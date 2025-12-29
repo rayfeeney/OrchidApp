@@ -30,7 +30,6 @@ New-Item -ItemType Directory -Force -Path `
   "$SchemaRoot/tables",
   "$SchemaRoot/views",
   "$SchemaRoot/routines",
-  "$SchemaRoot/triggers",
   "database/checksums" | Out-Null
 
 # Load existing checksums (as hashtable)
@@ -48,14 +47,14 @@ function Get-Checksum($Content) {
   (Get-FileHash -InputStream ([IO.MemoryStream]::new($bytes)) -Algorithm SHA256).Hash
 }
 
+# Items previously in Git
+$SeenObjects = @{}
+
 function Export-Object {
   param ($Type, $Name, $OutPath, $DumpArgs)
 
-  $sql = & $mysqldump `
-    -h $MySqlHost -P $MySqlPort `
-    -u $User "-p$Password" `
-    $DumpArgs $Database $Name `
-    --skip-comments --skip-dump-date 2>$null
+  $sql = & $mysqldump -h $MySqlHost -P $MySqlPort -u $User "-p$Password" `
+    $DumpArgs $Database $Name --skip-comments --skip-dump-date 2>$null
 
   if (-not $sql) { return }
 
@@ -66,6 +65,7 @@ function Export-Object {
 
   $hash = Get-Checksum $sql
   $key = "$Type/$Name"
+  $SeenObjects[$key] = $true
 
   if ($Checksums[$key] -ne $hash) {
     $sql | Out-File -Encoding utf8 $OutPath
@@ -79,7 +79,7 @@ $tables = & $mysql -N -B -h $MySqlHost -P $MySqlPort `
   -u $User "-p$Password" $Database `
   -e "SELECT TABLE_NAME FROM information_schema.TABLES 
       WHERE TABLE_SCHEMA = '$Database' 
-      AND TABLE_TYPE = 'BASE TABLE'"
+      AND TABLE_TYPE = 'BASE TABLE'" 2>$null
 
 
 foreach ($t in $tables) {
@@ -90,7 +90,7 @@ foreach ($t in $tables) {
 $views = & $mysql -N -B -h $MySqlHost -P $MySqlPort `
   -u $User "-p$Password" $Database `
   -e "SELECT TABLE_NAME FROM information_schema.VIEWS 
-      WHERE TABLE_SCHEMA = '$Database'"
+      WHERE TABLE_SCHEMA = '$Database'" 2>$null
 
 
 foreach ($v in $views) {
@@ -100,10 +100,29 @@ foreach ($v in $views) {
 # Routines
 $routines = & $mysql -N -B -h $MySqlHost -P $MySqlPort `
   -u $User "-p$Password" $Database `
-  -e "SELECT ROUTINE_NAME FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = '$Database'"
+  -e "SELECT ROUTINE_NAME FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = '$Database'" 2>$null
 
 foreach ($r in $routines) {
   Export-Object "routines" $r "$SchemaRoot/routines/$r.sql" "--routines --no-create-info"
 }
 
 $Checksums | ConvertTo-Json -Depth 3 | Out-File $ChecksumFile -Encoding utf8
+
+Write-Host ""
+#Write-Host "Checking for schema objects present in Git but missing from DB..."
+
+$schemaDirs = @("tables", "views", "routines")
+
+foreach ($dir in $schemaDirs) {
+  $path = Join-Path $SchemaRoot $dir
+  if (-not (Test-Path $path)) { continue }
+
+  Get-ChildItem $path -Filter *.sql | ForEach-Object {
+    $name = [IO.Path]::GetFileNameWithoutExtension($_.Name)
+    $key = "$dir/$name"
+
+    if (-not $SeenObjects.ContainsKey($key)) {
+      Write-Warning "Schema drift detected: Object exists in Git but not in DB: $key"
+    }
+  }
+}
