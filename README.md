@@ -1,3 +1,5 @@
-database/checksums/schema.json
-This file tracks checksums of exported schema objects.
-It is intentionally committed to ensure deterministic schema tracking.
+### database/checksums/schema.json
+
+This file is auto-generated on commit.
+It tracks checksums of exported database schema objects
+and must be committed. Do not edit manually.
