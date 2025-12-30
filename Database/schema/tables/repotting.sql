@@ -13,22 +13,21 @@ DROP TABLE IF EXISTS `repotting`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `repotting` (
-  `RepottingId` int NOT NULL AUTO_INCREMENT,
-  `PlantId` int NOT NULL,
-  `RepotDate` date NOT NULL,
-  `OldMediumCode` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `OldMediumNotes` text COLLATE utf8mb4_unicode_ci,
-  `NewMediumCode` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `NewMediumNotes` text COLLATE utf8mb4_unicode_ci,
-  `PotSize` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `ReasonCode` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `ReasonNotes` text COLLATE utf8mb4_unicode_ci,
-  `Notes` text COLLATE utf8mb4_unicode_ci,
-  `CreatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`RepottingId`),
-  KEY `IX_Repotting_PlantDate` (`PlantId`,`RepotDate`),
-  CONSTRAINT `FK_Repotting_Plant` FOREIGN KEY (`PlantId`) REFERENCES `plant` (`PlantId`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `repottingId` int NOT NULL AUTO_INCREMENT COMMENT 'Internal identifier for repotting event',
+  `plantId` int NOT NULL COMMENT 'Plant that was repotted',
+  `repotDate` date NOT NULL COMMENT 'Date of repotting',
+  `oldMediumCode` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Previous potting medium',
+  `oldMediumNotes` text COLLATE utf8mb4_unicode_ci COMMENT 'Notes on previous medium condition',
+  `newMediumCode` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'New potting medium',
+  `newMediumNotes` text COLLATE utf8mb4_unicode_ci COMMENT 'Notes on new medium',
+  `potSize` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Pot size used',
+  `repotReasonCode` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Reason for repotting',
+  `repotReasonNotes` text COLLATE utf8mb4_unicode_ci COMMENT 'Free-text explanation for repotting',
+  `repottingNotes` text COLLATE utf8mb4_unicode_ci COMMENT 'Additional repotting notes',
+  `createdDateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Record creation timestamp (local time)',
+  PRIMARY KEY (`repottingId`),
+  KEY `ixRepottingPlantRepotDate` (`plantId`,`repotDate`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Repotting history per plant.';
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 

@@ -13,18 +13,18 @@ DROP TABLE IF EXISTS `flowering`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `flowering` (
-  `FloweringId` int NOT NULL AUTO_INCREMENT,
-  `PlantId` int NOT NULL,
-  `StartDate` date NOT NULL,
-  `EndDate` date DEFAULT NULL,
-  `SpikeCount` int DEFAULT NULL,
-  `FlowerCount` int DEFAULT NULL,
-  `Notes` text COLLATE utf8mb4_unicode_ci,
-  `CreatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`FloweringId`),
-  KEY `IX_Flowering_PlantStart` (`PlantId`,`StartDate`),
-  CONSTRAINT `FK_Flowering_Plant` FOREIGN KEY (`PlantId`) REFERENCES `plant` (`PlantId`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `floweringId` int NOT NULL AUTO_INCREMENT COMMENT 'Internal identifier for flowering record',
+  `plantId` int NOT NULL COMMENT 'Plant that flowered',
+  `startDate` date NOT NULL COMMENT 'Date flowering started',
+  `endDate` date DEFAULT NULL COMMENT 'Date flowering ended (NULL = currently flowering)',
+  `spikeCount` int DEFAULT NULL COMMENT 'Number of flower spikes',
+  `flowerCount` int DEFAULT NULL COMMENT 'Approximate number of flowers',
+  `floweringNotes` text COLLATE utf8mb4_unicode_ci COMMENT 'Grower notes about flowering quality',
+  `createdDateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Record creation timestamp (local time)',
+  PRIMARY KEY (`floweringId`),
+  KEY `ixFloweringPlantStartDate` (`plantId`,`startDate`),
+  CONSTRAINT `fkFloweringPlant` FOREIGN KEY (`plantId`) REFERENCES `plant` (`plantId`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Flowering history per plant. Current flowering = endDate IS NULL.';
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 

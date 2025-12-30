@@ -13,20 +13,20 @@ DROP TABLE IF EXISTS `species`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `species` (
-  `SpeciesId` int NOT NULL AUTO_INCREMENT,
-  `Genus` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `SpeciesName` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `HybridName` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `GrowthCode` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `GrowthNotes` text COLLATE utf8mb4_unicode_ci,
-  `Notes` text COLLATE utf8mb4_unicode_ci,
-  `IsActive` tinyint(1) NOT NULL DEFAULT '1',
-  `CreatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `UpdatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`SpeciesId`),
-  KEY `IX_Species_Genus` (`Genus`),
-  KEY `IX_Species_IsActive` (`IsActive`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `speciesId` int NOT NULL AUTO_INCREMENT COMMENT 'Internal identifier for species or hybrid',
+  `genus` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Canonical genus name (e.g. Phalaenopsis)',
+  `speciesName` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Species epithet (NULL for hybrids)',
+  `hybridName` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Registered hybrid name (NULL if unnamed or species)',
+  `growthCode` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Structured growth habit code',
+  `growthNotes` text COLLATE utf8mb4_unicode_ci COMMENT 'Free-text notes about growth characteristics',
+  `speciesNotes` text COLLATE utf8mb4_unicode_ci COMMENT 'General notes about this species or hybrid',
+  `isActive` tinyint(1) NOT NULL DEFAULT '1' COMMENT '1 = usable, 0 = retired or deprecated',
+  `createdDateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Record creation timestamp (local time)',
+  `updatedDateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last update timestamp (local time)',
+  PRIMARY KEY (`speciesId`),
+  KEY `ixSpeciesGenus` (`genus`),
+  KEY `ixSpeciesIsActive` (`isActive`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Taxonomic information for orchid species and hybrids.';
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 

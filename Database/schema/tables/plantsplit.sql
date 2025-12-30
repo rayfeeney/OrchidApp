@@ -13,20 +13,20 @@ DROP TABLE IF EXISTS `plantsplit`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `plantsplit` (
-  `PlantSplitId` int NOT NULL AUTO_INCREMENT,
-  `ParentPlantId` int NOT NULL,
-  `ChildPlantId` int NOT NULL,
-  `SplitDate` date NOT NULL,
-  `ReasonCode` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `ReasonNotes` text COLLATE utf8mb4_unicode_ci,
-  `Notes` text COLLATE utf8mb4_unicode_ci,
-  `CreatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`PlantSplitId`),
-  UNIQUE KEY `UQ_PlantSplit_UniquePair` (`ParentPlantId`,`ChildPlantId`),
-  KEY `IX_PlantSplit_Parent` (`ParentPlantId`,`SplitDate`),
-  KEY `IX_PlantSplit_Child` (`ChildPlantId`,`SplitDate`),
-  CONSTRAINT `FK_PlantSplit_ChildPlant` FOREIGN KEY (`ChildPlantId`) REFERENCES `plant` (`PlantId`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CONSTRAINT `FK_PlantSplit_ParentPlant` FOREIGN KEY (`ParentPlantId`) REFERENCES `plant` (`PlantId`) ON DELETE RESTRICT ON UPDATE RESTRICT
+  `plantSplitId` int NOT NULL AUTO_INCREMENT COMMENT 'Internal identifier for plant split lineage record',
+  `parentPlantId` int NOT NULL COMMENT 'Original plant that was split',
+  `childPlantId` int NOT NULL COMMENT 'New plant created from the split',
+  `splitDate` date NOT NULL COMMENT 'Date the split occurred',
+  `splitReasonCode` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Reason for splitting (Overgrown, Rescue, Share, etc)',
+  `splitReasonNotes` text COLLATE utf8mb4_unicode_ci COMMENT 'Free-text explanation of why the plant was split',
+  `splitNotes` text COLLATE utf8mb4_unicode_ci COMMENT 'Additional notes about the split outcome',
+  `createdDateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Record creation timestamp (local time)',
+  PRIMARY KEY (`plantSplitId`),
+  UNIQUE KEY `uqPlantSplitUniquePair` (`parentPlantId`,`childPlantId`),
+  KEY `ixPlantSplitParent` (`parentPlantId`,`splitDate`),
+  KEY `ixPlantSplitChild` (`childPlantId`,`splitDate`),
+  CONSTRAINT `fkPlantSplitChild` FOREIGN KEY (`childPlantId`) REFERENCES `plant` (`plantId`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `fkPlantSplitParent` FOREIGN KEY (`parentPlantId`) REFERENCES `plant` (`plantId`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

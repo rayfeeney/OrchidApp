@@ -14,17 +14,17 @@ DROP TABLE IF EXISTS `plantactivesummary`;
 SET @saved_cs_client     = @@character_set_client;
 /*!50503 SET character_set_client = utf8mb4 */;
 /*!50001 CREATE VIEW `plantactivesummary` AS SELECT 
- 1 AS `PlantId`,
- 1 AS `PlantTag`,
- 1 AS `PlantName`,
- 1 AS `AcquisitionDate`,
- 1 AS `Source`,
- 1 AS `Genus`,
- 1 AS `SpeciesName`,
- 1 AS `HybridName`,
- 1 AS `LocationName`,
- 1 AS `LocationTypeCode`,
- 1 AS `LocationStartDate`*/;
+ 1 AS `plantId`,
+ 1 AS `plantTag`,
+ 1 AS `plantName`,
+ 1 AS `acquisitionDate`,
+ 1 AS `acquisitionSource`,
+ 1 AS `genus`,
+ 1 AS `speciesName`,
+ 1 AS `hybridName`,
+ 1 AS `locationName`,
+ 1 AS `locationTypeCode`,
+ 1 AS `locationStartDateTime`*/;
 SET character_set_client = @saved_cs_client;
 /*!50001 DROP VIEW IF EXISTS `plantactivesummary`*/;
 /*!50001 SET @saved_cs_client          = @@character_set_client */;
@@ -35,7 +35,7 @@ SET character_set_client = @saved_cs_client;
 /*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013  SQL SECURITY DEFINER */
-/*!50001 VIEW `plantactivesummary` AS select `p`.`PlantId` AS `PlantId`,`p`.`PlantTag` AS `PlantTag`,`p`.`PlantName` AS `PlantName`,`p`.`AcquisitionDate` AS `AcquisitionDate`,`p`.`Source` AS `Source`,`s`.`Genus` AS `Genus`,`s`.`SpeciesName` AS `SpeciesName`,`s`.`HybridName` AS `HybridName`,`pcl`.`LocationName` AS `LocationName`,`pcl`.`LocationTypeCode` AS `LocationTypeCode`,`pcl`.`LocationStartDate` AS `LocationStartDate` from ((`plant` `p` join `species` `s` on((`s`.`SpeciesId` = `p`.`SpeciesId`))) left join `plantcurrentlocation` `pcl` on((`pcl`.`PlantId` = `p`.`PlantId`))) where (`p`.`IsActive` = 1) */;
+/*!50001 VIEW `plantactivesummary` AS select `p`.`plantId` AS `plantId`,`p`.`plantTag` AS `plantTag`,`p`.`plantName` AS `plantName`,`p`.`acquisitionDate` AS `acquisitionDate`,`p`.`acquisitionSource` AS `acquisitionSource`,`s`.`genus` AS `genus`,`s`.`speciesName` AS `speciesName`,`s`.`hybridName` AS `hybridName`,`pcl`.`locationName` AS `locationName`,`pcl`.`locationTypeCode` AS `locationTypeCode`,`pcl`.`locationStartDateTime` AS `locationStartDateTime` from ((`plant` `p` left join `species` `s` on((`s`.`speciesId` = `p`.`speciesId`))) left join `plantcurrentlocation` `pcl` on((`pcl`.`plantId` = `p`.`plantId`))) where (`p`.`isActive` = 1) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;

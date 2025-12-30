@@ -13,21 +13,21 @@ DROP TABLE IF EXISTS `plantlocationhistory`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `plantlocationhistory` (
-  `PlantLocationHistoryId` int NOT NULL AUTO_INCREMENT,
-  `PlantId` int NOT NULL,
-  `LocationId` int NOT NULL,
-  `StartDate` datetime NOT NULL,
-  `EndDate` datetime DEFAULT NULL,
-  `ReasonCode` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `ReasonNotes` text COLLATE utf8mb4_unicode_ci,
-  `Notes` text COLLATE utf8mb4_unicode_ci,
-  `CreatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`PlantLocationHistoryId`),
-  KEY `IX_PlantLocationHistory_PlantTime` (`PlantId`,`StartDate`,`EndDate`),
-  KEY `IX_PlantLocationHistory_LocationTime` (`LocationId`,`StartDate`,`EndDate`),
-  CONSTRAINT `FK_PlantLocationHistory_Location` FOREIGN KEY (`LocationId`) REFERENCES `location` (`LocationId`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CONSTRAINT `FK_PlantLocationHistory_Plant` FOREIGN KEY (`PlantId`) REFERENCES `plant` (`PlantId`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `plantLocationHistoryId` int NOT NULL AUTO_INCREMENT COMMENT 'Internal identifier for plant location history row',
+  `plantId` int NOT NULL COMMENT 'Plant being moved',
+  `locationId` int NOT NULL COMMENT 'Location plant is moved to',
+  `startDateTime` datetime NOT NULL COMMENT 'Date and time plant entered this location',
+  `endDateTime` datetime DEFAULT NULL COMMENT 'Date and time plant left this location (NULL = current)',
+  `moveReasonCode` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Reason for movement',
+  `moveReasonNotes` text COLLATE utf8mb4_unicode_ci COMMENT 'Free-text explanation for movement',
+  `plantLocationNotes` text COLLATE utf8mb4_unicode_ci COMMENT 'Additional notes about this placement',
+  `createdDateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Record creation timestamp (local time)',
+  PRIMARY KEY (`plantLocationHistoryId`),
+  KEY `ixPlantLocationHistoryPlantTime` (`plantId`,`startDateTime`,`endDateTime`),
+  KEY `ixPlantLocationHistoryLocationTime` (`locationId`,`startDateTime`,`endDateTime`),
+  CONSTRAINT `fkPlantLocationHistoryLocation` FOREIGN KEY (`locationId`) REFERENCES `location` (`locationId`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `fkPlantLocationHistoryPlant` FOREIGN KEY (`plantId`) REFERENCES `plant` (`plantId`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Time-based history of where plants have been located.';
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 

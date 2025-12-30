@@ -13,17 +13,17 @@ DROP TABLE IF EXISTS `plantevent`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `plantevent` (
-  `PlantEventId` int NOT NULL AUTO_INCREMENT,
-  `PlantId` int NOT NULL,
-  `EventCode` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `EventDate` datetime NOT NULL,
-  `Details` text COLLATE utf8mb4_unicode_ci,
-  `CreatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`PlantEventId`),
-  KEY `IX_PlantEvent_PlantDate` (`PlantId`,`EventDate`),
-  KEY `IX_PlantEvent_EventCode` (`EventCode`),
-  CONSTRAINT `FK_PlantEvent_Plant` FOREIGN KEY (`PlantId`) REFERENCES `plant` (`PlantId`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `plantEventId` int NOT NULL AUTO_INCREMENT COMMENT 'Internal identifier for plant event',
+  `plantId` int NOT NULL COMMENT 'Plant the event relates to',
+  `eventCode` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Structured event type (Watering, Feeding, Pest, etc)',
+  `eventDateTime` datetime NOT NULL COMMENT 'Date and time of event (local time)',
+  `eventDetails` text COLLATE utf8mb4_unicode_ci COMMENT 'Free-text description of event',
+  `createdDateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Record creation timestamp (local time)',
+  PRIMARY KEY (`plantEventId`),
+  KEY `ixPlantEventPlantDateTime` (`plantId`,`eventDateTime`),
+  KEY `ixPlantEventEventCode` (`eventCode`),
+  CONSTRAINT `fkPlantEventPlant` FOREIGN KEY (`plantId`) REFERENCES `plant` (`plantId`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='General-purpose event log for plant care and observations.';
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 

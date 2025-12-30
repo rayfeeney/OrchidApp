@@ -14,11 +14,11 @@ DROP TABLE IF EXISTS `plantcurrentlocation`;
 SET @saved_cs_client     = @@character_set_client;
 /*!50503 SET character_set_client = utf8mb4 */;
 /*!50001 CREATE VIEW `plantcurrentlocation` AS SELECT 
- 1 AS `PlantId`,
- 1 AS `LocationId`,
- 1 AS `LocationName`,
- 1 AS `LocationTypeCode`,
- 1 AS `LocationStartDate`*/;
+ 1 AS `plantId`,
+ 1 AS `locationId`,
+ 1 AS `locationName`,
+ 1 AS `locationTypeCode`,
+ 1 AS `locationStartDateTime`*/;
 SET character_set_client = @saved_cs_client;
 /*!50001 DROP VIEW IF EXISTS `plantcurrentlocation`*/;
 /*!50001 SET @saved_cs_client          = @@character_set_client */;
@@ -29,7 +29,7 @@ SET character_set_client = @saved_cs_client;
 /*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013  SQL SECURITY DEFINER */
-/*!50001 VIEW `plantcurrentlocation` AS select `plh`.`PlantId` AS `PlantId`,`plh`.`LocationId` AS `LocationId`,`l`.`LocationName` AS `LocationName`,`l`.`LocationTypeCode` AS `LocationTypeCode`,`plh`.`StartDate` AS `LocationStartDate` from (`plantlocationhistory` `plh` join `location` `l` on((`l`.`LocationId` = `plh`.`LocationId`))) where (`plh`.`EndDate` is null) */;
+/*!50001 VIEW `plantcurrentlocation` AS select `plh`.`plantId` AS `plantId`,`plh`.`locationId` AS `locationId`,`l`.`locationName` AS `locationName`,`l`.`locationTypeCode` AS `locationTypeCode`,`plh`.`startDateTime` AS `locationStartDateTime` from (`plantlocationhistory` `plh` join `location` `l` on((`l`.`locationId` = `plh`.`locationId`))) where (`plh`.`endDateTime` is null) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
