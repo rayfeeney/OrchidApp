@@ -106,7 +106,27 @@ foreach ($r in $routines) {
   Export-Object "routines" $r "$SchemaRoot/routines/$r.sql" "--routines --no-create-info"
 }
 
-$Checksums | ConvertTo-Json -Depth 3 | Out-File $ChecksumFile -Encoding utf8
+# Write checksum file deterministically and only if changed
+$OrderedChecksums = [ordered]@{}
+foreach ($key in ($Checksums.Keys | Sort-Object)) {
+  $OrderedChecksums[$key] = $Checksums[$key]
+}
+
+$NewJson = $OrderedChecksums | ConvertTo-Json -Depth 3
+
+$WriteFile = $true
+if (Test-Path $ChecksumFile) {
+  $ExistingJson = Get-Content $ChecksumFile -Raw
+  if ($ExistingJson -eq $NewJson) {
+    $WriteFile = $false
+  }
+}
+
+if ($WriteFile) {
+  $NewJson | Out-File $ChecksumFile -Encoding utf8
+  Write-Host "Checksum file updated"
+}
+
 
 Write-Host ""
 #Write-Host "Checking for schema objects present in Git but missing from DB..."
