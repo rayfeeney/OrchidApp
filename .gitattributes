@@ -1,2 +1,6 @@
-# Auto detect text files and perform LF normalization
+# Default behaviour
 * text=auto
+
+# Shell scripts must always be LF
+*.sh text eol=lf
+.githooks/pre-commit text eol=lf
