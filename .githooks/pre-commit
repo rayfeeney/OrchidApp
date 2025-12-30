@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+set -e
+
+echo "Exporting MySQL schema..."
+
+pwsh -NoProfile -ExecutionPolicy Bypass \
+  -File database/scripts/Export-MySqlSchema.ps1
+
+echo "Staging schema changes..."
+git add database/schema database/checksums
+
+echo "Schema sync complete."
