@@ -9,7 +9,7 @@
    ------------------------
    Naming Standards
    ------------------------
-   - camelCase naming used in MySQL for tables, columns, views, indexes
+   - camelCase naming used in MySQL for tables, columns, views, indexes (when writing, MySQL ignores case in table names)
    - Suffixes:
        * Id        → identifiers (primary & foreign keys)
        * Code      → structured, filterable values

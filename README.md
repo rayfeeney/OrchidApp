@@ -53,17 +53,18 @@ so it can see the environment variables.
 
 This only needs to be done **once per machine**.
 
-## 4. Enable the versioned Git hook (required)
+## 4. Run the setup helper script (required)
 
-This repository stores its Git hooks in a **versioned directory**.
+This repository provides a helper script to validate and configure the local
+development environment.
 
-From **Git Bash**, run **once** in the repo root:
+After completing the steps above, run the following from the repository root
+using **PowerShell 7**:
 
-```bash
-git config core.hooksPath .githooks
-```
+```powershell
+pwsh scripts/setup.ps1
 
-This configuration:
+This ensures configuration is required and applys the correct pre-commit hook:
 
 Applies **only to this repository**
 Does **not** affect other repos
@@ -72,8 +73,7 @@ Ensures everyone runs the same hook logic
 ## 5. Line endings (important)
 
 This repository enforces **LF line endings** for hooks and scripts.
-
-Normally, no action is required.
+The setup script configures Git correctly, so normally no action is required.
 
 If GitHub Desktop shows a line-ending warning, run once from Git Bash:
 
@@ -85,7 +85,8 @@ Then commit the result.
 
 ## 6. Verify the setup
 
-Make any small change and commit using **GitHub Desktop**.
+Once the setup script has completed successfully, make any small change and
+commit using **GitHub Desktop**.
 
 You should see output similar to:
 
