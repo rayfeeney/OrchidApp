@@ -1,6 +1,6 @@
 **Note:** This repository uses a required pre-commit hook to manage database schema changes. Please complete the setup steps before committing.
 
-## Repository setup (Windows + GitHub Desktop)
+# Repository setup (Windows + GitHub Desktop)
 
 This repository uses a **required pre-commit hook** to automatically export and track the MySQL database schema on every commit.
 
@@ -130,11 +130,15 @@ and commit once.
 
 This setup ensures:
 
-Schema-as-code
-Deterministic diffs
-No hidden database drift
-Consistent behaviour across machines and CI
+* Schema-as-code
+* Deterministic diffs
+* No hidden database drift
+* Consistent behaviour across machines and CI
 
+
+
+
+# Useful information
 
 ### database/checksums/schema.json
 
