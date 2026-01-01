@@ -30,9 +30,9 @@ SET character_set_client = @saved_cs_client;
 /*!50001 SET @saved_cs_client          = @@character_set_client */;
 /*!50001 SET @saved_cs_results         = @@character_set_results */;
 /*!50001 SET @saved_col_connection     = @@collation_connection */;
-/*!50001 SET character_set_client      = utf8mb4 */;
-/*!50001 SET character_set_results     = utf8mb4 */;
-/*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
+/*!50001 SET character_set_client      = cp850 */;
+/*!50001 SET character_set_results     = cp850 */;
+/*!50001 SET collation_connection      = cp850_general_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013  SQL SECURITY DEFINER */
 /*!50001 VIEW `plantactivesummary` AS select `p`.`plantId` AS `plantId`,`p`.`plantTag` AS `plantTag`,`p`.`plantName` AS `plantName`,`p`.`acquisitionDate` AS `acquisitionDate`,`p`.`acquisitionSource` AS `acquisitionSource`,`s`.`genus` AS `genus`,`s`.`speciesName` AS `speciesName`,`s`.`hybridName` AS `hybridName`,`pcl`.`locationName` AS `locationName`,`pcl`.`locationTypeCode` AS `locationTypeCode`,`pcl`.`locationStartDateTime` AS `locationStartDateTime` from ((`plant` `p` left join `species` `s` on((`s`.`speciesId` = `p`.`speciesId`))) left join `plantcurrentlocation` `pcl` on((`pcl`.`plantId` = `p`.`plantId`))) where (`p`.`isActive` = 1) */;

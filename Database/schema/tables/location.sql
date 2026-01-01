@@ -14,12 +14,12 @@ DROP TABLE IF EXISTS `location`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `location` (
   `locationId` int NOT NULL AUTO_INCREMENT COMMENT 'Internal identifier for a physical location',
-  `locationName` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Human-readable location name',
-  `locationTypeCode` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Type of location (Greenhouse, House, Garden, etc)',
-  `locationNotes` text COLLATE utf8mb4_unicode_ci COMMENT 'Free-text notes about this location',
-  `climateCode` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'General climate classification',
-  `climateNotes` text COLLATE utf8mb4_unicode_ci COMMENT 'Free-text climate description',
-  `locationGeneralNotes` text COLLATE utf8mb4_unicode_ci COMMENT 'Other notes about the location',
+  `locationName` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Human-readable location name',
+  `locationTypeCode` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Type of location (Greenhouse, House, Garden, etc)',
+  `locationNotes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Free-text notes about this location',
+  `climateCode` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'General climate classification',
+  `climateNotes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Free-text climate description',
+  `locationGeneralNotes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Other notes about the location',
   `isActive` tinyint(1) NOT NULL DEFAULT '1' COMMENT '1 = active location, 0 = retired',
   `createdDateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Record creation timestamp (local time)',
   `updatedDateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last update timestamp (local time)',
