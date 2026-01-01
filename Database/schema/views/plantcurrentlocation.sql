@@ -24,9 +24,9 @@ SET character_set_client = @saved_cs_client;
 /*!50001 SET @saved_cs_client          = @@character_set_client */;
 /*!50001 SET @saved_cs_results         = @@character_set_results */;
 /*!50001 SET @saved_col_connection     = @@collation_connection */;
-/*!50001 SET character_set_client      = cp850 */;
-/*!50001 SET character_set_results     = cp850 */;
-/*!50001 SET collation_connection      = cp850_general_ci */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013  SQL SECURITY DEFINER */
 /*!50001 VIEW `plantcurrentlocation` AS select `plh`.`plantId` AS `plantId`,`plh`.`locationId` AS `locationId`,`l`.`locationName` AS `locationName`,`l`.`locationTypeCode` AS `locationTypeCode`,`plh`.`startDateTime` AS `locationStartDateTime` from (`plantlocationhistory` `plh` join `location` `l` on((`l`.`locationId` = `plh`.`locationId`))) where (`plh`.`endDateTime` is null) */;

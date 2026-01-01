@@ -19,7 +19,7 @@ CREATE TABLE `flowering` (
   `endDate` date DEFAULT NULL COMMENT 'Date flowering ended (NULL = currently flowering)',
   `spikeCount` int DEFAULT NULL COMMENT 'Number of flower spikes',
   `flowerCount` int DEFAULT NULL COMMENT 'Approximate number of flowers',
-  `floweringNotes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Grower notes about flowering quality',
+  `floweringNotes` text COLLATE utf8mb4_unicode_ci COMMENT 'Grower notes about flowering quality',
   `createdDateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Record creation timestamp (local time)',
   PRIMARY KEY (`floweringId`),
   KEY `ixFloweringPlantStartDate` (`plantId`,`startDate`),
