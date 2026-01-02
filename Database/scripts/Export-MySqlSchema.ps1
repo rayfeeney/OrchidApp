@@ -159,7 +159,9 @@ foreach ($dir in @("tables", "views", "routines")) {
   Get-ChildItem $path -Filter *.sql | ForEach-Object {
     $key = "$dir/$($_.BaseName)"
     if (-not $SeenObjects.ContainsKey($key)) {
-      Write-Warning "Schema object no longer exists in DB: $key"
+      Write-Host "Removed $key (no longer exists in DB)"
+      Remove-Item $_.FullName
+      $Checksums.Remove($key)
     }
   }
 }
