@@ -28,6 +28,7 @@ $ChecksumFile = "database/checksums/schema.json"
 
 New-Item -ItemType Directory -Force -Path `
   "$SchemaRoot/tables",
+  "$SchemaRoot/constraints",
   "$SchemaRoot/views",
   "$SchemaRoot/routines",
   "database/checksums" | Out-Null
@@ -144,75 +145,85 @@ foreach ($t in $tables) {
 }
 
 # --- Constraints --------------------
-# $constraintRows = Invoke-MySqlQuery @"
-# SELECT
-#   kcu.CONSTRAINT_NAME,
-#   kcu.TABLE_NAME,
-#   kcu.COLUMN_NAME,
-#   kcu.REFERENCED_TABLE_NAME,
-#   kcu.REFERENCED_COLUMN_NAME,
-#   rc.UPDATE_RULE,
-#   rc.DELETE_RULE,
-#   kcu.ORDINAL_POSITION
-# FROM information_schema.KEY_COLUMN_USAGE kcu
-# JOIN information_schema.REFERENTIAL_CONSTRAINTS rc
-#   ON rc.CONSTRAINT_NAME = kcu.CONSTRAINT_NAME
-#  AND rc.CONSTRAINT_SCHEMA = kcu.CONSTRAINT_SCHEMA
-# WHERE kcu.TABLE_SCHEMA = '$Database'
-#   AND kcu.REFERENCED_TABLE_NAME IS NOT NULL
-# ORDER BY
-#   kcu.CONSTRAINT_NAME,
-#   kcu.ORDINAL_POSITION;
-# "@
+$constraintRows = Invoke-MySqlQuery @"
+SELECT
+  kcu.CONSTRAINT_NAME,
+  kcu.TABLE_NAME,
+  kcu.COLUMN_NAME,
+  kcu.REFERENCED_TABLE_NAME,
+  kcu.REFERENCED_COLUMN_NAME,
+  rc.UPDATE_RULE,
+  rc.DELETE_RULE,
+  kcu.ORDINAL_POSITION
+FROM information_schema.KEY_COLUMN_USAGE kcu
+JOIN information_schema.REFERENTIAL_CONSTRAINTS rc
+  ON rc.CONSTRAINT_NAME = kcu.CONSTRAINT_NAME
+ AND rc.CONSTRAINT_SCHEMA = kcu.CONSTRAINT_SCHEMA
+WHERE kcu.TABLE_SCHEMA = '$Database'
+  AND kcu.REFERENCED_TABLE_NAME IS NOT NULL
+ORDER BY
+  kcu.CONSTRAINT_NAME,
+  kcu.ORDINAL_POSITION;
+"@
 
-# $constraints = @{}
+$constraints = @{}
 
-# foreach ($row in $constraintRows) {
-#   $parts = $row -split "`t"
-#   $name  = $parts[0]
+foreach ($row in $constraintRows) {
+  $parts = $row -split "`t"
+  $name  = $parts[0]
 
-#   if (-not $constraints.ContainsKey($name)) {
-#     $constraints[$name] = @()
-#   }
+  if (-not $constraints.ContainsKey($name)) {
+    $constraints[$name] = @()
+  }
 
-#   $constraints[$name] += ,$parts
-# }
+  $constraints[$name] += ,$parts
+}
 
-# $constraintDir = "$SchemaRoot/constraints"
-# New-Item -ItemType Directory -Force -Path $constraintDir | Out-Null
+foreach ($constraintName in $constraints.Keys) {
+  $rows = $constraints[$constraintName]
 
-# foreach ($constraintName in $constraints.Keys) {
-#   $rows = $constraints[$constraintName]
+   # Filesystem-safe constraint name
+  $FileConstraintName = $constraintName.TrimStart('/') -replace '[\\/:*?"<>|]', '_'
 
-#   $table       = $rows[0][1]
-#   $refTable    = $rows[0][3]
-#   $onUpdate    = $rows[0][5]
-#   $onDelete    = $rows[0][6]
+  # PSScriptAnalyzer SuppressMessage PSAvoidUnusedVariables - Justification: Used in the generated SQL
+  # Warning may still appear due to use in a loop
+  $table      = $rows[0][1]
 
-#   $columns     = $rows | ForEach-Object { "``$($_[2])``" } -join ", "
-#   $refColumns  = $rows | ForEach-Object { "``$($_[4])``" } -join ", "
+  # PSScriptAnalyzer SuppressMessage PSAvoidUnusedVariables - Justification: Used in the generated SQL
+  # Warning may still appear due to use in a loop
+  $refTable   = $rows[0][3]
 
-#   $sql = @"
-# ALTER TABLE `$table`
-#   ADD CONSTRAINT `$constraintName`
-#   FOREIGN KEY ($columns)
-#   REFERENCES `$refTable` ($refColumns)
-#   ON DELETE $onDelete
-#   ON UPDATE $onUpdate;
-# "@
+  $onUpdate   = $rows[0][5]
+  $onDelete   = $rows[0][6]
 
-#   $path = "$constraintDir/$constraintName.sql"
+  $columns    = ($rows | ForEach-Object { "``$($_[2])``" }) -join ", "
+  $refColumns = ($rows | ForEach-Object { "``$($_[4])``" }) -join ", "
 
-#   $hash = Get-Checksum $sql
-#   $key  = "constraints/$constraintName"
-#   $SeenObjects[$key] = $true
+  $sql = @"
+ALTER TABLE `$table`
+  ADD CONSTRAINT `$constraintName`
+  FOREIGN KEY ($columns)
+  REFERENCES `$refTable` ($refColumns)
+  ON DELETE $onDelete
+  ON UPDATE $onUpdate;
+"@
 
-#   if ($Checksums[$key] -ne $hash) {
-#     $sql | Out-File -Encoding utf8 $path
-#     $Checksums[$key] = $hash
-#     Write-Host "Updated constraints/$constraintName"
-#   }
-# }
+  # Normalise whitespace 
+  $sql = $sql.Trim() + "`n"
+
+  $key  = "constraints/$FileConstraintName"
+  $hash = Get-Checksum $sql
+  $SeenObjects[$key] = $true
+
+  $OutPath = Join-Path "$SchemaRoot/constraints" "$FileConstraintName.sql"
+
+  if ($Checksums[$key] -ne $hash) {
+    $sql | Out-File -Encoding utf8 $OutPath
+    $Checksums[$key] = $hash
+    Write-Host "Updated $key"
+  }
+}
+
 
 # --- Views --------------------------
 $views = Invoke-MySqlQuery @"
@@ -252,7 +263,7 @@ if (-not (Test-Path $ChecksumFile) -or (Get-Content $ChecksumFile -Raw).Trim() -
 
 # --- Remove schema objects that no longer exist in the DB -------------------
  
-foreach ($dir in @("tables", "views", "routines")) {
+foreach ($dir in @("tables", "constraints", "views", "routines")) {
   $path = Join-Path $SchemaRoot $dir
   if (-not (Test-Path $path)) { continue }
 
