@@ -2,6 +2,9 @@ $ErrorActionPreference = "Stop"
 
 # --- Preconditions -----------------------------------------------------------
 
+$RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
+Set-Location $RepoRoot
+
 foreach ($cmd in @("mysql", "mysqldump")) {
   if (-not (Get-Command $cmd -ErrorAction SilentlyContinue)) {
     throw "$cmd not found in PATH"
@@ -85,9 +88,35 @@ function Export-Object {
 
   if (-not $sql) { return }
 
+  # Join output into single string
+  $sql = ($sql -join "`n")
+
+  # Normalise noise
   $sql = $sql `
     -replace 'DEFINER=`[^`]+`@`[^`]+`', '' `
     -replace 'AUTO_INCREMENT=\d+', ''
+
+  # Strip FOREIGN KEY constraints from table DDL
+  if ($Type -eq "tables") {
+
+    # Remove named FK constraints
+    $sql = $sql -replace '(?ms),?\s*CONSTRAINT\s+`[^`]+`\s+FOREIGN\s+KEY\s*\([^\)]*\)\s+REFERENCES\s+`[^`]+`\s*\([^\)]*\)(?:\s+ON\s+DELETE\s+\w+)?(?:\s+ON\s+UPDATE\s+\w+)?', ''
+
+    # Remove unnamed FK constraints
+    $sql = $sql -replace '(?ms),?\s*FOREIGN\s+KEY\s*\([^\)]*\)\s+REFERENCES\s+`[^`]+`\s*\([^\)]*\)(?:\s+ON\s+DELETE\s+\w+)?(?:\s+ON\s+UPDATE\s+\w+)?', ''
+  }
+
+  # Remove MySQL versioned executable comments (entire statements)
+  $sql = $sql -replace '(?ms)/\*![0-9]+\s.*?\*/\s*;?', ''
+
+  # Remove mysqldump session SET statements
+  $sql = $sql -replace '(?m)^\s*SET\s+@?OLD_.*?;\s*$', ''
+  $sql = $sql -replace '(?m)^\s*SET\s+(SQL_MODE|CHARACTER_SET_.*|COLLATION_.*|TIME_ZONE).*?;\s*$', ''
+
+  # Normalise whitespace
+  $sql = $sql -replace "(\r?\n){3,}", "`n`n"
+  $sql = $sql.Trim()
+  $sql = $sql + "`n"
 
   $hash = Get-Checksum $sql
   $key  = "$Type/$Name"
@@ -102,7 +131,7 @@ function Export-Object {
 
 # --- Discover & export -------------------------------------------------------
 
-# Tables
+# --- Tables -------------------------
 $tables = Invoke-MySqlQuery @"
 SELECT TABLE_NAME
 FROM information_schema.TABLES
@@ -114,7 +143,78 @@ foreach ($t in $tables) {
   Export-Object "tables" $t "$SchemaRoot/tables/$t.sql" "--no-data"
 }
 
-# Views
+# --- Constraints --------------------
+# $constraintRows = Invoke-MySqlQuery @"
+# SELECT
+#   kcu.CONSTRAINT_NAME,
+#   kcu.TABLE_NAME,
+#   kcu.COLUMN_NAME,
+#   kcu.REFERENCED_TABLE_NAME,
+#   kcu.REFERENCED_COLUMN_NAME,
+#   rc.UPDATE_RULE,
+#   rc.DELETE_RULE,
+#   kcu.ORDINAL_POSITION
+# FROM information_schema.KEY_COLUMN_USAGE kcu
+# JOIN information_schema.REFERENTIAL_CONSTRAINTS rc
+#   ON rc.CONSTRAINT_NAME = kcu.CONSTRAINT_NAME
+#  AND rc.CONSTRAINT_SCHEMA = kcu.CONSTRAINT_SCHEMA
+# WHERE kcu.TABLE_SCHEMA = '$Database'
+#   AND kcu.REFERENCED_TABLE_NAME IS NOT NULL
+# ORDER BY
+#   kcu.CONSTRAINT_NAME,
+#   kcu.ORDINAL_POSITION;
+# "@
+
+# $constraints = @{}
+
+# foreach ($row in $constraintRows) {
+#   $parts = $row -split "`t"
+#   $name  = $parts[0]
+
+#   if (-not $constraints.ContainsKey($name)) {
+#     $constraints[$name] = @()
+#   }
+
+#   $constraints[$name] += ,$parts
+# }
+
+# $constraintDir = "$SchemaRoot/constraints"
+# New-Item -ItemType Directory -Force -Path $constraintDir | Out-Null
+
+# foreach ($constraintName in $constraints.Keys) {
+#   $rows = $constraints[$constraintName]
+
+#   $table       = $rows[0][1]
+#   $refTable    = $rows[0][3]
+#   $onUpdate    = $rows[0][5]
+#   $onDelete    = $rows[0][6]
+
+#   $columns     = $rows | ForEach-Object { "``$($_[2])``" } -join ", "
+#   $refColumns  = $rows | ForEach-Object { "``$($_[4])``" } -join ", "
+
+#   $sql = @"
+# ALTER TABLE `$table`
+#   ADD CONSTRAINT `$constraintName`
+#   FOREIGN KEY ($columns)
+#   REFERENCES `$refTable` ($refColumns)
+#   ON DELETE $onDelete
+#   ON UPDATE $onUpdate;
+# "@
+
+#   $path = "$constraintDir/$constraintName.sql"
+
+#   $hash = Get-Checksum $sql
+#   $key  = "constraints/$constraintName"
+#   $SeenObjects[$key] = $true
+
+#   if ($Checksums[$key] -ne $hash) {
+#     $sql | Out-File -Encoding utf8 $path
+#     $Checksums[$key] = $hash
+#     Write-Host "Updated constraints/$constraintName"
+#   }
+# }
+
+# --- Views --------------------------
 $views = Invoke-MySqlQuery @"
 SELECT TABLE_NAME
 FROM information_schema.VIEWS
@@ -125,7 +225,7 @@ foreach ($v in $views) {
   Export-Object "views" $v "$SchemaRoot/views/$v.sql" "--no-data"
 }
 
-# Routines
+# --- Routines -----------------------
 $routines = Invoke-MySqlQuery @"
 SELECT ROUTINE_NAME
 FROM information_schema.ROUTINES
