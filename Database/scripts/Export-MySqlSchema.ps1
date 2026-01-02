@@ -1,4 +1,3 @@
-
 $ErrorActionPreference = "Stop"
 
 # --- Preconditions -----------------------------------------------------------
@@ -151,18 +150,24 @@ if (-not (Test-Path $ChecksumFile) -or (Get-Content $ChecksumFile -Raw).Trim() -
   Write-Host "Checksum file updated"
 }
 
-# --- Warn about removed objects ---------------------------------------------
-
+# --- Remove schema objects that no longer exist in the DB -------------------
+ 
 foreach ($dir in @("tables", "views", "routines")) {
   $path = Join-Path $SchemaRoot $dir
   if (-not (Test-Path $path)) { continue }
 
   Get-ChildItem $path -Filter *.sql | ForEach-Object {
     $key = "$dir/$($_.BaseName)"
+
     if (-not $SeenObjects.ContainsKey($key)) {
       Write-Host "Removed $key (no longer exists in DB)"
-      Remove-Item $_.FullName
-      $Checksums.Remove($key)
+
+      Remove-Item $_.FullName -Force
+
+      if ($Checksums.ContainsKey($key)) {
+        $Checksums.Remove($key)
+      }
     }
   }
 }
+

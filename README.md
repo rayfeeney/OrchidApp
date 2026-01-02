@@ -1,26 +1,43 @@
-**Note:** This repository uses a required pre-commit hook to manage database schema changes. Please complete the setup steps before committing.
+# OrchidApp
 
-# Repository setup (Windows + GitHub Desktop)
+**Note:** This repository uses a **required pre-commit hook** to capture database schema changes. Please complete the setup steps below before committing.
 
-This repository uses a **required pre-commit hook** to automatically export and track the MySQL database schema on every commit.
+---
 
-The hook:
+## Repository setup (Windows + GitHub Desktop)
 
-* Exports schema objects to `database/schema`
-* Updates `database/checksums/schema.json`
-* Warns about schema drift
-* Runs automatically before each commit
+This repository treats the **database schema as source code**.
 
-Follow the steps below **once after cloning**.
+During development, schema changes are made **directly in the database**. A required pre-commit hook captures a complete snapshot of the database schema and commits it to Git. Continuous Integration (CI) then validates that the committed snapshot can be rebuilt cleanly from scratch.
+
+This process is intentionally strict to prevent hidden schema drift and ensure long-term reproducibility.
+
+---
+
+## What the pre-commit hook does
+
+The required pre-commit hook runs automatically before every commit and:
+
+- Discovers all schema objects from the database
+- Exports schema objects to `database/schema`
+- Creates files for new objects
+- Removes files for dropped objects
+- Normalises output for deterministic diffs
+- Updates `database/checksums/schema.json`
+- Warns about potential schema inconsistencies
+
+The hook is versioned in this repository and must not be bypassed without justification.
+
+---
 
 ## 1. Prerequisites
 
-Install the following:
+Install the following on your machine:
 
-* **GitHub Desktop**
-* **Git for Windows** (includes Git Bash)
-* **PowerShell 7 (`pwsh`)**
-* **MySQL client tools** (`mysql`, `mysqldump`)
+- **GitHub Desktop**
+- **Git for Windows** (includes Git Bash)
+- **PowerShell 7 (`pwsh`)**
+- **MySQL client tools** (`mysql`, `mysqldump`)
 
 Ensure `mysql` and `mysqldump` are available on your `PATH`.
 
@@ -31,11 +48,15 @@ mysql --version
 mysqldump --version
 ```
 
+---
+
 ## 2. Clone the repository
 
 Clone the repository using **GitHub Desktop** as normal.
 
 Once cloned, open a **Git Bash** terminal in the repository root.
+
+---
 
 ## 3. Configure database credentials (required)
 
@@ -48,32 +69,38 @@ setx MYSQL_USER "your_mysql_user"
 setx MYSQL_PASSWORD "your_mysql_password"
 ```
 
-After running this, **close and reopen GitHub Desktop**
-so it can see the environment variables.
+After running these commands:
 
-This only needs to be done **once per machine**.
+- Close **all terminals**
+- Restart **GitHub Desktop**
 
-## 4. Run the setup helper script (required)
+This step only needs to be done **once per machine**.
 
-This repository provides a helper script to validate and configure the local
-development environment.
+---
 
-After completing the steps above, run the following from the repository root
-using **PowerShell 7**:
+## 4. Enable the versioned Git hook (required)
 
-```powershell
-pwsh scripts/setup.ps1
+This repository stores its Git hooks in a **versioned directory**.
 
-This ensures configuration is required and applys the correct pre-commit hook:
+From **Git Bash**, run **once** in the repository root:
 
-Applies **only to this repository**
-Does **not** affect other repos
-Ensures everyone runs the same hook logic
+```bash
+git config core.hooksPath .githooks
+```
+
+This configuration:
+
+- Applies **only to this repository**
+- Does **not** affect other repositories
+- Ensures all contributors run the same hook logic
+
+---
 
 ## 5. Line endings (important)
 
 This repository enforces **LF line endings** for hooks and scripts.
-The setup script configures Git correctly, so normally no action is required.
+
+Normally, no action is required.
 
 If GitHub Desktop shows a line-ending warning, run once from Git Bash:
 
@@ -83,66 +110,61 @@ git add --renormalize .
 
 Then commit the result.
 
+---
+
 ## 6. Verify the setup
 
-Once the setup script has completed successfully, make any small change and
-commit using **GitHub Desktop**.
+Make a small change in the database and commit using **GitHub Desktop**.
 
 You should see output similar to:
 
 ```
-Exporting MySQL schema...
+Exporting schema from localhost:3306 as <user>
 Updated tables/...
-Schema sync complete.
+Checksum file updated
 ```
 
-If no schema changes exist, the hook will run silently.
+If no schema changes exist, the hook will run quietly.
+
+---
 
 ## 7. Important rules
 
-* **Do not** edit files in `database/checksums` manually
-* **Do not** edit files in `.githooks` unless updating hook logic
-* Schema changes should be made in the **database**, not by editing `.sql` files
-* The checksum file is intentionally committed and auto-generated
+- **Do not** manually edit files in `database/schema`
+- **Do not** manually edit files in `database/checksums`
+- **Do not** selectively commit generated files
+- Schema changes must be made in the **database**, not by editing build or export scripts
+- The checksum file is intentionally committed and auto-generated
 
-## 8. Troubleshooting
+Violations of these rules may result in CI failure or rejected pull requests.
 
-### The hook does not run
+---
 
-* Ensure this was executed:
+## 8. Authority model (important)
 
-  ```bash
-  git config core.hooksPath .githooks
-  ```
-* Restart GitHub Desktop after setting environment variables
-* Ensure `pwsh`, `mysql`, and `mysqldump` are on `PATH`
+- During development, the **database is the source of truth**
+- The pre-commit hook captures a **complete schema snapshot** into Git
+- Git represents the authoritative record of that snapshot
+- CI rebuilds a database from the committed snapshot and validates reproducibility
+- CI does **not** generate or modify schema artefacts
 
-### Line-ending warnings in GitHub Desktop
+CI failure blocks merge, not push.
 
-Run:
+---
 
-```bash
-git add --renormalize .
-```
+## 9. Why this process exists
 
-and commit once.
+This process ensures:
 
-## Why this exists
+- Database-first development
+- Complete and accurate schema snapshots
+- Deterministic, reviewable diffs
+- No hidden or accidental schema drift
+- Consistent behaviour across machines, environments, and CI rebuilds
+- Long-term maintainability
 
-This setup ensures:
+The process is intentionally strict in validation, but flexible during development.
 
-* Schema-as-code
-* Deterministic diffs
-* No hidden database drift
-* Consistent behaviour across machines and CI
+---
 
-
-
-
-# Useful information
-
-### database/checksums/schema.json
-
-This file is auto-generated on commit.
-It tracks checksums of exported database schema objects
-and must be committed. Do not edit manually.
+If you are unsure about any part of this process, **ask before committing**.

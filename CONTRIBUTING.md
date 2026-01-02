@@ -88,12 +88,15 @@ When changing the database schema:
 3. Allow the pre-commit hook to:
 
    * Discover schema objects
-   * Export schema objects
+   * Export schema definitions deterministically
+   * Create files for new objects
+   * Remove files for dropped objects
    * Update checksums
-   * Stage generated files
+   * Stage all generated changes
 
 All generated changes must be committed together.
 
+If the pre-commit hook produces changes you do not expect, stop and review them before committing.
 
 ### 4.2 What you must not do
 
@@ -115,13 +118,14 @@ This repository uses a **required pre-commit hook** that:
 * Exports database schema objects
 * Normalises output for deterministic diffs
 * Tracks changes via checksums
-* Warns about schema drift
+* Warns about potential schema drift and inconsistencies
+* Removes generated schema files for objects that no longer exist in the database
 
 The hook is versioned in `.githooks/pre-commit` and must not be modified locally without review.
 
 ## 6. Continuous integration (CI)
 
-CI validates that the committed schema snapshot can be rebuilt cleanly from scratch.
+CI validates that the committed schema snapshot, including additions and deletions, can be rebuilt cleanly from scratch.
 
 CI performs the following steps:
 
@@ -149,7 +153,7 @@ Bypassing the hook:
 * Must be justified
 * Does not bypass CI validation
 
-Unjustified bypasses may be rejected during review.
+Emergency bypasses exist to unblock work, not to avoid review or validation. Unjustified bypasses may be rejected during review.
 
 ## 8. Review expectations
 
@@ -175,5 +179,6 @@ This process ensures:
 It is intentionally strict in validation, but flexible during development.
 
 
-* If you are unsure about any part of this process, ask before committing.
+*If you are unsure about any part of this process, ask before committing.*
+
 
