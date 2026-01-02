@@ -1,11 +1,13 @@
 $ErrorActionPreference = "Stop"
 
-# Pre-execute checks
-if (-not (Get-Command mysqldump -ErrorAction SilentlyContinue)) {
-  throw "mysqldump not found in PATH"
+# --- Preconditions -----------------------------------------------------------
+
+foreach ($cmd in @("mysql", "mysqldump")) {
+  if (-not (Get-Command $cmd -ErrorAction SilentlyContinue)) {
+    throw "$cmd not found in PATH"
+  }
 }
 
-# Config
 $MySqlHost = $env:MYSQL_HOST ?? "localhost"
 $MySqlPort = $env:MYSQL_PORT ?? 3306
 $Database  = "orchids"
@@ -16,9 +18,9 @@ if (-not $User -or -not $Password) {
   throw "MYSQL_USER or MYSQL_PASSWORD environment variables not set"
 }
 
-Write-Host "Exporting schema from ${MySqlHost}:${MySqlPort} as ${User}"
+Write-Host "Exporting schema snapshot from ${MySqlHost}:${MySqlPort} as ${User}"
 
-$SchemaRoot  = "database/schema"
+$SchemaRoot   = "database/schema"
 $ChecksumFile = "database/checksums/schema.json"
 
 New-Item -ItemType Directory -Force -Path `
@@ -27,13 +29,20 @@ New-Item -ItemType Directory -Force -Path `
   "$SchemaRoot/routines",
   "database/checksums" | Out-Null
 
-# Load existing checksums
-$Checksums = @{}
-if (Test-Path $ChecksumFile) {
-  $json = Get-Content $ChecksumFile -Raw | ConvertFrom-Json
-  foreach ($prop in $json.PSObject.Properties) {
-    $Checksums[$prop.Name] = $prop.Value
-  }
+# --- Helpers ----------------------------------------------------------------
+
+function Invoke-MySqlQuery {
+  param ($Query)
+
+  $Query | mysql `
+    --protocol=TCP `
+    --host=$MySqlHost `
+    --port=$MySqlPort `
+    --user=$User `
+    --password=$Password `
+    --batch `
+    --skip-column-names `
+    $Database
 }
 
 function Get-Checksum($Content) {
@@ -41,16 +50,33 @@ function Get-Checksum($Content) {
   (Get-FileHash -InputStream ([IO.MemoryStream]::new($bytes)) -Algorithm SHA256).Hash
 }
 
+# --- Load existing checksums -------------------------------------------------
+
+$Checksums = @{}
+if (Test-Path $ChecksumFile) {
+  $json = Get-Content $ChecksumFile -Raw | ConvertFrom-Json
+  foreach ($p in $json.PSObject.Properties) {
+    $Checksums[$p.Name] = $p.Value
+  }
+}
+
 $SeenObjects = @{}
 
+# --- Export logic ------------------------------------------------------------
+
 function Export-Object {
-  param ($Type, $Name, $OutPath, $DumpArgs)
+  param (
+    [string]$Type,
+    [string]$Name,
+    [string]$OutPath,
+    [string]$DumpArgs
+  )
 
   $sql = & mysqldump `
-    -h $MySqlHost `
-    -P $MySqlPort `
-    -u $User `
-    "-p$Password" `
+    --host=$MySqlHost `
+    --port=$MySqlPort `
+    --user=$User `
+    "--password=$Password" `
     $DumpArgs `
     $Database `
     $Name `
@@ -74,52 +100,66 @@ function Export-Object {
   }
 }
 
-# Export schema objects (Git-driven)
-$schemaDirs = @{
-  tables   = "$SchemaRoot/tables"
-  views    = "$SchemaRoot/views"
-  routines = "$SchemaRoot/routines"
+# --- Discover & export -------------------------------------------------------
+
+# Tables
+$tables = Invoke-MySqlQuery @"
+SELECT TABLE_NAME
+FROM information_schema.TABLES
+WHERE TABLE_SCHEMA = '$Database'
+  AND TABLE_TYPE = 'BASE TABLE';
+"@
+
+foreach ($t in $tables) {
+  Export-Object "tables" $t "$SchemaRoot/tables/$t.sql" "--no-data"
 }
 
-foreach ($type in $schemaDirs.Keys) {
-  $dir = $schemaDirs[$type]
-  if (-not (Test-Path $dir)) { continue }
+# Views
+$views = Invoke-MySqlQuery @"
+SELECT TABLE_NAME
+FROM information_schema.VIEWS
+WHERE TABLE_SCHEMA = '$Database';
+"@
 
-  Get-ChildItem $dir -Filter *.sql | ForEach-Object {
-    Export-Object $type $_.BaseName $_.FullName "--no-data"
-  }
+foreach ($v in $views) {
+  Export-Object "views" $v "$SchemaRoot/views/$v.sql" "--no-data"
 }
 
-# Write checksum file deterministically
-$OrderedChecksums = [ordered]@{}
-foreach ($key in ($Checksums.Keys | Sort-Object)) {
-  $OrderedChecksums[$key] = $Checksums[$key]
+# Routines
+$routines = Invoke-MySqlQuery @"
+SELECT ROUTINE_NAME
+FROM information_schema.ROUTINES
+WHERE ROUTINE_SCHEMA = '$Database';
+"@
+
+foreach ($r in $routines) {
+  Export-Object "routines" $r "$SchemaRoot/routines/$r.sql" "--routines --no-create-info"
 }
 
-$NewJson = ($OrderedChecksums | ConvertTo-Json -Depth 3).Trim()
+# --- Write checksum file deterministically ----------------------------------
 
-$WriteFile = $true
-if (Test-Path $ChecksumFile) {
-  $ExistingJson = (Get-Content $ChecksumFile -Raw).Trim()
-  if ($ExistingJson -eq $NewJson) {
-    $WriteFile = $false
-  }
+$Ordered = [ordered]@{}
+foreach ($k in ($Checksums.Keys | Sort-Object)) {
+  $Ordered[$k] = $Checksums[$k]
 }
 
-if ($WriteFile) {
+$NewJson = ($Ordered | ConvertTo-Json -Depth 3).Trim()
+
+if (-not (Test-Path $ChecksumFile) -or (Get-Content $ChecksumFile -Raw).Trim() -ne $NewJson) {
   $NewJson | Out-File $ChecksumFile -Encoding utf8
   Write-Host "Checksum file updated"
 }
 
-# Drift warnings (warn only)
-foreach ($dir in $schemaDirs.Keys) {
+# --- Warn about removed objects ---------------------------------------------
+
+foreach ($dir in @("tables", "views", "routines")) {
   $path = Join-Path $SchemaRoot $dir
   if (-not (Test-Path $path)) { continue }
 
   Get-ChildItem $path -Filter *.sql | ForEach-Object {
     $key = "$dir/$($_.BaseName)"
     if (-not $SeenObjects.ContainsKey($key)) {
-      Write-Warning "Schema drift detected: Object exists in Git but not in DB: $key"
+      Write-Warning "Schema object no longer exists in DB: $key"
     }
   }
 }
