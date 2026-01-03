@@ -1,4 +1,2 @@
-DROP TABLE IF EXISTS `plantactivesummary`;
-
-SET @saved_cs_client     = @@character_set_client;
+CREATE VIEW `plantactivesummary` AS select `p`.`plantId` AS `plantId`,`p`.`plantTag` AS `plantTag`,`p`.`plantName` AS `plantName`,`p`.`acquisitionDate` AS `acquisitionDate`,`p`.`acquisitionSource` AS `acquisitionSource`,`s`.`genus` AS `genus`,`s`.`speciesName` AS `speciesName`,`s`.`hybridName` AS `hybridName`,`pcl`.`locationName` AS `locationName`,`pcl`.`locationTypeCode` AS `locationTypeCode`,`pcl`.`locationStartDateTime` AS `locationStartDateTime` from ((`plant` `p` left join `species` `s` on((`s`.`speciesId` = `p`.`speciesId`))) left join `plantcurrentlocation` `pcl` on((`pcl`.`plantId` = `p`.`plantId`))) where (`p`.`isActive` = 1);
 

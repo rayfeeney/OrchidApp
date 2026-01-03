@@ -76,21 +76,76 @@ function Export-Object {
     [string]$DumpArgs
   )
 
-  $sql = & mysqldump `
-    --host=$MySqlHost `
-    --port=$MySqlPort `
-    --user=$User `
-    "--password=$Password" `
-    $DumpArgs `
-    $Database `
-    $Name `
-    --skip-comments `
-    --skip-dump-date 2>$null
+$mysqldumpArgs = @(
+  "--host=$MySqlHost"
+  "--port=$MySqlPort"
+  "--user=$User"
+  "--password=$Password"
+  "--skip-dump-date"
+)
+
+if ($Type -ne "views") {
+  $mysqldumpArgs += "--skip-comments"
+}
+
+if ($DumpArgs) {
+  $mysqldumpArgs += $DumpArgs
+}
+
+$mysqldumpArgs += @(
+  $Database
+  $Name
+)
+
+$sql = & mysqldump @mysqldumpArgs 2>$null
+
+
+if ($Type -eq "views") {
+
+  $debugDir = "$SchemaRoot/tmp"
+  New-Item -ItemType Directory -Force -Path $debugDir | Out-Null
+
+  # Force string join in case mysqldump returns an array
+  $rawSql = $sql -join "`n"
+
+  $rawPath = Join-Path $debugDir "raw-view-$Name.sql"
+  $rawSql | Out-File -Encoding utf8 $rawPath
+
+}
+
 
   if (-not $sql) { return }
 
-  # Join output into single string
-  $sql = ($sql -join "`n")
+# Join output into single string
+$sql = ($sql -join "`n")
+
+# ---------------- VIEW HANDLING (ISOLATED) ----------------
+if ($Type -eq "views") {
+
+  # Keep only the final view structure
+  if ($sql -notmatch '(?ms)--\s*Final view structure for view.*$') {
+    Write-Warning "Final view structure not found for view $Name"
+    return
+  }
+
+  $sql = $Matches[0]
+
+  # Extract the VIEW ... AS SELECT ... statement
+  if ($sql -notmatch '(?ms)/\*![0-9]+\s*VIEW\s+(`[^`]+`\s+AS\s+.*?);?\s*\*/') {
+    Write-Warning "VIEW definition not found for view $Name"
+    return
+  }
+
+  $viewBody = $Matches[1]
+
+  # Reconstruct clean CREATE VIEW
+  $sql = "CREATE VIEW $viewBody;"
+
+  # Normalise whitespace
+  $sql = $sql.Trim() + "`n"
+}
+else {
+# ---------------- NON-VIEW HANDLING ----------------
 
   # Normalise noise
   $sql = $sql `
@@ -100,15 +155,13 @@ function Export-Object {
   # Strip FOREIGN KEY constraints from table DDL
   if ($Type -eq "tables") {
 
-    # Remove named FK constraints
     $sql = $sql -replace '(?ms),?\s*CONSTRAINT\s+`[^`]+`\s+FOREIGN\s+KEY\s*\([^\)]*\)\s+REFERENCES\s+`[^`]+`\s*\([^\)]*\)(?:\s+ON\s+DELETE\s+\w+)?(?:\s+ON\s+UPDATE\s+\w+)?', ''
 
-    # Remove unnamed FK constraints
     $sql = $sql -replace '(?ms),?\s*FOREIGN\s+KEY\s*\([^\)]*\)\s+REFERENCES\s+`[^`]+`\s*\([^\)]*\)(?:\s+ON\s+DELETE\s+\w+)?(?:\s+ON\s+UPDATE\s+\w+)?', ''
   }
 
-  # Remove MySQL versioned executable comments (entire statements)
-  $sql = $sql -replace '(?ms)/\*![0-9]+\s.*?\*/\s*;?', ''
+  # Remove all versioned comments
+  $sql = $sql -replace '(?m)^\s*/\*![0-9]+\s.*?\*/\s*;?\s*$', ''
 
   # Remove mysqldump session SET statements
   $sql = $sql -replace '(?m)^\s*SET\s+@?OLD_.*?;\s*$', ''
@@ -116,8 +169,8 @@ function Export-Object {
 
   # Normalise whitespace
   $sql = $sql -replace "(\r?\n){3,}", "`n`n"
-  $sql = $sql.Trim()
-  $sql = $sql + "`n"
+  $sql = $sql.Trim() + "`n"
+}
 
   $hash = Get-Checksum $sql
   $key  = "$Type/$Name"
@@ -233,7 +286,7 @@ WHERE TABLE_SCHEMA = '$Database';
 "@
 
 foreach ($v in $views) {
-  Export-Object "views" $v "$SchemaRoot/views/$v.sql" "--no-data"
+  Export-Object "views" $v "$SchemaRoot/views/$v.sql" $null
 }
 
 # --- Routines -----------------------
