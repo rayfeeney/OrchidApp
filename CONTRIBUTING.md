@@ -2,9 +2,9 @@
 
 Thank you for contributing to this repository.
 
-This project treats the database schema as source code and enforces consistency through automated tooling. Contributions are expected to follow the conventions and workflows described below.
+This project treats the **database schema as source code** and enforces consistency through automated tooling. Contributions are expected to follow the conventions and workflows described below.
 
-These rules are not optional. They exist to prevent schema drift, reduce review overhead, and ensure long-term maintainability.
+These rules are not optional. They exist to prevent schema drift, reduce review overhead and ensure long-term maintainability.
 
 ---
 
@@ -13,7 +13,7 @@ These rules are not optional. They exist to prevent schema drift, reduce review 
 All contributors must understand and follow these principles:
 
 - The database is authoritative during development
-- Git is the authoritative snapshot of the schema state at commit time
+- Git represents an authoritative snapshot of the schema at commit time
 - Schema artefacts are generated, not hand-edited
 - Consistency and reproducibility are enforced via automation
 - Validation happens through CI, not developer discipline alone
@@ -22,13 +22,13 @@ All contributors must understand and follow these principles:
 
 ## 2. Required local setup
 
-Before making any commits, contributors must complete the repository setup described in README.md, including:
+Before making any commits, contributors must complete the repository setup described in **README.md**, including:
 
 - Installing required tooling
 - Setting database credentials via environment variables
 - Enabling the versioned Git hook:
 
-```git bash
+```bash
 git config core.hooksPath .githooks
 ```
 
@@ -41,7 +41,7 @@ This repository follows a defined set of **[database design and naming standards
 The **authoritative specification** is defined in:
 
 ```
-[DatabaseStandards.sql](database/standards/DatabaseStandards.sql)
+database/standards/DatabaseStandards.sql
 ```
 
 This file is the source of truth. Documentation elsewhere is descriptive only.
@@ -84,8 +84,9 @@ Standards violations should be corrected at the database level, not patched in g
 When changing the database schema:
 
 1. Apply the change **directly to the database**
-2. Commit your work normally
-3. Allow the pre-commit hook to:
+2. Work on a **feature branch**
+4. Commit your work normally
+5. Allow the pre-commit hook to:
 
    * Discover schema objects
    * Export schema definitions deterministically
@@ -95,8 +96,6 @@ When changing the database schema:
    * Stage all generated changes
 
 All generated changes must be committed together.
-
-If the pre-commit hook produces changes you do not expect, stop and review them before committing.
 
 ### 4.2 What you must not do
 
@@ -118,28 +117,28 @@ This repository uses a **required pre-commit hook** that:
 * Exports database schema objects
 * Normalises output for deterministic diffs
 * Tracks changes via checksums
-* Warns about potential schema drift and inconsistencies
 * Removes generated schema files for objects that no longer exist in the database
+* Warns about potential schema inconsistencies
 
 The hook is versioned in `.githooks/pre-commit` and must not be modified locally without review.
 
 ## 6. Continuous integration (CI)
 
-CI validates that the committed schema snapshot, including additions and deletions, can be rebuilt cleanly from scratch.
+CI validates that the committed schema snapshot can be rebuilt cleanly from scratch using only the committed artefacts.
 
 CI performs the following steps:
 
 * Creates a fresh, disposable database
-* Applies the committed schema build scripts
-* Verifies that the schema is internally consistent and reproducible
+* Rebuilds the schema from committed schema files
+* Fails if the schema cannot be applied cleanly
 
-CI does not modify schema artefacts. It acts only as a validator.
+CI does not:
 
-CI may fail if:
+* Export schema
+* Modify schema artefacts
+* “Fix” inconsistencies
 
-* Schema scripts cannot be applied cleanly
-* Object dependencies are invalid or misordered
-* Generated artefacts are inconsistent or incomplete
+CI mirrors the behaviour of the local validation script `scripts/ci-local.ps1`.
 
 CI failure blocks merge, not push.
 
@@ -153,7 +152,7 @@ Bypassing the hook:
 * Must be justified
 * Does not bypass CI validation
 
-Emergency bypasses exist to unblock work, not to avoid review or validation. Unjustified bypasses may be rejected during review.
+Unjustified bypasses may be rejected during review.
 
 ## 8. Review expectations
 
@@ -162,7 +161,7 @@ When reviewing contributions, maintainers will expect:
 * Schema changes to follow documented standards
 * Generated artefacts to be present and correct
 * No manual edits to generated files
-* Clear intent and traceability from database change to commit
+* Clear traceability from database change to commit
 
 Pull requests that do not meet these expectations may be returned for correction.
 
