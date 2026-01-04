@@ -1,0 +1,37 @@
+name: Schema Build Validation
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-schema:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: orchids
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Wait for MySQL
+        run: |
+          until mysql -h 127.0.0.1 -u root -proot -e "SELECT 1"; do
+            sleep 2
+          done
+
+      - name: Apply schema
+        run: |
+          mysql -h 127.0.0.1 -u root -proot orchids < database/build/schema.sql
