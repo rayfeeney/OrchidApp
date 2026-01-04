@@ -13,9 +13,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up PowerShell
-        uses: PowerShell/PowerShell@v1
-
       - name: Verify Docker is available
         run: docker info
 
