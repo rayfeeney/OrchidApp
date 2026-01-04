@@ -1,0 +1,82 @@
+name: Schema Build Validation
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build-schema:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up PowerShell
+        uses: PowerShell/PowerShell@v1
+
+      - name: Verify Docker is available
+        run: docker info
+
+      - name: Run schema build validation
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $MySqlImage    = 'mysql:8.0'
+          $ContainerName = 'orchidapp-ci-mysql'
+          $DatabaseName  = 'orchids_ci'
+          $RootPassword  = 'root'
+          $MySqlPort     = 3306   # internal only
+
+          function Cleanup {
+            docker rm -f $ContainerName 2>$null | Out-Null
+          }
+
+          Cleanup
+          try {
+            docker run `
+              --name $ContainerName `
+              -e MYSQL_ROOT_PASSWORD=$RootPassword `
+              -e MYSQL_DATABASE=$DatabaseName `
+              -p $MySqlPort`:3306 `
+              -d $MySqlImage | Out-Null
+
+            if ($LASTEXITCODE -ne 0) {
+              throw "Failed to start MySQL container."
+            }
+
+            $ready = $false
+            for ($i = 0; $i -lt 30; $i++) {
+              try {
+                docker exec $ContainerName `
+                  mysql -h 127.0.0.1 -u root -p$RootPassword `
+                  -e "SELECT 1;" 2>$null | Out-Null
+                $ready = $true
+                break
+              }
+              catch {
+                Start-Sleep -Seconds 2
+              }
+            }
+
+            if (-not $ready) {
+              throw "MySQL did not become ready in time."
+            }
+
+            $env:MYSQL_HOST      = '127.0.0.1'
+            $env:MYSQL_PORT      = $MySqlPort
+            $env:MYSQL_USER      = 'root'
+            $env:MYSQL_PASSWORD = $RootPassword
+            $env:MYSQL_DATABASE = $DatabaseName
+
+            pwsh database/scripts/Assemble-Schema.ps1
+
+            if ($LASTEXITCODE -ne 0) {
+              throw "Schema assembly failed."
+            }
+          }
+          finally {
+            Cleanup
+          }
