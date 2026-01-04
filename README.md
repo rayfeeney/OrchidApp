@@ -39,7 +39,7 @@ Install the following on your machine:
 - **PowerShell 7 (`pwsh`)**
 - **MySQL client tools** (`mysql`, `mysqldump`)
 
-Ensure `mysql` and `mysqldump` are available on your `PATH`.
+Ensure `mysql` and `mysqldump` are available on your `PATH`
 
 You can verify with:
 
@@ -105,7 +105,7 @@ Normally, no action is required.
 If GitHub Desktop shows a line-ending warning, run once from Git Bash:
 
 ```bash
-git add --renormalize .
+git add --renormalize 
 ```
 
 Then commit the result.
