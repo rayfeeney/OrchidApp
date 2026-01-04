@@ -1,6 +1,6 @@
 # OrchidApp
 
-**Note:** This repository uses a **required pre-commit hook** to capture database schema changes. Please complete the setup steps below before committing.
+**Note:** This repository uses a **required pre-commit hook** and **CI validation** to manage database schema changes. Please complete the setup steps below before committing.
 
 ---
 
@@ -38,6 +38,7 @@ Install the following on your machine:
 - **Git for Windows** (includes Git Bash)
 - **PowerShell 7 (`pwsh`)**
 - **MySQL client tools** (`mysql`, `mysqldump`)
+- **Docker Desktop** (required for CI validation)
 
 Ensure `mysql` and `mysqldump` are available on your `PATH`
 
@@ -112,19 +113,45 @@ Then commit the result.
 
 ---
 
-## 6. Verify the setup
+## 6. Typical development workflow
 
-Make a small change in the database and commit using **GitHub Desktop**.
+Create a feature branch
 
-You should see output similar to:
+1. Make schema changes directly in the database
+1. Commit your work
+1. The pre-commit hook exports and stages schema artefacts
+ - (Optional but recommended) Run local CI validation
+1. Push your branch
+1. Open a pull request
+ - CI validates the rebuild
+1. Merge once CI passes
 
+---
+
+## 7. Local CI validation (recommended)
+
+This repository provides a local CI mirror to validate schema rebuilds before pushing.
+
+The script:
+
+```bash
+scripts/ci-local.ps1
 ```
-Exporting schema from localhost:3306 as <user>
-Updated tables/...
-Checksum file updated
+
+This script:
+
+ - Starts a disposable MySQL Docker container
+ - Rebuilds the database from committed schema artefacts
+ - Fails if the schema cannot be rebuilt cleanly
+ - Mirrors GitHub Actions behaviour exactly
+
+Run it with:
+
+```pwsh 
+scripts/ci-local.ps1
 ```
 
-If no schema changes exist, the hook will run quietly.
+Using this script is strongly recommended before opening a pull request.
 
 ---
 
