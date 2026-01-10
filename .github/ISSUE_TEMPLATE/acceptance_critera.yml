@@ -1,0 +1,17 @@
+name: Acceptance Criteria
+description: Work item with clear completion conditions
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      placeholder: Optional background or links
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance Criteria
+      placeholder: |
+        - [ ] ...
+    validations:
+      required: true
