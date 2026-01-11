@@ -1,10 +1,15 @@
 #!/usr/bin/env sh
 set -e
 
-echo "Exporting MySQL schema..."
+echo "Running pre-commit schema export..."
 
-pwsh -NoProfile -ExecutionPolicy Bypass \
+if ! pwsh -NoProfile -ExecutionPolicy Bypass \
   -File database/scripts/Export-MySqlSchema.ps1
+then
+  echo "ERROR: MySQL schema export failed."
+  echo "Commit aborted by pre-commit hook."
+  exit 1
+fi
 
 echo "Staging schema changes..."
 git add database/schema database/checksums

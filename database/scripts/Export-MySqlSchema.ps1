@@ -1,5 +1,7 @@
 $ErrorActionPreference = "Stop"
 
+try {
+
 # --- PRECONDITIONS -----------------------------------------------------------
 $RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
 Set-Location $RepoRoot
@@ -15,14 +17,17 @@ $MySqlPort = $env:MYSQL_PORT ?? 3306
 $Database = "orchids"
 $User = $env:MYSQL_USER
 $Password = $env:MYSQL_PASSWORD
+$env:MYSQL_PWD = $Password
 
 if (-not $User -or -not $Password) {
   throw "MYSQL_USER or MYSQL_PASSWORD environment variables not set"
 }
 
-Write-Host "Exporting schema snapshot from ${MySqlHost}:${MySqlPort} as ${User}"
+Write-Host "Starting MySQL schema export…"
+Write-Host "Server: ${MySqlHost}:${MySqlPort}"
+Write-Host "Database: $Database"
 
-$SchemaRoot = "database/schema"
+$SchemaRoot = Resolve-Path "database/schema"
 $ChecksumFile = "database/checksums/schema.json"
 
 New-Item -ItemType Directory -Force -Path `
@@ -34,22 +39,52 @@ New-Item -ItemType Directory -Force -Path `
 
 # --- HELPERS ----------------------------------------------------------------
 function Invoke-MySqlQuery {
-  param ($Query)
+    param (
+        [Parameter(Mandatory)]
+        [string]$Query
+    )
 
-  $Query | mysql `
+  $compoundQuery = @"
+SET SESSION lock_wait_timeout = 5;
+$Query
+"@
+
+Write-Host "Connecting to MySQL (timeout 5s)…"
+
+  $output = & mysql `
     --protocol=TCP `
     --host=$MySqlHost `
     --port=$MySqlPort `
     --user=$User `
-    --password=$Password `
+    --connect-timeout=5 `
     --batch `
     --skip-column-names `
-    $Database
+    --database=$Database `
+    --execute="$compoundQuery" `
+    2>$null
+
+if ($LASTEXITCODE -ne 0) {
+    throw "MySQL command failed (exit code $LASTEXITCODE)"
+}
+
+  return $output
 }
 
 function Get-Checksum($Content) {
   $bytes = [System.Text.Encoding]::UTF8.GetBytes($Content)
   (Get-FileHash -InputStream ([IO.MemoryStream]::new($bytes)) -Algorithm SHA256).Hash
+}
+
+function Ensure-DirectoryForFile {
+    param (
+        [Parameter(Mandatory)]
+        [string]$FilePath
+    )
+
+    $dir = Split-Path $FilePath
+    if (-not (Test-Path $dir)) {
+        New-Item -ItemType Directory -Path $dir | Out-Null
+    }
 }
 
 # --- LOAD EXISTING CHECKSUMS -------------------------------------------------
@@ -76,7 +111,6 @@ function Export-Object {
     "--host=$MySqlHost"
     "--port=$MySqlPort"
     "--user=$User"
-    "--password=$Password"
     "--skip-dump-date"
   )
 
@@ -162,6 +196,7 @@ function Export-Object {
   $SeenObjects[$key] = $true
 
   if ($Checksums[$key] -ne $hash) {
+    Ensure-DirectoryForFile $OutPath
     $sql | Out-File -Encoding utf8 $OutPath
     $Checksums[$key] = $hash
     Write-Host "Updated $key"
@@ -169,6 +204,7 @@ function Export-Object {
 }
 
 # --- DISCOVER & EXPORT ------------------------------------------------------
+Write-Host "Reading database metadata…"
 # --- Tables -----------------------------------------------------------------
 $tables = Invoke-MySqlQuery @"
 SELECT TABLE_NAME
@@ -177,8 +213,11 @@ WHERE TABLE_SCHEMA = '$Database'
   AND TABLE_TYPE = 'BASE TABLE';
 "@
 
+Write-Host "Exporting tables…"
+
 foreach ($t in $tables) {
-  Export-Object "tables" $t "$SchemaRoot/tables/$t.sql" "--no-data"
+  $outPath = Join-Path $SchemaRoot "tables\$t.sql"
+  Export-Object "tables" $t $outPath "--no-data"
 }
 
 # --- Constraints ------------------------------------------------------------
@@ -255,6 +294,7 @@ ALTER TABLE `$table`
   $OutPath = Join-Path "$SchemaRoot/constraints" "$FileConstraintName.sql"
 
   if ($Checksums[$key] -ne $hash) {
+    Ensure-DirectoryForFile $OutPath
     $sql | Out-File -Encoding utf8 $OutPath
     $Checksums[$key] = $hash
     Write-Host "Updated $key"
@@ -268,8 +308,11 @@ FROM information_schema.VIEWS
 WHERE TABLE_SCHEMA = '$Database';
 "@
 
+Write-Host "Exporting views…"
+
 foreach ($v in $views) {
-  Export-Object "views" $v "$SchemaRoot/views/$v.sql" $null
+  $outPath = Join-Path $SchemaRoot "views\$v.sql"
+  Export-Object "views" $v $outPath $null
 }
 
 # --- Routines ---------------------------------------------------------------
@@ -279,8 +322,11 @@ FROM information_schema.ROUTINES
 WHERE ROUTINE_SCHEMA = '$Database';
 "@
 
+Write-Host "Exporting routines…"
+
 foreach ($r in $routines) {
-  Export-Object "routines" $r "$SchemaRoot/routines/$r.sql" "--routines --no-create-info"
+  $outPath = Join-Path $SchemaRoot "routines\$r.sql"
+  Export-Object "routines" $r $outPath "--routines --no-create-info"
 }
 
 # --- Write checksum file deterministically ----------------------------------
@@ -292,6 +338,7 @@ foreach ($k in ($Checksums.Keys | Sort-Object)) {
 $NewJson = ($Ordered | ConvertTo-Json -Depth 3).Trim()
 
 if (-not (Test-Path $ChecksumFile) -or (Get-Content $ChecksumFile -Raw).Trim() -ne $NewJson) {
+  Ensure-DirectoryForFile $ChecksumFile
   $NewJson | Out-File $ChecksumFile -Encoding utf8
   Write-Host "Checksum file updated"
 }
@@ -317,3 +364,8 @@ foreach ($dir in @("tables", "constraints", "views", "routines")) {
   }
 }
 
+Write-Host "MySQL schema export completed successfully."
+}
+finally {
+    Remove-Item Env:\MYSQL_PWD -ErrorAction SilentlyContinue
+}
