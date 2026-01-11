@@ -14,5 +14,5 @@ CREATE TABLE `species` (
   PRIMARY KEY (`speciesId`),
   KEY `ixSpeciesGenus` (`genus`),
   KEY `ixSpeciesIsActive` (`isActive`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Taxonomic information for orchid species and hybrids.';
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Taxonomic information for orchid species and hybrids.';
 
