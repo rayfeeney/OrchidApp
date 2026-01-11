@@ -365,6 +365,9 @@ foreach ($dir in @("tables", "constraints", "views", "routines")) {
 }
 
 Write-Host "MySQL schema export completed successfully."
+Write-Host "Pausing for 10 seconds to allow review of output…"
+Start-Sleep -Seconds 10
+
 }
 finally {
     Remove-Item Env:\MYSQL_PWD -ErrorAction SilentlyContinue
