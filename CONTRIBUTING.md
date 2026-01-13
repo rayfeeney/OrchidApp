@@ -1,183 +1,122 @@
-# Contributing guidelines
+# Contributing to OrchidApp
 
-Thank you for contributing to this repository.
+Thank you for your interest in contributing to OrchidApp.
 
-This project treats the **database schema as source code** and enforces consistency through automated tooling. Contributions are expected to follow the conventions and workflows described below.
-
-These rules are not optional. They exist to prevent schema drift, reduce review overhead and ensure long-term maintainability.
+This project is deliberately strict. The automation, not individual judgement, defines what is acceptable. By contributing, you agree to follow the workflow and constraints described below.
 
 ---
 
-## 1. Core principles
+## Before you start (mandatory)
 
-All contributors must understand and follow these principles:
+Before making any changes, you **must** read and comply with the project contract defined in **README.md**, in particular:
 
-- The database is authoritative during development
-- Git represents an authoritative snapshot of the schema at commit time
-- Schema artefacts are generated, not hand-edited
-- Consistency and reproducibility are enforced via automation
-- Validation happens through CI, not developer discipline alone
+- **Mandatory setup**
+- **Prerequisites (required)**
+- **How schema changes work**
+- **Pre-commit enforcement**
+
+If the prerequisites are not met or the setup script has not been run, commits will fail locally or be rejected by CI.
 
 ---
 
-## 2. Required local setup
+## Source of truth
 
-Before making any commits, contributors must complete the repository setup described in **README.md**, including:
+- The **live MySQL database schema** is the authoritative source
+- Files under `database/schema/` are **generated artefacts**
+- Generated schema files must **never be edited manually**
 
-- Installing required tooling
-- Setting database credentials via environment variables
-- Enabling the versioned Git hook:
+Any contribution that edits generated schema files directly will be rejected.
 
-```bash
-git config core.hooksPath .githooks
-```
+---
 
-Commits made without this setup may be rejected during review or by CI.
+## Expected workflow
 
-## 3. Database standards (authoritative)
+Follow this workflow for all schema changes:
 
-This repository follows a defined set of **[database design and naming standards](database/standards/DatabaseStandards.sql)**.
+1. Ensure all prerequisites listed in `README.md` are installed and configured
+2. Run the mandatory setup script if you have not already done so:
 
-The **authoritative specification** is defined in:
+   ```powershell
+   pwsh scripts/setup.ps1
+   ```
 
-```
-database/standards/DatabaseStandards.sql
-```
-
-This file is the source of truth. Documentation elsewhere is descriptive only.
-
-### 3.1 Summary of standards
-
-Contributors are expected to comply with the following high-level principles when making database changes:
-
-* Consistent and meaningful naming for:
-  * Tables
-  * Columns
-  * Primary keys
-  * Foreign keys
-  * Constraints and indexes
-* Predictable primary key patterns
-* Explicit and appropriate data types
-* Clear ownership and lifecycle semantics
-* Avoidance of implicit or engine-specific defaults
-* Schema objects must be self-describing and reviewable
-
-Reviewers will assess changes against both the **[database standards](database/standards/DatabaseStandards.sql)** and these principles.
-
-### 3.2 Relationship to tooling
-
-The schema export scripts, checksum tracking, and CI validation **assume compliance** with these standards.
-
-Non-conforming objects may result in:
-
-* Export failures
-* Unexpected diffs
-* Checksum mismatches
-* CI failures
-
-Standards violations should be corrected at the database level, not patched in generated artefacts.
-
-## 4. Making schema changes
-
-### 4.1 What you must do
-
-When changing the database schema:
-
-1. Apply the change **directly to the database**
-2. Work on a **feature branch**
-4. Commit your work normally
+3. Make schema changes directly in your local MySQL database
+4. Commit your changes using Git
 5. Allow the pre-commit hook to:
+   - export the schema from the database
+   - regenerate files under `database/schema/`
+   - stage generated files automatically
 
-   * Discover schema objects
-   * Export schema definitions deterministically
-   * Create files for new objects
-   * Remove files for dropped objects
-   * Update checksums
-   * Stage all generated changes
+If the pre-commit hook fails, **do not bypass it**. Fix the underlying issue and retry.
 
-All generated changes must be committed together.
+---
 
-### 4.2 What you must not do
+## Pre-commit rules
 
-The following are explicitly disallowed:
+The pre-commit hook is a hard enforcement mechanism.
 
-*  Manually editing files in `database/schema`
-*  Manually editing files in `database/checksums`
-*  Selectively committing generated files
-*  Bypassing the hook without justification
-*  Committing schema changes without generated artefacts
+- It modifies and stages generated files
+- It fails commits if schema export or validation fails
+- Bypassing it (for example using `--no-verify`) is not permitted
 
-If you believe an exception is required, explain it clearly in the commit message or pull request.
+Commits that bypass pre-commit enforcement will fail CI and must be corrected.
 
-## 5. Pre-commit hook behaviour
+---
 
-This repository uses a **required pre-commit hook** that:
+## Local CI validation (required before PRs)
 
-* Discovers schema objects from the database
-* Exports database schema objects
-* Normalises output for deterministic diffs
-* Tracks changes via checksums
-* Removes generated schema files for objects that no longer exist in the database
-* Warns about potential schema inconsistencies
+Before opening a pull request, contributors are expected to run:
 
-The hook is versioned in `.githooks/pre-commit` and must not be modified locally without review.
+```powershell
+pwsh scripts/ci-local.ps1
+```
 
-## 6. Continuous integration (CI)
+This script:
 
-CI validates that the committed schema snapshot can be rebuilt cleanly from scratch using only the committed artefacts.
+- creates a disposable MySQL instance using Docker
+- rebuilds the schema using only committed files
+- mirrors the GitHub Actions workflow exactly
 
-CI performs the following steps:
+If this script fails locally, CI will fail as well.
 
-* Creates a fresh, disposable database
-* Rebuilds the schema from committed schema files
-* Fails if the schema cannot be applied cleanly
+---
+
+## Continuous integration expectations
+
+GitHub Actions validates every push and pull request by rebuilding the schema from committed files only.
 
 CI does not:
 
-* Export schema
-* Modify schema artefacts
-* “Fix” inconsistencies
+- use your development database
+- tolerate schema drift
+- allow missing or out-of-order objects
 
-CI mirrors the behaviour of the local validation script `scripts/ci-local.ps1`.
+Your contribution must pass CI without manual intervention.
 
-CI failure blocks merge, not push.
+---
 
-## 7. Emergency hook bypass
+## What not to do
 
-A controlled hook bypass mechanism exists for exceptional circumstances (e.g. outages, hotfixes).
+- Do not edit files under `database/schema/` manually
+- Do not bypass Git hooks
+- Do not commit schema changes without running local validation
+- Do not rely on undocumented manual steps
 
-Bypassing the hook:
+---
 
-* Must be explicit
-* Must be justified
-* Does not bypass CI validation
+## Scope of contributions
 
-Unjustified bypasses may be rejected during review.
+This project prioritises:
 
-## 8. Review expectations
+- correctness
+- reproducibility
+- clarity of intent
 
-When reviewing contributions, maintainers will expect:
+Contributions that weaken enforcement, introduce ambiguity or rely on tribal knowledge are unlikely to be accepted.
 
-* Schema changes to follow documented standards
-* Generated artefacts to be present and correct
-* No manual edits to generated files
-* Clear traceability from database change to commit
+---
 
-Pull requests that do not meet these expectations may be returned for correction.
+## Questions and discussion
 
-## 9. Why this process exists
-
-This process ensures:
-
-* Database-first development
-* Complete and accurate schema snapshots
-* Reproducible builds in CI
-* No hidden or accidental schema drift
-* Consistent behaviour across developers and environments
-
-It is intentionally strict in validation, but flexible during development.
-
-
-*If you are unsure about any part of this process, ask before committing.*
-
+If you are unsure how to proceed, raise a discussion or issue **before** attempting to bypass automation. The rules are intentional and enforced by design.
 

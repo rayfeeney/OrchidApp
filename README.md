@@ -1,197 +1,170 @@
 # OrchidApp
 
-**Note:** This repository uses a **required pre-commit hook** and **CI validation** to manage database schema changes. Please complete the setup steps below before committing.
+OrchidApp is a learning and reference project for building, validating and version‑controlling a MySQL database schema in a professional, reproducible way.
+
+The project treats the **database schema as source code**, with strict guarantees that:
+
+- every committed schema can be rebuilt from scratch
+- schema drift is detected immediately
+- local development and CI behave the same way
+
+This repository is intentionally opinionated and automation‑heavy. The automation is the contract.
 
 ---
 
-## Repository setup (Windows + GitHub Desktop)
+## Core principles
 
-This repository treats the **database schema as source code**.
+1. **The live database schema is the authoritative source**  
+   All schema changes are made in a database instance, not by editing SQL files.
 
-During development, schema changes are made **directly in the database**. A required pre-commit hook captures a complete snapshot of the database schema and commits it to Git. Continuous Integration (CI) then validates that the committed snapshot can be rebuilt cleanly from scratch.
+2. **Schema files are generated artefacts**  
+   Files under `database/schema/` are generated automatically and must never be edited manually.
 
-This process is intentionally strict to prevent hidden schema drift and ensure long-term reproducibility.
+3. **Git is the contract**  
+   Anything committed to Git must be sufficient to rebuild the schema from scratch.
 
----
-
-## What the pre-commit hook does
-
-The required pre-commit hook runs automatically before every commit and:
-
-- Discovers all schema objects from the database
-- Exports schema objects to `database/schema`
-- Creates files for new objects
-- Removes files for dropped objects
-- Normalises output for deterministic diffs
-- Updates `database/checksums/schema.json`
-- Warns about potential schema inconsistencies
-
-The hook is versioned in this repository and must not be bypassed without justification.
+4. **Local validation mirrors CI**  
+   What passes locally will pass in GitHub Actions, and vice versa.
 
 ---
 
-## 1. Prerequisites
+## Mandatory setup (do this first)
 
-Install the following on your machine:
-
-- **GitHub Desktop**
-- **Git for Windows** (includes Git Bash)
-- **PowerShell 7 (`pwsh`)**
-- **MySQL client tools** (`mysql`, `mysqldump`)
-- **Docker Desktop** (required for CI validation)
-
-Ensure `mysql` and `mysqldump` are available on your `PATH`
-
-You can verify with:
-
-```bash
-mysql --version
-mysqldump --version
-```
-
----
-
-## 2. Clone the repository
-
-Clone the repository using **GitHub Desktop** as normal.
-
-Once cloned, open a **Git Bash** terminal in the repository root.
-
----
-
-## 3. Configure database credentials (required)
-
-Database credentials must **not** be hard-coded.
-
-Set the following **user-level environment variables** in PowerShell:
+After cloning the repository, you **must** run the setup script:
 
 ```powershell
-setx MYSQL_USER "your_mysql_user"
-setx MYSQL_PASSWORD "your_mysql_password"
+pwsh scripts/setup.ps1
 ```
 
-After running these commands:
+This step is not optional. It:
 
-- Close **all terminals**
-- Restart **GitHub Desktop**
+- verifies required tooling (PowerShell, Docker, MySQL client)
+- configures Git to use the repository’s custom hooks (`.githooks/`)
+- ensures schema validation runs automatically on every commit
 
-This step only needs to be done **once per machine**.
-
----
-
-## 4. Enable the versioned Git hook (required)
-
-This repository stores its Git hooks in a **versioned directory**.
-
-From **Git Bash**, run **once** in the repository root:
-
-```bash
-git config core.hooksPath .githooks
-```
-
-This configuration:
-
-- Applies **only to this repository**
-- Does **not** affect other repositories
-- Ensures all contributors run the same hook logic
+Commits made without running this setup are invalid and will fail CI.
 
 ---
 
-## 5. Line endings (important)
+## Prerequisites (required)
 
-This repository enforces **LF line endings** for hooks and scripts.
+The following applications and configuration are required to work on this repository. Commits and CI will fail if these requirements are not met.
 
-Normally, no action is required.
+### Applications
 
-If GitHub Desktop shows a line-ending warning, run once from Git Bash:
+- **PowerShell 7 or later** (`pwsh`)
+- **Git**, with support for custom hooks via `core.hooksPath`
+- **Docker Desktop** (or equivalent Docker runtime). Docker must be running before committing or running local CI
+- **MySQL client tools**, compatible with the target MySQL major version
 
-```bash
-git add --renormalize 
-```
+### Configuration
 
-Then commit the result.
+- Git must allow custom hooks (`core.hooksPath` is configured by `scripts/setup.ps1`)
+- PowerShell execution policy must allow local script execution
+- Docker must be available to the current user account
 
----
-
-## 6. Typical development workflow
-
-Create a feature branch
-
-1. Make schema changes directly in the database
-1. Commit your work
-1. The pre-commit hook exports and stages schema artefacts
- - (Optional but recommended) Run local CI validation
-1. Push your branch
-1. Open a pull request
- - CI validates the rebuild
-1. Merge once CI passes
+The setup script validates these prerequisites and will fail fast with clear errors if any are missing.
 
 ---
 
-## 7. Local CI validation (recommended)
+CI.
 
-This repository provides a local CI mirror to validate schema rebuilds before pushing.
+---
 
-The script:
+## Repository structure (high level)
 
-```bash
-scripts/ci-local.ps1
+- `database/schema/`  
+  Generated SQL fragments representing the current database schema. **Do not edit manually.**
+
+- `database/scripts/`  
+  PowerShell scripts that export and assemble the schema in a deterministic way.
+
+- `.githooks/pre-commit`  
+  Enforces schema export and validation during every commit.
+
+- `scripts/ci-local.ps1`  
+  Runs the same schema build validation locally that CI runs in GitHub Actions.
+
+---
+
+## How schema changes work
+
+1. Make schema changes directly in your local MySQL database
+2. Commit your changes as normal
+3. During commit, the pre‑commit hook will:
+   - export the schema from the database
+   - normalise and regenerate files under `database/schema/`
+   - stage any updated schema files automatically
+   - fail the commit if export or validation fails
+
+The commit may modify files as part of this process. This is expected behaviour.
+
+---
+
+## Pre‑commit enforcement
+
+The pre‑commit hook is a **hard gate**, not an advisory check.
+
+- It mutates and stages generated schema files
+- It prevents commits if schema export or validation fails
+- Bypassing it (for example using `--no-verify`) is not permitted
+
+Any commit that bypasses the hook will fail CI and be rejected.
+
+---
+
+## Local CI validation
+
+Before opening a pull request, you are expected to run:
+
+```powershell
+pwsh scripts/ci-local.ps1
 ```
 
 This script:
 
- - Starts a disposable MySQL Docker container
- - Rebuilds the database from committed schema artefacts
- - Fails if the schema cannot be rebuilt cleanly
- - Mirrors GitHub Actions behaviour exactly
+- spins up a disposable MySQL instance using Docker
+- rebuilds the schema using only committed files
+- mirrors the GitHub Actions workflow exactly
 
-Run it with:
-
-```pwsh 
-scripts/ci-local.ps1
-```
-
-Using this script is strongly recommended before opening a pull request.
+If this script fails locally, CI will fail as well.
 
 ---
 
-## 7. Important rules
+## Continuous integration
 
-- **Do not** manually edit files in `database/schema`
-- **Do not** manually edit files in `database/checksums`
-- **Do not** selectively commit generated files
-- Schema changes must be made in the **database**, not by editing build or export scripts
-- The checksum file is intentionally committed and auto-generated
+GitHub Actions runs a schema build validation on every push and pull request.
 
-Violations of these rules may result in CI failure or rejected pull requests.
+CI does **not** use your development database. It validates that:
 
----
+- the committed schema can be assembled
+- the schema can be built from scratch
+- no ordering or dependency issues exist
 
-## 8. Authority model (important)
-
-- During development, the **database is the source of truth**
-- The pre-commit hook captures a **complete schema snapshot** into Git
-- Git represents the authoritative record of that snapshot
-- CI rebuilds a database from the committed snapshot and validates reproducibility
-- CI does **not** generate or modify schema artefacts
-
-CI failure blocks merge, not push.
+This ensures long‑term reproducibility and prevents schema drift.
 
 ---
 
-## 9. Why this process exists
+## What this project is (and is not)
 
-This process ensures:
+This project is:
 
-- Database-first development
-- Complete and accurate schema snapshots
-- Deterministic, reviewable diffs
-- No hidden or accidental schema drift
-- Consistent behaviour across machines, environments, and CI rebuilds
-- Long-term maintainability
+- a learning and reference implementation
+- deliberately strict by design
+- focused on correctness and reproducibility
 
-The process is intentionally strict in validation, but flexible during development.
+This project is not:
+
+- optimised for rapid prototyping
+- tolerant of undocumented manual steps
+- flexible about bypassing validation
 
 ---
 
-If you are unsure about any part of this process, **ask before committing**.
+## Contributing
+
+Please read `CONTRIBUTING.md` before making changes. It explains the expected workflow, validation requirements and commit rules in detail.
+
+---
+
+See `architecture.md for` the architectural philosophy behind these rules.
