@@ -18,6 +18,7 @@ CREATE TABLE `plant` (
   UNIQUE KEY `uqPlantPlantTag` (`plantTag`),
   KEY `ixPlantSpeciesId` (`speciesId`),
   KEY `ixPlantIsActive` (`isActive`),
-  KEY `ixPlantEndReasonCode` (`endReasonCode`)
+  KEY `ixPlantEndReasonCode` (`endReasonCode`),
+  CONSTRAINT `chkPlantIsActive` CHECK ((`isActive` in (0,1)))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Individual orchid plants tracked in the collection.';
 

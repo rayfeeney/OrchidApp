@@ -14,6 +14,7 @@ CREATE TABLE `location` (
   PRIMARY KEY (`locationId`),
   KEY `ixLocationName` (`locationName`),
   KEY `ixLocationTypeCode` (`locationTypeCode`),
-  KEY `ixLocationIsActive` (`isActive`)
+  KEY `ixLocationIsActive` (`isActive`),
+  CONSTRAINT `chkLocationIsActive` CHECK ((`isActive` in (0,1)))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Locations where plants may be kept over time.';
 
