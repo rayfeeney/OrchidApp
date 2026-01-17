@@ -263,29 +263,33 @@ foreach ($constraintName in $constraints.Keys) {
 
   # PSScriptAnalyzer SuppressMessage PSAvoidUnusedVariables - Justification: Used in the generated SQL
   # Warning may still appear due to use in a loop
-  $table = $rows[0][1]
+  # Table names from information_schema are unqualified
+  $tableName = $rows[0][1]
+  $refTableName = $rows[0][3]
 
-  # PSScriptAnalyzer SuppressMessage PSAvoidUnusedVariables - Justification: Used in the generated SQL
-  # Warning may still appear due to use in a loop
-  $refTable = $rows[0][3]
+  # Schema-qualified, safely quoted identifiers
+  $tableQualified = "``$Database``.``$tableName``"
+  $refTableQualified = "``$Database``.``$refTableName``"
 
   $onUpdate = $rows[0][5]
   $onDelete = $rows[0][6]
 
+  # Quote columns with backticks (MySQL identifier quoting)
   $columns = ($rows | ForEach-Object { "``$($_[2])``" }) -join ", "
   $refColumns = ($rows | ForEach-Object { "``$($_[4])``" }) -join ", "
 
+  # IMPORTANT: do NOT escape $variables in this here-string
   $sql = @"
-ALTER TABLE `$table`
-  ADD CONSTRAINT `$constraintName`
+ALTER TABLE $tableQualified
+  ADD CONSTRAINT ``$constraintName``
   FOREIGN KEY ($columns)
-  REFERENCES `$refTable` ($refColumns)
+  REFERENCES $refTableQualified ($refColumns)
   ON DELETE $onDelete
   ON UPDATE $onUpdate;
 "@
 
-  # Normalise whitespace 
   $sql = $sql.Trim() + "`n"
+
 
   $key = "constraints/$FileConstraintName"
   $hash = Get-Checksum $sql

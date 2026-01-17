@@ -1,7 +1,7 @@
-ALTER TABLE $table
-  ADD CONSTRAINT $constraintName
+ALTER TABLE `orchids`.`plantlocationhistory`
+  ADD CONSTRAINT `fkPlantLocationHistoryLocation`
   FOREIGN KEY (`locationId`)
-  REFERENCES $refTable (`locationId`)
+  REFERENCES `orchids`.`location` (`locationId`)
   ON DELETE RESTRICT
   ON UPDATE RESTRICT;
 
