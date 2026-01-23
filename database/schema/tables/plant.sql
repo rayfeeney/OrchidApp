@@ -2,7 +2,7 @@ DROP TABLE IF EXISTS `plant`;
 
 CREATE TABLE `plant` (
   `plantId` int NOT NULL AUTO_INCREMENT COMMENT 'Internal identifier for individual plant',
-  `speciesId` int DEFAULT NULL COMMENT 'Linked species or hybrid (NULL if unidentified)',
+  `taxonId` int DEFAULT NULL COMMENT 'Linked taxonomic identification (taxon); NULL if unidentified',
   `plantTag` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Physical label on the pot',
   `plantName` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Optional informal name',
   `acquisitionDate` date DEFAULT NULL COMMENT 'Date plant was acquired',
@@ -16,9 +16,9 @@ CREATE TABLE `plant` (
   `updatedDateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last update timestamp (local time)',
   PRIMARY KEY (`plantId`),
   UNIQUE KEY `uqPlantPlantTag` (`plantTag`),
-  KEY `ixPlantSpeciesId` (`speciesId`),
   KEY `ixPlantIsActive` (`isActive`),
   KEY `ixPlantEndReasonCode` (`endReasonCode`),
+  KEY `ixPlantTaxonId` (`taxonId`),
   CONSTRAINT `chkPlantIsActive` CHECK ((`isActive` in (0,1)))
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Individual orchid plants tracked in the collection.';
 

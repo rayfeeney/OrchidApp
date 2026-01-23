@@ -131,7 +131,7 @@ When you have database-only changes:
    ```bash
    git branch --show-current
    ```
-3. Confirm you are on the correct branch:
+3. Execute the command to manually commit:
 
    ```bash
    git commit --allow-empty
