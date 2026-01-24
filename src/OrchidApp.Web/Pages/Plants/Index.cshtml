@@ -1,0 +1,11 @@
+@page
+@model OrchidApp.Web.Pages.Plants.IndexModel
+
+<h1>Plants</h1>
+
+<ul>
+@foreach (var plant in Model.Plants)
+{
+    <li>@plant</li>
+}
+</ul>
