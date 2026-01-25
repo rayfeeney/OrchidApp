@@ -6,6 +6,11 @@
 <ul>
 @foreach (var genus in Model.Genera)
 {
-    <li>@genus.Name</li>
+    <li>
+        <a asp-page="/Genera/Details"
+           asp-route-id="@genus.GenusId">
+            @genus.Name
+        </a>
+    </li>
 }
 </ul>

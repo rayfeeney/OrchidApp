@@ -24,6 +24,12 @@ public class OrchidDbContext : DbContext
 
             entity.Property(e => e.Name)
                   .HasColumnName("genusName");
+
+            entity.Property(e => e.Notes)
+                  .HasColumnName("genusNotes");
+
+            entity.Property(e => e.IsActive)
+                  .HasColumnName("isActive");
         });
     }
 }
