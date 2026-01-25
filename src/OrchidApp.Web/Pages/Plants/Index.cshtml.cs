@@ -1,18 +1,24 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using OrchidApp.Web.Data;
+using OrchidApp.Web.Models;
 
 namespace OrchidApp.Web.Pages.Plants;
 
 public class IndexModel : PageModel
 {
-    public List<string> Plants { get; private set; } = [];
+    private readonly OrchidDbContext _db;
+
+    public IndexModel(OrchidDbContext db)
+    {
+        _db = db;
+    }
+
+    public List<Genus> Genera { get; private set; } = [];
 
     public void OnGet()
     {
-        Plants =
-        [
-            "Phalaenopsis",
-            "Cattleya",
-            "Dendrobium"
-        ];
+        Genera = _db.Genera
+                    .OrderBy(g => g.Name)
+                    .ToList();
     }
 }

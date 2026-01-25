@@ -1,11 +1,11 @@
 @page
 @model OrchidApp.Web.Pages.Plants.IndexModel
 
-<h1>Plants</h1>
+<h1>Genera</h1>
 
 <ul>
-@foreach (var plant in Model.Plants)
+@foreach (var genus in Model.Genera)
 {
-    <li>@plant</li>
+    <li>@genus.Name</li>
 }
 </ul>
