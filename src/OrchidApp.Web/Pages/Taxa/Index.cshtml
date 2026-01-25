@@ -16,7 +16,12 @@ else
         <ul>
         @foreach (var taxon in genusGroup)
         {
-            <li>@taxon.DisplayName</li>
+            <li>
+                <a asp-page="/Taxa/Details"
+                asp-route-id="@taxon.TaxonId">
+                 @taxon.DisplayName
+                </a>
+            </li>
         }
         </ul>
     }
