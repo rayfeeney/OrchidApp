@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using OrchidApp.Web.Data;
 using OrchidApp.Web.Models;
 
-namespace OrchidApp.Web.Pages.Plants;
+namespace OrchidApp.Web.Pages.Genera;
 
 public class IndexModel : PageModel
 {
