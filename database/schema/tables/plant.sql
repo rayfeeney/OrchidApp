@@ -2,7 +2,7 @@ DROP TABLE IF EXISTS `plant`;
 
 CREATE TABLE `plant` (
   `plantId` int NOT NULL AUTO_INCREMENT COMMENT 'Internal identifier for individual plant',
-  `taxonId` int DEFAULT NULL COMMENT 'Linked taxonomic identification (taxon); NULL if unidentified',
+  `taxonId` int NOT NULL COMMENT 'Linked taxonomic identification (taxon); always populated (if unidentified at taxon, the taxon all null record is linked)',
   `plantTag` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Physical label on the pot',
   `plantName` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Optional informal name',
   `acquisitionDate` date DEFAULT NULL COMMENT 'Date plant was acquired',
