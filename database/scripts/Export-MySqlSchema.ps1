@@ -320,17 +320,47 @@ foreach ($v in $views) {
 }
 
 # --- Routines ---------------------------------------------------------------
+Write-Host "Exporting routines..."
+
 $routines = Invoke-MySqlQuery @"
-SELECT ROUTINE_NAME
+SELECT ROUTINE_NAME, ROUTINE_TYPE
 FROM information_schema.ROUTINES
-WHERE ROUTINE_SCHEMA = '$Database';
+WHERE ROUTINE_SCHEMA = '$Database'
+ORDER BY ROUTINE_TYPE, ROUTINE_NAME;
 "@
 
-Write-Host "Exporting routines…"
+foreach ($row in $routines) {
 
-foreach ($r in $routines) {
-  $outPath = Join-Path $SchemaRoot "routines\$r.sql"
-  Export-Object "routines" $r $outPath "--routines --no-create-info"
+  # information_schema output is tab-delimited
+  $parts = $row -split "`t"
+  $name  = $parts[0]
+  $type  = $parts[1]   # PROCEDURE or FUNCTION
+
+  Write-Host "  $type $name"
+
+  $result = Invoke-MySqlQuery "SHOW CREATE $type ``$Database``.``$name``;"
+
+  if (-not $result) {
+    Write-Warning "    Failed to read definition for $type $name"
+    continue
+  }
+
+  # SHOW CREATE returns two columns; definition is column 2
+  $definition = ($result -split "`t")[1].Trim() + "`n"
+
+  $key = "routines/$name"
+  $relativePath = "$key.sql"
+  $outPath = Join-Path $SchemaRoot $relativePath
+
+  $hash = Get-Checksum $definition
+  $SeenObjects[$key] = $true
+
+  if ($Checksums[$relativePath] -ne $hash) {
+    Ensure-DirectoryForFile $outPath
+    $definition | Out-File -Encoding utf8 $outPath
+    $Checksums[$relativePath] = $hash
+    Write-Host "    Updated $relativePath"
+  }
 }
 
 # --- Write checksum file deterministically ----------------------------------
