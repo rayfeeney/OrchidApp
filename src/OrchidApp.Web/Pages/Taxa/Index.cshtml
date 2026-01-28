@@ -1,0 +1,28 @@
+@page
+@model OrchidApp.Web.Pages.Taxa.IndexModel
+
+<h1>Taxa</h1>
+
+@if (!Model.Taxa.Any())
+{
+    <p>No taxa have been added yet.</p>
+}
+else
+{
+    @foreach (var genusGroup in Model.Taxa.GroupBy(t => t.GenusName))
+    {
+        <h2>@genusGroup.Key</h2>
+
+        <ul>
+        @foreach (var taxon in genusGroup)
+        {
+            <li>
+                <a asp-page="/Taxa/Details"
+                asp-route-id="@taxon.TaxonId">
+                 @taxon.DisplayName
+                </a>
+            </li>
+        }
+        </ul>
+    }
+}

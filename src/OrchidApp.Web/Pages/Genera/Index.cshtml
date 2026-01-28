@@ -1,0 +1,16 @@
+@page
+@model OrchidApp.Web.Pages.Genera.IndexModel
+
+<h1>Genera</h1>
+
+<ul>
+@foreach (var genus in Model.Genera)
+{
+    <li>
+        <a asp-page="/Genera/Details"
+           asp-route-id="@genus.GenusId">
+            @genus.Name
+        </a>
+    </li>
+}
+</ul>

@@ -1,0 +1,13 @@
+@page "{id:int}"
+@model OrchidApp.Web.Pages.Genera.DetailsModel
+
+<h1>@Model.Genus!.Name</h1>
+
+@if (!string.IsNullOrWhiteSpace(Model.Genus.Notes))
+{
+    <p>@Model.Genus.Notes</p>
+}
+
+<p>
+    <a asp-page="/Genera/Index">Back to list</a>
+</p>
