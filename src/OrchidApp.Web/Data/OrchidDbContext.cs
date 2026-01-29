@@ -12,6 +12,8 @@ public class OrchidDbContext : DbContext
 
     public DbSet<Genus> Genera => Set<Genus>();
     public DbSet<TaxonIdentity> TaxonIdentities => Set<TaxonIdentity>();
+    public DbSet<PlantActiveSummary> PlantActiveSummaries => Set<PlantActiveSummary>();
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -69,5 +71,33 @@ public class OrchidDbContext : DbContext
             entity.Property(e => e.IsActive)
                 .HasColumnName("isActive");
         });
+
+        // =========================
+        // Plant active view mapping
+        // ========================= 
+        modelBuilder.Entity<PlantActiveSummary>(entity =>
+        {
+            entity.ToView("vPlantActiveSummary");
+            entity.HasKey(e => e.PlantId);
+
+            entity.Property(e => e.PlantId).HasColumnName("plantId");
+
+            entity.Property(e => e.PlantTag).HasColumnName("plantTag");
+            entity.Property(e => e.PlantName).HasColumnName("plantName");
+
+            entity.Property(e => e.AcquisitionDate)
+                .HasColumnName("acquisitionDate");
+
+            entity.Property(e => e.AcquisitionSource)
+                .HasColumnName("acquisitionSource");
+
+            entity.Property(e => e.GenusName).HasColumnName("genusName");
+            entity.Property(e => e.SpeciesName).HasColumnName("speciesName");
+            entity.Property(e => e.HybridName).HasColumnName("hybridName");
+
+            entity.Property(e => e.DisplayName).HasColumnName("displayName");
+
+        });
+
     }
 }
