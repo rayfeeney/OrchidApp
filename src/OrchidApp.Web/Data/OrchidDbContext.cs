@@ -13,6 +13,8 @@ public class OrchidDbContext : DbContext
     public DbSet<Genus> Genera => Set<Genus>();
     public DbSet<TaxonIdentity> TaxonIdentities => Set<TaxonIdentity>();
     public DbSet<PlantActiveSummary> PlantActiveSummaries => Set<PlantActiveSummary>();
+    public DbSet<PlantCurrentLocation> PlantCurrentLocations => Set<PlantCurrentLocation>();
+
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -81,6 +83,7 @@ public class OrchidDbContext : DbContext
             entity.HasKey(e => e.PlantId);
 
             entity.Property(e => e.PlantId).HasColumnName("plantId");
+            entity.Property(e => e.TaxonId).HasColumnName("taxonId");
 
             entity.Property(e => e.PlantTag).HasColumnName("plantTag");
             entity.Property(e => e.PlantName).HasColumnName("plantName");
@@ -97,6 +100,19 @@ public class OrchidDbContext : DbContext
 
             entity.Property(e => e.DisplayName).HasColumnName("displayName");
 
+        });
+        // =========================
+        // Plant current location view mapping
+        // =========================
+        modelBuilder.Entity<PlantCurrentLocation>(entity =>
+        {
+            entity.ToView("vplantcurrentlocation");
+            entity.HasKey(e => e.PlantId);
+
+            entity.Property(e => e.PlantId).HasColumnName("plantId");
+            entity.Property(e => e.PlantTag).HasColumnName("plantTag");
+            entity.Property(e => e.DisplayName).HasColumnName("displayName");
+            entity.Property(e => e.LocationName).HasColumnName("locationName");
         });
 
     }

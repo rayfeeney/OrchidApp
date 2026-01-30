@@ -3,6 +3,7 @@ namespace OrchidApp.Web.Models;
 public class PlantActiveSummary
 {
     public int PlantId { get; set; }
+    public int TaxonId { get; set; }
 
     public string? PlantTag { get; set; }
     public string? PlantName { get; set; }

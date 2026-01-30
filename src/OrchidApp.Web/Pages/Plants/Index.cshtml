@@ -1,0 +1,31 @@
+@page
+@model OrchidApp.Web.Pages.Plants.IndexModel
+
+@{
+    ViewData["Title"] = "Plants";
+}
+
+<h1>Plants</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Taxon</th>
+            <th class="text-end">Plants</th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var taxon in Model.Taxa)
+{
+        <tr>
+            <td>
+                <a asp-page="/Plants/Taxon"
+                asp-route-taxonId="@taxon.TaxonId">
+                    @taxon.DisplayName
+                </a>
+            </td>
+            <td class="text-end">@taxon.PlantCount</td>
+        </tr>
+}
+    </tbody>
+</table>

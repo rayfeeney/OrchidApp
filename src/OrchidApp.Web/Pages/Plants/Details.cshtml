@@ -1,0 +1,18 @@
+@page "/Plants/Details/{plantId:int}"
+@model OrchidApp.Web.Pages.Plants.DetailsModel
+
+@{
+    ViewData["Title"] = Model.Plant.DisplayName;
+}
+
+<h1>@Model.Plant.DisplayName</h1>
+
+<dl class="row">
+    <dt class="col-sm-3">Tag</dt>
+    <dd class="col-sm-9">@Model.Plant.PlantTag</dd>
+
+    <dt class="col-sm-3">Location</dt>
+    <dd class="col-sm-9">@Model.Plant.LocationName</dd>
+</dl>
+
+<a asp-page="/Plants/Index">Back to Plants</a>
