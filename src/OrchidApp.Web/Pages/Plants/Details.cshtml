@@ -1,0 +1,50 @@
+@page "/Plants/Details/{plantId:int}"
+@model OrchidApp.Web.Pages.Plants.DetailsModel
+
+@{
+    ViewData["Title"] = Model.PlantRequired.DisplayName;
+}
+
+<h1>@Model.PlantRequired.DisplayName</h1>
+
+<dl class="row">
+    <dt class="col-sm-3">Tag</dt>
+    <dd class="col-sm-9">@Model.PlantRequired.PlantTag</dd>
+
+    <dt class="col-sm-3">Location</dt>
+    <dd class="col-sm-9">@Model.PlantRequired.LocationName</dd>
+</dl>
+
+<h2>History</h2>
+
+@if (!Model.LifecycleEvents.Any())
+{
+    <p class="text-muted">No history recorded.</p>
+}
+else
+{
+    <table class="table table-sm">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Event</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var ev in Model.LifecycleEvents)
+        {
+            <tr>
+                <td class="text-nowrap">
+                    @ev.EventDateTime.ToString("yyyy-MM-dd")
+                </td>
+                <td>
+                    <strong>@ev.EventType</strong><br />
+                    @ev.EventSummary
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+<a asp-page="/Plants/Index">Back to Plants</a>
