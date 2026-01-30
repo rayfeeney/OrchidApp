@@ -14,6 +14,7 @@ public class OrchidDbContext : DbContext
     public DbSet<TaxonIdentity> TaxonIdentities => Set<TaxonIdentity>();
     public DbSet<PlantActiveSummary> PlantActiveSummaries => Set<PlantActiveSummary>();
     public DbSet<PlantCurrentLocation> PlantCurrentLocations => Set<PlantCurrentLocation>();
+    public DbSet<PlantLifecycleEvent> PlantLifecycleHistory => Set<PlantLifecycleEvent>();
 
 
 
@@ -114,6 +115,20 @@ public class OrchidDbContext : DbContext
             entity.Property(e => e.DisplayName).HasColumnName("displayName");
             entity.Property(e => e.LocationName).HasColumnName("locationName");
         });
+        // =========================
+        // Plant lifecycle event mapping
+        // =========================
+        modelBuilder.Entity<PlantLifecycleEvent>(entity =>
+        {
+            entity.HasNoKey();
+            entity.ToView("vplantlifecyclehistory");
 
-    }
+            entity.Property(e => e.PlantId).HasColumnName("plantId");
+            entity.Property(e => e.EventDateTime).HasColumnName("eventDateTime");
+            entity.Property(e => e.EventType).HasColumnName("eventType");
+            entity.Property(e => e.EventSummary).HasColumnName("eventSummary");
+            entity.Property(e => e.SourceTable).HasColumnName("sourceTable");
+            entity.Property(e => e.SourceId).HasColumnName("sourceId");
+        });
+        }
 }
