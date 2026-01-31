@@ -1,122 +1,103 @@
 # Contributing to OrchidApp
 
-Thank you for your interest in contributing to OrchidApp.
+This repository is deliberately strict. Automation and validation are not advisory; they are the contract.  
+Contributions that bypass enforced workflows will be rejected.
 
-This project is deliberately strict. The automation, not individual judgement, defines what is acceptable. By contributing, you agree to follow the workflow and constraints described below.
+This project contains two closely related areas of development:
 
----
+- a rigorously validated MySQL database schema, which is considered foundational and authoritative
+- a web application layer developed on top of that schema, which is the primary area of future work
 
-## Before you start (mandatory)
-
-Before making any changes, you **must** read and comply with the project contract defined in **README.md**, in particular:
-
-- **Mandatory setup**
-- **Prerequisites (required)**
-- **How schema changes work**
-- **Pre-commit enforcement**
-
-If the prerequisites are not met or the setup script has not been run, commits will fail locally or be rejected by CI.
+All contributions, regardless of area, are expected to follow the same principles of reproducibility, automation, and explicit constraints.
 
 ---
 
-## Source of truth
+## General principles
 
-- The **live MySQL database schema** is the authoritative source
-- Files under `database/schema/` are **generated artefacts**
-- Generated schema files must **never be edited manually**
+- The repository must remain reproducible from committed artefacts alone
+- Manual or undocumented steps are not acceptable
+- Local validation and CI must behave identically
+- Generated artefacts must never be edited by hand
+- If automation fails, the change is invalid
 
-Any contribution that edits generated schema files directly will be rejected.
-
----
-
-## Expected workflow
-
-Follow this workflow for all schema changes:
-
-1. Ensure all prerequisites listed in `README.md` are installed and configured
-2. Run the mandatory setup script if you have not already done so:
-
-   ```powershell
-   pwsh scripts/setup.ps1
-   ```
-
-3. Make schema changes directly in your local MySQL database
-4. Commit your changes using Git
-5. Allow the pre-commit hook to:
-   - export the schema from the database
-   - regenerate files under `database/schema/`
-   - stage generated files automatically
-
-If the pre-commit hook fails, **do not bypass it**. Fix the underlying issue and retry.
+If you are not comfortable working within these constraints, this project is not a good fit.
 
 ---
 
-## Pre-commit rules
+## Mandatory setup
 
-The pre-commit hook is a hard enforcement mechanism.
-
-- It modifies and stages generated files
-- It fails commits if schema export or validation fails
-- Bypassing it (for example using `--no-verify`) is not permitted
-
-Commits that bypass pre-commit enforcement will fail CI and must be corrected.
-
----
-
-## Local CI validation (required before PRs)
-
-Before opening a pull request, contributors are expected to run:
+Before making any changes, you **must** run the setup script:
 
 ```powershell
-pwsh scripts/ci-local.ps1
+pwsh scripts/setup.ps1
 ```
 
-This script:
+This configures required tooling and installs repository-specific Git hooks.
+Commits made without running this setup are invalid and will fail CI.
 
-- creates a disposable MySQL instance using Docker
-- rebuilds the schema using only committed files
-- mirrors the GitHub Actions workflow exactly
+## Types of contributions
 
-If this script fails locally, CI will fail as well.
+### Database changes
 
----
+The MySQL database schema is considered the primary source of truth.
 
-## Continuous integration expectations
+All schema changes must:
 
-GitHub Actions validates every push and pull request by rebuilding the schema from committed files only.
+- be made directly in a database instance
+- rely on the pre-commit hook to export and normalise schema files
+- result in committed artefacts that can rebuild the schema from scratch
 
-CI does not:
+Generated files under database/schema/ must never be edited manually.
 
-- use your development database
-- tolerate schema drift
-- allow missing or out-of-order objects
+Bypassing the pre-commit hook (for example using --no-verify) is not permitted and will result in CI failure.
 
-Your contribution must pass CI without manual intervention.
+## Web application changes
 
----
+The web application is the primary consumer of the database schema and the main area of future development.
 
-## What not to do
+Web application contributions are expected to:
 
-- Do not edit files under `database/schema/` manually
-- Do not bypass Git hooks
-- Do not commit schema changes without running local validation
-- Do not rely on undocumented manual steps
+- treat the database schema as authoritative
+- operate within existing constraints rather than bypassing them
+- avoid introducing undocumented manual steps
+- integrate cleanly with the existing repository structure and CI
 
----
+Web application code does not exempt a contributor from repository-wide rules around validation, commits, and reproducibility.
 
-## Scope of contributions
+### Not permitted
 
-This project prioritises:
+Web application contributions must not:
 
-- correctness
-- reproducibility
-- clarity of intent
+- manually modify generated schema files
+- bypass database constraints in application logic
+- introduce schema changes without following the database workflow
+- assume application convenience overrides database correctness
 
-Contributions that weaken enforcement, introduce ambiguity or rely on tribal knowledge are unlikely to be accepted.
+## Commits and validation
 
----
+This repository uses enforced pre-commit hooks and CI validation.
 
-## Questions and discussion
+- Hooks may modify and stage files as part of a commit
+- Empty commits may be required to trigger schema export
+- GitHub Desktop is not sufficient for all workflows
 
-If you are unsure how to proceed, raise a discussion or issue **before** attempting to bypass automation. The rules are intentional and enforced by design.
+If a commit passes locally, it must pass in CI.
+If it fails locally, do not push it.
 
+## Pull requests
+
+When opening a pull request, clearly state whether your changes are:
+
+- database-focused
+- web application-focused
+- cross-cutting
+
+This helps reviewers apply the correct context and level of scrutiny.
+
+Pull requests that bypass validation, remove enforcement, or weaken guarantees will be rejected.
+
+## Final note
+
+This project prioritises correctness, clarity, and long-term maintainability over speed or convenience.
+
+If something feels difficult, that is usually intentional.
