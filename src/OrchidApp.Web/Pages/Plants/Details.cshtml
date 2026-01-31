@@ -48,6 +48,18 @@ else
                 <td>
                     <strong>@ev.EventType</strong><br />
                     @ev.EventSummary
+
+                    @if (ev.EventType == "Observation")
+                    {
+                        <div class="d-flex justify-content-end mt-2">
+                            <a asp-page="/Plants/Events/Remove"
+                            asp-route-sourceId="@ev.SourceId"
+                            asp-route-plantId="@Model.PlantRequired.PlantId"
+                            class="btn btn-sm btn-outline-danger">
+                                Remove
+                            </a>
+                        </div>
+                    }
                 </td>
             </tr>
         }
