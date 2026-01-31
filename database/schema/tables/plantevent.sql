@@ -12,5 +12,5 @@ CREATE TABLE `plantevent` (
   KEY `ixPlantEventPlantDateTime` (`plantId`,`eventDateTime`),
   KEY `ixPlantEventEventCode` (`eventCode`),
   CONSTRAINT `chkPlantEventIsActive` CHECK ((`isActive` in (0,1)))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='General-purpose event log for plant care and observations.';
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='General-purpose event log for plant care and observations.';
 
