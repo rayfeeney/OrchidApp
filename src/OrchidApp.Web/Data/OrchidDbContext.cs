@@ -157,6 +157,10 @@ public class OrchidDbContext : DbContext
 
             entity.Property(e => e.IsActive)
                 .HasColumnName("isActive");
+
+            entity.Property(e => e.UpdatedDateTime)
+                .HasColumnName("updatedDateTime");
+
         });
 
         }

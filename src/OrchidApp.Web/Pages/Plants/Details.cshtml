@@ -49,12 +49,19 @@ else
                     <strong>@ev.EventType</strong><br />
                     @ev.EventSummary
 
-                    @if (ev.EventType == "Observation")
+                    @if (ev.EventType == "Observation" && ev.SourceTable == "plantevent")
                     {
-                        <div class="d-flex justify-content-end mt-2">
-                            <a asp-page="/Plants/Events/Remove"
-                            asp-route-sourceId="@ev.SourceId"
+                        <div class="d-flex gap-2 mt-2">
+                            <a asp-page="/Plants/Events/Edit"
                             asp-route-plantId="@Model.PlantRequired.PlantId"
+                            asp-route-sourceId="@ev.SourceId"
+                            class="btn btn-sm btn-outline-secondary">
+                                Edit
+                            </a>
+
+                            <a asp-page="/Plants/Events/Remove"
+                            asp-route-plantId="@Model.PlantRequired.PlantId"
+                            asp-route-sourceId="@ev.SourceId"
                             class="btn btn-sm btn-outline-danger">
                                 Remove
                             </a>

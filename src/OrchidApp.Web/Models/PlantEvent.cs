@@ -8,6 +8,8 @@ public class PlantEvent
     public string? EventCode { get; set; }   // unused for now
     public DateTime EventDateTime { get; set; }
     public string? EventDetails { get; set; }
+    public DateTime UpdatedDateTime { get; set; }
+
 
     public bool IsActive { get; set; }
 }
