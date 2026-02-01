@@ -1,9 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using OrchidApp.Web.Data;
 using OrchidApp.Web.Models;
-using Microsoft.EntityFrameworkCore;
-using System.Linq;
 
 namespace OrchidApp.Web.Pages.Plants;
 
@@ -21,19 +20,18 @@ public class TaxonModel : PageModel
 
     public string DisplayName { get; private set; } = string.Empty;
 
-    public List<PlantCurrentLocation> Plants { get; private set; } = [];
+    public List<PlantCurrentLocation> Plants { get; private set; } = new();
 
     public async Task OnGetAsync(int taxonId)
     {
         TaxonId = taxonId;
 
         Plants = await _db.PlantCurrentLocations
-            .AsNoTracking()
             .Where(p => p.TaxonId == taxonId)
             .OrderBy(p => p.LocationName)
             .ThenBy(p => p.PlantTag)
             .ToListAsync();
 
-        DisplayName = Plants.FirstOrDefault()?.DisplayName ?? DisplayName;
+        DisplayName = Plants.FirstOrDefault()?.DisplayName ?? string.Empty;
     }
 }
