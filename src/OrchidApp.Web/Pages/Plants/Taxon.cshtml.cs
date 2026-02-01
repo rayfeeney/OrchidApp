@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using OrchidApp.Web.Data;
 using OrchidApp.Web.Models;
+using Microsoft.EntityFrameworkCore;
 using System.Linq;
 
 namespace OrchidApp.Web.Pages.Plants;
@@ -20,22 +21,19 @@ public class TaxonModel : PageModel
 
     public string DisplayName { get; private set; } = string.Empty;
 
-    public List<PlantActiveSummary> Plants { get; private set; } = [];
+    public List<PlantCurrentLocation> Plants { get; private set; } = [];
 
-    public IActionResult OnGet()
+    public async Task OnGetAsync(int taxonId)
     {
-        Plants = _db.PlantActiveSummaries
-                    .Where(p => p.TaxonId == TaxonId)
-                    .OrderBy(p => p.PlantTag)
-                    .ToList();
+        TaxonId = taxonId;
 
-        if (Plants.Count == 0)
-        {
-            return NotFound();
-        }
+        Plants = await _db.PlantCurrentLocations
+            .AsNoTracking()
+            .Where(p => p.TaxonId == taxonId)
+            .OrderBy(p => p.LocationName)
+            .ThenBy(p => p.PlantTag)
+            .ToListAsync();
 
-        DisplayName = Plants.First().DisplayName;
-
-        return Page();
+        DisplayName = Plants.FirstOrDefault()?.DisplayName ?? DisplayName;
     }
 }

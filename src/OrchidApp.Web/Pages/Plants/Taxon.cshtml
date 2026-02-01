@@ -5,29 +5,48 @@
     ViewData["Title"] = Model.DisplayName;
 }
 
-<h1>@Model.DisplayName</h1>
+<h1 class="page-title">
+    @Model.DisplayName
+    <span class="count">@Model.Plants.Count</span>
+</h1>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>Tag</th>
-            <th>Name</th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var plant in Model.Plants)
+@if (!Model.Plants.Any())
 {
-        <tr>
-            <td>
-                <a asp-page="/Plants/Details"
-                asp-route-plantId="@plant.PlantId">
-                    @plant.PlantTag
-                </a>
-            </td>
-            <td>@plant.PlantName</td>
-        </tr>
+    <div class="empty-state">
+        <p>You don’t have any plants of this taxon yet.</p>
+    </div>
 }
-    </tbody>
-</table>
+else
+{
+    <div class="card-list">
+        @foreach (var plant in Model.Plants)
+        {
+            <a class="plant-card"
+               asp-page="/Plants/Details"
+               asp-route-plantId="@plant.PlantId">
 
-<a asp-page="/Plants/Index">Back to Plants</a>
+                <div class="plant-tag">@plant.PlantTag</div>
+
+                @if (!string.IsNullOrWhiteSpace(plant.PlantName))
+                {
+                    <div class="plant-name">@plant.PlantName</div>
+                }
+
+                <div class="location-line">
+                      @plant.LocationName
+                </div>
+
+                @if (plant.LocationStartDateTime.HasValue)
+                {
+                    <div class="since">
+                        there since @plant.LocationStartDateTime.Value.ToString("dd MMM yyyy")
+                    </div>
+                }
+                    </a>
+                }
+    </div>
+}
+
+<div class="page-actions">
+    <a asp-page="/Plants/Index">← Back to Plants</a>
+</div>

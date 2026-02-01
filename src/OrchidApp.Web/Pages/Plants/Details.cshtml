@@ -17,6 +17,14 @@
 
 <h2>History</h2>
 
+    <p>
+        <a asp-page="/Plants/Events/Add"
+        asp-route-plantId="@Model.PlantRequired.PlantId"
+        class="btn btn-sm btn-primary">
+            Add Observation
+        </a>
+    </p>
+
 @if (!Model.LifecycleEvents.Any())
 {
     <p class="text-muted">No history recorded.</p>
@@ -40,6 +48,25 @@ else
                 <td>
                     <strong>@ev.EventType</strong><br />
                     @ev.EventSummary
+
+                    @if (ev.EventType == "Observation" && ev.SourceTable == "plantevent")
+                    {
+                        <div class="d-flex gap-2 mt-2">
+                            <a asp-page="/Plants/Events/Edit"
+                            asp-route-plantId="@Model.PlantRequired.PlantId"
+                            asp-route-sourceId="@ev.SourceId"
+                            class="btn btn-sm btn-outline-secondary">
+                                Edit
+                            </a>
+
+                            <a asp-page="/Plants/Events/Remove"
+                            asp-route-plantId="@Model.PlantRequired.PlantId"
+                            asp-route-sourceId="@ev.SourceId"
+                            class="btn btn-sm btn-outline-danger">
+                                Remove
+                            </a>
+                        </div>
+                    }
                 </td>
             </tr>
         }

@@ -112,6 +112,7 @@ public class OrchidDbContext : DbContext
 
             entity.Property(e => e.PlantId).HasColumnName("plantId");
             entity.Property(e => e.PlantTag).HasColumnName("plantTag");
+            entity.Property(e => e.PlantName).HasColumnName("plantName");
             entity.Property(e => e.DisplayName).HasColumnName("displayName");
             entity.Property(e => e.LocationName).HasColumnName("locationName");
         });
