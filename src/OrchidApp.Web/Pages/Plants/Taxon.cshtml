@@ -36,12 +36,9 @@ else
                     @plant.LocationName
                 </div>
 
-                @if (plant.LocationStartDateTime.HasValue)
-                {
-                    <div class="since">
-                        there since @plant.LocationStartDateTime.Value.ToString("dd MMM yyyy")
-                    </div>
-                }
+                <div class="since">
+                    There since @plant.LocationStartDateTime.ToString("dd MMM yyyy")
+                </div>
             </a>
         }
     </div>
