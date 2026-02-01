@@ -107,14 +107,17 @@ public class OrchidDbContext : DbContext
         // =========================
         modelBuilder.Entity<PlantCurrentLocation>(entity =>
         {
-            entity.ToView("vplantcurrentlocation");
-            entity.HasKey(e => e.PlantId);
+        entity.ToView("vplantcurrentlocation");
+        entity.HasKey(e => e.PlantLocationHistoryId);
 
-            entity.Property(e => e.PlantId).HasColumnName("plantId");
-            entity.Property(e => e.PlantTag).HasColumnName("plantTag");
-            entity.Property(e => e.PlantName).HasColumnName("plantName");
-            entity.Property(e => e.DisplayName).HasColumnName("displayName");
-            entity.Property(e => e.LocationName).HasColumnName("locationName");
+        entity.Property(e => e.PlantLocationHistoryId)
+            .HasColumnName("plantLocationHistoryId");
+
+        entity.Property(e => e.PlantId).HasColumnName("plantId");
+        entity.Property(e => e.PlantTag).HasColumnName("plantTag");
+        entity.Property(e => e.PlantName).HasColumnName("plantName");
+        entity.Property(e => e.DisplayName).HasColumnName("displayName");
+        entity.Property(e => e.LocationName).HasColumnName("locationName");
         });
         // =========================
         // Plant lifecycle event mapping

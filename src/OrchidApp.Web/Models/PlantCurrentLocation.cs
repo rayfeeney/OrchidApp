@@ -2,7 +2,8 @@ namespace OrchidApp.Web.Models;
 
 public class PlantCurrentLocation
 {
-     public int PlantId { get; set; }
+    public int PlantLocationHistoryId { get; set; }
+    public int PlantId { get; set; }
 
     public string? PlantTag { get; set; }
     public string? PlantName { get; set; }
