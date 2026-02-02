@@ -29,3 +29,53 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
 }
+
+.page-title {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.count {
+  font-size: 0.9rem;
+  opacity: 0.6;
+  margin-left: 0.4rem;
+}
+
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.plant-card {
+  display: block;
+  padding: 1rem;
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 16px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.plant-card:hover {
+  background: rgba(0,0,0,0.03);
+}
+
+.plant-tag {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.plant-name {
+  margin-top: 0.2rem;
+  font-size: 0.95rem;
+  opacity: 0.75;
+}
+
+.empty-state {
+  opacity: 0.8;
+  margin-top: 1.5rem;
+}
+
+.page-actions {
+  margin-top: 1.5rem;
+}

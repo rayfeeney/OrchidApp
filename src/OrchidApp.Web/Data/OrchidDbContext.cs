@@ -31,13 +31,10 @@ public class OrchidDbContext : DbContext
 
             entity.Property(e => e.GenusId)
                   .HasColumnName("genusId");
-
             entity.Property(e => e.Name)
                   .HasColumnName("genusName");
-
             entity.Property(e => e.Notes)
                   .HasColumnName("genusNotes");
-
             entity.Property(e => e.IsActive)
                   .HasColumnName("isActive");
         });
@@ -48,30 +45,22 @@ public class OrchidDbContext : DbContext
             modelBuilder.Entity<TaxonIdentity>(entity =>
         {
             entity.ToView("vTaxonIdentity");
-
             entity.HasKey(e => e.TaxonId);
 
             entity.Property(e => e.TaxonId)
                 .HasColumnName("taxonId");
-
             entity.Property(e => e.GenusId)
                 .HasColumnName("genusId");
-
             entity.Property(e => e.GenusName)
                 .HasColumnName("genusName");
-
             entity.Property(e => e.SpeciesName)
                 .HasColumnName("speciesName");
-
             entity.Property(e => e.HybridName)
                 .HasColumnName("hybridName");
-
             entity.Property(e => e.DisplayName)
                 .HasColumnName("displayName");
-
             entity.Property(e => e.TaxonNotes)
                 .HasColumnName("taxonNotes");
-
             entity.Property(e => e.IsActive)
                 .HasColumnName("isActive");
         });
@@ -86,22 +75,14 @@ public class OrchidDbContext : DbContext
 
             entity.Property(e => e.PlantId).HasColumnName("plantId");
             entity.Property(e => e.TaxonId).HasColumnName("taxonId");
-
             entity.Property(e => e.PlantTag).HasColumnName("plantTag");
             entity.Property(e => e.PlantName).HasColumnName("plantName");
-
-            entity.Property(e => e.AcquisitionDate)
-                .HasColumnName("acquisitionDate");
-
-            entity.Property(e => e.AcquisitionSource)
-                .HasColumnName("acquisitionSource");
-
+            entity.Property(e => e.AcquisitionDate).HasColumnName("acquisitionDate");
+            entity.Property(e => e.AcquisitionSource).HasColumnName("acquisitionSource");
             entity.Property(e => e.GenusName).HasColumnName("genusName");
             entity.Property(e => e.SpeciesName).HasColumnName("speciesName");
             entity.Property(e => e.HybridName).HasColumnName("hybridName");
-
             entity.Property(e => e.DisplayName).HasColumnName("displayName");
-
         });
         // =========================
         // Plant current location view mapping
@@ -109,21 +90,28 @@ public class OrchidDbContext : DbContext
         modelBuilder.Entity<PlantCurrentLocation>(entity =>
         {
             entity.ToView("vplantcurrentlocation");
-            entity.HasKey(e => e.PlantId);
+            // Stable identity for EF (comes from plantlocationhistory)
+            entity.HasKey(e => e.PlantLocationHistoryId);
 
+            entity.Property(e => e.PlantLocationHistoryId).HasColumnName("plantLocationHistoryId");
             entity.Property(e => e.PlantId).HasColumnName("plantId");
             entity.Property(e => e.PlantTag).HasColumnName("plantTag");
+            entity.Property(e => e.PlantName).HasColumnName("plantName");
             entity.Property(e => e.DisplayName).HasColumnName("displayName");
+            entity.Property(e => e.TaxonId).HasColumnName("taxonId");
+            entity.Property(e => e.LocationId).HasColumnName("locationId");
             entity.Property(e => e.LocationName).HasColumnName("locationName");
+            entity.Property(e => e.LocationTypeCode).HasColumnName("locationTypeCode");
+            entity.Property(e => e.LocationStartDateTime).HasColumnName("locationStartDateTime");
         });
         // =========================
         // Plant lifecycle event mapping
         // =========================
         modelBuilder.Entity<PlantLifecycleEvent>(entity =>
         {
-            entity.HasNoKey();
             entity.ToView("vplantlifecyclehistory");
-
+            entity.HasNoKey();
+            
             entity.Property(e => e.PlantId).HasColumnName("plantId");
             entity.Property(e => e.EventDateTime).HasColumnName("eventDateTime");
             entity.Property(e => e.EventType).HasColumnName("eventType");
