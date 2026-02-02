@@ -15,6 +15,7 @@ public class OrchidDbContext : DbContext
     public DbSet<PlantActiveSummary> PlantActiveSummaries => Set<PlantActiveSummary>();
     public DbSet<PlantCurrentLocation> PlantCurrentLocations => Set<PlantCurrentLocation>();
     public DbSet<PlantLifecycleEvent> PlantLifecycleHistory => Set<PlantLifecycleEvent>();
+    public DbSet<PlantEvent> PlantEvent => Set<PlantEvent>();
 
 
 
@@ -118,5 +119,37 @@ public class OrchidDbContext : DbContext
             entity.Property(e => e.SourceTable).HasColumnName("sourceTable");
             entity.Property(e => e.SourceId).HasColumnName("sourceId");
         });
+        // =========================
+        // Plant event mapping
+        // =========================
+        modelBuilder.Entity<PlantEvent>(entity =>
+        {
+            entity.ToTable("plantevent");
+
+            entity.HasKey(e => e.PlantEventId);
+
+            entity.Property(e => e.PlantEventId)
+                .HasColumnName("plantEventId");
+
+            entity.Property(e => e.PlantId)
+                .HasColumnName("plantId");
+
+            entity.Property(e => e.EventCode)
+                .HasColumnName("eventCode");
+
+            entity.Property(e => e.EventDateTime)
+                .HasColumnName("eventDateTime");
+
+            entity.Property(e => e.EventDetails)
+                .HasColumnName("eventDetails");
+
+            entity.Property(e => e.IsActive)
+                .HasColumnName("isActive");
+
+            entity.Property(e => e.UpdatedDateTime)
+                .HasColumnName("updatedDateTime");
+
+        });
+
         }
 }

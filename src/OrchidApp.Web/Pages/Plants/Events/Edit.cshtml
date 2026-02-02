@@ -1,0 +1,44 @@
+@page "/Plants/Events/Edit/{plantId:int}/{sourceId:int}"
+@model OrchidApp.Web.Pages.Plants.Events.EditModel
+
+@{
+    ViewData["Title"] = "Edit Observation";
+}
+
+<h1>Edit Observation</h1>
+
+@if (Model.PlantDisplayName != null)
+{
+    <p class="text-muted">
+        for <strong>@Model.PlantDisplayName</strong>
+        @if (!string.IsNullOrWhiteSpace(Model.PlantTag))
+        {
+            <span>(Tag: @Model.PlantTag)</span>
+        }
+    </p>
+}
+
+<form method="post">
+    <div class="mb-3">
+        <label asp-for="EventDate" class="form-label">Date</label>
+        <input asp-for="EventDate"
+               type="date"
+               class="form-control"
+               asp-format="{0:yyyy-MM-dd}" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="EventDetails" class="form-label">Notes</label>
+        <textarea asp-for="EventDetails"
+                  class="form-control"
+                  rows="4"></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save changes</button>
+
+    <a asp-page="/Plants/Details"
+       asp-route-plantId="@Model.PlantId"
+       class="btn btn-secondary">
+        Cancel
+    </a>
+</form>
