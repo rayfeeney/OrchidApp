@@ -17,13 +17,35 @@
 
 <h2>History</h2>
 
-    <p>
+    <div class="d-grid gap-2 d-sm-flex mb-3">
         <a asp-page="/Plants/Events/Add"
+        asp-route-eventType="Observation"
         asp-route-plantId="@Model.PlantRequired.PlantId"
         class="btn btn-sm btn-primary">
             Add Observation
         </a>
-    </p>
+
+        <a asp-page="/Plants/Events/Add"
+        asp-route-eventType="LocationChange"
+        asp-route-plantId="@Model.PlantRequired.PlantId"
+        class="btn btn-sm btn-primary">
+            Move Location
+        </a>
+
+        <a asp-page="/Plants/Events/Add"
+        asp-route-eventType="Flowering"
+        asp-route-plantId="@Model.PlantRequired.PlantId"
+        class="btn btn-sm btn-primary">
+            Add Flowering
+        </a>
+
+        <a asp-page="/Plants/Events/Add"
+        asp-route-eventType="Repotting"
+        asp-route-plantId="@Model.PlantRequired.PlantId"
+        class="btn btn-sm btn-primary">
+            Add Repotting
+        </a>
+    </div>
 
 @if (!Model.LifecycleEvents.Any())
 {

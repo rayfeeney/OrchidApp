@@ -105,6 +105,14 @@ The absence of an implementation today is an intentional state, not a gap in the
 
 ---
 
+## Write strategy
+
+- Atomic, independent entities (e.g. plantevent) may be written directly via EF Core.
+- Temporal or inter-row dependent entities (e.g. plantlocationhistory) must be written exclusively via stored procedures.
+- Triggers are permitted only to enforce absolute invariants, not to implement domain behaviour.
+
+---
+
 ## Non-goals
 
 This architecture does not aim to:

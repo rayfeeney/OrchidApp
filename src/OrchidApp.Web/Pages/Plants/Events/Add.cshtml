@@ -1,11 +1,21 @@
-@page "/Plants/Events/Add/{plantId:int}"
+@page "/Plants/Events/Add/{plantId:int}/{eventType?}"
 @model OrchidApp.Web.Pages.Plants.Events.AddModel
 
 @{
-    ViewData["Title"] = "Add Observation";
+    ViewData["Title"] = Model.EventType switch
+    {
+        "Observation" => "Add Observation",
+        "LocationChange" => "Move Location",
+        "Flowering" => "Add Flowering",
+        "Repotting" => "Add Repotting",
+        _ => "Add Event"
+    };
 }
 
-<h1>Add Observation</h1>
+<h1>@ViewData["Title"]</h1>
+
+<div asp-validation-summary="ModelOnly"
+     class="text-danger mb-3"></div>
 
 @if (Model.PlantDisplayName != null)
 {
@@ -20,21 +30,67 @@
 
 <form method="post">
 
-    <div class="mb-3">
-        <label asp-for="EventDate" class="form-label"></label>
-        <input asp-for="EventDate"
-               type="date"
-               class="form-control" 
-               asp-format="{0:yyyy-MM-dd}" />
-    </div>
+    @* Observation *@
+    @if (Model.EventType == "Observation")
+    {
+        <div class="mb-3">
+            <label asp-for="EventDate" class="form-label"></label>
+            <input asp-for="EventDate"
+                   type="date"
+                   class="form-control"
+                   asp-format="{0:yyyy-MM-dd}" />
+        </div>
 
-    <div class="mb-3">
-        <label asp-for="EventDetails" class="form-label">Notes</label>
-        <textarea asp-for="EventDetails"
-                  class="form-control"
-                  rows="4">
-                  placeholder="e.g. Noticed new root growth, leaves firm and glossy"></textarea>
-    </div>
+        <div class="mb-3">
+            <label asp-for="EventDetails" class="form-label">Notes</label>
+            <textarea asp-for="EventDetails"
+                      class="form-control"
+                      rows="4"
+                      placeholder="e.g. Noticed new root growth, leaves firm and glossy">
+            </textarea>
+        </div>
+    }
+
+    @* LocationChange (stub for now) *@
+    @if (Model.EventType == "LocationChange")
+    {
+        <div class="mb-3">
+            <label asp-for="LocationId" class="form-label">Location</label>
+            <select asp-for="LocationId" class="form-select">
+                <option value="">-- select location --</option>
+                @foreach (var loc in Model.Locations)
+                {
+                    <option value="@loc.LocationId">@loc.LocationName</option>
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="EventDate" class="form-label">Move date</label>
+            <input asp-for="EventDate"
+                type="datetime-local"
+                class="form-control" />
+        </div>
+
+        //Not yet implemented: MoveReasonCode
+        //<div class="mb-3">
+        //  <label asp-for="MoveReasonCode" class="form-label">Reason</label>
+        //  <input asp-for="MoveReasonCode" class="form-control" />
+        //</div>
+
+        <div class="mb-3">
+            <label asp-for="EventDetails" class="form-label">Reason notes</label>
+            <textarea asp-for="EventDetails" class="form-control"></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="PlantLocationNotes" class="form-label">Location notes</label>
+            <textarea asp-for="PlantLocationNotes" class="form-control"></textarea>
+        </div>
+    }
+
+
+    @* Flowering / Repotting will follow the same pattern *@
 
     <button type="submit" class="btn btn-primary">Save</button>
 
@@ -44,5 +100,3 @@
         Cancel
     </a>
 </form>
-
-
