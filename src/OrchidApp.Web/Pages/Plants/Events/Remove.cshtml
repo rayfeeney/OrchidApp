@@ -2,13 +2,18 @@
 @model OrchidApp.Web.Pages.Plants.Events.RemoveModel
 
 @{
-    ViewData["Title"] = "Remove Observation";
+    ViewData["Title"] = Model.EventType == "LocationChange"
+        ? "Remove Location"
+        : "Remove Observation";
 }
 
-<h1>Remove Observation</h1>
+<h1>@ViewData["Title"]</h1>
+
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
 <p class="text-muted">
-    You are about to remove the following observation.
+    You are about to remove the following 
+    @(Model.EventType == "LocationChange" ? "location record" : "observation").
 </p>
 
 <div class="border rounded p-3 mb-3">
@@ -22,6 +27,8 @@
 </div>
 
 <form method="post">
+    <input type="hidden" asp-for="EventType" />
+    
     <button type="submit" class="btn btn-danger">
         Confirm Remove
     </button>

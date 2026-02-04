@@ -9,8 +9,53 @@ using System.Data;
 using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 
-
 namespace OrchidApp.Web.Pages.Plants.Events;
+
+/*
+    ADD LIFECYCLE EVENTS — DESIGN NOTES
+
+    Lifecycle events are stored in separate tables according
+    to their semantic behaviour.
+
+    Tables involved:
+    - plantevent              → Observations
+    - repotting               → Repotting events
+    - flowering               → Flowering events
+    - plantlocationhistory    → Location changes
+    - vplantlifecyclehistory  → Read-only UNION for display
+
+    ATOMIC EVENTS
+    Tables:
+    - plantevent
+    - repotting
+    - flowering
+
+    Characteristics:
+    - Represent discrete facts in time
+    - Adding them does not affect other records
+    - Created directly via EF Core
+    - Validation is local to the row
+
+    STRUCTURAL EVENTS
+    Table:
+    - plantlocationhistory
+
+    Characteristics:
+    - Participates in an exclusive, continuous timeline
+    - Adding a location change must:
+        - Close the previous location (if any)
+        - Prevent overlaps and backdating
+        - Enforce invariants
+
+    Therefore:
+    - LocationChange creation is handled exclusively
+      via stored procedures
+    - The UI collects input only
+    - All validation and stitching happens in SQL
+
+    This PageModel intentionally branches by EventType.
+    This is not duplication — it is semantic separation.
+*/
 
 public class AddModel : PageModel
 {
@@ -92,6 +137,7 @@ public class AddModel : PageModel
             return Page();
         }
 
+        // Dispatch by EventType: each case owns its own persistence semantics
         switch (EventType)
         {
             case "Observation":
@@ -133,8 +179,8 @@ public class AddModel : PageModel
                     //cmd.Parameters.Add(pMoveReasonCode);
                     
                     var pStartDateTime = cmd.CreateParameter();
-                    pStartDateTime.ParameterName = "pStartDateTime";
-                    pStartDateTime.Value = EventDate;
+                    pStartDateTime.ParameterName = "pStartDate";
+                    pStartDateTime.Value = EventDate.Date;
                     cmd.Parameters.Add(pStartDateTime);
 
                     var pMoveReasonNotes = cmd.CreateParameter();
