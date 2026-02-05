@@ -17,13 +17,35 @@
 
 <h2>History</h2>
 
-    <p>
+    <div class="d-grid gap-2 d-sm-flex mb-3">
         <a asp-page="/Plants/Events/Add"
+        asp-route-eventType="Observation"
         asp-route-plantId="@Model.PlantRequired.PlantId"
         class="btn btn-sm btn-primary">
             Add Observation
         </a>
-    </p>
+
+        <a asp-page="/Plants/Events/Add"
+        asp-route-eventType="LocationChange"
+        asp-route-plantId="@Model.PlantRequired.PlantId"
+        class="btn btn-sm btn-primary">
+            Move Location
+        </a>
+
+        <a asp-page="/Plants/Events/Add"
+        asp-route-eventType="Flowering"
+        asp-route-plantId="@Model.PlantRequired.PlantId"
+        class="btn btn-sm btn-primary">
+            Add Flowering
+        </a>
+
+        <a asp-page="/Plants/Events/Add"
+        asp-route-eventType="Repotting"
+        asp-route-plantId="@Model.PlantRequired.PlantId"
+        class="btn btn-sm btn-primary">
+            Add Repotting
+        </a>
+    </div>
 
 @if (!Model.LifecycleEvents.Any())
 {
@@ -55,6 +77,7 @@ else
                             <a asp-page="/Plants/Events/Edit"
                             asp-route-plantId="@Model.PlantRequired.PlantId"
                             asp-route-sourceId="@ev.SourceId"
+                            asp-route-eventType="Observation"
                             class="btn btn-sm btn-outline-secondary">
                                 Edit
                             </a>
@@ -62,11 +85,34 @@ else
                             <a asp-page="/Plants/Events/Remove"
                             asp-route-plantId="@Model.PlantRequired.PlantId"
                             asp-route-sourceId="@ev.SourceId"
+                            asp-route-eventType="Observation"
                             class="btn btn-sm btn-outline-danger">
                                 Remove
                             </a>
                         </div>
                     }
+
+                    @if (ev.EventType == "LocationChange" && ev.SourceTable == "plantlocationhistory")
+                    {
+                        <div class="d-flex gap-2 mt-2">
+                            <a asp-page="/Plants/Events/Edit"
+                            asp-route-plantId="@Model.PlantRequired.PlantId"
+                            asp-route-sourceId="@ev.SourceId"
+                            asp-route-eventType="LocationChange"
+                            class="btn btn-sm btn-outline-secondary">
+                                Edit
+                            </a>
+
+                            <a asp-page="/Plants/Events/Remove"
+                            asp-route-plantId="@Model.PlantRequired.PlantId"
+                            asp-route-sourceId="@ev.SourceId"
+                            asp-route-eventType="LocationChange"
+                            class="btn btn-sm btn-outline-danger">
+                                Remove
+                            </a>
+                        </div>
+                    }
+
                 </td>
             </tr>
         }

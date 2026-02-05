@@ -14,6 +14,7 @@ CREATE TABLE `repotting` (
   `repottingNotes` text COLLATE utf8mb4_unicode_ci COMMENT 'Additional repotting notes',
   `createdDateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Record creation timestamp (local time)',
   `isActive` tinyint NOT NULL DEFAULT '1' COMMENT 'Indicates whether this record is valid for use; inactive records represent superseded or erroneous entries retained for audit purposes',
+  `updatedDateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last update timestamp (local time)',
   PRIMARY KEY (`repottingId`),
   KEY `ixRepottingPlantRepotDate` (`plantId`,`repotDate`),
   CONSTRAINT `chkRepottingIsActive` CHECK ((`isActive` in (0,1)))

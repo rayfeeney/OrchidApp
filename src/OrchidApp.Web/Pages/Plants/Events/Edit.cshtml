@@ -2,10 +2,14 @@
 @model OrchidApp.Web.Pages.Plants.Events.EditModel
 
 @{
-    ViewData["Title"] = "Edit Observation";
+    ViewData["Title"] = Model.EventType == "LocationChange"
+        ? "Edit Location"
+        : "Edit Observation";
 }
 
-<h1>Edit Observation</h1>
+<h1>@ViewData["Title"]</h1>
+
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
 @if (Model.PlantDisplayName != null)
 {
@@ -19,16 +23,33 @@
 }
 
 <form method="post">
+    <input type="hidden" asp-for="EventType" />
+
     <div class="mb-3">
-        <label asp-for="EventDate" class="form-label">Date</label>
-        <input asp-for="EventDate"
-               type="date"
-               class="form-control"
-               asp-format="{0:yyyy-MM-dd}" />
+        <label asp-for="EventDate" class="form-label">
+            @(Model.EventType == "LocationChange" ? "Date & time" : "Date")
+        </label>
+
+        @if (Model.EventType == "LocationChange")
+        {
+            <input asp-for="EventDate"
+                type="datetime-local"
+                class="form-control"
+                asp-format="{0:yyyy-MM-ddTHH:mm}" />
+        }
+        else
+        {
+            <input asp-for="EventDate"
+                type="date"
+                class="form-control"
+                asp-format="{0:yyyy-MM-dd}" />
+        }
     </div>
 
     <div class="mb-3">
-        <label asp-for="EventDetails" class="form-label">Notes</label>
+        <label asp-for="EventDetails" class="form-label">
+            @(Model.EventType == "LocationChange" ? "Reason / Notes" : "Notes")
+        </label>
         <textarea asp-for="EventDetails"
                   class="form-control"
                   rows="4"></textarea>

@@ -16,6 +16,8 @@ public class OrchidDbContext : DbContext
     public DbSet<PlantCurrentLocation> PlantCurrentLocations => Set<PlantCurrentLocation>();
     public DbSet<PlantLifecycleEvent> PlantLifecycleHistory => Set<PlantLifecycleEvent>();
     public DbSet<PlantEvent> PlantEvent => Set<PlantEvent>();
+    public DbSet<Location> Location => Set<Location>();
+
 
 
 
@@ -84,6 +86,7 @@ public class OrchidDbContext : DbContext
             entity.Property(e => e.HybridName).HasColumnName("hybridName");
             entity.Property(e => e.DisplayName).HasColumnName("displayName");
         });
+
         // =========================
         // Plant current location view mapping
         // =========================
@@ -104,6 +107,7 @@ public class OrchidDbContext : DbContext
             entity.Property(e => e.LocationTypeCode).HasColumnName("locationTypeCode");
             entity.Property(e => e.LocationStartDateTime).HasColumnName("locationStartDateTime");
         });
+
         // =========================
         // Plant lifecycle event mapping
         // =========================
@@ -119,36 +123,48 @@ public class OrchidDbContext : DbContext
             entity.Property(e => e.SourceTable).HasColumnName("sourceTable");
             entity.Property(e => e.SourceId).HasColumnName("sourceId");
         });
+
         // =========================
         // Plant event mapping
         // =========================
         modelBuilder.Entity<PlantEvent>(entity =>
         {
             entity.ToTable("plantevent");
-
             entity.HasKey(e => e.PlantEventId);
 
             entity.Property(e => e.PlantEventId)
                 .HasColumnName("plantEventId");
-
             entity.Property(e => e.PlantId)
                 .HasColumnName("plantId");
-
             entity.Property(e => e.EventCode)
                 .HasColumnName("eventCode");
-
             entity.Property(e => e.EventDateTime)
                 .HasColumnName("eventDateTime");
-
             entity.Property(e => e.EventDetails)
                 .HasColumnName("eventDetails");
-
             entity.Property(e => e.IsActive)
                 .HasColumnName("isActive");
-
             entity.Property(e => e.UpdatedDateTime)
                 .HasColumnName("updatedDateTime");
 
+        });
+
+        // =========================
+        // Location table mapping
+        // =========================
+        modelBuilder.Entity<Location>(entity =>
+        {
+            entity.ToTable("location");
+            entity.HasKey(e => e.LocationId);
+
+            entity.Property(e => e.LocationId)
+                .HasColumnName("locationId");
+            entity.Property(e => e.LocationName)
+                .HasColumnName("locationName");
+            entity.Property(e => e.LocationTypeCode)
+                .HasColumnName("locationTypeCode");
+            entity.Property(e => e.IsActive)
+                .HasColumnName("isActive");
         });
 
         }
