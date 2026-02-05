@@ -79,15 +79,12 @@ public class OrchidDbContext : DbContext
             entity.Property(e => e.TaxonId).HasColumnName("taxonId");
             entity.Property(e => e.PlantTag).HasColumnName("plantTag");
             entity.Property(e => e.PlantName).HasColumnName("plantName");
-            entity.Property(e => e.AcquisitionDate)
-                .HasColumnName("acquisitionDate");
-            entity.Property(e => e.AcquisitionSource)
-                .HasColumnName("acquisitionSource");
+            entity.Property(e => e.AcquisitionDate).HasColumnName("acquisitionDate");
+            entity.Property(e => e.AcquisitionSource).HasColumnName("acquisitionSource");
             entity.Property(e => e.GenusName).HasColumnName("genusName");
             entity.Property(e => e.SpeciesName).HasColumnName("speciesName");
             entity.Property(e => e.HybridName).HasColumnName("hybridName");
             entity.Property(e => e.DisplayName).HasColumnName("displayName");
-
         });
 
         // =========================
@@ -96,12 +93,19 @@ public class OrchidDbContext : DbContext
         modelBuilder.Entity<PlantCurrentLocation>(entity =>
         {
             entity.ToView("vplantcurrentlocation");
-            entity.HasKey(e => e.PlantId);
+            // Stable identity for EF (comes from plantlocationhistory)
+            entity.HasKey(e => e.PlantLocationHistoryId);
 
+            entity.Property(e => e.PlantLocationHistoryId).HasColumnName("plantLocationHistoryId");
             entity.Property(e => e.PlantId).HasColumnName("plantId");
             entity.Property(e => e.PlantTag).HasColumnName("plantTag");
+            entity.Property(e => e.PlantName).HasColumnName("plantName");
             entity.Property(e => e.DisplayName).HasColumnName("displayName");
+            entity.Property(e => e.TaxonId).HasColumnName("taxonId");
+            entity.Property(e => e.LocationId).HasColumnName("locationId");
             entity.Property(e => e.LocationName).HasColumnName("locationName");
+            entity.Property(e => e.LocationTypeCode).HasColumnName("locationTypeCode");
+            entity.Property(e => e.LocationStartDateTime).HasColumnName("locationStartDateTime");
         });
 
         // =========================
@@ -109,9 +113,9 @@ public class OrchidDbContext : DbContext
         // =========================
         modelBuilder.Entity<PlantLifecycleEvent>(entity =>
         {
-            entity.HasNoKey();
             entity.ToView("vplantlifecyclehistory");
-
+            entity.HasNoKey();
+            
             entity.Property(e => e.PlantId).HasColumnName("plantId");
             entity.Property(e => e.EventDateTime).HasColumnName("eventDateTime");
             entity.Property(e => e.EventType).HasColumnName("eventType");
