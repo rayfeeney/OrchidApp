@@ -104,6 +104,12 @@ public class EditModel : PageModel
     [BindProperty]
     public int? FlowerCount { get; set; }
 
+    // Repotting-specific fields
+    [BindProperty] public string? OldMediumNotes { get; set; }
+    [BindProperty] public string? NewMediumNotes { get; set; }
+    [BindProperty] public string? PotSize { get; set; }
+    [BindProperty] public string? RepotReasonNotes { get; set; }
+    [BindProperty] public string? RepottingNotes { get; set; }
 
     public string? PlantDisplayName { get; private set; }
     public string? PlantTag { get; private set; }
@@ -184,6 +190,25 @@ public class EditModel : PageModel
                 SpikeCount  = flowering.SpikeCount;
                 FlowerCount = flowering.FlowerCount;
                 EventDetails = flowering.FloweringNotes;
+
+                break;
+
+            case "Repotting":
+
+                var repotting = _db.Repotting
+                    .FirstOrDefault(r => r.RepottingId == SourceId && r.IsActive);
+
+                if (repotting == null)
+                {
+                    return NotFound();
+                }
+
+                EventDate = repotting.RepotDate;
+                OldMediumNotes = repotting.OldMediumNotes;
+                NewMediumNotes = repotting.NewMediumNotes;
+                PotSize = repotting.PotSize;
+                RepotReasonNotes = repotting.RepotReasonNotes;
+                RepottingNotes = repotting.RepottingNotes;
 
                 break;
 
@@ -287,6 +312,26 @@ public class EditModel : PageModel
 
                 _db.SaveChanges();
 
+                break;
+
+            case "Repotting":
+
+                var repotting = _db.Repotting
+                    .FirstOrDefault(r => r.RepottingId == SourceId && r.IsActive);
+
+                if (repotting == null)
+                {
+                    return NotFound();
+                }
+
+                repotting.RepotDate = EventDate.Date;
+                repotting.OldMediumNotes = string.IsNullOrWhiteSpace(OldMediumNotes) ? null : OldMediumNotes;
+                repotting.NewMediumNotes = string.IsNullOrWhiteSpace(NewMediumNotes) ? null : NewMediumNotes;
+                repotting.PotSize = string.IsNullOrWhiteSpace(PotSize) ? null : PotSize;
+                repotting.RepotReasonNotes = string.IsNullOrWhiteSpace(RepotReasonNotes) ? null : RepotReasonNotes;
+                repotting.RepottingNotes = string.IsNullOrWhiteSpace(RepottingNotes) ? null : RepottingNotes;
+
+                _db.SaveChanges();
                 break;
 
             default:
