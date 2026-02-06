@@ -2,9 +2,14 @@
 @model OrchidApp.Web.Pages.Plants.Events.EditModel
 
 @{
-    ViewData["Title"] = Model.EventType == "LocationChange"
-        ? "Edit Location"
-        : "Edit Observation";
+    ViewData["Title"] = Model.EventType switch
+    {
+        "Observation"   => "Edit Observation",
+        "LocationChange"=> "Edit Location",
+        "Flowering"     => "Edit Flowering",
+        "Repotting"     => "Edit Repotting",
+        _               => throw new InvalidOperationException("Unknown event type.")
+    };
 }
 
 <h1>@ViewData["Title"]</h1>
@@ -26,8 +31,15 @@
     <input type="hidden" asp-for="EventType" />
 
     <div class="mb-3">
-        <label asp-for="EventDate" class="form-label">
-            @(Model.EventType == "LocationChange" ? "Date & time" : "Date")
+       <label asp-for="EventDate" class="form-label">
+            @(Model.EventType switch
+            {
+                "Observation"    => "Noted on",
+                "LocationChange" => "Moved on",
+                "Repotting"      => "Repotted on",
+                "Flowering"      => "Flowering started on",
+                _                => "Date"
+            })
         </label>
 
         @if (Model.EventType == "LocationChange")
@@ -54,6 +66,34 @@
                   class="form-control"
                   rows="4"></textarea>
     </div>
+
+    @if (Model.EventType == "Flowering")
+    {
+        <div class="mb-3">
+            <label asp-for="EndDate" class="form-label">Flowering ended on</label>
+            <input asp-for="EndDate"
+                type="date"
+                class="form-control"
+                asp-format="{0:yyyy-MM-dd}" />
+            <div class="form-text">
+                Leave blank if currently flowering.
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="SpikeCount" class="form-label">Spike count</label>
+            <input asp-for="SpikeCount"
+                type="number"
+                class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="FlowerCount" class="form-label">Flower count</label>
+            <input asp-for="FlowerCount"
+                type="number"
+                class="form-control" />
+        </div>
+    }
 
     <button type="submit" class="btn btn-primary">Save changes</button>
 

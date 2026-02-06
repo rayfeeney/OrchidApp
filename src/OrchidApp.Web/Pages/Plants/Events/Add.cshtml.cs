@@ -87,6 +87,21 @@ public class AddModel : PageModel
     [BindProperty]
     public int LocationId { get; set; }
 
+    // Flowering specific
+    [BindProperty]
+    [DataType(DataType.Date)]
+    public DateTime StartDate { get; set; } = DateTime.Today;
+
+    [BindProperty]
+    [DataType(DataType.Date)]
+    public DateTime? EndDate { get; set; }
+
+    [BindProperty]
+    public int? SpikeCount { get; set; }
+
+    [BindProperty]
+    public int? FlowerCount { get; set; }
+
     // Not used for now
     //[BindProperty]
     //public string? MoveReasonCode { get; set; }
@@ -215,7 +230,34 @@ public class AddModel : PageModel
                 break;
 
             case "Flowering":
-                throw new NotImplementedException($"{EventType} not wired yet.");
+
+                if (EndDate.HasValue && EndDate < StartDate)
+                {
+                    ModelState.AddModelError(
+                        string.Empty,
+                        "End date cannot be before start date."
+                    );
+                    LoadLookups();
+                    return Page();
+                }
+
+                var flowering = new Flowering
+                {
+                    PlantId = PlantId,
+                    StartDate = StartDate.Date,
+                    EndDate = EndDate?.Date,
+                    SpikeCount = SpikeCount,
+                    FlowerCount = FlowerCount,
+                    FloweringNotes = string.IsNullOrWhiteSpace(EventDetails)
+                                        ? null
+                                        : EventDetails,
+                    IsActive = true
+                };
+
+                _db.Flowering.Add(flowering);
+                _db.SaveChanges();
+
+                break;
 
             case "Repotting":
                 throw new NotImplementedException($"{EventType} not wired yet.");

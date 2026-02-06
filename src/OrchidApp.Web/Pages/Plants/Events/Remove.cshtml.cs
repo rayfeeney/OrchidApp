@@ -99,6 +99,16 @@ public class RemoveModel : PageModel
                     e.SourceId == SourceId &&
                     e.SourceTable == "plantlocationhistory"),
 
+            "Flowering" =>
+                _db.PlantLifecycleHistory.FirstOrDefault(e =>
+                    e.SourceId == SourceId &&
+                    e.SourceTable == "flowering"),
+
+            "Repotting" =>
+                _db.PlantLifecycleHistory.FirstOrDefault(e =>
+                    e.SourceId == SourceId &&
+                    e.SourceTable == "repotting"),
+
             _ => null
         };
 
@@ -168,6 +178,22 @@ public class RemoveModel : PageModel
                 }
                 break;
             }
+
+            case "Flowering":
+
+                var flowering = _db.Flowering
+                    .FirstOrDefault(f => f.FloweringId == SourceId
+                                    && f.PlantId == PlantId
+                                    && f.IsActive);
+
+                if (flowering == null)
+                    return NotFound();
+
+                flowering.IsActive = false;
+
+                _db.SaveChanges();
+                break;
+
 
             default:
                 return NotFound();
