@@ -134,6 +134,27 @@ else
                         </div>
                     }
 
+                    @if (ev.EventType == "Repotting" && ev.SourceTable == "repotting")
+                    {
+                        <div class="d-flex gap-2 mt-2">
+                            <a asp-page="/Plants/Events/Edit"
+                            asp-route-plantId="@Model.PlantRequired.PlantId"
+                            asp-route-sourceId="@ev.SourceId"
+                            asp-route-eventType="Repotting"
+                            class="btn btn-sm btn-outline-secondary">
+                                Edit
+                            </a>
+
+                            <a asp-page="/Plants/Events/Remove"
+                            asp-route-plantId="@Model.PlantRequired.PlantId"
+                            asp-route-sourceId="@ev.SourceId"
+                            asp-route-eventType="Repotting"
+                            class="btn btn-sm btn-outline-danger">
+                                Remove
+                            </a>
+                        </div>
+                    }
+
                 </td>
             </tr>
         }
