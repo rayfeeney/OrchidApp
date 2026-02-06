@@ -36,9 +36,17 @@ else
                     @plant.LocationName
                 </div>
 
-                <div class="since">
-                    There since @plant.LocationStartDateTime.ToString("dd MMM yyyy")
-                </div>
+            <div class="since">
+                @if (plant.LocationStartDateTime.HasValue)
+                {
+                    <text>There since @plant.LocationStartDateTime.Value.ToString("dd MMM yyyy")</text>
+                }
+                else
+                {
+                    <text>No location yet recorded</text>
+                }
+            </div>
+
             </a>
         }
     </div>
