@@ -83,7 +83,7 @@ public class OrchidDbContext : DbContext
         {
             entity.ToView("vplantcurrentlocation");
             // Stable identity for EF (comes from plantlocationhistory)
-            entity.HasKey(e => e.PlantLocationHistoryId);
+            entity.HasNoKey();
 
             entity.Property(e => e.PlantLocationHistoryId)  .HasColumnName("plantLocationHistoryId");
             entity.Property(e => e.PlantId)                 .HasColumnName("plantId");
