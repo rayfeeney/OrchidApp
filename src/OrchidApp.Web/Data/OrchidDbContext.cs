@@ -19,6 +19,7 @@ public class OrchidDbContext : DbContext
     public DbSet<Location> Location => Set<Location>();
     public DbSet<Flowering> Flowering => Set<Flowering>();
 
+    public DbSet<Repotting> Repotting => Set<Repotting>();
 
 
 
@@ -160,6 +161,27 @@ public class OrchidDbContext : DbContext
             entity.Property(e => e.FloweringNotes)          .HasColumnName("floweringNotes");
             entity.Property(e => e.CreatedDateTime)         .HasColumnName("createdDateTime");
             entity.Property(e => e.UpdatedDateTime)         .HasColumnName("updatedDateTime");
+            entity.Property(e => e.IsActive)                .HasColumnName("isActive");
+        });
+        // =========================
+        // Repotting table mapping
+        // =========================
+        modelBuilder.Entity<Repotting>(entity =>
+        {
+            entity.ToTable("repotting");
+            entity.HasKey(e => e.RepottingId);
+
+            entity.Property(e => e.RepottingId)             .HasColumnName("repottingId");
+            entity.Property(e => e.PlantId)                 .HasColumnName("plantId");
+            entity.Property(e => e.RepotDate)               .HasColumnName("repotDate");
+            entity.Property(e => e.OldMediumCode)           .HasColumnName("oldMediumCode");
+            entity.Property(e => e.NewMediumCode)           .HasColumnName("newMediumCode");
+            entity.Property(e => e.RepotReasonCode)         .HasColumnName("repotReasonCode");
+            entity.Property(e => e.OldMediumNotes)          .HasColumnName("oldMediumNotes");
+            entity.Property(e => e.NewMediumNotes)          .HasColumnName("newMediumNotes");
+            entity.Property(e => e.PotSize)                 .HasColumnName("potSize");
+            entity.Property(e => e.RepotReasonNotes)        .HasColumnName("repotReasonNotes");
+            entity.Property(e => e.RepottingNotes)          .HasColumnName("repottingNotes");
             entity.Property(e => e.IsActive)                .HasColumnName("isActive");
         });
 

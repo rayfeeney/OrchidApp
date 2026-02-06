@@ -194,6 +194,20 @@ public class RemoveModel : PageModel
                 _db.SaveChanges();
                 break;
 
+            case "Repotting":
+
+                var repotting = _db.Repotting
+                    .FirstOrDefault(r => r.RepottingId == SourceId && r.IsActive);
+
+                if (repotting == null)
+                {
+                    return NotFound();
+                }
+
+                repotting.IsActive = false;
+
+                _db.SaveChanges();
+                break;
 
             default:
                 return NotFound();
