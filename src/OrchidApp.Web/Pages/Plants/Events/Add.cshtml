@@ -129,9 +129,53 @@
                   class="form-control"
                   rows="4"></textarea>
     </div>
-}
 
-    @* Repotting will follow the same pattern *@
+    }
+
+    @* Repotting *@
+    @if (Model.EventType == "Repotting")
+    {
+        <div class="mb-3">
+            <label asp-for="EventDate" class="form-label">Repot date</label>
+            <input asp-for="EventDate"
+                type="date"
+                class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="OldMediumNotes" class="form-label">Old medium notes</label>
+            <textarea asp-for="OldMediumNotes"
+                    class="form-control"
+                    rows="3"></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="NewMediumNotes" class="form-label">New medium notes</label>
+            <textarea asp-for="NewMediumNotes"
+                    class="form-control"
+                    rows="3"></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="PotSize" class="form-label">Pot size</label>
+            <input asp-for="PotSize"
+                class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="RepotReasonNotes" class="form-label">Reason notes</label>
+            <textarea asp-for="RepotReasonNotes"
+                    class="form-control"
+                    rows="3"></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="RepottingNotes" class="form-label">Additional notes</label>
+            <textarea asp-for="RepottingNotes"
+                    class="form-control"
+                    rows="3"></textarea>
+        </div>
+    }
 
     <button type="submit" class="btn btn-primary">Save</button>
 

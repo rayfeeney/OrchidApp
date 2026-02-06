@@ -109,6 +109,22 @@ public class AddModel : PageModel
     [BindProperty]
     public string? PlantLocationNotes { get; set; }
 
+    // Repotting-specific fields
+    [BindProperty]
+    public string? OldMediumNotes { get; set; }
+
+    [BindProperty]
+    public string? NewMediumNotes { get; set; }
+
+    [BindProperty]
+    public string? PotSize { get; set; }
+
+    [BindProperty]
+    public string? RepotReasonNotes { get; set; }
+
+    [BindProperty]
+    public string? RepottingNotes { get; set; }
+
     // For populating Location dropdown
     public List<Location> Locations { get; private set; } = new();
     private void LoadLookups()
@@ -260,7 +276,22 @@ public class AddModel : PageModel
                 break;
 
             case "Repotting":
-                throw new NotImplementedException($"{EventType} not wired yet.");
+
+                var repotting = new Repotting
+                {
+                    PlantId = PlantId,
+                    RepotDate = EventDate.Date,
+                    OldMediumNotes = string.IsNullOrWhiteSpace(OldMediumNotes) ? null : OldMediumNotes,
+                    NewMediumNotes = string.IsNullOrWhiteSpace(NewMediumNotes) ? null : NewMediumNotes,
+                    PotSize = string.IsNullOrWhiteSpace(PotSize) ? null : PotSize,
+                    RepotReasonNotes = string.IsNullOrWhiteSpace(RepotReasonNotes) ? null : RepotReasonNotes,
+                    RepottingNotes = string.IsNullOrWhiteSpace(RepottingNotes) ? null : RepottingNotes,
+                    IsActive = true
+                };
+
+                _db.Repotting.Add(repotting);
+                _db.SaveChanges();
+                break;
 
             default:
                 return NotFound();
