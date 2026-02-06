@@ -81,14 +81,29 @@ public class EditModel : PageModel
     [FromRoute]
     public int SourceId { get; set; }
 
-    [BindProperty]
+    [BindProperty(SupportsGet = true)]
     public string EventType { get; set; } = string.Empty;
+
 
     [BindProperty]
     public DateTime EventDate { get; set; }
 
     [BindProperty]
     public string? EventDetails { get; set; } // = string.Empty;
+
+
+    // Flowering-specific fields
+
+    [BindProperty]
+    [DataType(DataType.Date)]
+    public DateTime? EndDate { get; set; }
+
+    [BindProperty]
+    public int? SpikeCount { get; set; }
+
+    [BindProperty]
+    public int? FlowerCount { get; set; }
+
 
     public string? PlantDisplayName { get; private set; }
     public string? PlantTag { get; private set; }
@@ -104,15 +119,8 @@ public class EditModel : PageModel
         }
 
         // Identify lifecycle event
-        var lifecycle = _db.PlantLifecycleHistory
-            .FirstOrDefault(e => e.SourceId == SourceId);
-
-        if (lifecycle == null)
-        {
+        if (string.IsNullOrWhiteSpace(EventType))
             return NotFound();
-        }
-
-        EventType = lifecycle.EventType;
 
         // Dispatch by EventType: each case owns its own persistence semantics
         switch (EventType)
@@ -159,6 +167,25 @@ public class EditModel : PageModel
 
                 break;
             }
+
+            case "Flowering":
+
+                var flowering = _db.Flowering
+                    .FirstOrDefault(f =>
+                        f.FloweringId == SourceId &&
+                        f.PlantId == PlantId &&
+                        f.IsActive);
+
+                if (flowering == null)
+                    return NotFound();
+
+                EventDate   = flowering.StartDate;
+                EndDate     = flowering.EndDate;
+                SpikeCount  = flowering.SpikeCount;
+                FlowerCount = flowering.FlowerCount;
+                EventDetails = flowering.FloweringNotes;
+
+                break;
 
                 default:
                     return NotFound();
@@ -227,6 +254,39 @@ public class EditModel : PageModel
                     ModelState.AddModelError(string.Empty, ex.Message);
                     return Page();
                 }
+                break;
+
+            case "Flowering":
+
+                if (EndDate.HasValue && EndDate < EventDate)
+                {
+                    ModelState.AddModelError(
+                        string.Empty,
+                        "End date cannot be before start date."
+                    );
+                    return Page();
+                }
+
+                var flowering = _db.Flowering
+                    .FirstOrDefault(f =>
+                        f.FloweringId == SourceId &&
+                        f.PlantId == PlantId &&
+                        f.IsActive);
+
+                if (flowering == null)
+                    return NotFound();
+
+                flowering.StartDate   = EventDate.Date;
+                flowering.EndDate     = EndDate?.Date;
+                flowering.SpikeCount  = SpikeCount;
+                flowering.FlowerCount = FlowerCount;
+                flowering.FloweringNotes =
+                    string.IsNullOrWhiteSpace(EventDetails)
+                        ? null
+                        : EventDetails;
+
+                _db.SaveChanges();
+
                 break;
 
             default:
