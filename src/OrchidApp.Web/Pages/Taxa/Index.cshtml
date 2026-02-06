@@ -11,18 +11,17 @@ else
 {
     @foreach (var genusGroup in Model.Taxa.GroupBy(t => t.GenusName))
     {
-        <h2>@genusGroup.Key</h2>
+        <h2 class="mt-4">@genusGroup.Key</h2>
 
-        <ul>
+        <div class="d-grid gap-2">
         @foreach (var taxon in genusGroup)
         {
-            <li>
-                <a asp-page="/Taxa/Details"
-                asp-route-id="@taxon.TaxonId">
-                 @taxon.DisplayName
-                </a>
-            </li>
+            <a asp-page="/Taxa/Details"
+               asp-route-id="@taxon.TaxonId"
+               class="btn btn-outline-primary btn-lg text-start">
+                @taxon.DisplayName
+            </a>
         }
-        </ul>
+        </div>
     }
 }

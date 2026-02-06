@@ -3,14 +3,13 @@
 
 <h1>Genera</h1>
 
-<ul>
+<div class="d-grid gap-2">
 @foreach (var genus in Model.Genera)
 {
-    <li>
-        <a asp-page="/Genera/Details"
-           asp-route-id="@genus.GenusId">
-            @genus.Name
-        </a>
-    </li>
+    <a asp-page="/Genera/Details"
+       asp-route-id="@genus.GenusId"
+       class="btn btn-outline-primary btn-lg text-start">
+        @genus.Name
+    </a>
 }
-</ul>
+</div>

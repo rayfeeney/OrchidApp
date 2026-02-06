@@ -7,25 +7,18 @@
 
 <h1>Plants</h1>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>Taxon</th>
-            <th class="text-end">Plants</th>
-        </tr>
-    </thead>
-    <tbody>
+<div class="d-grid gap-2">
 @foreach (var taxon in Model.Taxa)
 {
-        <tr>
-            <td>
-                <a asp-page="/Plants/Taxon"
-                asp-route-taxonId="@taxon.TaxonId">
-                    @taxon.DisplayName
-                </a>
-            </td>
-            <td class="text-end">@taxon.PlantCount</td>
-        </tr>
+    <a asp-page="/Plants/Taxon"
+       asp-route-taxonId="@taxon.TaxonId"
+       class="btn btn-outline-primary btn-lg text-start d-flex justify-content-between align-items-center">
+
+        <span>@taxon.DisplayName</span>
+        <span class="badge bg-secondary">
+            @taxon.PlantCount
+        </span>
+
+    </a>
 }
-    </tbody>
-</table>
+</div>
