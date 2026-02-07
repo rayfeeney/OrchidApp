@@ -7,6 +7,13 @@
 
 <h1>Plants</h1>
 
+<div class="mb-3">
+    <a asp-page="/Plants/Add/Index"
+       class="btn btn-sm btn-primary">
+        Add plant
+    </a>
+</div>
+
 <div class="d-grid gap-2">
 @foreach (var taxon in Model.Taxa)
 {

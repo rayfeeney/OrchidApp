@@ -1,0 +1,61 @@
+@page "/Plants/Add/Create/{taxonId:int}"
+@model OrchidApp.Web.Pages.Plants.Add.CreateModel
+
+@{
+    ViewData["Title"] = "Add plant";
+}
+
+<h1>Add plant</h1>
+
+<p class="text-muted">
+    for <strong>@Model.Taxon!.DisplayName</strong>
+</p>
+
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+<form method="post">
+
+    <div class="mb-3">
+        <label asp-for="Input.PlantTag" class="form-label"></label>
+        <input asp-for="Input.PlantTag" class="form-control" />
+        <span asp-validation-for="Input.PlantTag" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Input.PlantName" class="form-label"></label>
+        <input asp-for="Input.PlantName" class="form-control" />
+        <span asp-validation-for="Input.PlantName" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Input.AcquisitionDate" class="form-label"></label>
+        <input asp-for="Input.AcquisitionDate" class="form-control" />
+        <span asp-validation-for="Input.AcquisitionDate" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Input.AcquisitionSource" class="form-label"></label>
+        <input asp-for="Input.AcquisitionSource" class="form-control" />
+        <span asp-validation-for="Input.AcquisitionSource" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Input.PlantNotes" class="form-label"></label>
+        <textarea asp-for="Input.PlantNotes"
+                  class="form-control"
+                  rows="4"></textarea>
+        <span asp-validation-for="Input.PlantNotes" class="text-danger"></span>
+    </div>
+
+    <div class="d-grid gap-2 d-sm-flex">
+        <button type="submit" class="btn btn-primary">
+            Add plant
+        </button>
+
+        <a asp-page="/Plants/Add/Index"
+           class="btn btn-outline-secondary">
+            Cancel
+        </a>
+    </div>
+
+</form>
