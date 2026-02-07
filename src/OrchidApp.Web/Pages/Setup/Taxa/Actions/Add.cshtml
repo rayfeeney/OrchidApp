@@ -1,0 +1,56 @@
+@page
+@model OrchidApp.Web.Pages.Setup.Taxa.Actions.AddModel
+
+<h1>Add Species or Hybrid</h1>
+
+<form method="post" class="mt-4">
+
+    <div asp-validation-summary="ModelOnly"
+        class="alert alert-danger">
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Genus</label>
+        <select class="form-select" asp-for="GenusId" required>
+            <option value="">Select a genus</option>
+            @foreach (var g in Model.Genera)
+            {
+                <option value="@g.GenusId">@g.GenusName</option>
+            }
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Species name</label>
+        <input class="form-control" asp-for="SpeciesName" />
+        <div class="form-text">Leave blank if adding a hybrid</div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Hybrid name</label>
+        <input class="form-control" asp-for="HybridName" />
+        <div class="form-text">Leave blank if adding a species</div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Growth notes (optional)</label>
+        <textarea class="form-control" asp-for="GrowthNotes"></textarea>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Species or hybrid notes (optional)</label>
+        <textarea class="form-control" asp-for="TaxonNotes"></textarea>
+    </div>
+
+    <div class="d-grid gap-2">
+        <button type="submit" class="btn btn-lg btn-primary">
+            Add Species or Hybrid
+        </button>
+
+        <a asp-page="/Setup/Taxa/Index"
+           class="btn btn-lg btn-outline-secondary">
+            Cancel
+        </a>
+    </div>
+
+</form>

@@ -1,11 +1,18 @@
 @page
 @model OrchidApp.Web.Pages.Setup.Taxa.IndexModel
 
-<h1>Taxa</h1>
+<h1>Species & hybrids</h1>
+
+<div class="d-grid gap-2 mb-4">
+    <a asp-page="/Setup/Taxa/Actions/Add"
+       class="btn btn-lg btn-primary">
+        Add Species or Hybrid
+    </a>
+</div>
 
 @if (!Model.Taxa.Any())
 {
-    <p>No taxa have been added yet.</p>
+    <p>No species or hybrids have been added yet.</p>
 }
 else
 {
