@@ -12,13 +12,13 @@ public class OrchidDbContext : DbContext
 
     public DbSet<Genus> Genera => Set<Genus>();
     public DbSet<TaxonIdentity> TaxonIdentities => Set<TaxonIdentity>();
+    public DbSet<Plant> Plants => Set<Plant>();
     public DbSet<PlantActiveSummary> PlantActiveSummaries => Set<PlantActiveSummary>();
     public DbSet<PlantCurrentLocation> PlantCurrentLocations => Set<PlantCurrentLocation>();
     public DbSet<PlantLifecycleEvent> PlantLifecycleHistory => Set<PlantLifecycleEvent>();
     public DbSet<PlantEvent> PlantEvent => Set<PlantEvent>();
     public DbSet<Location> Location => Set<Location>();
     public DbSet<Flowering> Flowering => Set<Flowering>();
-
     public DbSet<Repotting> Repotting => Set<Repotting>();
 
 
@@ -144,6 +144,7 @@ public class OrchidDbContext : DbContext
             entity.Property(e => e.LocationName)            .HasColumnName("locationName");
             entity.Property(e => e.LocationTypeCode)        .HasColumnName("locationTypeCode");
             entity.Property(e => e.IsActive)                .HasColumnName("isActive");
+        });
         // =========================
         // Flowering table mapping
         // =========================
@@ -184,8 +185,36 @@ public class OrchidDbContext : DbContext
             entity.Property(e => e.RepottingNotes)          .HasColumnName("repottingNotes");
             entity.Property(e => e.IsActive)                .HasColumnName("isActive");
         });
+        // =========================
+        // Plant table mapping
+        // =========================
+        modelBuilder.Entity<Plant>(entity =>
+        {
+            entity.ToTable("plant");
+            entity.HasKey(e => e.PlantId);
 
+            entity.Property(e => e.PlantId)              .HasColumnName("plantId");
+            entity.Property(e => e.TaxonId)              .HasColumnName("taxonId");
+
+            entity.Property(e => e.PlantTag)             .HasColumnName("plantTag");
+            entity.Property(e => e.PlantName)            .HasColumnName("plantName");
+
+            entity.Property(e => e.AcquisitionDate)      .HasColumnName("acquisitionDate");
+            entity.Property(e => e.AcquisitionSource)    .HasColumnName("acquisitionSource");
+
+            entity.Property(e => e.IsActive)              .HasColumnName("isActive");
+
+            entity.Property(e => e.EndReasonCode)         .HasColumnName("endReasonCode");
+            entity.Property(e => e.EndDate)               .HasColumnName("endDate");
+            entity.Property(e => e.EndNotes)              .HasColumnName("endNotes");
+
+            entity.Property(e => e.PlantNotes)            .HasColumnName("plantNotes");
+
+            entity.Property(e => e.CreatedDateTime)       .HasColumnName("createdDateTime");
+            entity.Property(e => e.UpdatedDateTime)       .HasColumnName("updatedDateTime");
         });
+
+
 
         }
 }

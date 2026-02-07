@@ -1,0 +1,30 @@
+@page
+@model OrchidApp.Web.Pages.Plants.Add.IndexModel
+
+@{
+    ViewData["Title"] = "Add plant";
+}
+
+<h1>Add plant</h1>
+
+<p class="text-muted">
+    Choose the genus and species/hybrid for the new plant.
+</p>
+
+<div class="d-grid gap-2">
+@foreach (var taxon in Model.Taxa)
+{
+    <a asp-page="/Plants/Add/Create"
+       asp-route-taxonId="@taxon.TaxonId"
+       class="btn btn-outline-primary btn-lg text-start">
+        @taxon.DisplayName
+    </a>
+}
+</div>
+
+<div class="mt-4">
+    <a asp-page="/Plants/Index"
+       class="btn btn-outline-secondary btn-sm">
+        ← Back to plants
+    </a>
+</div>
