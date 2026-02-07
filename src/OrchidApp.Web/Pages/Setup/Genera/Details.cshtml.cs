@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using OrchidApp.Web.Data;
 using OrchidApp.Web.Models;
 
-namespace OrchidApp.Web.Pages.Genera;
+namespace OrchidApp.Web.Pages.Setup.Genera;
 
 public class DetailsModel : PageModel
 {

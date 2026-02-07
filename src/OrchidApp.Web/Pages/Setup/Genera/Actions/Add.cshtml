@@ -1,0 +1,44 @@
+@page
+@model OrchidApp.Web.Pages.Setup.Genera.Actions.AddModel
+
+<h1>Add genus</h1>
+
+<div class="mt-4">
+
+    <div asp-validation-summary="ModelOnly"
+         class="alert alert-danger">
+    </div>
+
+    <form method="post">
+
+        <div class="mb-3">
+            <label class="form-label">Genus name</label>
+            <input asp-for="GenusName"
+                   class="form-control"
+                   autocomplete="off" />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="GenusNotes" class="form-label">
+                Notes (optional)
+            </label>
+            <textarea asp-for="GenusNotes"
+                    class="form-control"
+                    rows="3"></textarea>
+        </div>
+
+        <div class="d-grid gap-2 mt-4">
+            <button type="submit"
+                    class="btn btn-primary btn-lg">
+                Add genus
+            </button>
+
+            <a asp-page="/Setup/Genera/Index"
+               class="btn btn-outline-secondary btn-sm text-start">
+                ← Back to genera
+            </a>
+        </div>
+
+    </form>
+ 
+</div>

@@ -1,0 +1,16 @@
+@page "{id:int}"
+@model OrchidApp.Web.Pages.Setup.Taxa.DetailsModel
+
+<h1>@Model.Taxon!.DisplayName</h1>
+
+@if (!string.IsNullOrWhiteSpace(Model.Taxon.TaxonNotes))
+{
+    <p>@Model.Taxon.TaxonNotes</p>
+}
+
+<div class="mt-4">
+    <a asp-page="/Setup/Taxa/Index"
+       class="btn btn-outline-secondary btn-sm">
+        ← Back to species & hybrids
+    </a>
+</div>

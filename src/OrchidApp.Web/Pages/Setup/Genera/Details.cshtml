@@ -1,0 +1,16 @@
+@page "{id:int}"
+@model OrchidApp.Web.Pages.Setup.Genera.DetailsModel
+
+<h1>@Model.Genus!.Name</h1>
+
+@if (!string.IsNullOrWhiteSpace(Model.Genus.Notes))
+{
+    <p>@Model.Genus.Notes</p>
+}
+
+<div class="mt-4">
+    <a asp-page="/Setup/Genera/Index"
+       class="btn btn-outline-secondary btn-sm">
+        ← Back to genera
+    </a>
+</p>

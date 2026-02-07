@@ -22,28 +22,28 @@
         asp-route-eventType="Observation"
         asp-route-plantId="@Model.PlantRequired.PlantId"
         class="btn btn-sm btn-primary">
-            Add Observation
+            Add observation
         </a>
 
         <a asp-page="/Plants/Events/Add"
         asp-route-eventType="LocationChange"
         asp-route-plantId="@Model.PlantRequired.PlantId"
         class="btn btn-sm btn-primary">
-            Move Location
+            Move plant
         </a>
 
         <a asp-page="/Plants/Events/Add"
         asp-route-eventType="Flowering"
         asp-route-plantId="@Model.PlantRequired.PlantId"
         class="btn btn-sm btn-primary">
-            Add Flowering
+            Add flowering
         </a>
 
         <a asp-page="/Plants/Events/Add"
         asp-route-eventType="Repotting"
         asp-route-plantId="@Model.PlantRequired.PlantId"
         class="btn btn-sm btn-primary">
-            Add Repotting
+            Add repotting
         </a>
     </div>
 
@@ -162,4 +162,9 @@ else
     </table>
 }
 
-<a asp-page="/Plants/Index">Back to Plants</a>
+<div class="mt-4">
+    <a asp-page="/Plants/Index"
+        class="btn btn-outline-secondary btn-sm">
+            ← Back to plants
+    </a>
+</div>

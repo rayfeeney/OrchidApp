@@ -14,6 +14,7 @@ CREATE TABLE `taxon` (
   `genusOnlyKey` int GENERATED ALWAYS AS ((case when ((`speciesName` is null) and (`hybridName` is null)) then `genusId` else NULL end)) STORED,
   `genusSpeciesKey` varchar(255) COLLATE utf8mb4_unicode_ci GENERATED ALWAYS AS ((case when (`speciesName` is not null) then concat(`genusId`,_utf8mb4':',`speciesName`) else NULL end)) STORED,
   `genusHybridKey` varchar(255) COLLATE utf8mb4_unicode_ci GENERATED ALWAYS AS ((case when (`hybridName` is not null) then concat(`genusId`,_utf8mb4':',`hybridName`) else NULL end)) STORED,
+  `isSystemManaged` tinyint(1) NOT NULL DEFAULT '0' COMMENT '1 Indicates this taxon row is created and managed by the system and must not be edited by end users; 0 Indicates user-managed taxon records',
   PRIMARY KEY (`taxonId`),
   UNIQUE KEY `uxTaxon_GenusOnly` (`genusOnlyKey`),
   UNIQUE KEY `uxTaxon_GenusSpecies` (`genusSpeciesKey`),
