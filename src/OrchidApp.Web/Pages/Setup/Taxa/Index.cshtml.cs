@@ -2,8 +2,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using OrchidApp.Web.Data;
 using OrchidApp.Web.Models;
 
-
-namespace OrchidApp.Web.Pages.Genera;
+namespace OrchidApp.Web.Pages.Setup.Taxa;
 
 public class IndexModel : PageModel
 {
@@ -14,14 +13,13 @@ public class IndexModel : PageModel
         _db = db;
     }
 
-    public List<Genus> Genera { get; private set; } = [];
+    public IReadOnlyList<TaxonIdentity> Taxa { get; private set; } = [];
 
     public void OnGet()
     {
-        Genera = _db.Genera
-                    .Where(g => g.IsActive)
-                    .OrderBy(g => g.Name)
-                    .ToList();
+        Taxa = _db.TaxonIdentities
+                  .OrderBy(t => t.GenusName)
+                  .ThenBy(t => t.DisplayName)
+                  .ToList();
     }
-
 }

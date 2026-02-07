@@ -1,12 +1,27 @@
 ﻿@page
-@model IndexModel
-@{
-    ViewData["Title"] = "Home page";
-}
+@model OrchidApp.Web.Pages.IndexModel
 
-<div class="text-center">
-    <h1 class="display-4">OrchidApp.Web</h1>
-    <p></p>
-    <p>Welcome.</p>
-    <p>OrchidApp Web is running.</p>
+<h1>OrchidApp</h1>
+
+<p class="text-muted">
+    Manage your orchid collection and care history.
+</p>
+
+<div class="d-grid gap-3 mt-4">
+
+    <a asp-page="/Plants/Index"
+       class="btn btn-lg btn-primary">
+        Plants
+    </a>
+
+    <a asp-page="/Setup/Index"
+       class="btn btn-lg btn-outline-primary">
+        Setup
+    </a>
+
+    <a asp-page="/Privacy"
+       class="btn btn-lg btn-outline-secondary">
+        Privacy
+    </a>
+
 </div>

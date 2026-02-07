@@ -1,0 +1,29 @@
+@page
+@model OrchidApp.Web.Pages.Setup.IndexModel
+
+<h1>Setup</h1>
+
+<p class="text-muted">
+    Use this area to manage reference information such as genera, species, and locations.
+</p>
+
+<div class="d-grid gap-3 mt-4">
+
+    <a asp-page="/Setup/Genera/Index"
+       class="btn btn-lg btn-outline-primary">
+        Genera
+    </a>
+
+    <a asp-page="/Setup/Taxa/Index"
+       class="btn btn-lg btn-outline-primary">
+        Species & Hybrids
+    </a>
+
+    <a asp-page="/Setup/Locations/Index"
+       class="btn btn-lg btn-outline-primary disabled"
+       tabindex="-1"
+       aria-disabled="true">
+        Locations (coming soon)
+    </a>
+
+</div>
