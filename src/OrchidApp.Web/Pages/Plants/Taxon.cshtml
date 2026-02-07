@@ -13,7 +13,7 @@
 @if (!Model.Plants.Any())
 {
     <div class="empty-state">
-        <p>You don’t have any plants of this taxon yet.</p>
+        <p>You don’t have any plants of this species/hybrid yet.</p>
     </div>
 }
 else
@@ -52,6 +52,9 @@ else
     </div>
 }
 
-<div class="page-actions">
-    <a asp-page="/Plants/Index">← Back to Plants</a>
+<div class="mt-4">
+    <a asp-page="/Plants/Index"
+       class="btn btn-outline-secondary btn-sm">
+        ← Back to plants
+    </a>
 </div>
