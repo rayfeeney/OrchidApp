@@ -43,7 +43,7 @@ public class OrchidDbContext : DbContext
         // =========================        
             modelBuilder.Entity<TaxonIdentity>(entity =>
         {
-            entity.ToView("vTaxonIdentity");
+            entity.ToView("vtaxonidentity");
             entity.HasKey(e => e.TaxonId);
 
             entity.Property(e => e.TaxonId)                 .HasColumnName("taxonId");
@@ -61,7 +61,7 @@ public class OrchidDbContext : DbContext
         // ========================= 
         modelBuilder.Entity<PlantActiveSummary>(entity =>
         {
-            entity.ToView("vPlantActiveSummary");
+            entity.ToView("vplantactivesummary");
             entity.HasKey(e => e.PlantId);
 
             entity.Property(e => e.PlantId)                 .HasColumnName("plantId");
