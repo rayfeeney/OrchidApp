@@ -1,2 +1,113 @@
-CREATE PROCEDURE `spRemovePlantLocation`(\n    IN pPlantLocationHistoryId INT\n)\nBEGIN\n    DECLARE vPlantId INT;\n    DECLARE vStart DATETIME;\n    DECLARE vEnd DATETIME;\n    DECLARE vIsCurrent TINYINT;\n\n    DECLARE vPrevId INT;\n    DECLARE vNextId INT;\n\n    START TRANSACTION;\n\n        /* ---------- Load target (locked) ---------- */\n\n        SELECT plantId, startDateTime, endDateTime\n          INTO vPlantId, vStart, vEnd\n        FROM plantlocationhistory\n        WHERE plantLocationHistoryId = pPlantLocationHistoryId\n          AND isActive = 1\n        FOR UPDATE;\n\n        IF vPlantId IS NULL THEN\n            SIGNAL SQLSTATE '45000'\n                SET MESSAGE_TEXT = 'Active location history row not found.';\n        END IF;\n\n        SET vIsCurrent = IF(vEnd IS NULL, 1, 0);\n\n        /* ---------- Guard: previous ambiguity ---------- */\n\n        IF (\n            SELECT COUNT(*)\n            FROM plantlocationhistory\n            WHERE plantId = vPlantId\n              AND isActive = 1\n              AND endDateTime = vStart\n        ) > 1 THEN\n            SIGNAL SQLSTATE '45000'\n                SET MESSAGE_TEXT = 'Ambiguous previous location during removal.';\n        END IF;\n\n        SELECT plantLocationHistoryId\n          INTO vPrevId\n        FROM plantlocationhistory\n        WHERE plantId = vPlantId\n          AND isActive = 1\n          AND endDateTime = vStart\n        LIMIT 1;\n\n        /* ---------- Guard: next ambiguity ---------- */\n\n        IF vIsCurrent = 0 AND (\n            SELECT COUNT(*)\n            FROM plantlocationhistory\n            WHERE plantId = vPlantId\n              AND isActive = 1\n              AND startDateTime = vEnd\n        ) > 1 THEN\n            SIGNAL SQLSTATE '45000'\n                SET MESSAGE_TEXT = 'Ambiguous next location during removal.';\n        END IF;\n\n        IF vIsCurrent = 0 THEN\n            SELECT plantLocationHistoryId\n              INTO vNextId\n            FROM plantlocationhistory\n            WHERE plantId = vPlantId\n              AND isActive = 1\n              AND startDateTime = vEnd\n            LIMIT 1;\n        END IF;\n\n        /* ---------- Re-stitch ---------- */\n\n        UPDATE plantlocationhistory\n        SET isActive = 0\n        WHERE plantLocationHistoryId = pPlantLocationHistoryId;\n        \n        IF vIsCurrent = 1 THEN\n            IF vPrevId IS NOT NULL THEN\n                UPDATE plantlocationhistory\n                SET endDateTime = NULL\n                WHERE plantLocationHistoryId = vPrevId;\n            END IF;\n        ELSE\n            IF vPrevId IS NOT NULL AND vNextId IS NOT NULL THEN\n                UPDATE plantlocationhistory\n                SET endDateTime = vEnd\n                WHERE plantLocationHistoryId = vPrevId;\n            END IF;\n        END IF;\n\n        /* ---------- Post-invariant ---------- */\n\n        IF (\n            SELECT COUNT(*)\n            FROM plantlocationhistory\n            WHERE plantId = vPlantId\n              AND isActive = 1\n              AND endDateTime IS NULL\n        ) > 1 THEN\n            SIGNAL SQLSTATE '45000'\n                SET MESSAGE_TEXT = 'Invariant violation after location removal.';\n        END IF;\n\n    COMMIT;\nEND	ut
+DELIMITER //
+CREATE PROCEDURE `spRemovePlantLocation`(
+    IN pPlantLocationHistoryId INT
+)
+BEGIN
+    DECLARE vPlantId INT;
+    DECLARE vStart DATETIME;
+    DECLARE vEnd DATETIME;
+    DECLARE vIsCurrent TINYINT;
+
+    DECLARE vPrevId INT;
+    DECLARE vNextId INT;
+
+    START TRANSACTION;
+
+        /* ---------- Load target (locked) ---------- */
+
+        SELECT plantId, startDateTime, endDateTime
+          INTO vPlantId, vStart, vEnd
+        FROM plantlocationhistory
+        WHERE plantLocationHistoryId = pPlantLocationHistoryId
+          AND isActive = 1
+        FOR UPDATE;
+
+        IF vPlantId IS NULL THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'Active location history row not found.';
+        END IF;
+
+        SET vIsCurrent = IF(vEnd IS NULL, 1, 0);
+
+        /* ---------- Guard: previous ambiguity ---------- */
+
+        IF (
+            SELECT COUNT(*)
+            FROM plantlocationhistory
+            WHERE plantId = vPlantId
+              AND isActive = 1
+              AND endDateTime = vStart
+        ) > 1 THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'Ambiguous previous location during removal.';
+        END IF;
+
+        SELECT plantLocationHistoryId
+          INTO vPrevId
+        FROM plantlocationhistory
+        WHERE plantId = vPlantId
+          AND isActive = 1
+          AND endDateTime = vStart
+        LIMIT 1;
+
+        /* ---------- Guard: next ambiguity ---------- */
+
+        IF vIsCurrent = 0 AND (
+            SELECT COUNT(*)
+            FROM plantlocationhistory
+            WHERE plantId = vPlantId
+              AND isActive = 1
+              AND startDateTime = vEnd
+        ) > 1 THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'Ambiguous next location during removal.';
+        END IF;
+
+        IF vIsCurrent = 0 THEN
+            SELECT plantLocationHistoryId
+              INTO vNextId
+            FROM plantlocationhistory
+            WHERE plantId = vPlantId
+              AND isActive = 1
+              AND startDateTime = vEnd
+            LIMIT 1;
+        END IF;
+
+        /* ---------- Re-stitch ---------- */
+
+        UPDATE plantlocationhistory
+        SET isActive = 0
+        WHERE plantLocationHistoryId = pPlantLocationHistoryId;
+        
+        IF vIsCurrent = 1 THEN
+            IF vPrevId IS NOT NULL THEN
+                UPDATE plantlocationhistory
+                SET endDateTime = NULL
+                WHERE plantLocationHistoryId = vPrevId;
+            END IF;
+        ELSE
+            IF vPrevId IS NOT NULL AND vNextId IS NOT NULL THEN
+                UPDATE plantlocationhistory
+                SET endDateTime = vEnd
+                WHERE plantLocationHistoryId = vPrevId;
+            END IF;
+        END IF;
+
+        /* ---------- Post-invariant ---------- */
+
+        IF (
+            SELECT COUNT(*)
+            FROM plantlocationhistory
+            WHERE plantId = vPlantId
+              AND isActive = 1
+              AND endDateTime IS NULL
+        ) > 1 THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'Invariant violation after location removal.';
+        END IF;
+
+    COMMIT;
+END
+//
+DELIMITER ;
 

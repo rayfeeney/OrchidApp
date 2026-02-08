@@ -358,17 +358,35 @@ if (-not $m.Success) {
     throw "Exported definition for $type ${name} does not contain a CREATE $type statement. Raw output was: [$result]"
 }
 
-$definition = $result.Substring($m.Index).Trim() + "`n"
+# Extract from CREATE onward
+$definition = $result.Substring($m.Index)
 
-# Trim anything after the final END keyword (MySQL appends charset/collation columns)
-$endMatch = [regex]::Match($definition, '(?is)\bEND\b', 'RightToLeft')
+# Trim anything after the final END (delimiter or charset may follow)
+$endMatch = [regex]::Match(
+    $definition,
+    '(?is)END',
+    [System.Text.RegularExpressions.RegexOptions]::RightToLeft
+)
 
-# Remove DEFINER clause for portability
+if (-not $endMatch.Success) {
+    throw "Could not locate END for $type ${name}"
+}
+
+$definition = $definition.Substring(0, $endMatch.Index + 3)
+
+# Strip DEFINER clause for portability (MySQL + MariaDB safe)
 $definition = $definition -replace '(?is)\bDEFINER\s*=\s*`[^`]+`\s*@\s*`[^`]+`\s*', ''
 
-if ($endMatch.Success) {
-    $definition = $definition.Substring(0, $endMatch.Index + $endMatch.Length).Trim() + "`n"
-}
+# SHOW CREATE returns escaped newlines/tabs – convert to real whitespace
+$definition = $definition -replace '\\r\\n', "`n"
+$definition = $definition -replace '\\n', "`n"
+$definition = $definition -replace '\\t', "`t"
+
+# Normalise whitespace
+$definition = $definition.Trim() + "`n"
+
+# Wrap with DELIMITER so the mysql client can execute it
+$definition = "DELIMITER //`n$definition//`nDELIMITER ;`n"
 
   $key = "routines/$name"
   $relativePath = "$key.sql"
@@ -406,24 +424,43 @@ foreach ($row in $triggers) {
     throw "Failed to read definition for trigger $name"
   }
 
-  # Extract CREATE TRIGGER block
-  $pattern = '(?is)\bCREATE\b.*?\bTRIGGER\b'
-  $m = [regex]::Match($result, $pattern)
+# Extract CREATE TRIGGER block
+$pattern = '(?is)\bCREATE\b.*?\bTRIGGER\b'
+$m = [regex]::Match($result, $pattern)
 
-  if (-not $m.Success) {
+if (-not $m.Success) {
     throw "Exported definition for trigger $name does not contain CREATE TRIGGER. Raw output: [$result]"
-  }
+}
 
-  $definition = $result.Substring($m.Index).Trim() + "`n"
+# Extract from CREATE onward
+$definition = $result.Substring($m.Index)
 
-  # Trim anything after END
-  $endMatch = [regex]::Match($definition, '(?is)\bEND\b', 'RightToLeft')
-  if ($endMatch.Success) {
-    $definition = $definition.Substring(0, $endMatch.Index + $endMatch.Length).Trim() + "`n"
-  }
+# Trim anything after the final END keyword
+$endMatch = [regex]::Match(
+    $definition,
+    '(?is)\bEND\b',
+    [System.Text.RegularExpressions.RegexOptions]::RightToLeft
+)
 
-  # Strip DEFINER clause for portability (MySQL + MariaDB safe)
-  $definition = $definition -replace '(?is)\bDEFINER\s*=\s*`[^`]+`\s*@\s*`[^`]+`\s*', ''
+if (-not $endMatch.Success) {
+    throw "Could not locate END for trigger $name"
+}
+
+$definition = $definition.Substring(0, $endMatch.Index + $endMatch.Length)
+
+# Strip DEFINER clause for portability
+$definition = $definition -replace '(?is)\bDEFINER\s*=\s*`[^`]+`\s*@\s*`[^`]+`\s*', ''
+
+# Unescape SHOW CREATE output
+$definition = $definition -replace '\\r\\n', "`n"
+$definition = $definition -replace '\\n', "`n"
+$definition = $definition -replace '\\t', "`t"
+
+# Normalise whitespace
+$definition = $definition.Trim() + "`n"
+
+# Wrap with DELIMITER
+$definition = "DELIMITER //`n$definition//`nDELIMITER ;`n"
 
   $key = "triggers/$name"
   $outPath = Join-Path $SchemaRoot "$key.sql"

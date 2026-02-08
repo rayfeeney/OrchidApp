@@ -1,2 +1,20 @@
-CREATE PROCEDURE `spUpdateTaxonMetadata`(\n  IN p_taxonId INT,\n  IN p_taxonNotes TEXT,\n  IN p_growthNotes TEXT,\n  IN p_growthCode VARCHAR(30),\n  IN p_isActive TINYINT\n)\nBEGIN\n  UPDATE orchids.taxon\n  SET\n    taxonNotes  = p_taxonNotes,\n    growthNotes = p_growthNotes,\n    growthCode  = p_growthCode,\n    isActive    = p_isActive\n  WHERE taxonId = p_taxonId;\nEND	utf8mb4	utf8mb4_0900_ai_ci	utf8mb4_unicode_ci
+DELIMITER //
+CREATE PROCEDURE `spUpdateTaxonMetadata`(
+  IN p_taxonId INT,
+  IN p_taxonNotes TEXT,
+  IN p_growthNotes TEXT,
+  IN p_growthCode VARCHAR(30),
+  IN p_isActive TINYINT
+)
+BEGIN
+  UPDATE orchids.taxon
+  SET
+    taxonNotes  = p_taxonNotes,
+    growthNotes = p_growthNotes,
+    growthCode  = p_growthCode,
+    isActive    = p_isActive
+  WHERE taxonId = p_taxonId;
+END
+//
+DELIMITER ;
 

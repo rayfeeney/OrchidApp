@@ -1,2 +1,117 @@
-CREATE PROCEDURE `spEditPlantLocation`(\n    IN pPlantLocationHistoryId INT,\n    IN pNewStartDateTime DATETIME,\n    IN pMoveReasonNotes VARCHAR(500),\n    IN pPlantLocationNotes VARCHAR(500)\n)\nBEGIN\n    DECLARE vPlantId INT;\n    DECLARE vOldStart DATETIME;\n    DECLARE vOldEnd DATETIME;\n    DECLARE vIsCurrent TINYINT;\n\n    DECLARE vPrevId INT;\n    DECLARE vPrevStart DATETIME;\n\n    DECLARE vNextStart DATETIME;\n\n    DECLARE vNewStart DATETIME;\n    DECLARE vEffectiveEnd DATETIME;\n\n    START TRANSACTION;\n\n        /* --- Load + lock target row --- */\n        SELECT plantId, startDateTime, endDateTime\n          INTO vPlantId, vOldStart, vOldEnd\n        FROM plantlocationhistory\n        WHERE plantLocationHistoryId = pPlantLocationHistoryId\n          AND isActive = 1\n        FOR UPDATE;\n\n        IF vPlantId IS NULL THEN\n            SIGNAL SQLSTATE '45000'\n                SET MESSAGE_TEXT = 'Active location history row not found.';\n        END IF;\n\n        SET vIsCurrent = IF(vOldEnd IS NULL, 1, 0);\n        SET vNewStart = COALESCE(pNewStartDateTime, vOldStart);\n        SET vEffectiveEnd = IF(vIsCurrent = 1, NOW(), vOldEnd);\n\n        /* --- Guard: start must be before end / NOW --- */\n        IF vNewStart >= vEffectiveEnd THEN\n            SIGNAL SQLSTATE '45000'\n                SET MESSAGE_TEXT = 'startDateTime must be earlier than endDateTime.';\n        END IF;\n\n        /* --- Load previous row (immediate predecessor) --- */\n        SELECT plantLocationHistoryId, startDateTime\n          INTO vPrevId, vPrevStart\n        FROM plantlocationhistory\n        WHERE plantId = vPlantId\n          AND isActive = 1\n          AND endDateTime = vOldStart\n          AND plantLocationHistoryId <> pPlantLocationHistoryId\n        FOR UPDATE;\n\n        /* --- Load next row (immediate successor) --- */\n        SELECT startDateTime\n          INTO vNextStart\n        FROM plantlocationhistory\n        WHERE plantId = vPlantId\n          AND isActive = 1\n          AND startDateTime > vOldStart\n        ORDER BY startDateTime\n        LIMIT 1\n        FOR UPDATE;\n\n        /* --- Guard: must not overlap next row --- */\n        IF vNextStart IS NOT NULL AND vNewStart >= vNextStart THEN\n            SIGNAL SQLSTATE '45000'\n                SET MESSAGE_TEXT = 'startDateTime cannot overlap next location.';\n        END IF;\n\n        /* --- Guard: current row cannot move into the future --- */\n        IF vIsCurrent = 1 AND vNewStart >= NOW() THEN\n            SIGNAL SQLSTATE '45000'\n                SET MESSAGE_TEXT = 'startDateTime cannot be in the future.';\n        END IF;\n\n        /* --- Guard: must not invalidate previous row --- */\n        IF vPrevId IS NOT NULL AND vNewStart <= vPrevStart THEN\n            SIGNAL SQLSTATE '45000'\n                SET MESSAGE_TEXT = 'startDateTime would invalidate previous location.';\n        END IF;\n\n        /* --- Propagate boundary to previous row --- */\n        IF vPrevId IS NOT NULL AND vNewStart <> vOldStart THEN\n            UPDATE plantlocationhistory\n            SET endDateTime = vNewStart\n            WHERE plantLocationHistoryId = vPrevId;\n        END IF;\n\n        /* --- Apply edit to target row --- */\n        UPDATE plantlocationhistory\n        SET\n            startDateTime      = vNewStart,\n            moveReasonNotes    = COALESCE(pMoveReasonNotes, moveReasonNotes),\n            plantLocationNotes = COALESCE(pPlantLocationNotes, plantLocationNotes)\n        WHERE plantLocationHistoryId = pPlantLocationHistoryId;\n\n        /* --- Invariant: at most one current row --- */\n        IF (\n            SELECT COUNT(*)\n            FROM plantlocationhistory\n            WHERE plantId = vPlantId\n              AND isActive = 1\n              AND endDateTime IS NULL\n        ) > 1 THEN\n            SIGNAL SQLSTATE '45000'\n                SET MESSAGE_TEXT = 'Invariant violation: multiple current locations.';\n        END IF;\n\n    COMMIT;\nEND	ut
+DELIMITER //
+CREATE PROCEDURE `spEditPlantLocation`(
+    IN pPlantLocationHistoryId INT,
+    IN pNewStartDateTime DATETIME,
+    IN pMoveReasonNotes VARCHAR(500),
+    IN pPlantLocationNotes VARCHAR(500)
+)
+BEGIN
+    DECLARE vPlantId INT;
+    DECLARE vOldStart DATETIME;
+    DECLARE vOldEnd DATETIME;
+    DECLARE vIsCurrent TINYINT;
+
+    DECLARE vPrevId INT;
+    DECLARE vPrevStart DATETIME;
+
+    DECLARE vNextStart DATETIME;
+
+    DECLARE vNewStart DATETIME;
+    DECLARE vEffectiveEnd DATETIME;
+
+    START TRANSACTION;
+
+        /* --- Load + lock target row --- */
+        SELECT plantId, startDateTime, endDateTime
+          INTO vPlantId, vOldStart, vOldEnd
+        FROM plantlocationhistory
+        WHERE plantLocationHistoryId = pPlantLocationHistoryId
+          AND isActive = 1
+        FOR UPDATE;
+
+        IF vPlantId IS NULL THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'Active location history row not found.';
+        END IF;
+
+        SET vIsCurrent = IF(vOldEnd IS NULL, 1, 0);
+        SET vNewStart = COALESCE(pNewStartDateTime, vOldStart);
+        SET vEffectiveEnd = IF(vIsCurrent = 1, NOW(), vOldEnd);
+
+        /* --- Guard: start must be before end / NOW --- */
+        IF vNewStart >= vEffectiveEnd THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'startDateTime must be earlier than endDateTime.';
+        END IF;
+
+        /* --- Load previous row (immediate predecessor) --- */
+        SELECT plantLocationHistoryId, startDateTime
+          INTO vPrevId, vPrevStart
+        FROM plantlocationhistory
+        WHERE plantId = vPlantId
+          AND isActive = 1
+          AND endDateTime = vOldStart
+          AND plantLocationHistoryId <> pPlantLocationHistoryId
+        FOR UPDATE;
+
+        /* --- Load next row (immediate successor) --- */
+        SELECT startDateTime
+          INTO vNextStart
+        FROM plantlocationhistory
+        WHERE plantId = vPlantId
+          AND isActive = 1
+          AND startDateTime > vOldStart
+        ORDER BY startDateTime
+        LIMIT 1
+        FOR UPDATE;
+
+        /* --- Guard: must not overlap next row --- */
+        IF vNextStart IS NOT NULL AND vNewStart >= vNextStart THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'startDateTime cannot overlap next location.';
+        END IF;
+
+        /* --- Guard: current row cannot move into the future --- */
+        IF vIsCurrent = 1 AND vNewStart >= NOW() THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'startDateTime cannot be in the future.';
+        END IF;
+
+        /* --- Guard: must not invalidate previous row --- */
+        IF vPrevId IS NOT NULL AND vNewStart <= vPrevStart THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'startDateTime would invalidate previous location.';
+        END IF;
+
+        /* --- Propagate boundary to previous row --- */
+        IF vPrevId IS NOT NULL AND vNewStart <> vOldStart THEN
+            UPDATE plantlocationhistory
+            SET endDateTime = vNewStart
+            WHERE plantLocationHistoryId = vPrevId;
+        END IF;
+
+        /* --- Apply edit to target row --- */
+        UPDATE plantlocationhistory
+        SET
+            startDateTime      = vNewStart,
+            moveReasonNotes    = COALESCE(pMoveReasonNotes, moveReasonNotes),
+            plantLocationNotes = COALESCE(pPlantLocationNotes, plantLocationNotes)
+        WHERE plantLocationHistoryId = pPlantLocationHistoryId;
+
+        /* --- Invariant: at most one current row --- */
+        IF (
+            SELECT COUNT(*)
+            FROM plantlocationhistory
+            WHERE plantId = vPlantId
+              AND isActive = 1
+              AND endDateTime IS NULL
+        ) > 1 THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'Invariant violation: multiple current locations.';
+        END IF;
+
+    COMMIT;
+END
+//
+DELIMITER ;
 

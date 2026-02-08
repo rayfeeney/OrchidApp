@@ -1,2 +1,44 @@
-CREATE PROCEDURE `spAddTaxonInternal`(\n    IN  pGenusId            INT,\n    IN  pSpeciesName        VARCHAR(100),\n    IN  pHybridName         VARCHAR(150),\n    IN  pGrowthNotes        TEXT,\n    IN  pTaxonNotes         TEXT,\n    IN  pIsSystemManaged    TINYINT(1),\n    OUT pTaxonId            INT\n)\nBEGIN\n    DECLARE vSpeciesName VARCHAR(100);\n    DECLARE vHybridName  VARCHAR(150);\n    DECLARE vGrowthNotes TEXT;\n    DECLARE vTaxonNotes  TEXT;\n\n    -- Normalise inputs\n    SET vSpeciesName = NULLIF(TRIM(pSpeciesName), '');\n    SET vHybridName  = NULLIF(TRIM(pHybridName), '');\n    SET vGrowthNotes = NULLIF(TRIM(pGrowthNotes), '');\n    SET vTaxonNotes  = NULLIF(TRIM(pTaxonNotes), '');\n\n    INSERT INTO taxon (\n        genusId,\n        speciesName,\n        hybridName,\n        growthNotes,\n        taxonNotes,\n        isSystemManaged\n    )\n    VALUES (\n        pGenusId,\n        vSpeciesName,\n        vHybridName,\n        vGrowthNotes,\n        vTaxonNotes,\n        pIsSystemManaged\n    );\n\n    SET pTaxonId = LAST_INSERT_ID();\nEND	utf8mb4	utf8mb4_0900_ai_ci	utf8mb4_unicode_ci
+DELIMITER //
+CREATE PROCEDURE `spAddTaxonInternal`(
+    IN  pGenusId            INT,
+    IN  pSpeciesName        VARCHAR(100),
+    IN  pHybridName         VARCHAR(150),
+    IN  pGrowthNotes        TEXT,
+    IN  pTaxonNotes         TEXT,
+    IN  pIsSystemManaged    TINYINT(1),
+    OUT pTaxonId            INT
+)
+BEGIN
+    DECLARE vSpeciesName VARCHAR(100);
+    DECLARE vHybridName  VARCHAR(150);
+    DECLARE vGrowthNotes TEXT;
+    DECLARE vTaxonNotes  TEXT;
+
+    -- Normalise inputs
+    SET vSpeciesName = NULLIF(TRIM(pSpeciesName), '');
+    SET vHybridName  = NULLIF(TRIM(pHybridName), '');
+    SET vGrowthNotes = NULLIF(TRIM(pGrowthNotes), '');
+    SET vTaxonNotes  = NULLIF(TRIM(pTaxonNotes), '');
+
+    INSERT INTO taxon (
+        genusId,
+        speciesName,
+        hybridName,
+        growthNotes,
+        taxonNotes,
+        isSystemManaged
+    )
+    VALUES (
+        pGenusId,
+        vSpeciesName,
+        vHybridName,
+        vGrowthNotes,
+        vTaxonNotes,
+        pIsSystemManaged
+    );
+
+    SET pTaxonId = LAST_INSERT_ID();
+END
+//
+DELIMITER ;
 
