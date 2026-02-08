@@ -424,9 +424,11 @@ foreach ($row in $triggers) {
     throw "Failed to read definition for trigger $name"
   }
 
-# Extract CREATE TRIGGER block
-$pattern = '(?is)\bCREATE\b.*?\bTRIGGER\b'
-$m = [regex]::Match($result, $pattern)
+# Locate CREATE TRIGGER anchor
+$m = [regex]::Match(
+    $result,
+    '(?is)\bCREATE\b\s+(?:DEFINER\s*=\s*`[^`]+`\s*@\s*`[^`]+`\s+)?TRIGGER\b'
+)
 
 if (-not $m.Success) {
     throw "Exported definition for trigger $name does not contain CREATE TRIGGER. Raw output: [$result]"
@@ -435,18 +437,8 @@ if (-not $m.Success) {
 # Extract from CREATE onward
 $definition = $result.Substring($m.Index)
 
-# Trim anything after the final END keyword
-$endMatch = [regex]::Match(
-    $definition,
-    '(?is)\bEND\b',
-    [System.Text.RegularExpressions.RegexOptions]::RightToLeft
-)
-
-if (-not $endMatch.Success) {
-    throw "Could not locate END for trigger $name"
-}
-
-$definition = $definition.Substring(0, $endMatch.Index + $endMatch.Length)
+# Ensure CREATE TRIGGER is the first token (discard any prefix junk)
+$definition = $definition.TrimStart()
 
 # Strip DEFINER clause for portability
 $definition = $definition -replace '(?is)\bDEFINER\s*=\s*`[^`]+`\s*@\s*`[^`]+`\s*', ''
@@ -455,6 +447,21 @@ $definition = $definition -replace '(?is)\bDEFINER\s*=\s*`[^`]+`\s*@\s*`[^`]+`\s
 $definition = $definition -replace '\\r\\n', "`n"
 $definition = $definition -replace '\\n', "`n"
 $definition = $definition -replace '\\t', "`t"
+
+# Trim to the trigger's final END (not END IF / END LOOP)
+# We match END that is followed by optional whitespace and then either end-of-string
+# or trailing charset/collation metadata.
+$finalEnd = [regex]::Match(
+    $definition,
+    '(?is)\bEND\b\s*(?:$|utf8mb4|utf8|latin1|collation|character set)',
+    [System.Text.RegularExpressions.RegexOptions]::RightToLeft
+)
+
+if (-not $finalEnd.Success) {
+    throw "Could not locate final END for trigger $name"
+}
+
+$definition = $definition.Substring(0, $finalEnd.Index) + "END"
 
 # Normalise whitespace
 $definition = $definition.Trim() + "`n"
