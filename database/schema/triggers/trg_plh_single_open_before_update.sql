@@ -13,7 +13,8 @@ CREATE TRIGGER `trg_plh_single_open_before_update` BEFORE UPDATE ON `plantlocati
             SIGNAL SQLSTATE '45000'
                 SET MESSAGE_TEXT = 'Invariant violation: multiple open locations for plant';
         END IF;
-    END
+    END IF;
+END
 //
 DELIMITER ;
 
