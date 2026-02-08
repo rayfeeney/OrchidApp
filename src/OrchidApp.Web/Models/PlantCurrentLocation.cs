@@ -5,7 +5,7 @@ public class PlantCurrentLocation
     public int PlantId { get; set; }
     public int TaxonId { get; set; }
 
-    public string PlantTag { get; set; } = string.Empty;
+    public string? PlantTag { get; set; } = string.Empty;
 
     public string? PlantName { get; set; }
 

@@ -28,17 +28,22 @@ public class CreateModel : PageModel
     {
         [Required(ErrorMessage = "Plant tag is required.")]
         [StringLength(50)]
+        [Display(Name = "Plant tag")]
         public string? PlantTag { get; set; }
 
         [StringLength(100)]
+        [Display(Name = "Plant name")]
         public string? PlantName { get; set; }
 
         [DataType(DataType.Date)]
+        [Display(Name = "Acquired on")]
         public DateOnly? AcquisitionDate { get; set; }
 
         [StringLength(150)]
+        [Display(Name = "Acquired from")]
         public string? AcquisitionSource { get; set; }
 
+        [Display(Name = "Plant notes")]
         public string? PlantNotes { get; set; }
     }
 
