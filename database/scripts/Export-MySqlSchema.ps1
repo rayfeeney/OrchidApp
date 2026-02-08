@@ -422,6 +422,9 @@ foreach ($row in $triggers) {
     $definition = $definition.Substring(0, $endMatch.Index + $endMatch.Length).Trim() + "`n"
   }
 
+  # Strip DEFINER clause for portability (MySQL + MariaDB safe)
+  $definition = $definition -replace '(?is)\bDEFINER\s*=\s*`[^`]+`\s*@\s*`[^`]+`\s*', ''
+
   $key = "triggers/$name"
   $outPath = Join-Path $SchemaRoot "$key.sql"
 
