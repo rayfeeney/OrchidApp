@@ -61,7 +61,7 @@ Write-Host "Connecting to MySQL (timeout 5s)…"
     --skip-column-names `
     --database=$Database `
     --execute="$compoundQuery" `
-    2>$null
+    2>&1
 
 if ($LASTEXITCODE -ne 0) {
     throw "MySQL command failed (exit code $LASTEXITCODE)"
@@ -75,7 +75,7 @@ function Get-Checksum($Content) {
   (Get-FileHash -InputStream ([IO.MemoryStream]::new($bytes)) -Algorithm SHA256).Hash
 }
 
-function Ensure-DirectoryForFile {
+function New-DirectoryForFile {
     param (
         [Parameter(Mandatory)]
         [string]$FilePath
@@ -196,7 +196,7 @@ function Export-Object {
   $SeenObjects[$key] = $true
 
   if ($Checksums[$key] -ne $hash) {
-    Ensure-DirectoryForFile $OutPath
+    New-DirectoryForFile $OutPath
     $sql | Out-File -Encoding utf8 $OutPath
     $Checksums[$key] = $hash
     Write-Host "Updated $key"
@@ -298,7 +298,7 @@ ALTER TABLE $tableQualified
   $OutPath = Join-Path "$SchemaRoot/constraints" "$FileConstraintName.sql"
 
   if ($Checksums[$key] -ne $hash) {
-    Ensure-DirectoryForFile $OutPath
+    New-DirectoryForFile $OutPath
     $sql | Out-File -Encoding utf8 $OutPath
     $Checksums[$key] = $hash
     Write-Host "Updated $key"
@@ -345,8 +345,30 @@ foreach ($row in $routines) {
     continue
   }
 
-  # SHOW CREATE returns two columns; definition is column 2
-  $definition = ($result -split "`t")[1].Trim() + "`n"
+# Match CREATE ... PROCEDURE|FUNCTION, allowing for DEFINER and other clauses
+$pattern = if ($type -eq "PROCEDURE") {
+    '(?is)\bCREATE\b.*?\bPROCEDURE\b'
+} else {
+    '(?is)\bCREATE\b.*?\bFUNCTION\b'
+}
+
+$m = [regex]::Match($result, $pattern)
+
+if (-not $m.Success) {
+    throw "Exported definition for $type ${name} does not contain a CREATE $type statement. Raw output was: [$result]"
+}
+
+$definition = $result.Substring($m.Index).Trim() + "`n"
+
+# Trim anything after the final END keyword (MySQL appends charset/collation columns)
+$endMatch = [regex]::Match($definition, '(?is)\bEND\b', 'RightToLeft')
+
+# Remove DEFINER clause for portability
+$definition = $definition -replace '(?is)\bDEFINER\s*=\s*`[^`]+`\s*@\s*`[^`]+`\s*', ''
+
+if ($endMatch.Success) {
+    $definition = $definition.Substring(0, $endMatch.Index + $endMatch.Length).Trim() + "`n"
+}
 
   $key = "routines/$name"
   $relativePath = "$key.sql"
@@ -356,10 +378,61 @@ foreach ($row in $routines) {
   $SeenObjects[$key] = $true
 
   if ($Checksums[$relativePath] -ne $hash) {
-    Ensure-DirectoryForFile $outPath
+    New-DirectoryForFile $outPath
     $definition | Out-File -Encoding utf8 $outPath
     $Checksums[$relativePath] = $hash
     Write-Host "    Updated $relativePath"
+  }
+}
+
+# --- Triggers ---------------------------------------------------------------
+Write-Host "Exporting triggers..."
+
+$triggers = Invoke-MySqlQuery @"
+SELECT TRIGGER_NAME
+FROM information_schema.TRIGGERS
+WHERE TRIGGER_SCHEMA = '$Database'
+ORDER BY TRIGGER_NAME;
+"@
+
+foreach ($row in $triggers) {
+
+  $name = $row.Trim()
+  Write-Host "  TRIGGER $name"
+
+  $result = Invoke-MySqlQuery "SHOW CREATE TRIGGER ``$Database``.``$name``;"
+
+  if (-not $result) {
+    throw "Failed to read definition for trigger $name"
+  }
+
+  # Extract CREATE TRIGGER block
+  $pattern = '(?is)\bCREATE\b.*?\bTRIGGER\b'
+  $m = [regex]::Match($result, $pattern)
+
+  if (-not $m.Success) {
+    throw "Exported definition for trigger $name does not contain CREATE TRIGGER. Raw output: [$result]"
+  }
+
+  $definition = $result.Substring($m.Index).Trim() + "`n"
+
+  # Trim anything after END
+  $endMatch = [regex]::Match($definition, '(?is)\bEND\b', 'RightToLeft')
+  if ($endMatch.Success) {
+    $definition = $definition.Substring(0, $endMatch.Index + $endMatch.Length).Trim() + "`n"
+  }
+
+  $key = "triggers/$name"
+  $outPath = Join-Path $SchemaRoot "$key.sql"
+
+  $hash = Get-Checksum $definition
+  $SeenObjects[$key] = $true
+
+  if ($Checksums[$key] -ne $hash) {
+    New-DirectoryForFile $outPath
+    $definition | Out-File -Encoding utf8 $outPath
+    $Checksums[$key] = $hash
+    Write-Host "    Updated $key"
   }
 }
 
@@ -372,14 +445,14 @@ foreach ($k in ($Checksums.Keys | Sort-Object)) {
 $NewJson = ($Ordered | ConvertTo-Json -Depth 3).Trim()
 
 if (-not (Test-Path $ChecksumFile) -or (Get-Content $ChecksumFile -Raw).Trim() -ne $NewJson) {
-  Ensure-DirectoryForFile $ChecksumFile
+  New-DirectoryForFile $ChecksumFile
   $NewJson | Out-File $ChecksumFile -Encoding utf8
   Write-Host "Checksum file updated"
 }
 
 # --- Remove schema objects that no longer exist in the DB -------------------
  
-foreach ($dir in @("tables", "constraints", "views", "routines")) {
+foreach ($dir in @("tables", "constraints", "views", "routines","triggers")) {
   $path = Join-Path $SchemaRoot $dir
   if (-not (Test-Path $path)) { continue }
 
