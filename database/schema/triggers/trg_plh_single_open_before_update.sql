@@ -1,2 +1,19 @@
-CREATE TRIGGER `trg_plh_single_open_before_update` BEFORE UPDATE ON `plantlocationhistory` FOR EACH ROW BEGIN\n    -- Only care if the updated row would be an active open row\n    IF NEW.isActive = 1 AND NEW.endDateTime IS NULL THEN\n        IF EXISTS (\n            SELECT 1\n            FROM orchids.plantlocationhistory\n            WHERE plantId = NEW.plantId\n              AND isActive = 1\n              AND endDateTime IS NULL\n              AND plantLocationHistoryId <> OLD.plantLocationHistoryId\n        ) THEN\n            SIGNAL SQLSTATE '45000'\n                SET MESSAGE_TEXT = 'Invariant violation: multiple open locations for plant';\n        END IF;\n    END
+DELIMITER //
+CREATE TRIGGER `trg_plh_single_open_before_update` BEFORE UPDATE ON `plantlocationhistory` FOR EACH ROW BEGIN
+    -- Only care if the updated row would be an active open row
+    IF NEW.isActive = 1 AND NEW.endDateTime IS NULL THEN
+        IF EXISTS (
+            SELECT 1
+            FROM orchids.plantlocationhistory
+            WHERE plantId = NEW.plantId
+              AND isActive = 1
+              AND endDateTime IS NULL
+              AND plantLocationHistoryId <> OLD.plantLocationHistoryId
+        ) THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'Invariant violation: multiple open locations for plant';
+        END IF;
+    END
+//
+DELIMITER ;
 
