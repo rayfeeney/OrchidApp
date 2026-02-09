@@ -9,7 +9,14 @@ builder.Services.AddRazorPages();
 builder.Services.AddDbContext<OrchidDbContext>(options =>
 {
     var connectionString = builder.Configuration.GetConnectionString("OrchidDb");
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new InvalidOperationException(
+                "Connection string 'OrchidDb' is missing.");
+        }
+    options.UseMySql(connectionString,new MySqlServerVersion(new Version(10, 6, 0))
+);
+
 });
 
 var app = builder.Build();
@@ -26,12 +33,12 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseStaticFiles();
+
 app.UseRouting();
 
 app.UseAuthorization();
 
-app.MapStaticAssets();
-app.MapRazorPages()
-   .WithStaticAssets();
+app.MapRazorPages();
 
 app.Run();
