@@ -34,12 +34,22 @@
     @if (Model.EventType == "Observation")
     {
         <div class="mb-3">
-            <label asp-for="EventDate" class="form-label"></label>
+            <label asp-for="EventDate" class="form-label">Observation date</label>
             <input asp-for="EventDate"
                    type="date"
                    class="form-control"
                    asp-format="{0:yyyy-MM-dd}" />
         </div>
+
+        @* Future: Observation eventCode *@
+        @*
+        <div class="mb-3">
+            <label asp-for="EventCode" class="form-label">Observation type</label>
+            <select asp-for="EventCode" class="form-select">
+                <option value="">-- select type --</option>
+            </select>
+        </div>
+        *@
 
         <div class="mb-3">
             <label asp-for="EventDetails" class="form-label">Notes</label>
@@ -79,7 +89,7 @@
         //</div>
 
         <div class="mb-3">
-            <label asp-for="EventDetails" class="form-label">Reason notes</label>
+            <label asp-for="EventDetails" class="form-label">Move reason</label>
             <textarea asp-for="EventDetails" class="form-control"></textarea>
         </div>
 
@@ -93,7 +103,7 @@
     @if (Model.EventType == "Flowering")
     {
         <div class="mb-3">
-            <label asp-for="StartDate" class="form-label"></label>
+            <label asp-for="StartDate" class="form-label">Start date</label>
             <input asp-for="StartDate"
                 type="date"
                 class="form-control" />
@@ -136,7 +146,7 @@
     @if (Model.EventType == "Repotting")
     {
         <div class="mb-3">
-            <label asp-for="EventDate" class="form-label">Repot date</label>
+            <label asp-for="EventDate" class="form-label">Repotting date</label>
             <input asp-for="EventDate"
                 type="date"
                 class="form-control" />
@@ -163,7 +173,7 @@
         </div>
 
         <div class="mb-3">
-            <label asp-for="RepotReasonNotes" class="form-label">Reason notes</label>
+            <label asp-for="RepotReasonNotes" class="form-label">Repotting reason</label>
             <textarea asp-for="RepotReasonNotes"
                     class="form-control"
                     rows="3"></textarea>

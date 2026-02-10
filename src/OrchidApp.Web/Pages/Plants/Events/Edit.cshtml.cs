@@ -84,13 +84,15 @@ public class EditModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string EventType { get; set; } = string.Empty;
 
-
     [BindProperty]
     public DateTime EventDate { get; set; }
 
     [BindProperty]
     public string? EventDetails { get; set; } // = string.Empty;
 
+    // Location change-specific fields
+    [BindProperty]
+    public string? PlantLocationNotes { get; set; }
 
     // Flowering-specific fields
 
@@ -148,7 +150,7 @@ public class EditModel : PageModel
                 using var cmd = conn.CreateCommand();
 
                 cmd.CommandText = @"
-                    SELECT startDateTime, moveReasonNotes
+                    SELECT startDateTime, moveReasonNotes, plantLocationNotes
                     FROM plantlocationhistory
                     WHERE plantLocationHistoryId = @id
                     AND isActive = 1";
@@ -167,9 +169,14 @@ public class EditModel : PageModel
                     return NotFound();
 
                 EventDate = reader.GetDateTime(0);
+
                 EventDetails = reader.IsDBNull(1)
                     ? string.Empty
                     : reader.GetString(1);
+
+                PlantLocationNotes = reader.IsDBNull(2)
+                    ? string.Empty
+                    : reader.GetString(2);
 
                 break;
             }
@@ -266,7 +273,9 @@ public class EditModel : PageModel
 
                     var pNotes = cmd.CreateParameter();
                     pNotes.ParameterName = "pPlantLocationNotes";
-                    pNotes.Value = DBNull.Value;
+                    pNotes.Value = string.IsNullOrWhiteSpace(PlantLocationNotes)
+                        ? DBNull.Value
+                        : PlantLocationNotes;
                     cmd.Parameters.Add(pNotes);
 
                     if (conn.State != ConnectionState.Open)
