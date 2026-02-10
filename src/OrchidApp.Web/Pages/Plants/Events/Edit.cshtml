@@ -14,7 +14,8 @@
 
 <h1>@ViewData["Title"]</h1>
 
-<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+<div asp-validation-summary="ModelOnly" 
+     class="text-danger mb-3"></div>
 
 @if (Model.PlantDisplayName != null)
 {
@@ -42,42 +43,81 @@
             })
         </label>
 
-        @if (Model.EventType == "LocationChange")
-        {
-            <input asp-for="EventDate"
-                type="datetime-local"
-                class="form-control"
-                asp-format="{0:yyyy-MM-ddTHH:mm}" />
-        }
-        else
-        {
+    @if (Model.EventType == "Observation")
+    {
+        <div class="mb-3">
+            <label asp-for="EventDate" class="form-label">Observed on</label>
             <input asp-for="EventDate"
                 type="date"
                 class="form-control"
                 asp-format="{0:yyyy-MM-dd}" />
-        }
-    </div>
+        </div>
 
-    <div class="mb-3">
-        <label asp-for="EventDetails" class="form-label">
-            @(Model.EventType == "LocationChange" ? "Reason / Notes" : "Notes")
-        </label>
-        <textarea asp-for="EventDetails"
-                  class="form-control"
-                  rows="4"></textarea>
-    </div>
+        @* Future: ObservationCode *@
+        @*
+        <div class="mb-3">
+            <label asp-for="EventCode" class="form-label">Observation type</label>
+            <select asp-for="EventCode" class="form-select"></select>
+        </div>
+        *@
+
+        <div class="mb-3">
+            <label asp-for="EventDetails" class="form-label">Notes</label>
+            <textarea asp-for="EventDetails"
+                    class="form-control"
+                    rows="4"></textarea>
+        </div>
+    }
+
+    @if (Model.EventType == "LocationChange")
+    {
+        <div class="mb-3">
+            <label asp-for="EventDate" class="form-label">Moved on</label>
+            <input asp-for="EventDate"
+                type="datetime-local"
+                class="form-control"
+                asp-format="{0:yyyy-MM-ddTHH:mm}" />
+        </div>
+
+        @* Future: MoveReasonCode *@
+        @*
+        <div class="mb-3">
+            <label asp-for="MoveReasonCode" class="form-label">Move reason</label>
+            <select asp-for="MoveReasonCode" class="form-select"></select>
+        </div>
+        *@
+
+        <div class="mb-3">
+            <label asp-for="EventDetails" class="form-label">Move reason (notes)</label>
+            <textarea asp-for="EventDetails"
+                    class="form-control"
+                    rows="3"></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="PlantLocationNotes" class="form-label">Location notes</label>
+            <textarea asp-for="PlantLocationNotes"
+                    class="form-control"
+                    rows="3"></textarea>
+        </div>
+    }
 
     @if (Model.EventType == "Flowering")
     {
+        <div class="mb-3">
+            <label asp-for="EventDate" class="form-label">Flowering started on</label>
+            <input asp-for="EventDate"
+                type="date"
+                class="form-control"
+                asp-format="{0:yyyy-MM-dd}" />
+        </div>
+
         <div class="mb-3">
             <label asp-for="EndDate" class="form-label">Flowering ended on</label>
             <input asp-for="EndDate"
                 type="date"
                 class="form-control"
                 asp-format="{0:yyyy-MM-dd}" />
-            <div class="form-text">
-                Leave blank if currently flowering.
-            </div>
         </div>
 
         <div class="mb-3">
@@ -92,6 +132,13 @@
             <input asp-for="FlowerCount"
                 type="number"
                 class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="EventDetails" class="form-label">Notes</label>
+            <textarea asp-for="EventDetails"
+                    class="form-control"
+                    rows="3"></textarea>
         </div>
     }
 

@@ -2,9 +2,14 @@
 @model OrchidApp.Web.Pages.Plants.Events.RemoveModel
 
 @{
-    ViewData["Title"] = Model.EventType == "LocationChange"
-        ? "Remove Location"
-        : "Remove Observation";
+    ViewData["Title"] = Model.EventType switch
+    {
+        "Observation"    => "Remove Observation Record",
+        "LocationChange" => "Remove Location Record",
+        "Flowering"      => "Remove Flowering Record",
+        "Repotting"      => "Remove Repotting Record",
+        _                => "Remove Event Record"
+    };
 }
 
 <h1>@ViewData["Title"]</h1>
@@ -12,14 +17,13 @@
 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
 <p class="text-muted">
-    You are about to remove the following 
-    @(Model.EventType == "LocationChange" ? "location record" : "observation").
+    You are about to remove the following.
 </p>
 
 <div class="border rounded p-3 mb-3">
     <strong>@Model.Event!.EventType</strong><br />
     <span class="text-muted">
-        @Model.Event.EventDateTime.ToString("yyyy-MM-dd")
+        @Model.Event.EventDateTime.ToString("dd/MM/yyyy")
     </span>
     <p class="mt-2">
         @Model.Event.EventSummary

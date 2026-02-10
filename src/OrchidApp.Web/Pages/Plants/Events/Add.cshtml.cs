@@ -83,6 +83,10 @@ public class AddModel : PageModel
     [BindProperty]
     public string? EventDetails { get; set; }
 
+    // Observation-specific properties
+    [BindProperty]
+    public string? EventCode { get; set; }
+
     // LocationChange specific properties
     [BindProperty]
     public int LocationId { get; set; }
@@ -102,9 +106,8 @@ public class AddModel : PageModel
     [BindProperty]
     public int? FlowerCount { get; set; }
 
-    // Not used for now
-    //[BindProperty]
-    //public string? MoveReasonCode { get; set; }
+    [BindProperty]
+    public string? MoveReasonCode { get; set; }
 
     [BindProperty]
     public string? PlantLocationNotes { get; set; }
@@ -176,6 +179,7 @@ public class AddModel : PageModel
                 {
                     PlantId = PlantId,
                     EventDateTime = EventDate,
+                    EventCode = string.IsNullOrWhiteSpace(EventCode) ? null : EventCode,
                     EventDetails = EventDetails,
                     IsActive = true
                 };
