@@ -79,3 +79,7 @@ body {
 .page-actions {
   margin-top: 1.5rem;
 }
+
+body.env-dev {
+    background-color: #fff6d6; /* soft pale amber */
+}
