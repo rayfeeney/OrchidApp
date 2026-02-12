@@ -5,15 +5,32 @@
     ViewData["Title"] = Model.PlantRequired.DisplayName;
 }
 
-<h1>@Model.PlantRequired.DisplayName</h1>
+<div class="row mb-3">
 
-<dl class="row">
-    <dt class="col-sm-3">Tag</dt>
-    <dd class="col-sm-9">@Model.PlantRequired.PlantTag</dd>
+    <!-- Left column: title + details -->
+    <div class="col-md-8">
+        <h1>@Model.PlantRequired.DisplayName</h1>
 
-    <dt class="col-sm-3">Location</dt>
-    <dd class="col-sm-9">@Model.PlantRequired.LocationName</dd>
-</dl>
+        <dl class="row">
+            <dt class="col-sm-3">Tag</dt>
+            <dd class="col-sm-9">@Model.PlantRequired.PlantTag</dd>
+
+            <dt class="col-sm-3">Location</dt>
+            <dd class="col-sm-9">@Model.PlantRequired.LocationName</dd>
+        </dl>
+    </div>
+
+    <!-- Right column: hero image -->
+    @if (!string.IsNullOrWhiteSpace(Model.HeroImagePath))
+    {
+        <div class="col-md-4 text-md-end">
+            <img src="~/@Model.HeroImagePath"
+                 class="img-fluid rounded shadow-sm"
+                 style="max-height:250px;" />
+        </div>
+    }
+
+</div>
 
 <h2>History</h2>
 

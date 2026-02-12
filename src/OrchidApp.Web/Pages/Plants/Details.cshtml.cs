@@ -21,6 +21,7 @@ public class DetailsModel : PageModel
     // Nullable backing property (truthful)
     public PlantCurrentLocation? Plant { get; private set; }
     public List<PlantLifecycleEvent> LifecycleEvents { get; private set; } = [];
+    public string? HeroImagePath { get; private set; }
 
 
     // Non-nullable wrapper for Razor (invariant)
@@ -31,6 +32,13 @@ public class DetailsModel : PageModel
     {
         Plant = _db.PlantCurrentLocations
                 .FirstOrDefault(p => p.PlantId == PlantId);
+
+        var heroPhoto = _db.PlantPhotos
+            .Where(p => p.PlantId == PlantId && p.IsHero && p.IsActive)
+            .Select(p => p.FilePath)
+            .FirstOrDefault();
+
+        HeroImagePath = heroPhoto;
 
         if (Plant == null)
         {

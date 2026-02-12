@@ -28,7 +28,7 @@
     </p>
 }
 
-<form method="post">
+<form method="post" enctype="multipart/form-data">
 
     @* Observation *@
     @if (Model.EventType == "Observation")
@@ -41,15 +41,13 @@
                    asp-format="{0:yyyy-MM-dd}" />
         </div>
 
-        @* Future: Observation eventCode *@
-        @*
         <div class="mb-3">
-            <label asp-for="EventCode" class="form-label">Observation type</label>
-            <select asp-for="EventCode" class="form-select">
-                <option value="">-- select type --</option>
-            </select>
+            <label class="form-label">Photos</label>
+            <input type="file"
+                name="UploadedFiles"
+                multiple
+                class="form-control" />
         </div>
-        *@
 
         <div class="mb-3">
             <label asp-for="EventDetails" class="form-label">Notes</label>
