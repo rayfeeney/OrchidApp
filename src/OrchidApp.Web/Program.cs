@@ -1,4 +1,5 @@
 using OrchidApp.Web.Data;
+using OrchidApp.Web.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,6 +19,9 @@ builder.Services.AddDbContext<OrchidDbContext>(options =>
 );
 
 });
+
+builder.Services.AddScoped<ObservationTypeResolver>();
+
 
 var app = builder.Build();
 

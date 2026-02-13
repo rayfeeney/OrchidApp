@@ -20,6 +20,8 @@ public class OrchidDbContext : DbContext
     public DbSet<Location> Location => Set<Location>();
     public DbSet<Flowering> Flowering => Set<Flowering>();
     public DbSet<Repotting> Repotting => Set<Repotting>();
+    public DbSet<PlantPhoto> PlantPhotos { get; set; }
+    public DbSet<ObservationType> ObservationTypes { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -123,14 +125,13 @@ public class OrchidDbContext : DbContext
 
             entity.Property(e => e.PlantEventId)            .HasColumnName("plantEventId");
             entity.Property(e => e.PlantId)                 .HasColumnName("plantId");
-            entity.Property(e => e.EventCode)               .HasColumnName("eventCode");
+            entity.Property(e => e.ObservationTypeId)       .HasColumnName("observationTypeId");
             entity.Property(e => e.EventDateTime)           .HasColumnName("eventDateTime");
             entity.Property(e => e.EventDetails)            .HasColumnName("eventDetails");
             entity.Property(e => e.IsActive)                .HasColumnName("isActive");
             entity.Property(e => e.UpdatedDateTime)         .HasColumnName("updatedDateTime");
-
         });
-
+        modelBuilder.Entity<PlantPhoto>()                   .ToTable("plantphoto");
         // =========================
         // Location table mapping
         // =========================
@@ -212,5 +213,9 @@ public class OrchidDbContext : DbContext
                                                             .ValueGeneratedOnAddOrUpdate();
         });
 
+        {
+            modelBuilder.Entity<ObservationType>()
+                .ToTable("observationtype");
+        }
         }
 }

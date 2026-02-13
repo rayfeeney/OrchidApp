@@ -8,6 +8,11 @@ using System.Linq;
 using System.Data;
 using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
+using OrchidApp.Web.Services;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Hosting;
+using System.IO;
+
 
 namespace OrchidApp.Web.Pages.Plants.Events;
 
@@ -60,10 +65,17 @@ namespace OrchidApp.Web.Pages.Plants.Events;
 public class AddModel : PageModel
 {
     private readonly OrchidDbContext _db;
+    private readonly ObservationTypeResolver _resolver;
+    private readonly IWebHostEnvironment _env;
 
-    public AddModel(OrchidDbContext db)
+    public AddModel(
+        OrchidDbContext db,
+        ObservationTypeResolver resolver,
+        IWebHostEnvironment env)
     {
         _db = db;
+        _resolver = resolver;
+        _env = env;
     }
 
     [FromRoute]
@@ -85,7 +97,11 @@ public class AddModel : PageModel
 
     // Observation-specific properties
     [BindProperty]
-    public string? EventCode { get; set; }
+    public int ObservationTypeId { get; set; }
+    [BindProperty]
+    public List<IFormFile>? UploadedFiles { get; set; }
+    public bool ShowPhotoSection { get; set; }
+
 
     // LocationChange specific properties
     [BindProperty]
@@ -163,9 +179,40 @@ public class AddModel : PageModel
         return Page();
     }
 
-    public IActionResult OnPost()
+    public async Task<IActionResult> OnPostAsync(string? quickAction)
     {
+        // Quick actions only apply to Observation events
+        if (!string.IsNullOrWhiteSpace(quickAction)
+            && EventType == "Observation")
+        {
+            EventDate = DateTime.Today;
+            ModelState.Remove(nameof(EventDate));
+
+            switch (quickAction)
+            {
+                case "photo":
+                    ShowPhotoSection = true;
+                    break;
+
+                case "feedGrowth":
+                    EventDetails = "Fed with growth food";
+                    ShowPhotoSection = false;
+                    ModelState.Remove(nameof(EventDetails));
+                    break;
+
+                case "feedBloom":
+                    EventDetails = "Fed with bloom food";
+                    ShowPhotoSection = false;
+                    ModelState.Remove(nameof(EventDetails));
+                    break;
+            }
+
+            LoadLookups();
+            return Page();
+        }
+
         if (!ModelState.IsValid)
+        
         {
             LoadLookups();
             return Page();
@@ -175,18 +222,68 @@ public class AddModel : PageModel
         switch (EventType)
         {
             case "Observation":
+
+                var hasPhotos = UploadedFiles != null && UploadedFiles.Any();
+                var typeCode = hasPhotos ? "OBS_PHOTO" : "OBS_NOTE";
+                var observationTypeId = await _resolver.GetIdAsync(typeCode);
+
                 var observation = new PlantEvent
                 {
                     PlantId = PlantId,
                     EventDateTime = EventDate,
-                    EventCode = string.IsNullOrWhiteSpace(EventCode) ? null : EventCode,
+                    ObservationTypeId = observationTypeId,
                     EventDetails = EventDetails,
                     IsActive = true
                 };
 
                 _db.PlantEvent.Add(observation);
-                _db.SaveChanges();
+                await _db.SaveChangesAsync();   // <-- SAVE FIRST
+
+                if (UploadedFiles != null && UploadedFiles.Any())
+                {
+                    var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "plants");
+                    var heroExists = _db.PlantPhotos
+                        .Any(p => p.PlantId == PlantId && p.IsHero && p.IsActive);
+
+                    foreach (var file in UploadedFiles)
+                    {
+                        if (file.Length > 0)
+                        {
+                            var uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+                            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                            using (var stream = new FileStream(filePath, FileMode.Create))
+                            {
+                                await file.CopyToAsync(stream);
+                            }
+
+                            var photo = new PlantPhoto
+                            {
+                                PlantEventId = observation.PlantEventId,
+                                PlantId = PlantId,
+                                FileName = file.FileName,
+                                FilePath = Path.Combine("uploads", "plants", uniqueFileName),
+                                MimeType = file.ContentType,
+                                IsHero = !heroExists,
+                                IsActive = true,
+                                CreatedDateTime = DateTime.Now
+                            };
+
+                            _db.PlantPhotos.Add(photo);
+
+                            // If we just assigned the first hero, prevent further ones
+                            if (!heroExists)
+                            {
+                                heroExists = true;
+                            }
+                        }
+                    }
+
+                    await _db.SaveChangesAsync();
+                }
+
                 break;
+
 
             case "LocationChange":
                 try

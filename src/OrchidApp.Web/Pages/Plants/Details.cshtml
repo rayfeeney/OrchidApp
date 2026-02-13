@@ -5,15 +5,38 @@
     ViewData["Title"] = Model.PlantRequired.DisplayName;
 }
 
-<h1>@Model.PlantRequired.DisplayName</h1>
+<div class="row mb-3">
 
-<dl class="row">
-    <dt class="col-sm-3">Tag</dt>
-    <dd class="col-sm-9">@Model.PlantRequired.PlantTag</dd>
+    <!-- Left column: title + details -->
+    <div class="col-12 col-md-8">
+        <h1>@Model.PlantRequired.DisplayName</h1>
 
-    <dt class="col-sm-3">Location</dt>
-    <dd class="col-sm-9">@Model.PlantRequired.LocationName</dd>
-</dl>
+        <dl class="row">
+            <dt class="col-4 col-sm-3">Tag</dt>
+            <dd class="col-8 col-sm-9">@Model.PlantRequired.PlantTag</dd>
+
+            <dt class="col-4 col-sm-3">Location</dt>
+            <dd class="col-8 col-sm-9">@Model.PlantRequired.LocationName</dd>
+        </dl>
+    </div>
+
+    <!-- Right column: hero image -->
+    @if (!string.IsNullOrWhiteSpace(Model.HeroImagePath))
+    {
+        <div class="col-12 col-md-4 mt-3 mt-md-0 text-md-end">
+            <a asp-page="/Plants/Photos/Index"
+               asp-route-plantId="@Model.PlantRequired.PlantId"
+               class="d-block w-100">
+
+                <img src="~/@Model.HeroImagePath"
+                     class="img-fluid rounded shadow-sm w-100"
+                     style="max-height:250px; object-fit:cover;" />
+            </a>
+        </div>
+    }
+
+</div>
+
 
 <h2>History</h2>
 
