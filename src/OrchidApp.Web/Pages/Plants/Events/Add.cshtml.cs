@@ -100,6 +100,8 @@ public class AddModel : PageModel
     public int ObservationTypeId { get; set; }
     [BindProperty]
     public List<IFormFile>? UploadedFiles { get; set; }
+    public bool ShowPhotoSection { get; set; }
+
 
     // LocationChange specific properties
     [BindProperty]
@@ -177,9 +179,40 @@ public class AddModel : PageModel
         return Page();
     }
 
-    public async Task<IActionResult> OnPostAsync()
+    public async Task<IActionResult> OnPostAsync(string? quickAction)
     {
+        // Quick actions only apply to Observation events
+        if (!string.IsNullOrWhiteSpace(quickAction)
+            && EventType == "Observation")
+        {
+            EventDate = DateTime.Today;
+            ModelState.Remove(nameof(EventDate));
+
+            switch (quickAction)
+            {
+                case "photo":
+                    ShowPhotoSection = true;
+                    break;
+
+                case "feedGrowth":
+                    EventDetails = "Fed with growth food";
+                    ShowPhotoSection = false;
+                    ModelState.Remove(nameof(EventDetails));
+                    break;
+
+                case "feedBloom":
+                    EventDetails = "Fed with bloom food";
+                    ShowPhotoSection = false;
+                    ModelState.Remove(nameof(EventDetails));
+                    break;
+            }
+
+            LoadLookups();
+            return Page();
+        }
+
         if (!ModelState.IsValid)
+        
         {
             LoadLookups();
             return Page();

@@ -33,6 +33,31 @@
     @* Observation *@
     @if (Model.EventType == "Observation")
     {
+            <div class="mb-3 d-grid gap-2">
+
+                <button type="submit"
+                        name="quickAction"
+                        value="photo"
+                        class="btn btn-outline-primary">
+                    📷 Add photo
+                </button>
+
+                <button type="submit"
+                        name="quickAction"
+                        value="feedGrowth"
+                        class="btn btn-outline-secondary">
+                    🌱 Feed (growth)
+                </button>
+
+                <button type="submit"
+                        name="quickAction"
+                        value="feedBloom"
+                        class="btn btn-outline-secondary">
+                    🌸 Feed (bloom)
+                </button>
+
+            </div>
+
         <div class="mb-3">
             <label asp-for="EventDate" class="form-label">Observation date</label>
             <input asp-for="EventDate"
@@ -41,13 +66,16 @@
                    asp-format="{0:yyyy-MM-dd}" />
         </div>
 
-        <div class="mb-3">
-            <label class="form-label">Photos</label>
-            <input type="file"
-                name="UploadedFiles"
-                multiple
-                class="form-control" />
-        </div>
+        @if (Model.ShowPhotoSection)
+        {
+            <div class="mb-3">
+                <label class="form-label">Photos</label>
+                <input type="file"
+                    name="UploadedFiles"
+                    multiple
+                    class="form-control" />
+            </div>
+        }
 
         <div class="mb-3">
             <label asp-for="EventDetails" class="form-label">Notes</label>
