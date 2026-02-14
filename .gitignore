@@ -20,6 +20,7 @@ Thumbs.db
 # =========================
 node_modules/
 dist/
+!src/OrchidApp.Web/wwwroot/lib/bootstrap/dist/
 build/
 
 # =========================
