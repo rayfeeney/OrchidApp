@@ -1,0 +1,58 @@
+@page "{id:int}"
+@model OrchidApp.Web.Pages.Setup.Taxa.Actions.EditModel
+
+<h1>Edit Taxon</h1>
+
+<form method="post" class="mt-3">
+
+    @if (!Model.Taxon.IsSystemManaged)
+    {
+        @if (!string.IsNullOrWhiteSpace(Model.Taxon.SpeciesName))
+        {
+            <div class="mb-3">
+                <label class="form-label">
+                    Species <small class="text-muted">(spelling correction only)</small>
+                </label>
+                <input asp-for="Taxon.SpeciesName" class="form-control" />
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Model.Taxon.HybridName))
+        {
+            <div class="mb-3">
+                <label class="form-label">
+                    Hybrid <small class="text-muted">(spelling correction only)</small>
+                </label>
+                <input asp-for="Taxon.HybridName" class="form-control" />
+            </div>
+        }
+    }
+
+    <div class="mb-3">
+        <label class="form-label">Growth Code</label>
+        <input asp-for="Taxon.GrowthCode" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Growth Notes</label>
+        <textarea asp-for="Taxon.GrowthNotes" class="form-control"></textarea>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Species/Hybrid notes</label>
+        <textarea asp-for="Taxon.TaxonNotes" class="form-control"></textarea>
+    </div>
+
+    <div class="d-grid gap-2 mt-4">
+        <button type="submit" class="btn btn-primary btn-lg">
+            Save
+        </button>
+
+        <a asp-page="/Setup/Taxa/Details"
+           asp-route-id="@Model.Taxon.TaxonId"
+           class="btn btn-outline-secondary btn-lg">
+            Cancel
+        </a>
+    </div>
+
+</form>

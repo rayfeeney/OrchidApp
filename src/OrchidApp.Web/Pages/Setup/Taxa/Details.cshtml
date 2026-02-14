@@ -1,11 +1,62 @@
 @page "{id:int}"
 @model OrchidApp.Web.Pages.Setup.Taxa.DetailsModel
 
-<h1>@Model.Taxon!.DisplayName</h1>
+<h1 class="d-flex align-items-center gap-2">
+    @Model.Taxon!.DisplayName
 
-@if (!string.IsNullOrWhiteSpace(Model.Taxon.TaxonNotes))
+    @if (!Model.Taxon.IsActive)
+    {
+        <span class="badge bg-secondary">
+            Inactive
+        </span>
+    }
+</h1>
+
+<dl class="row mt-3">
+
+    <dt class="col-sm-3">Genus</dt>
+    <dd class="col-sm-9">@Model.Taxon.GenusName</dd>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Taxon.SpeciesName))
+    {
+        <dt class="col-sm-3">Species</dt>
+        <dd class="col-sm-9">@Model.Taxon.SpeciesName</dd>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.Taxon.HybridName))
+    {
+        <dt class="col-sm-3">Hybrid</dt>
+        <dd class="col-sm-9">@Model.Taxon.HybridName</dd>
+    }
+
+    <dt class="col-sm-3">Growth Code</dt>
+    <dd class="col-sm-9">
+        @(string.IsNullOrWhiteSpace(Model.Taxon.GrowthCode) ? "—" : Model.Taxon.GrowthCode)
+    </dd>
+
+    <dt class="col-sm-3">Growth Notes</dt>
+    <dd class="col-sm-9">
+        @(string.IsNullOrWhiteSpace(Model.Taxon.GrowthNotes) ? "—" : Model.Taxon.GrowthNotes)
+    </dd>
+
+    <dt class="col-sm-3">Species/Hybrid notes</dt>
+    <dd class="col-sm-9">
+        @(string.IsNullOrWhiteSpace(Model.Taxon.TaxonNotes) ? "—" : Model.Taxon.TaxonNotes)
+    </dd>
+
+</dl>
+
+@if (Model.Taxon != null)
 {
-    <p>@Model.Taxon.TaxonNotes</p>
+    <div class="d-grid gap-2 mt-4">
+
+        <a asp-page="/Setup/Taxa/Actions/Edit"
+           asp-route-id="@Model.Taxon.TaxonId"
+           class="btn btn-primary btn-lg">
+            Edit
+        </a>
+
+    </div>
 }
 
 <div class="mt-4">
