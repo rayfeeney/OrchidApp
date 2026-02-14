@@ -8,10 +8,13 @@ CREATE PROCEDURE `spAddGenus`(
 BEGIN
     DECLARE vGenusName	VARCHAR(100);
     DECLARE vGenusNotes	TEXT;
-    -- Single handler for all SQL exceptions
+    
+    DECLARE v_errno INT;
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
-        IF MYSQL_ERRNO = 1062 THEN
+        GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO;
+
+        IF v_errno = 1062 THEN
             ROLLBACK;
             SIGNAL SQLSTATE '45000'
                 SET MESSAGE_TEXT = 'Genus already exists';
@@ -21,11 +24,11 @@ BEGIN
         END IF;
     END;
 
-    -- Defensive initialisation (after DECLAREs)
+    
     SET pGenusId = NULL;
     SET pGenusOnlyTaxonId = NULL;
 
-    -- Normalise genus details
+    
     SET vGenusName	= NULLIF(TRIM(pGenusName), '');
     SET vGenusNotes	= NULLIF(TRIM(pGenusNotes), '');
 
@@ -36,7 +39,7 @@ BEGIN
 
     START TRANSACTION;
 
-    -- Optional UX-friendly pre-check (still worth keeping)
+    
     IF EXISTS (
         SELECT 1
         FROM genus
@@ -66,7 +69,7 @@ BEGIN
         NULL,
         NULL,
         NULL,
-        1,  -- isSystemManaged
+        1,  
         pGenusOnlyTaxonId
     );
 

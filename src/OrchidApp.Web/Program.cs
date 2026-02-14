@@ -1,6 +1,8 @@
 using OrchidApp.Web.Data;
 using OrchidApp.Web.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Diagnostics;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
