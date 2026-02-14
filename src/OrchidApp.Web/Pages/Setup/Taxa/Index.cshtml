@@ -24,9 +24,17 @@ else
         @foreach (var taxon in genusGroup)
         {
             <a asp-page="/Setup/Taxa/Details"
-               asp-route-id="@taxon.TaxonId"
-               class="btn btn-outline-primary btn-lg text-start">
+            asp-route-id="@taxon.TaxonId"
+            class="btn btn-lg text-start @(taxon.IsActive ? "btn-outline-primary" : "btn-outline-secondary text-muted")">
+
                 @taxon.DisplayName
+
+                @if (!taxon.IsActive)
+                {
+                    <span class="badge bg-secondary ms-2">
+                        Inactive
+                    </span>
+                }
             </a>
         }
         </div>

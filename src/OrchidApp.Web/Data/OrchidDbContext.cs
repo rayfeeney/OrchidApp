@@ -12,6 +12,7 @@ public class OrchidDbContext : DbContext
 
     public DbSet<Genus> Genera => Set<Genus>();
     public DbSet<TaxonIdentity> TaxonIdentities => Set<TaxonIdentity>();
+    public DbSet<Taxon> Taxa => Set<Taxon>();
     public DbSet<Plant> Plants => Set<Plant>();
     public DbSet<PlantActiveSummary> PlantActiveSummaries => Set<PlantActiveSummary>();
     public DbSet<PlantCurrentLocation> PlantCurrentLocations => Set<PlantCurrentLocation>();
@@ -56,6 +57,9 @@ public class OrchidDbContext : DbContext
             entity.Property(e => e.DisplayName)             .HasColumnName("displayName");
             entity.Property(e => e.TaxonNotes)              .HasColumnName("taxonNotes");
             entity.Property(e => e.IsActive)                .HasColumnName("isActive");
+            entity.Property(e => e.GrowthCode)              .HasColumnName("growthCode");
+            entity.Property(e => e.GrowthNotes)             .HasColumnName("growthNotes");
+            entity.Property(e => e.IsSystemManaged)         .HasColumnName("isSystemManaged");
         });
 
         // =========================
@@ -76,6 +80,27 @@ public class OrchidDbContext : DbContext
             entity.Property(e => e.SpeciesName)             .HasColumnName("speciesName");
             entity.Property(e => e.HybridName)              .HasColumnName("hybridName");
             entity.Property(e => e.DisplayName)             .HasColumnName("displayName");
+        });
+
+        // =========================
+        // Taxon table mapping
+        // =========================
+        modelBuilder.Entity<Taxon>(entity =>
+        {
+            entity.ToTable("taxon");
+            entity.HasKey(e => e.TaxonId);
+
+            entity.Property(e => e.TaxonId)                 .HasColumnName("taxonId");
+            entity.Property(e => e.GenusId)                 .HasColumnName("genusId");
+            entity.Property(e => e.SpeciesName)             .HasColumnName("speciesName");
+            entity.Property(e => e.HybridName)              .HasColumnName("hybridName");
+            entity.Property(e => e.GrowthCode)              .HasColumnName("growthCode");
+            entity.Property(e => e.GrowthNotes)             .HasColumnName("growthNotes");
+            entity.Property(e => e.TaxonNotes)              .HasColumnName("taxonNotes");
+            entity.Property(e => e.IsActive)                .HasColumnName("isActive");
+            entity.Property(e => e.IsSystemManaged)         .HasColumnName("isSystemManaged");
+            entity.Property(e => e.CreatedDateTime)         .HasColumnName("createdDateTime");
+            entity.Property(e => e.UpdatedDateTime)         .HasColumnName("updatedDateTime");
         });
 
         // =========================

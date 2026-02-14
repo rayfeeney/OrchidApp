@@ -1,12 +1,38 @@
 @page "{id:int}"
 @model OrchidApp.Web.Pages.Setup.Genera.DetailsModel
 
-<h1>@Model.Genus!.Name</h1>
+<h1 class="d-flex align-items-center gap-2">
+    @Model.Genus!.Name
 
-@if (!string.IsNullOrWhiteSpace(Model.Genus.Notes))
-{
-    <p>@Model.Genus.Notes</p>
-}
+    @if (!Model.Genus.IsActive)
+    {
+        <span class="badge bg-secondary">
+            Inactive
+        </span>
+    }
+</h1>
+
+<dl class="row mt-3">
+
+    <dt class="col-sm-3">Genus</dt>
+    <dd class="col-sm-9">@Model.Genus.Name</dd>
+
+    <dt class="col-sm-3">Notes</dt>
+    <dd class="col-sm-9">
+        @(string.IsNullOrWhiteSpace(Model.Genus.Notes) ? "—" : Model.Genus.Notes)
+    </dd>
+
+</dl>
+
+<div class="d-grid gap-2 mt-4">
+
+    <a asp-page="/Setup/Genera/Actions/Edit"
+       asp-route-id="@Model.Genus!.GenusId"
+       class="btn btn-primary btn-lg">
+        Edit
+    </a>
+
+</div>
 
 <div class="mt-4">
     <a asp-page="/Setup/Genera/Index"
