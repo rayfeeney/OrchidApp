@@ -1,6 +1,4 @@
-DROP TABLE IF EXISTS `plantphoto`;
-
-CREATE TABLE `plantphoto` (
+CREATE TABLE IF NOT EXISTS `plantphoto` (
   `plantPhotoId` int NOT NULL AUTO_INCREMENT COMMENT 'Internal identifier for this plant photo record',
   `plantEventId` int NOT NULL COMMENT 'Observation event this photo is attached to',
   `plantId` int NOT NULL COMMENT 'Plant this photo belongs to (denormalised for direct access)',

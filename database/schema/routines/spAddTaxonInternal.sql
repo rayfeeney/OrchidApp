@@ -1,5 +1,5 @@
 DELIMITER //
-CREATE PROCEDURE `spAddTaxonInternal`(
+CREATE OR REPLACE PROCEDURE `spAddTaxonInternal`(
     IN  pGenusId            INT,
     IN  pSpeciesName        VARCHAR(100),
     IN  pHybridName         VARCHAR(150),

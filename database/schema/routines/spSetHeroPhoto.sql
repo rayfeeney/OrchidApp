@@ -1,5 +1,5 @@
 DELIMITER //
-CREATE PROCEDURE `spSetHeroPhoto`(
+CREATE OR REPLACE PROCEDURE `spSetHeroPhoto`(
     IN pPlantId INT,
     IN pPlantPhotoId INT
 )

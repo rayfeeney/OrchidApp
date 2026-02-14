@@ -1,6 +1,4 @@
-DROP TABLE IF EXISTS `flowering`;
-
-CREATE TABLE `flowering` (
+CREATE TABLE IF NOT EXISTS `flowering` (
   `floweringId` int NOT NULL AUTO_INCREMENT COMMENT 'Internal identifier for flowering record',
   `plantId` int NOT NULL COMMENT 'Plant that flowered',
   `startDate` date NOT NULL COMMENT 'Date flowering started',

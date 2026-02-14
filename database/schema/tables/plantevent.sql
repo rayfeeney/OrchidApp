@@ -1,6 +1,4 @@
-DROP TABLE IF EXISTS `plantevent`;
-
-CREATE TABLE `plantevent` (
+CREATE TABLE IF NOT EXISTS `plantevent` (
   `plantEventId` int NOT NULL AUTO_INCREMENT COMMENT 'Internal identifier for plant event',
   `plantId` int NOT NULL COMMENT 'Plant the event relates to',
   `eventDateTime` datetime NOT NULL COMMENT 'Date and time of event (local time)',

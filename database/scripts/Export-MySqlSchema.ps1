@@ -114,22 +114,36 @@ function Export-Object {
     "--skip-dump-date"
   )
 
-  if ($Type -ne "views") {
+    if ($Type -ne "views") {
     $mysqldumpArgs += "--skip-comments"
+  }
+
+  # Ensure table exports are non-destructive
+  if ($Type -eq "tables") {
+    $mysqldumpArgs += @(
+      "--skip-add-drop-table"
+    )
   }
 
   if ($DumpArgs) {
     $mysqldumpArgs += $DumpArgs
   }
 
+
   $mysqldumpArgs += @(
     $Database
     $Name
   )
 
-  $sql = & mysqldump @mysqldumpArgs 2>$null
+  $sql = & mysqldump @mysqldumpArgs
 
-  if (-not $sql) { return }
+  if ($LASTEXITCODE -ne 0) {
+      throw "mysqldump failed for $Type $Name"
+  }
+
+  if (-not $sql) {
+      throw "mysqldump returned empty output for $Type $Name"
+  }
 
   # Join output into single string
   $sql = ($sql -join "`n")
@@ -156,8 +170,8 @@ function Export-Object {
 
     $viewBody = $Matches[1]
 
-    # Reconstruct clean CREATE VIEW
-    $sql = "CREATE VIEW $viewBody;"
+    # Reconstruct clean CREATE OR REPLACE VIEW
+    $sql = "CREATE OR REPLACE VIEW $viewBody;"
 
     # Normalise whitespace
     $sql = $sql.Trim() + "`n"
@@ -171,6 +185,7 @@ function Export-Object {
 
     # Strip FOREIGN KEY constraints from table DDL
     if ($Type -eq "tables") {
+      $sql = $sql -replace 'CREATE TABLE `', 'CREATE TABLE IF NOT EXISTS `'
 
       $sql = $sql -replace '(?ms),?\s*CONSTRAINT\s+`[^`]+`\s+FOREIGN\s+KEY\s*\([^\)]*\)\s+REFERENCES\s+`[^`]+`\s*\([^\)]*\)(?:\s+ON\s+DELETE\s+\w+)?(?:\s+ON\s+UPDATE\s+\w+)?', ''
 
@@ -361,6 +376,9 @@ if (-not $m.Success) {
 # Extract from CREATE onward
 $definition = $result.Substring($m.Index)
 
+# Replace CREATE with CREATE OR REPLACE for idempotency
+$definition = $definition -replace '^(?i)CREATE\s+', 'CREATE OR REPLACE '
+
 # Trim anything after the final END (delimiter or charset may follow)
 $endMatch = [regex]::Match(
     $definition,
@@ -464,10 +482,18 @@ if (-not $finalEnd.Success) {
 $definition = $definition.Substring(0, $finalEnd.Index) + "END"
 
 # Normalise whitespace
-$definition = $definition.Trim() + "`n"
+$definition = $definition.Trim()
 
-# Wrap with DELIMITER
-$definition = "DELIMITER //`n$definition//`nDELIMITER ;`n"
+# Build idempotent trigger script
+$definition = @"
+DELIMITER //
+
+DROP TRIGGER IF EXISTS ``$name``//
+
+$definition//
+
+DELIMITER ;
+"@
 
   $key = "triggers/$name"
   $outPath = Join-Path $SchemaRoot "$key.sql"

@@ -1,6 +1,4 @@
-DROP TABLE IF EXISTS `observationtype`;
-
-CREATE TABLE `observationtype` (
+CREATE TABLE IF NOT EXISTS `observationtype` (
   `Id` int NOT NULL AUTO_INCREMENT,
   `typeCode` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,
   `displayName` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
