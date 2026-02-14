@@ -1,6 +1,4 @@
-DROP TABLE IF EXISTS `taxon`;
-
-CREATE TABLE `taxon` (
+CREATE TABLE IF NOT EXISTS `taxon` (
   `taxonId` int NOT NULL AUTO_INCREMENT COMMENT 'Internal identifier for species or hybrid',
   `genusId` int NOT NULL COMMENT 'Foreign key to genus.genusId (taxonomic genus)',
   `speciesName` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Species epithet (NULL for hybrids)',

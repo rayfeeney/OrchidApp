@@ -1,6 +1,4 @@
-DROP TABLE IF EXISTS `repotting`;
-
-CREATE TABLE `repotting` (
+CREATE TABLE IF NOT EXISTS `repotting` (
   `repottingId` int NOT NULL AUTO_INCREMENT COMMENT 'Internal identifier for repotting event',
   `plantId` int NOT NULL COMMENT 'Plant that was repotted',
   `repotDate` date NOT NULL COMMENT 'Date of repotting',

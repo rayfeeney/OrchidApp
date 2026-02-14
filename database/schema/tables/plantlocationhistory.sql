@@ -1,6 +1,4 @@
-DROP TABLE IF EXISTS `plantlocationhistory`;
-
-CREATE TABLE `plantlocationhistory` (
+CREATE TABLE IF NOT EXISTS `plantlocationhistory` (
   `plantLocationHistoryId` int NOT NULL AUTO_INCREMENT COMMENT 'Internal identifier for plant location history row',
   `plantId` int NOT NULL COMMENT 'Plant being moved',
   `locationId` int NOT NULL COMMENT 'Location plant is moved to',

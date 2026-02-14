@@ -1,6 +1,4 @@
-DROP TABLE IF EXISTS `genus`;
-
-CREATE TABLE `genus` (
+CREATE TABLE IF NOT EXISTS `genus` (
   `genusId` int NOT NULL AUTO_INCREMENT COMMENT 'Internal identifier for genus',
   `genusName` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Canonical genus name (e.g. Phalaenopsis)',
   `genusNotes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'General notes about this genus',

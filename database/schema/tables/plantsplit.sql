@@ -1,6 +1,4 @@
-DROP TABLE IF EXISTS `plantsplit`;
-
-CREATE TABLE `plantsplit` (
+CREATE TABLE IF NOT EXISTS `plantsplit` (
   `plantSplitId` int NOT NULL AUTO_INCREMENT COMMENT 'Internal identifier for plant split lineage record',
   `parentPlantId` int NOT NULL COMMENT 'Original plant that was split',
   `childPlantId` int NOT NULL COMMENT 'New plant created from the split',

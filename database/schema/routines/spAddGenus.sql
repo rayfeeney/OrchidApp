@@ -1,5 +1,5 @@
 DELIMITER //
-CREATE PROCEDURE `spAddGenus`(
+CREATE OR REPLACE PROCEDURE `spAddGenus`(
     IN  pGenusName           VARCHAR(100),
     IN	pGenusNotes			 TEXT,
     OUT pGenusId             INT,

@@ -1,5 +1,5 @@
 DELIMITER //
-CREATE PROCEDURE `spRemovePlantLocation`(
+CREATE OR REPLACE PROCEDURE `spRemovePlantLocation`(
     IN pPlantLocationHistoryId INT
 )
 BEGIN
