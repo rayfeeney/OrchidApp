@@ -19,7 +19,6 @@ public class IndexModel : PageModel
     public void OnGet()
     {
         Genera = _db.Genera
-                    .Where(g => g.IsActive)
                     .OrderBy(g => g.Name)
                     .ToList();
     }

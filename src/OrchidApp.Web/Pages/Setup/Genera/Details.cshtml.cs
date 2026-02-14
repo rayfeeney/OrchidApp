@@ -19,7 +19,7 @@ public class DetailsModel : PageModel
     public IActionResult OnGet(int id)
     {
         Genus = _db.Genera
-                .SingleOrDefault(g => g.GenusId == id && g.IsActive);
+                .SingleOrDefault(g => g.GenusId == id);
 
         if (Genus == null)
         {
