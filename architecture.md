@@ -1,135 +1,280 @@
 # Architecture
 
-This document describes the architectural philosophy and constraints of OrchidApp.
+This document defines the architectural contract of OrchidApp.
 
-It is not a how-to guide and does not describe implementation details.  
-Its purpose is to explain *why* the system is structured the way it is, and which boundaries are intentional and non-negotiable.
+It explains the structural boundaries, invariants, enforcement
+mechanisms, and operational guarantees that govern the system.
 
----
+This is not a how-to guide.\
+It is the non-negotiable design philosophy of the system.
 
-## Architectural overview
+------------------------------------------------------------------------
 
-OrchidApp is a web application built on top of a rigorously designed and enforced MySQL database schema.
+# Architectural Summary
 
-The architecture is deliberately layered:
+OrchidApp is a layered system built around a strict principle:
 
-- the **database layer** defines invariants, constraints, and lifecycle rules
-- the **web application layer** implements behaviour and workflows within those constraints
+> Invariants live in the database.\
+> Behaviour lives in the application.\
+> Enforcement lives in automation.
 
-The database is treated as the authoritative source of truth.  
-The application layer exists to *use* those rules, not reinterpret or weaken them.
+The architecture deliberately separates responsibility across four
+layers:
 
----
+1.  **Database Layer** --- structural integrity and lifecycle invariants
+2.  **Application Layer** --- behavioural workflows
+3.  **Automation Layer** --- reproducibility and validation
+4.  **Operations Layer** --- backup, restore, and deployment discipline
 
-## Database as an invariant core
+No layer may weaken another.
 
-The MySQL schema is the architectural foundation of the system.
+------------------------------------------------------------------------
+
+# 1. Database Layer --- Invariant Core
+
+The MariaDB schema is the authoritative source of truth.
 
 It is responsible for:
 
-- enforcing structural integrity
-- encoding lifecycle and identification rules
-- preventing invalid or contradictory states
-- guaranteeing reproducibility from committed artefacts alone
+-   Structural integrity
+-   Lifecycle enforcement
+-   Temporal adjacency rules
+-   Split and propagation semantics
+-   Preventing invalid state transitions
 
-These properties are not optional and are not delegated to application logic.
+The database is treated as source code.
 
-The schema is treated as **source code**, with automation ensuring that:
+It must be reproducible, deterministic, and resistant to drift.
 
-- every committed version can be rebuilt from scratch
-- drift between environments is detected immediately
-- local development and CI behave identically
+## Authoritative Environment
 
-Any architecture that relies on the application layer to “fix up” invalid data is considered incorrect.
+MariaDB running on Linux is the authoritative validator for:
 
----
+-   Identifier casing
+-   Collation behaviour
+-   Stored procedure parsing
+-   Trigger semantics
 
-## Generated artefacts and enforcement
+Windows MySQL behaviour must not be relied upon.
 
-Schema files committed to the repository are generated artefacts.
+------------------------------------------------------------------------
 
-They exist to:
+# 2. Migration System --- Controlled Evolution
 
-- make the schema versionable
-- enable deterministic rebuilds
-- act as inputs to validation and CI
+Schema evolution is controlled exclusively through deterministic
+migration files:
 
-They are not hand-authored and must never be edited manually.
+    database/migrations/
 
-Enforcement via pre-commit hooks and CI is a core architectural feature, not a convenience.  
-Bypassing enforcement invalidates the architecture.
+Each migration:
 
----
+-   Follows naming format `YYYYMMDDHHMM_Name.sql`
+-   Is applied exactly once
+-   Is recorded in the `schemaversion` table
+-   Has its SHA256 checksum stored and enforced
 
-## Web application as behavioural layer
+The migration system prevents:
 
-The web application layer sits on top of the database and is responsible for *behaviour*, not *authority*.
+-   Out-of-order execution
+-   Duplicate timestamps
+-   Silent historical modification
+-   Schema drift prior to execution
 
-Its responsibilities include:
+The production database must never be modified outside this system.
 
-- providing user-facing workflows
-- orchestrating valid interactions with the schema
-- presenting domain concepts without weakening constraints
-- making correct usage easier than incorrect usage
+------------------------------------------------------------------------
 
-The application must operate within the rules defined by the database.  
-It must not duplicate, bypass, or silently override those rules.
+# 3. Schema Export --- Deterministic Representation
 
----
+Schema files under:
 
-## Evolution and change
+    database/schema/
 
-Change is expected, but not everywhere equally.
+are generated artefacts.
 
-- The **database layer** evolves cautiously and deliberately. Changes here are structural and high-impact.
-- The **web application layer** is expected to evolve more rapidly as workflows and interfaces are refined.
+They:
 
-Schema changes should be driven by clearly identified application needs, not speculative design or convenience.
+-   Represent the assembled schema
+-   Are regenerated deterministically
+-   Must never be edited manually
+-   Are validated in CI
 
-Conversely, application complexity must not be pushed into the database to compensate for poor application design.
+Generated artefacts are inputs to validation, not authoring surfaces.
 
----
+------------------------------------------------------------------------
 
-## Technology choices
+# 4. Lifecycle Model --- Structural Rules
 
-Specific technologies, frameworks, or stacks for the web application are intentionally not mandated at this stage.
+A plant has a single immutable lifecycle:
 
-Architectural decisions should be guided by the same principles applied to the database:
+    startDateTime → endDateTime
 
-- explicit constraints
-- clear ownership of responsibility
-- resistance to accidental complexity
-- preference for correctness over convenience
+## Split Semantics
 
-The absence of an implementation today is an intentional state, not a gap in the architecture.
+-   A split ends the parent lifecycle
+-   Creates two or more new plants
+-   A plant may be split at most once
+-   Children are independent entities with new identities
 
----
+## Propagation Semantics
 
-## Write strategy
+-   Propagation creates a new plant
+-   Parent lifecycle continues unchanged
+-   A plant may have at most one propagation record
+-   Supports one or two parent plants
+-   Designed for future extensibility without breaking invariants
 
-- Atomic, independent entities (e.g. plantevent) may be written directly via EF Core.
-- Temporal or inter-row dependent entities (e.g. plantlocationhistory) must be written exclusively via stored procedures.
-- Triggers are permitted only to enforce absolute invariants, not to implement domain behaviour.
+## Location History
 
----
+-   Enforces strict temporal adjacency
+-   No overlaps permitted
+-   Structural updates must be performed via stored procedures
+-   UI must remain "dumb"; SQL enforces invariants
 
-## Non-goals
+These rules are enforced at the database level and are non-negotiable.
+
+------------------------------------------------------------------------
+
+# 5. Photo & Hero Image Model
+
+Photos are attached only via Observation events.
+
+Rules:
+
+-   Stored in `plantphoto`
+-   Each photo belongs to exactly one Observation
+-   Hero image selection is explicit (`isHero` flag)
+-   At most one active hero image per plant
+-   No automatic "latest photo" inference
+-   Heavy image browsing isolated to dedicated photo pages
+
+The database enforces ownership and uniqueness constraints. The
+application controls selection behaviour only within those constraints.
+
+------------------------------------------------------------------------
+
+# 6. Write Strategy --- Responsibility Separation
+
+## Atomic Entities
+
+Entities without cross-row invariants (e.g. `plantevent`) may be written
+via EF Core.
+
+## Structural / Temporal Entities
+
+Entities that enforce adjacency, lifecycle termination, or identity
+branching must:
+
+-   Be written exclusively via stored procedures
+-   Encapsulate invariant logic inside SQL
+-   Reject invalid transitions atomically
+
+Examples include:
+
+-   plantlocationhistory
+-   plantsplit
+-   propagation records
+
+Triggers may enforce absolute invariants, but must not implement domain
+behaviour.
+
+------------------------------------------------------------------------
+
+# 7. Application Layer --- Behavioural Orchestration
+
+The ASP.NET Core Razor Pages application:
+
+-   Orchestrates valid workflows
+-   Presents lifecycle and taxonomy concepts
+-   Invokes stored procedures for structural changes
+-   Uses EF Core for atomic writes
+-   Respects environment separation (Development vs Production)
+
+The application must not:
+
+-   Duplicate database constraints
+-   Override lifecycle rules
+-   Compensate for invalid state in application code
+
+Correctness is enforced at the data layer.
+
+------------------------------------------------------------------------
+
+# 8. Automation Layer --- Enforcement Mechanism
+
+Automation enforces architectural guarantees through:
+
+-   Pre-commit hooks
+-   Deterministic schema export
+-   Migration validation
+-   SHA256 checksum enforcement
+-   CI rebuild validation via Docker
+
+Local validation mirrors CI exactly.
+
+If validation fails locally, it will fail in CI.
+
+Automation is not optional. It is architectural enforcement.
+
+------------------------------------------------------------------------
+
+# 9. Operations Layer --- State Protection
+
+OrchidApp maintains two stateful components:
+
+-   MariaDB database (`orchids`)
+-   Uploads directory
+
+The system includes:
+
+-   Nightly encrypted database snapshots
+-   Encrypted uploads mirror
+-   14-day retention for database backups
+-   Quarterly restore validation requirement
+
+Application binaries are rebuilt from Git. Only database and uploads
+represent persistent state.
+
+Backups are only considered valid if restores succeed.
+
+------------------------------------------------------------------------
+
+# 10. Non-Goals
 
 This architecture does not aim to:
 
-- optimise for rapid prototyping
-- tolerate undocumented manual processes
-- allow application logic to override data correctness
-- prioritise developer convenience over reproducibility
+-   Optimise for rapid prototyping
+-   Tolerate undocumented manual processes
+-   Allow application logic to override data correctness
+-   Reduce enforcement for convenience
 
-If a workflow feels restrictive, that restriction is usually deliberate.
+Restrictions are intentional.
 
----
+------------------------------------------------------------------------
 
-## Summary
+# 11. Evolution Strategy
 
-The OrchidApp architecture is built around a simple but strict idea:
+Change is permitted, but not everywhere equally.
 
-> **Invariants live in the database. Behaviour lives in the application. Enforcement lives in automation.**
+-   Database layer changes are high impact and cautious.
+-   Application layer changes may evolve more rapidly.
+-   Migration discipline must never be weakened.
+-   Documentation must reflect operational reality.
 
-Everything else follows from that.
+Architecture is stable, but implementation may refine.
+
+------------------------------------------------------------------------
+
+# Final Principle
+
+OrchidApp is designed for:
+
+-   Determinism
+-   Invariant safety
+-   Operational resilience
+-   Long-term maintainability
+
+Correctness is preferred over convenience. Reproducibility is preferred
+over speed. Explicitness is preferred over ambiguity.
+
+------------------------------------------------------------------------
