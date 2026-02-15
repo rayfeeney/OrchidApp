@@ -1,241 +1,239 @@
 # OrchidApp
 
-OrchidApp is a learning and reference project for building a web application backed by a rigorously designed, validated, and version-controlled MySQL database schema.
+OrchidApp is a production-grade web application backed by a rigorously
+designed, migration-controlled, and operationally validated MariaDB
+database schema.
 
-The project deliberately treats the database schema as source code, with strict guarantees that:
+The system is deliberately opinionated. Invariants live in the database.
+Behaviour lives in the application. Enforcement lives in automation.
 
-- Every committed schema can be rebuilt from scratch
-- Schema drift is detected immediately
-- Local development and CI behave the same way
+------------------------------------------------------------------------
 
-This repository is intentionally opinionated and automation-heavy. The automation is the contract.
+## Production Status
 
-The web application layer is developed on top of this foundation and is the primary area of future work.
+-   ASP.NET Core Razor Pages (.NET LTS)
+-   EF Core for atomic entities
+-   Stored procedures for structural entities
+-   MariaDB (Linux) authoritative environment
+-   Deterministic migration system with checksum enforcement
+-   Automated nightly encrypted backups (database + uploads)
+-   Restore process validated
+-   Mobile-first UI design
 
----
+OrchidApp is deployed and operational on Raspberry Pi (Linux).
 
-## Database Layer (MySQL)
+------------------------------------------------------------------------
 
-### Core principles
+# Architecture Overview
 
-1. **The live database schema is the authoritative source**  
-   All schema changes are made in a database instance, not by editing SQL files.
+The system is layered intentionally:
 
-2. **Schema files are generated artefacts**  
-   Files under `database/schema/` are generated automatically and must never be edited manually.
+-   **Database layer** --- enforces invariants and lifecycle rules
+-   **Application layer** --- orchestrates valid workflows
+-   **Automation layer** --- enforces reproducibility and drift
+    detection
+-   **Operations layer** --- backup, restore, and deployment discipline
 
-3. **Git is the contract**  
-   Anything committed to Git must be sufficient to rebuild the schema from scratch.
+No layer may weaken the guarantees of another.
 
-4. **Local validation mirrors CI**  
-   What passes locally will pass in GitHub Actions, and vice versa.
+------------------------------------------------------------------------
 
----
+# Database Layer (MariaDB)
 
-### Mandatory setup (do this first)
+## Authoritative Environment
 
-After cloning the repository, you **must** run the setup script:
+MariaDB running on Linux is the authoritative validator for:
 
-```powershell
-pwsh scripts/setup.ps1
-```
+-   Identifier casing
+-   Collation behaviour
+-   Stored procedure parsing
 
-This step is not optional. It:
+Windows MySQL behaviour must not be relied upon.
 
-- verifies required tooling (PowerShell, Docker, MySQL client)
-- configures Git to use the repository’s custom hooks (`.githooks/`)
-- ensures schema validation runs automatically on every commit
+------------------------------------------------------------------------
 
-Commits made without running this setup are invalid and will fail CI.
+## Core Principles
 
----
+1.  The schema is treated as source code.
+2.  Every committed version can be rebuilt from scratch.
+3.  Drift between environments is detected automatically.
+4.  Structural invariants are enforced in the database, not the
+    application.
 
-### Prerequisites (required)
+------------------------------------------------------------------------
 
-The following applications and configuration are required to work on this repository. Commits and CI will fail if these requirements are not met.
+# Migration System
 
-#### Applications
+All structural schema changes are implemented via deterministic
+migration files:
 
-- **PowerShell 7 or later** (`pwsh`)
-- **Git**, with support for custom hooks via `core.hooksPath`
-- **Docker Desktop** (or equivalent Docker runtime). Docker must be running before committing or running local CI
-- **MySQL client tools**, compatible with the target MySQL major version
-- **VS Code**, general editor and Git integration
+    database/migrations/
 
-#### Configuration
+Each migration file:
 
-- Git must allow custom hooks (`core.hooksPath` is configured by `scripts/setup.ps1`)
-- PowerShell execution policy must allow local script execution
-- Docker must be available to the current user account
+-   Follows naming convention `YYYYMMDDHHMM_Name.sql`
+-   Is applied exactly once
+-   Is recorded in the `schemaversion` table
+-   Has its SHA256 checksum stored and enforced
 
-The setup script validates these prerequisites and will fail fast with clear errors if any are missing.
+The system prevents:
 
----
+-   Out-of-order migrations
+-   Duplicate timestamps
+-   Silent modification of historical migrations
+-   Schema drift prior to migration execution
 
-CI.
+Migrations are applied by piping directly into `mysql`, mirroring
+production behaviour.
 
----
+The production database must never be modified outside the migration
+system.
 
-### Repository structure (high level)
+------------------------------------------------------------------------
 
-- `database/schema/`  
-  Generated SQL fragments representing the current database schema. **Do not edit manually.**
+# Schema Export & Enforcement
 
-- `database/scripts/`  
-  PowerShell scripts that export and assemble the schema in a deterministic way.
+Schema files under:
 
-- `.githooks/pre-commit`  
-  Enforces schema export and validation during every commit.
+    database/schema/
 
-- `scripts/ci-local.ps1`  
-  Runs the same schema build validation locally that CI runs in GitHub Actions.
+are generated artefacts.
 
----
+They:
 
-### How schema changes work
+-   Represent the full assembled schema
+-   Must never be edited manually
+-   Are regenerated deterministically
+-   Are validated in CI
 
-1. Make schema changes directly in your local MySQL database
-2. Commit your changes as normal
-3. During commit, the pre‑commit hook will:
-   - export the schema from the database
-   - normalise and regenerate files under `database/schema/`
-   - stage any updated schema files automatically
-   - fail the commit if export or validation fails
+Pre-commit hooks enforce export and validation. Bypassing hooks is not
+permitted.
 
-The commit may modify files as part of this process. This is expected behaviour.
+------------------------------------------------------------------------
 
----
+# Lifecycle Model
 
-### Pre‑commit enforcement
+A plant has a single immutable lifecycle:
 
-The pre‑commit hook is a **hard gate**, not an advisory check.
+    startDateTime → endDateTime
 
-- It mutates and stages generated schema files
-- It prevents commits if schema export or validation fails
-- Bypassing it (for example using `--no-verify`) is not permitted
+Rules:
 
-Any commit that bypasses the hook will fail CI and be rejected.
+-   A split ends a lifecycle and creates new plants
+-   A plant may be split at most once
+-   Propagation creates new plants without ending the parent
+-   A plant may have at most one propagation record
+-   Location history enforces strict temporal adjacency
+-   Structural lifecycle changes are executed exclusively via stored
+    procedures
 
-### Database-only changes (important)
+These invariants are database-enforced and non-negotiable.
 
-If you have made schema changes **only in the database**, Git may report that there are no file changes to commit.
+------------------------------------------------------------------------
 
-This is expected.
+# Photo & Hero Image Model
 
-In this project, schema files are generated by the **pre-commit hook**, not edited manually.  
-Therefore, you must explicitly trigger a commit to allow the hook to run.
+-   Photos are attached only via Observation events
+-   Photos are stored in `plantphoto`
+-   Each photo belongs to exactly one Observation
+-   Hero image selection is explicit (`isHero` flag)
+-   At most one active hero image per plant
+-   No automatic "latest photo" inference
 
-#### Required procedure
+Heavy photo loading is isolated to dedicated pages.
 
-When you have database-only changes:
+------------------------------------------------------------------------
 
-1. Open **Git Bash** in the repository root
-2. Confirm you are on the correct branch:
+# Write Strategy
 
-   ```bash
-   git branch --show-current
-   ```
-3. Execute the command to manually commit:
+-   Atomic entities (e.g. `plantevent`) may be written via EF Core
+-   Temporal or structural entities (e.g. `plantlocationhistory`,
+    `plantsplit`, propagation) must be written via stored procedures
+-   Triggers may enforce absolute invariants but must not implement
+    domain behaviour
 
-   ```bash
-   git commit --allow-empty
-   ```
-4. When the editor opens:
+------------------------------------------------------------------------
 
-- Enter a clear commit summary
-- Optionally include a detailed description
+# Web Application Layer
 
-5. Save and exit the editor
+-   ASP.NET Core Razor Pages
+-   Mobile-first UI patterns
+-   Environment-based configuration (Development / Production)
+-   Stored procedures invoked where structural invariants are required
+-   Database treated as authoritative
 
-   The pre-commit hook will then:
+The application must not reinterpret or override database rules.
 
-   - Export the schema from the database
-   - Regenerate files under database/schema/
-   - Stage those files automatically
-   - Complete the commit with the generated artefacts included
+------------------------------------------------------------------------
 
-**Notes**
+# Operations
 
-   - Do not use --no-verify
-   - Do not manually edit generated files
+## Backups
 
-GitHub Desktop cannot perform this step; Git Bash is required
+Nightly automated backup system:
 
----
+-   MariaDB snapshot
+    (`mysqldump --single-transaction --routines --triggers`)
+-   gzip compression
+-   Encrypted via rclone crypt
+-   Uploaded to OneDrive
+-   14-day retention (database)
+-   Encrypted mirror for uploads folder
+-   Quarterly restore validation required
 
-### Local CI validation
+Backups are only considered valid if restore tests succeed.
 
-Before opening a pull request, you are expected to run:
+------------------------------------------------------------------------
 
-```powershell
-pwsh scripts/ci-local.ps1
-```
+## Restore Validation
 
-This script:
+After restore:
 
-- spins up a disposable MySQL instance using Docker
-- rebuilds the schema using only committed files
-- mirrors the GitHub Actions workflow exactly
+    SELECT scriptName FROM schemaversion ORDER BY appliedAt;
 
-If this script fails locally, CI will fail as well.
+Migration history must match repository state.
 
----
+Application binaries are rebuilt from Git. Only database and uploads are
+stateful.
 
-### Continuous integration
+------------------------------------------------------------------------
 
-GitHub Actions runs a schema build validation on every push and pull request.
+# Development Workflow
 
-CI does **not** use your development database. It validates that:
+After cloning:
 
-- the committed schema can be assembled
-- the schema can be built from scratch
-- no ordering or dependency issues exist
+    pwsh scripts/setup.ps1
 
-This ensures long‑term reproducibility and prevents schema drift.
+This configures tooling and installs enforced Git hooks.
 
----
+Local CI validation:
 
-## Web Application
+    pwsh scripts/ci-local.ps1
 
-OrchidApp is intended to be a web application backed by the MySQL database defined in this repository.
+If it fails locally, it will fail in CI.
 
-At present, development has deliberately focused on the database layer. The schema, constraints, and lifecycle rules are considered foundational and are treated as the primary source of truth. The web application layer is not yet implemented and should be considered an explicit gap rather than an omission.
+------------------------------------------------------------------------
 
-The role of the web application is to:
+# What This Project Is
 
-- Act as the primary interface to the database
-- Operate within the constraints enforced by the schema, not bypass them
-- Provide workflow-driven interaction rather than generic CRUD screens
-- Reflect the lifecycle and identification rules already modelled in the database
+-   A strict, reproducible, production-ready system
+-   A learning and reference implementation
+-   Designed for correctness over convenience
 
-The web application is expected to evolve on top of the existing schema. Schema changes should be driven by clearly identified application needs, not speculative UI design.
+# What This Project Is Not
 
-No specific web framework, language, or stack is currently mandated. This is intentional. Architectural decisions for the application layer should follow the same principles applied to the database: clarity of responsibility, explicit constraints, and resistance to accidental complexity.
+-   A rapid prototyping sandbox
+-   Tolerant of undocumented manual changes
+-   Flexible about bypassing enforcement
 
-Development of the web application is the primary area of future work in this project.
+------------------------------------------------------------------------
 
----
+# Architectural Principle
 
-### What this project is (and is not)
+> Invariants live in the database.\
+> Behaviour lives in the application.\
+> Enforcement lives in automation.
 
-This project is:
+Everything else follows from that.
 
-- a learning and reference implementation
-- deliberately strict by design
-- focused on correctness and reproducibility
-
-This project is not:
-
-- optimised for rapid prototyping
-- tolerant of undocumented manual steps
-- flexible about bypassing validation
-
----
-
-### Contributing
-
-Please read `CONTRIBUTING.md` before making changes. It explains the expected workflow, validation requirements and commit rules in detail.
-
----
-
-See `architecture.md for` the architectural philosophy behind these rules.
+------------------------------------------------------------------------

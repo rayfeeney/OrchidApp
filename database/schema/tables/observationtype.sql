@@ -7,10 +7,6 @@ CREATE TABLE IF NOT EXISTS `observationtype` (
   `isActive` tinyint(1) NOT NULL DEFAULT '1',
   `createdDateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updatedDateTime` datetime DEFAULT NULL,
-  `testColumn` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `secondTestColumn` int DEFAULT NULL,
-  `thirdTestColumn` int DEFAULT NULL,
-  `fourthTestColumn` int DEFAULT NULL,
   PRIMARY KEY (`Id`),
   UNIQUE KEY `ux_observationtype_typeCode` (`typeCode`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Defines subtypes of Observation records. System rows may drive application behaviour.';

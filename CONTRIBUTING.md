@@ -1,103 +1,220 @@
 # Contributing to OrchidApp
 
-This repository is deliberately strict. Automation and validation are not advisory; they are the contract.  
-Contributions that bypass enforced workflows will be rejected.
+OrchidApp is a production-grade system built on strict architectural
+guarantees.
 
-This project contains two closely related areas of development:
+Automation is not advisory. It is the contract.
 
-- a rigorously validated MySQL database schema, which is considered foundational and authoritative
-- a web application layer developed on top of that schema, which is the primary area of future work
+This document defines how contributions must be made in order to
+preserve:
 
-All contributions, regardless of area, are expected to follow the same principles of reproducibility, automation, and explicit constraints.
+-   Schema reproducibility
+-   Migration integrity
+-   Operational safety
+-   Lifecycle invariants
+-   Backup validity
+-   CI determinism
 
----
+If a change weakens any of these, it will be rejected.
 
-## General principles
+------------------------------------------------------------------------
 
-- The repository must remain reproducible from committed artefacts alone
-- Manual or undocumented steps are not acceptable
-- Local validation and CI must behave identically
-- Generated artefacts must never be edited by hand
-- If automation fails, the change is invalid
+# Core Principles
 
-If you are not comfortable working within these constraints, this project is not a good fit.
+All contributions must respect:
 
----
+1.  **Database invariants are authoritative**
+2.  **Migrations control structural change**
+3.  **Generated artefacts are never edited manually**
+4.  **Local validation must mirror CI**
+5.  **Production behaviour must be reproducible**
 
-## Mandatory setup
+------------------------------------------------------------------------
 
-Before making any changes, you **must** run the setup script:
+# Mandatory Setup
 
-```powershell
-pwsh scripts/setup.ps1
-```
+After cloning the repository, you must run:
 
-This configures required tooling and installs repository-specific Git hooks.
-Commits made without running this setup are invalid and will fail CI.
+    pwsh scripts/setup.ps1
 
-## Types of contributions
+This:
 
-### Database changes
+-   Verifies required tooling
+-   Installs enforced Git hooks
+-   Configures deterministic schema export
 
-The MySQL database schema is considered the primary source of truth.
+Commits made without running setup are invalid and will fail CI.
 
-All schema changes must:
+------------------------------------------------------------------------
 
-- be made directly in a database instance
-- rely on the pre-commit hook to export and normalise schema files
-- result in committed artefacts that can rebuild the schema from scratch
+# Types of Contributions
 
-Generated files under database/schema/ must never be edited manually.
+## 1. Database (Structural) Changes
 
-Bypassing the pre-commit hook (for example using --no-verify) is not permitted and will result in CI failure.
+Structural schema changes must:
 
-## Web application changes
+-   Be implemented via migration files in `database/migrations/`
+-   Follow naming format `YYYYMMDDHHMM_Name.sql`
+-   Never modify historical migrations
+-   Pass drift detection before application
 
-The web application is the primary consumer of the database schema and the main area of future development.
+Migrations are recorded in the `schemaversion` table with SHA256
+checksums. Checksum modification or timestamp duplication will fail
+validation.
 
-Web application contributions are expected to:
+Direct modification of the Production database is prohibited.
 
-- treat the database schema as authoritative
-- operate within existing constraints rather than bypassing them
-- avoid introducing undocumented manual steps
-- integrate cleanly with the existing repository structure and CI
+------------------------------------------------------------------------
 
-Web application code does not exempt a contributor from repository-wide rules around validation, commits, and reproducibility.
+## 2. Schema Export (Generated Artefacts)
 
-### Not permitted
+Files under:
 
-Web application contributions must not:
+    database/schema/
 
-- manually modify generated schema files
-- bypass database constraints in application logic
-- introduce schema changes without following the database workflow
-- assume application convenience overrides database correctness
+Are generated automatically.
 
-## Commits and validation
+They:
 
-This repository uses enforced pre-commit hooks and CI validation.
+-   Must never be edited manually
+-   Are regenerated during pre-commit
+-   Are validated in CI
 
-- Hooks may modify and stage files as part of a commit
-- Empty commits may be required to trigger schema export
-- GitHub Desktop is not sufficient for all workflows
+If you need to change the schema, create a migration --- do not edit
+generated SQL.
 
-If a commit passes locally, it must pass in CI.
-If it fails locally, do not push it.
+------------------------------------------------------------------------
 
-## Pull requests
+## 3. Lifecycle & Structural Writes
 
-When opening a pull request, clearly state whether your changes are:
+Certain domain entities enforce structural invariants and must be
+written exclusively via stored procedures.
 
-- database-focused
-- web application-focused
-- cross-cutting
+Examples include:
 
-This helps reviewers apply the correct context and level of scrutiny.
+-   plantlocationhistory
+-   plantsplit
+-   propagation records
 
-Pull requests that bypass validation, remove enforcement, or weaken guarantees will be rejected.
+EF Core must not bypass these invariants.
 
-## Final note
+Atomic entities (e.g. plantevent) may be written directly via EF Core.
 
-This project prioritises correctness, clarity, and long-term maintainability over speed or convenience.
+If uncertain, default to stored procedures.
 
-If something feels difficult, that is usually intentional.
+------------------------------------------------------------------------
+
+## 4. Web Application Changes
+
+The web application:
+
+-   Must treat the database as authoritative
+-   Must not reinterpret or override invariants
+-   Must not duplicate constraint logic already enforced in SQL
+-   Must respect environment separation (Development vs Production)
+
+Application convenience must never override data correctness.
+
+------------------------------------------------------------------------
+
+# Commits & Hooks
+
+This repository enforces pre-commit validation.
+
+The hook:
+
+-   Exports schema deterministically
+-   Stages regenerated artefacts
+-   Fails on validation errors
+
+Bypassing hooks (`--no-verify`) is not permitted.
+
+GitHub Desktop may not support all workflows. Git Bash is required for
+database-only commits.
+
+------------------------------------------------------------------------
+
+# Database-Only Changes
+
+If changes were made only in the database:
+
+    git commit --allow-empty
+
+This triggers schema export and staging via the pre-commit hook.
+
+Do not manually stage generated files.
+
+------------------------------------------------------------------------
+
+# Local CI Validation
+
+Before opening a pull request:
+
+    pwsh scripts/ci-local.ps1
+
+This spins up a disposable MariaDB instance via Docker and rebuilds the
+schema from committed artefacts only.
+
+If it fails locally, it will fail in CI.
+
+------------------------------------------------------------------------
+
+# Pull Requests
+
+Each PR must clearly state whether it is:
+
+-   Database-focused
+-   Web application-focused
+-   Cross-cutting
+-   Operational (backup / infrastructure)
+
+Structural changes require heightened scrutiny.
+
+Pull requests that weaken enforcement, reduce guarantees, or bypass
+invariants will be rejected.
+
+------------------------------------------------------------------------
+
+# Operational Awareness
+
+Changes that affect:
+
+-   Migrations
+-   Backup scripts
+-   Restore procedures
+-   Deployment behaviour
+
+Must include documentation updates.
+
+Backups are only valid if restores succeed. Restore discipline is part
+of architectural enforcement.
+
+------------------------------------------------------------------------
+
+# Not Permitted
+
+The following are explicitly disallowed:
+
+-   Editing generated schema files
+-   Modifying historical migrations
+-   Bypassing stored procedures for structural entities
+-   Introducing undocumented manual steps
+-   Applying schema changes directly in Production
+-   Weakening checksum or drift enforcement
+
+------------------------------------------------------------------------
+
+# Architectural Reminder
+
+OrchidApp is not optimised for speed of development.
+
+It is optimised for:
+
+-   Reproducibility
+-   Determinism
+-   Invariant safety
+-   Long-term maintainability
+
+If a workflow feels strict, that strictness is intentional.
+
+------------------------------------------------------------------------
