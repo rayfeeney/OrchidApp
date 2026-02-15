@@ -242,6 +242,10 @@ public class AddModel : PageModel
                 if (UploadedFiles != null && UploadedFiles.Any())
                 {
                     var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "plants");
+
+                    // Ensure directory exists (Linux-safe, idempotent)
+                    Directory.CreateDirectory(uploadsFolder);
+
                     var heroExists = _db.PlantPhotos
                         .Any(p => p.PlantId == PlantId && p.IsHero && p.IsActive);
 
