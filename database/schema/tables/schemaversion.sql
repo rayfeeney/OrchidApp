@@ -5,5 +5,5 @@ CREATE TABLE IF NOT EXISTS `schemaversion` (
   `appliedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`versionId`),
   UNIQUE KEY `uq_scriptName` (`scriptName`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
