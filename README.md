@@ -19,6 +19,7 @@ Behaviour lives in the application. Enforcement lives in automation.
 -   Automated nightly encrypted backups (database + uploads)
 -   Restore process validated
 -   Mobile-first UI design
+-   Deterministic deployment model (systemd + environment file)
 
 OrchidApp is deployed and operational on Raspberry Pi (Linux).
 
@@ -32,9 +33,25 @@ The system is layered intentionally:
 -   **Application layer** --- orchestrates valid workflows
 -   **Automation layer** --- enforces reproducibility and drift
     detection
--   **Operations layer** --- backup, restore, and deployment discipline
+-   **Operations layer** --- backup, restore and deployment discipline
 
 No layer may weaken the guarantees of another.
+
+------------------------------------------------------------------------
+
+# Environment Model
+
+  Environment   Platform       Configuration
+  ------------- -------------- ------------------------------------------
+  Development   Windows PC     `appsettings.Development.json`
+  Production    Raspberry Pi   systemd + `/etc/orchidapp/orchidapp.env`
+
+Production never depends on Development configuration.
+
+Secrets are never committed to Git.
+
+The production connection string is supplied via a systemd
+`EnvironmentFile`, not via JSON configuration.
 
 ------------------------------------------------------------------------
 
@@ -158,6 +175,7 @@ Heavy photo loading is isolated to dedicated pages.
 
 -   ASP.NET Core Razor Pages
 -   Mobile-first UI patterns
+-   Explicit startup validation for required configuration
 -   Environment-based configuration (Development / Production)
 -   Stored procedures invoked where structural invariants are required
 -   Database treated as authoritative
@@ -167,6 +185,23 @@ The application must not reinterpret or override database rules.
 ------------------------------------------------------------------------
 
 # Operations
+
+## Deployment
+
+Deployment is deterministic and consists only of:
+
+    git pull
+    dotnet publish -c Release -o ./publish
+    sudo systemctl restart orchidapp
+
+If additional manual steps are required, the deployment model is broken
+and must be corrected.
+
+Full installation and upgrade instructions are defined in:
+
+    docs/installation-upgrade.md
+
+------------------------------------------------------------------------
 
 ## Backups
 
@@ -235,5 +270,3 @@ If it fails locally, it will fail in CI.
 > Enforcement lives in automation.
 
 Everything else follows from that.
-
-------------------------------------------------------------------------

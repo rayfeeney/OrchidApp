@@ -15,7 +15,8 @@ builder.Services.AddDbContext<OrchidDbContext>(options =>
         if (string.IsNullOrWhiteSpace(connectionString))
         {
             throw new InvalidOperationException(
-                "Connection string 'OrchidDb' is missing.");
+                "Connection string 'OrchidDb' is not configured. " +
+                "Ensure Production provides it via environment configuration.");
         }
     options.UseMySql(connectionString,new MySqlServerVersion(new Version(10, 6, 0))
 );
