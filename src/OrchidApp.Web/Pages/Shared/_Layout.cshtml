@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - OrchidApp.Web</title>
+    <title>@ViewData["Title"] - OrchidApp</title>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -14,7 +14,7 @@
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container">
-                <a class="navbar-brand" asp-area="" asp-page="/Index">OrchidApp.Web</a>
+                <a class="navbar-brand" asp-area="" asp-page="/Index">OrchidApp</a>
                 <button class="navbar-toggler" type="button"
                         data-bs-toggle="collapse"
                         data-bs-target=".navbar-collapse"
@@ -33,9 +33,6 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-page="/Setup/Index">Setup</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-page="/Privacy">Privacy</a>
-                        </li>
                     </ul>
                 </div>
             </div>
@@ -49,8 +46,21 @@
     </div>
 
     <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - OrchidApp.Web - <a asp-page="/Privacy">Privacy</a>
+        <div class="container small text-center py-3">
+            <div>
+                &copy; @DateTime.UtcNow.Year Raymond Feeney
+            </div>
+            <div>
+                <a asp-page="/Privacy">Privacy</a>
+                ·
+                <a asp-page="/Legal/Licence">Licence (AGPL v3.0)</a>
+                ·
+                <a href="https://github.com/rayfeeney/OrchidApp" 
+                target="_blank" 
+                rel="noopener">
+                    Source Code
+                </a>
+            </div>
         </div>
     </footer>
 
