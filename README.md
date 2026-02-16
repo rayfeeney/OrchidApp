@@ -1,7 +1,7 @@
 # OrchidApp
 
 OrchidApp is a production-grade web application backed by a rigorously
-designed, migration-controlled, and operationally validated MariaDB
+designed, migration-controlled and operationally validated MariaDB
 database schema.
 
 The system is deliberately opinionated. Invariants live in the database.
