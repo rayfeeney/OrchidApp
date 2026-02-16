@@ -1,6 +1,9 @@
 # OrchidApp
 
-OrchidApp is a production-grade web application backed by a rigorously
+OrchidApp is a self-hosted web application for managing an orchid 
+collection with database-enforced lifecycle integrity. 
+
+It is a production-grade web application backed by a rigorously
 designed, migration-controlled and operationally validated MariaDB
 database schema.
 
