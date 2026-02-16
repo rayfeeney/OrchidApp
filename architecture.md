@@ -3,7 +3,7 @@
 This document defines the architectural contract of OrchidApp.
 
 It explains the structural boundaries, invariants, enforcement
-mechanisms, and operational guarantees that govern the system.
+mechanisms and operational guarantees that govern the system.
 
 This is not a how-to guide.\
 It is the non-negotiable design philosophy of the system.
@@ -24,7 +24,7 @@ layers:
 1.  **Database Layer** --- structural integrity and lifecycle invariants
 2.  **Application Layer** --- behavioural workflows
 3.  **Automation Layer** --- reproducibility and validation
-4.  **Operations Layer** --- backup, restore, and deployment discipline
+4.  **Operations Layer** --- backup, restore and deployment discipline
 
 No layer may weaken another.
 
@@ -44,7 +44,7 @@ It is responsible for:
 
 The database is treated as source code.
 
-It must be reproducible, deterministic, and resistant to drift.
+It must be reproducible, deterministic and resistant to drift.
 
 ## Authoritative Environment
 
