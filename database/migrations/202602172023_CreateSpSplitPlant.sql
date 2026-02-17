@@ -22,6 +22,8 @@ BEGIN
 
     DECLARE vChildCount INT DEFAULT 0;
 
+    DECLARE vErrorMessage VARCHAR(255);
+
     IF pSplitDateTime IS NULL THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'SplitDateTime is required';
     END IF;
@@ -89,14 +91,14 @@ BEGIN
 
         -- Reject duplicates within the request
         IF EXISTS (SELECT 1 FROM tmpSplitTags WHERE tag = vChildTag) THEN
-            SIGNAL SQLSTATE '45000'
-                SET MESSAGE_TEXT = CONCAT('Duplicate child tag in split request: ', vChildTag);
+                SET vErrorMessage = CONCAT('Duplicate child tag in split request: ', vChildTag);
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = vErrorMessage;
         END IF;
 
         -- Friendly early check (schema UNIQUE(plantTag) will enforce anyway)
         IF EXISTS (SELECT 1 FROM plant WHERE plantTag = vChildTag) THEN
-            SIGNAL SQLSTATE '45000'
-                SET MESSAGE_TEXT = CONCAT('Plant tag already exists: ', vChildTag);
+                SET vErrorMessage = CONCAT('Plant tag already exists: ', vChildTag);
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = vErrorMessage;
         END IF;
 
         INSERT INTO tmpSplitTags(tag) VALUES (vChildTag);
