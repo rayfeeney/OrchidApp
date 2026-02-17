@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS `plantsplit` (
   `splitDateTime` datetime NOT NULL COMMENT 'Date and time the split occurred',
   `updatedDateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last update timestamp (local time)',
   PRIMARY KEY (`plantSplitId`),
+  UNIQUE KEY `uxPlantSplit_parentPlantId` (`parentPlantId`),
   KEY `ixPlantSplitParent` (`parentPlantId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
