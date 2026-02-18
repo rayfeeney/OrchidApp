@@ -95,6 +95,7 @@ CREATE TABLE IF NOT EXISTS schemaversion (
 "@.Trim()
 
 & mysql `
+  --default-character-set=utf8mb4 `
   --protocol=TCP `
   --host=$MySqlHost `
   --port=$MySqlPort `
@@ -114,6 +115,7 @@ CREATE TABLE IF NOT EXISTS schemaversion (
     Write-Host "Reading applied migrations..."
 
     $appliedRows = & mysql `
+        --default-character-set=utf8mb4 `
         --protocol=TCP `
         --host=$MySqlHost `
         --port=$MySqlPort `
@@ -235,6 +237,7 @@ CREATE TABLE IF NOT EXISTS schemaversion (
 
             # Execute migration file via stdin (production-like behaviour)
             Get-Content $file.FullName -Raw | & mysql `
+                --default-character-set=utf8mb4 `
                 --protocol=TCP `
                 --host=$MySqlHost `
                 --port=$MySqlPort `
@@ -249,6 +252,7 @@ CREATE TABLE IF NOT EXISTS schemaversion (
             $insertSql = "INSERT INTO schemaversion (scriptName, checksum) VALUES ('$($file.Name)', '$hash');"
 
             & mysql `
+                --default-character-set=utf8mb4 `
                 --protocol=TCP `
                 --host=$MySqlHost `
                 --port=$MySqlPort `
