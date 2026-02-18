@@ -1,10 +1,14 @@
-DROP VIEW IF EXISTS orchids.vplantlifecyclehistory;
+USE orchids;
 
-CREATE OR REPLACE VIEW orchids.vplantlifecyclehistory AS
+DROP VIEW IF EXISTS vplantlifecyclehistory;
+
+CREATE OR REPLACE
+SQL SECURITY INVOKER
+VIEW vplantlifecyclehistory AS
 
 WITH plant_identity AS (
     SELECT p.plantId
-    FROM orchids.plant p
+    FROM plant p
     WHERE p.isActive = 1
 )
 
@@ -17,7 +21,7 @@ SELECT
     'plantevent' COLLATE utf8mb4_unicode_ci AS sourceTable,
     pe.plantEventId AS sourceId
 FROM plant_identity pi
-JOIN orchids.plantevent pe ON pe.plantId = pi.plantId
+JOIN plantevent pe ON pe.plantId = pi.plantId
 WHERE pe.isActive = 1
 
 UNION ALL
@@ -62,7 +66,7 @@ SELECT
     'repotting' COLLATE utf8mb4_unicode_ci AS sourceTable,
     r.repottingId AS sourceId
 FROM plant_identity pi
-JOIN orchids.repotting r ON r.plantId = pi.plantId
+JOIN repotting r ON r.plantId = pi.plantId
 WHERE r.isActive = 1
 
 UNION ALL
@@ -121,7 +125,7 @@ SELECT
     'flowering' COLLATE utf8mb4_unicode_ci AS sourceTable,
     f.floweringId AS sourceId
 FROM plant_identity pi
-JOIN orchids.flowering f ON f.plantId = pi.plantId
+JOIN flowering f ON f.plantId = pi.plantId
 WHERE f.isActive = 1
 
 UNION ALL
@@ -157,6 +161,6 @@ SELECT
     'plantlocationhistory' COLLATE utf8mb4_unicode_ci AS sourceTable,
     plh.plantLocationHistoryId AS sourceId
 FROM plant_identity pi
-JOIN orchids.plantlocationhistory plh ON plh.plantId = pi.plantId
-JOIN orchids.location l ON l.locationId = plh.locationId
+JOIN plantlocationhistory plh ON plh.plantId = pi.plantId
+JOIN location l ON l.locationId = plh.locationId
 WHERE plh.isActive = 1;
