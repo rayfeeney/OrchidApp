@@ -14,5 +14,5 @@ CREATE TABLE IF NOT EXISTS `location` (
   KEY `ixLocationTypeCode` (`locationTypeCode`),
   KEY `ixLocationIsActive` (`isActive`),
   CONSTRAINT `chkLocationIsActive` CHECK ((`isActive` in (0,1)))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Locations where plants may be kept over time.';
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Locations where plants may be kept over time.';
 
