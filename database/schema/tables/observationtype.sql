@@ -9,5 +9,5 @@ CREATE TABLE IF NOT EXISTS `observationtype` (
   `updatedDateTime` datetime DEFAULT NULL,
   PRIMARY KEY (`Id`),
   UNIQUE KEY `ux_observationtype_typeCode` (`typeCode`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Defines subtypes of Observation records. System rows may drive application behaviour.';
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Defines subtypes of Observation records. System rows may drive application behaviour.';
 
