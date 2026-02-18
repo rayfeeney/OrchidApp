@@ -8,5 +8,5 @@ CREATE TABLE IF NOT EXISTS `genus` (
   PRIMARY KEY (`genusId`),
   UNIQUE KEY `uqGenus_GenusName` (`genusName`),
   CONSTRAINT `chkGenusIsActive` CHECK ((`isActive` in (0,1)))
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Genus information for orchid species and hybrids.';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Genus information for orchid species and hybrids.';
 
