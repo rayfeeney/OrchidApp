@@ -1,4 +1,5 @@
 USE orchids;
+SELECT CURRENT_USER();
 
 DROP VIEW IF EXISTS vplantlifecyclehistory;
 
