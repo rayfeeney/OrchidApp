@@ -7,8 +7,9 @@ CREATE TABLE IF NOT EXISTS `plantsplit` (
   `createdDateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Record creation timestamp (local time)',
   `splitDateTime` datetime NOT NULL COMMENT 'Date and time the split occurred',
   `updatedDateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last update timestamp (local time)',
+  `isActive` tinyint(1) NOT NULL DEFAULT '1' COMMENT '1 = active record; 0 = logically removed (soft delete)',
   PRIMARY KEY (`plantSplitId`),
   UNIQUE KEY `uxPlantSplit_parentPlantId` (`parentPlantId`),
   KEY `ixPlantSplitParent` (`parentPlantId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

@@ -1,5 +1,10 @@
-DELIMITER //
-CREATE OR REPLACE PROCEDURE `spSplitPlant`(
+DROP PROCEDURE IF EXISTS spSplitPlant;
+
+DELIMITER $$
+
+CREATE
+DEFINER = CURRENT_USER
+PROCEDURE spSplitPlant (
     IN pParentPlantId INT,
     IN pSplitDateTime DATETIME,
     IN pChildPlantTagsCsv TEXT,
@@ -7,6 +12,7 @@ CREATE OR REPLACE PROCEDURE `spSplitPlant`(
     IN pSplitReasonNotes TEXT,
     IN pSplitNotes TEXT
 )
+SQL SECURITY DEFINER
 BEGIN
     DECLARE vTaxonId INT;
     DECLARE vParentStart DATETIME;
@@ -170,6 +176,7 @@ BEGIN
                 taxonId,
                 plantTag,
                 acquisitionDate,
+                acquisitionSource,
                 endDate,
                 isActive
             )
@@ -177,6 +184,7 @@ BEGIN
                 vTaxonId,
                 curTag,
                 pSplitDateTime,
+                'From a split of plant ID ' + CAST(pParentPlantId AS CHAR),
                 NULL,
                 1
             );
@@ -200,13 +208,13 @@ BEGIN
     END;
 
     UPDATE plant
-    SET endDate = pSplitDateTime
+    SET endDate = pSplitDateTime,
+        endNotes = CONCAT('Split into ', vChildCount, ' plants on ', DATE_FORMAT(pSplitDateTime, '%Y-%m-%d %H:%i:%s'))
     WHERE plantId = pParentPlantId;
 
     DROP TEMPORARY TABLE tmpSplitTags;
 
     COMMIT;
-END
-//
-DELIMITER ;
+END $$
 
+DELIMITER ;
