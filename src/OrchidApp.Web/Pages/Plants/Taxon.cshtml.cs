@@ -20,13 +20,13 @@ public class TaxonModel : PageModel
 
     public string DisplayName { get; private set; } = string.Empty;
 
-    public List<PlantCurrentLocation> Plants { get; private set; } = new();
+    public List<PlantActiveCurrentLocation> Plants { get; private set; } = new();
 
     public async Task OnGetAsync(int taxonId)
     {
         TaxonId = taxonId;
 
-        Plants = await _db.PlantCurrentLocations
+        Plants = await _db.PlantActiveCurrentLocations
             .Where(p => p.TaxonId == taxonId)
             .OrderBy(p => p.LocationName)
             .ThenBy(p => p.PlantTag)

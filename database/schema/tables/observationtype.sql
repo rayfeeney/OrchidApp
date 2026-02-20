@@ -1,8 +1,8 @@
 CREATE TABLE IF NOT EXISTS `observationtype` (
   `Id` int NOT NULL AUTO_INCREMENT,
-  `typeCode` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `displayName` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text COLLATE utf8mb4_unicode_ci,
+  `typeCode` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `displayName` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `isSystem` tinyint(1) NOT NULL DEFAULT '0',
   `isActive` tinyint(1) NOT NULL DEFAULT '1',
   `createdDateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,

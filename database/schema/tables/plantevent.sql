@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS `plantevent` (
   `plantEventId` int NOT NULL AUTO_INCREMENT COMMENT 'Internal identifier for plant event',
   `plantId` int NOT NULL COMMENT 'Plant the event relates to',
   `eventDateTime` datetime NOT NULL COMMENT 'Date and time of event (local time)',
-  `eventDetails` text COLLATE utf8mb4_unicode_ci COMMENT 'Free-text description of event',
+  `eventDetails` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Free-text description of event',
   `createdDateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Record creation timestamp (local time)',
   `isActive` tinyint NOT NULL DEFAULT '1' COMMENT 'Indicates whether this record is valid for use; inactive records represent superseded or erroneous entries retained for audit purposes',
   `updatedDateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last update timestamp (local time)',

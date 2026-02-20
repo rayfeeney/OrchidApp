@@ -1,0 +1,86 @@
+@page "{plantId:int}"
+@model OrchidApp.Web.Pages.Plants.Events.SplitModel
+
+<h2>Split plant</h2>
+
+<p>
+    You are about to split plant <strong>@Model.Plant?.PlantTag</strong>.
+</p>
+
+<p>
+    Splitting ends this plant. Its history 
+    will be available to view.
+    Two or more new plants will be created.
+    The original plant will no longer exist.
+</p>
+
+<div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+<form method="post">
+
+    <div class="mb-3">
+        <label asp-for="SplitDateTime" class="form-label">
+            Split date and time
+        </label>
+        <input asp-for="SplitDateTime"
+            type="datetime-local"
+            class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="SplitReasonNotes" class="form-label">
+            Reason for split (optional)
+        </label>
+        <textarea asp-for="SplitReasonNotes"
+                class="form-control"
+                rows="3">
+        </textarea>
+    </div>
+
+    <input type="hidden" asp-for="PlantId" />
+    <input type="hidden" asp-for="ChildCount" />
+
+    @for (int i = 0; i < Model.ChildCount; i++)
+    {
+        <div class="card mb-3 p-3">
+
+            <div class="mb-3">
+                <label asp-for="Children[i].PlantTag" class="form-label">
+                    Child @(@i + 1) Plant Tag
+                </label>
+                <input asp-for="Children[i].PlantTag"
+                       class="form-control" />
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Children[i].PlantName" class="form-label">
+                    Child @(@i + 1) Plant Name (optional)
+                </label>
+                <input asp-for="Children[i].PlantName"
+                       class="form-control" />
+            </div>
+
+        </div>
+    }
+
+    <div class="mb-4">
+        <button type="submit"
+                asp-page-handler="AddChild"
+                class="btn btn-outline-secondary w-100">
+            Add another child
+        </button>
+    </div>
+
+    <button type="submit"
+            asp-page-handler="Split"
+            class="btn btn-danger w-100">
+        Confirm split
+    </button>
+
+</form>
+
+<a asp-page="/Plants/Details"
+   asp-route-plantId="@Model.PlantId"
+   class="btn btn-outline-secondary">
+    Cancel
+</a>
