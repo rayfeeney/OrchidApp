@@ -74,11 +74,13 @@
     {
         <hr class="my-4" />
 
-        <a asp-page="/Plants/Events/Split"
-        asp-route-plantId="@Model.PlantRequired.PlantId"
-        class="btn btn-outline-secondary btn-lg w-100">
-            Split plant
-        </a>
+        <div class="mb-4">
+            <a asp-page="/Plants/Events/Split"
+            asp-route-plantId="@Model.PlantRequired.PlantId"
+            class="btn btn-outline-secondary btn-lg w-100">
+                Split plant
+            </a>
+        </div>
     }
 
 @if (!Model.LifecycleEvents.Any())
