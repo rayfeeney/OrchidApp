@@ -117,7 +117,7 @@ public class OrchidDbContext : DbContext
             entity.Property(e => e.PlantTag)                .HasColumnName("plantTag");
             entity.Property(e => e.PlantName)               .HasColumnName("plantName");
             entity.Property(e => e.DisplayName)             .HasColumnName("displayName");
-            entity.Property(e => e.EndDate)                 .HasColumnName("plantEendDate");
+            entity.Property(e => e.PlantEndDate)            .HasColumnName("plantEndDate");
             entity.Property(e => e.TaxonId)                 .HasColumnName("taxonId");
             entity.Property(e => e.LocationId)              .HasColumnName("locationId");
             entity.Property(e => e.LocationName)            .HasColumnName("locationName");

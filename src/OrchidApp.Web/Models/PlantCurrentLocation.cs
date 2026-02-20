@@ -7,7 +7,7 @@ public class PlantCurrentLocation
     public string? PlantTag { get; set; } = string.Empty;
     public string? PlantName { get; set; }
     public string DisplayName { get; set; } = string.Empty;
-    public DateTime? EndDate { get; set; }
+    public DateTime? PlantEndDate { get; set; }
 
 
     public int? LocationId { get; set; }
