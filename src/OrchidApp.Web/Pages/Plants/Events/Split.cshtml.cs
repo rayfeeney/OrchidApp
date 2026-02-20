@@ -2,6 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using OrchidApp.Web.Data;
 using OrchidApp.Web.Models;
+using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
+using MySqlConnector;
 
 namespace OrchidApp.Web.Pages.Plants.Events;
 
@@ -24,6 +27,14 @@ public class SplitModel : PageModel
 
     [BindProperty]
     public List<ChildInput> Children { get; set; } = new();
+
+    [BindProperty]
+    public DateTime SplitDateTime { get; set; }
+            = DateTime.Now.AddSeconds(-DateTime.Now.Second)
+                        .AddMilliseconds(-DateTime.Now.Millisecond);
+
+    [BindProperty]
+    public string? SplitReasonNotes { get; set; }
 
     public class ChildInput
     {
@@ -81,8 +92,23 @@ public class SplitModel : PageModel
         return Page();
     }
 
-    public IActionResult OnPostSplit()
+    public async Task<IActionResult> OnPostSplit()
     {
+        var parent = _db.PlantCurrentLocations
+            .FirstOrDefault(p => p.PlantId == PlantId);
+
+        if (parent == null || parent.PlantEndDate != null)
+        {
+            ModelState.AddModelError(string.Empty,
+                "This plant can no longer be split.");
+            EnsureChildListLength();
+            return Page();
+        }
+
+        SplitReasonNotes = string.IsNullOrWhiteSpace(SplitReasonNotes)
+            ? null
+            : SplitReasonNotes.Trim();
+
         // Ensure minimum rows
         if (ChildCount < 2)
             ChildCount = 2;
@@ -91,6 +117,12 @@ public class SplitModel : PageModel
         var filledChildren = Children
             .Where(c => !string.IsNullOrWhiteSpace(c.PlantTag))
             .ToList();
+
+        var tags = filledChildren
+            .Select(c => c.PlantTag!.Trim())
+            .ToList();
+
+        var csv = string.Join(",", tags);
 
         // Rule 1: At least two children
         if (filledChildren.Count < 2)
@@ -144,8 +176,38 @@ public class SplitModel : PageModel
             return Page();
         }
 
-        // If validation passes for now
-        return RedirectToPage("/Plants/Details", new { plantId = PlantId });
+        SplitReasonNotes = string.IsNullOrWhiteSpace(SplitReasonNotes)
+            ? null
+            : SplitReasonNotes.Trim();
+
+        try
+        {
+            var parameters = new[]
+            {
+                new MySqlParameter("@pParentPlantId", PlantId),
+                new MySqlParameter("@pSplitDateTime", SplitDateTime),
+                new MySqlParameter("@pChildPlantTagsCsv", csv),
+                new MySqlParameter("@pSplitReasonCode", DBNull.Value),
+                new MySqlParameter("@pSplitReasonNotes", (object?)SplitReasonNotes ?? DBNull.Value),
+                new MySqlParameter("@pSplitNotes", DBNull.Value)
+            };
+
+            await _db.Database.ExecuteSqlRawAsync(
+                "CALL spSplitPlant(@pParentPlantId, @pSplitDateTime, @pChildPlantTagsCsv, @pSplitReasonCode, @pSplitReasonNotes, @pSplitNotes);",
+                parameters
+            );
+
+            return RedirectToPage("/Plants/Index");
+        }
+        catch (Exception ex)
+        {
+            ModelState.AddModelError(string.Empty,
+                ex.GetBaseException().Message);
+
+            EnsureChildListLength();
+            return Page();
+        }
+
     }
 
 }

@@ -18,6 +18,25 @@
 
 <form method="post">
 
+    <div class="mb-3">
+        <label asp-for="SplitDateTime" class="form-label">
+            Split date and time
+        </label>
+        <input asp-for="SplitDateTime"
+            type="datetime-local"
+            class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="SplitReasonNotes" class="form-label">
+            Reason for split (optional)
+        </label>
+        <textarea asp-for="SplitReasonNotes"
+                class="form-control"
+                rows="3">
+        </textarea>
+    </div>
+
     <input type="hidden" asp-for="PlantId" />
     <input type="hidden" asp-for="ChildCount" />
 
