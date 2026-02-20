@@ -86,5 +86,5 @@ FROM (
 			)
 	)
 WHERE (`orchids`.`plant`.`isActive` = 1)
-    AND (`orchids`.`plant`.`endDate` IS NULL);
+      AND (`orchids`.`plant`.`endDate` IS NULL);
 
