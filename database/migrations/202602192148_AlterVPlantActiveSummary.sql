@@ -1,6 +1,6 @@
 USE orchids;
 
-DROP VIEW IF EXISTS vplantlifecyclehistory;
+DROP VIEW IF EXISTS vplantactivesummary;
 
 CREATE OR REPLACE
 SQL SECURITY INVOKER

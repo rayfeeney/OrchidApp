@@ -11,6 +11,7 @@ BEGIN
     DECLARE vTaxonId INT;
     DECLARE vParentStart DATETIME;
     DECLARE vParentEnd DATETIME;
+    DECLARE vParentPlantTag VARCHAR(100);
 
     DECLARE vSplitId INT;
 
@@ -29,12 +30,13 @@ BEGIN
 
     START TRANSACTION;
 
-    SELECT taxonId, startDateTime, endDateTime
-      INTO vTaxonId, vParentStart, vParentEnd
+    SELECT taxonId, plantTag, acquisitionDate, endDate
+    INTO vTaxonId, vParentPlantTag, vParentStart, vParentEnd
     FROM plant
     WHERE plantId = pParentPlantId
-      AND isActive = 1
+    AND isActive = 1
     FOR UPDATE;
+
 
     IF vTaxonId IS NULL THEN
         SIGNAL SQLSTATE '45000'
@@ -168,14 +170,16 @@ BEGIN
             INSERT INTO plant (
                 taxonId,
                 plantTag,
-                startDateTime,
-                endDateTime,
+                acquisitionDate,
+                acquisitionSource,
+                endDate,
                 isActive
             )
             VALUES (
                 vTaxonId,
                 curTag,
                 pSplitDateTime,
+                CONCAT('From split of ', vParentPlantTag),
                 NULL,
                 1
             );
@@ -199,7 +203,8 @@ BEGIN
     END;
 
     UPDATE plant
-    SET endDateTime = pSplitDateTime
+    SET endDate = pSplitDateTime,
+        endNotes = CONCAT('Split into ', vChildCount, ' plants on ', DATE_FORMAT(pSplitDateTime, '%Y-%m-%d %H:%i:%s'))
     WHERE plantId = pParentPlantId;
 
     DROP TEMPORARY TABLE tmpSplitTags;
