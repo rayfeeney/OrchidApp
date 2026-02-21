@@ -21,36 +21,67 @@ else
     <div class="card-list">
         @foreach (var plant in Model.Plants)
         {
-            <a class="plant-card"
-               asp-page="/Plants/Details"
-               asp-route-plantId="@plant.PlantId">
+            <div class="plant-card-wrapper">
 
-                <div class="plant-tag">@plant.PlantTag</div>
+                <!-- Main clickable card -->
+                <a class="plant-card"
+                asp-page="/Plants/Details"
+                asp-route-plantId="@plant.PlantId">
 
-                @if (!string.IsNullOrWhiteSpace(plant.PlantName))
-                {
-                    <div class="plant-name">@plant.PlantName</div>
-                }
+                    <div class="plant-main">
 
-                <div class="location-line">
-                    @plant.LocationName
-                </div>
+                        <!-- Hero thumbnail -->
+                        @if (!string.IsNullOrEmpty(plant.HeroFilePath))
+                        {
+                            <img src="@plant.HeroFilePath"
+                                class="plant-thumb"
+                                alt="Hero image" />
+                        }
+                        else
+                        {
+                            <div class="plant-thumb-placeholder"></div>
+                        }
 
-            <div class="since">
-                @if (plant.LocationStartDateTime.HasValue)
-                {
-                    <text>There since @plant.LocationStartDateTime.Value.ToString("dd/MM/yyyy")</text>
-                }
-                else
-                {
-                    <text>No location yet recorded</text>
-                }
+                        <div class="plant-text">
+
+                            <div class="plant-tag">@plant.PlantTag</div>
+
+                            @if (!string.IsNullOrWhiteSpace(plant.PlantName))
+                            {
+                                <div class="plant-name">@plant.PlantName</div>
+                            }
+
+                            <div class="location-line">
+                                @plant.LocationName
+                            </div>
+
+                            <div class="since">
+                                @if (plant.LocationStartDateTime.HasValue)
+                                {
+                                    <text>There since @plant.LocationStartDateTime.Value.ToString("dd/MM/yyyy")</text>
+                                }
+                                else
+                                {
+                                    <text>No location yet recorded</text>
+                                }
+                            </div>
+
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Edit action -->
+                <a class="plant-edit"
+                asp-page="/Plants/Edit"
+                asp-route-plantId="@plant.PlantId"
+                title="Edit plant">
+                    <i class="bi bi-pencil"></i>
+                </a>
+
             </div>
-
-            </a>
         }
-    </div>
-}
+            </div>
+        }
 
 <div class="mt-4">
     <a asp-page="/Plants/Index"

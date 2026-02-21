@@ -79,3 +79,59 @@ html {
 body.env-dev {
   background-color: #fff6d6;
 }
+
+/* Wrap card and edit icon side by side */
+.plant-card-wrapper {
+  display: flex;
+  align-items: stretch;
+}
+
+/* Allow the card to fill available width */
+.plant-card {
+  flex: 1 1 auto;   /* allow it to grow and shrink */
+  min-width: 0;     /* critical: prevents overflow pushing edit off-screen */
+}
+
+/* Layout inside the card */
+.plant-main {
+  display: flex;
+  align-items: center;
+}
+
+/* Hero thumbnail */
+.plant-thumb {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-right: 1rem;
+}
+
+/* Placeholder when no hero */
+.plant-thumb-placeholder {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.06);
+  margin-right: 1rem;
+}
+
+/* Text block expands */
+.plant-text {
+  flex: 1;
+}
+
+/* Edit icon container */
+.plant-edit {
+  flex: 0 0 auto;   /* do NOT let it stretch */
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+  color: #000;      /* temporarily darker for visibility */
+  text-decoration: none;
+}
+
+/* Pencil size */
+.plant-edit i {
+  font-size: 1.1rem;
+}
