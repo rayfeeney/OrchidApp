@@ -15,4 +15,5 @@ public class PlantActiveCurrentLocation
     public DateTime? LocationStartDateTime { get; set; }
 
     public string DisplayName { get; set; } = string.Empty;
+    public string? HeroFilePath { get; set; }
 }
