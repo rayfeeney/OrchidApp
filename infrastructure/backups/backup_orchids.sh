@@ -72,7 +72,7 @@ rclone delete "$REMOTE" --min-age "${RETENTION_DAYS}d" --include "*.sql.gz"
 log "Retention cleanup complete"
 
 # ---------- SYNC UPLOADS ----------
-UPLOADS_PATH="/opt/orchidapp/publish/wwwroot/uploads/plants"
+UPLOADS_PATH="/opt/orchidapp/uploads"
 
 log "Syncing uploads folder"
 rclone sync "$UPLOADS_PATH" orchiduploadscrypt:

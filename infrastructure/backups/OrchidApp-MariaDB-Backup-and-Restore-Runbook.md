@@ -2,7 +2,7 @@
 
 **System:** Raspberry Pi (PiForPiHole)\
 **Database:** MariaDB -- `orchids`\
-**Uploads Path:** `/opt/orchidapp/publish/wwwroot/uploads/plants`\
+**Uploads Path:** `Uploads Path: /opt/orchidapp/uploads`\
 **Cloud Target:** Personal OneDrive\
 **Encryption:** rclone `crypt` remotes\
 **Created:** 15 Feb 2026\
@@ -214,7 +214,7 @@ Cleanup:
 ```{=html}
 <!-- -->
 ```
-    rclone sync orchiduploadscrypt: /opt/orchidapp/publish/wwwroot/uploads/plants
+    rclone sync orchiduploadscrypt: /opt/orchidapp/uploads
 
 ------------------------------------------------------------------------
 
