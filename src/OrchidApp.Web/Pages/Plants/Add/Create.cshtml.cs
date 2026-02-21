@@ -37,7 +37,7 @@ public class CreateModel : PageModel
 
         [DataType(DataType.Date)]
         [Display(Name = "Acquired on")]
-        public DateOnly? AcquisitionDate { get; set; }
+        public DateTime? AcquisitionDate { get; set; }
 
         [StringLength(150)]
         [Display(Name = "Acquired from")]

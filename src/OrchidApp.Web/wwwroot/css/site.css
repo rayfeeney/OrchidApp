@@ -47,8 +47,7 @@ html {
   display: block;
   padding: 1rem;
   border: 1px solid rgba(0,0,0,0.15);
-  border-radius: 16px;
-  text-decoration: none;
+  border-radius: 16px 0 0 16px; /* keep your joined look */
   color: inherit;
 }
 
@@ -78,4 +77,122 @@ html {
 
 body.env-dev {
   background-color: #fff6d6;
+}
+
+/* --- Taxon page layout (card + thumbnail + edit) --- */
+
+.plant-card-wrapper {
+  display: flex;
+  align-items: stretch;
+  gap: 0.75rem; /* space between card and edit */
+}
+
+/* Card remains your existing visual style; this only controls flex sizing */
+.plant-card {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Inside the card */
+.plant-main {
+  display: flex;
+  align-items: center;
+}
+
+.plant-thumb,
+.plant-thumb-placeholder {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  object-fit: cover;
+  margin-right: 1rem;
+}
+
+.plant-thumb-placeholder {
+  background: rgba(0,0,0,0.06);
+}
+
+.plant-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Edit link on the right */
+.plant-edit {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+  text-decoration: none;
+  color: rgba(0,0,0,0.6);
+  font-size: 0.9rem;
+}
+
+/* Visually merge edit with card */
+.plant-card-wrapper {
+  gap: 0; /* remove space */
+}
+
+.plant-card {
+  border-radius: 16px 0 0 16px;
+}
+
+/* Make card + edit feel like one component */
+.plant-card-wrapper {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+/* Card takes the space */
+.plant-card {
+  flex: 1 1 auto;
+  min-width: 0;
+  border-radius: 16px 0 0 16px;
+}
+
+/* Edit zone attached, subtle */
+.plant-edit {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  padding: 0;
+
+  border: 1px solid rgba(0,0,0,0.15);   /* slightly lighter than card */
+  border-left: 0;
+  border-radius: 0 16px 16px 0;
+
+  background: transparent;              /* remove the “panel” feel */
+  color: rgba(0,0,0,0.55);
+  text-decoration: none;
+}
+
+.plant-edit:hover {
+  background: rgba(0,0,0,0.04);
+  color: rgba(0,0,0,0.75);
+}
+
+.plant-edit i {
+  font-size: 1.1rem;
+}
+
+.plant-thumb-link {
+  display: block;
+  margin-right: 1rem;
+  text-decoration: none;
+}
+
+.plant-text-link {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.plant-text-link:hover {
+  background: rgba(0,0,0,0.03);
+  border-radius: 12px;
 }
