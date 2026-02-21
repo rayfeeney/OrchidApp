@@ -9,13 +9,13 @@ public class Plant
     public string? PlantTag { get; set; }
     public string? PlantName { get; set; }
 
-    public DateOnly? AcquisitionDate { get; set; }
+    public DateTime? AcquisitionDate { get; set; }
     public string? AcquisitionSource { get; set; }
 
     public bool IsActive { get; set; }
 
     public string? EndReasonCode { get; set; }
-    public DateOnly? EndDate { get; set; }
+    public DateTime? EndDate { get; set; }
     public string? EndNotes { get; set; }
 
     public string? PlantNotes { get; set; }
