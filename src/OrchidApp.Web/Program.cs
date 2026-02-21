@@ -2,6 +2,7 @@ using OrchidApp.Web.Data;
 using OrchidApp.Web.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.Extensions.FileProviders;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -40,7 +41,21 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseStaticFiles();
+app.UseStaticFiles(); // always serve wwwroot (Dev + Prod)
+
+// In Production, also serve external uploads folder
+if (!app.Environment.IsDevelopment())
+{
+    var uploadsPath = Path.GetFullPath(
+        Path.Combine(app.Environment.ContentRootPath, "..", "uploads")
+    );
+
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(uploadsPath),
+        RequestPath = "/uploads"
+    });
+}
 
 app.UseRouting();
 
