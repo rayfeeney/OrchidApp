@@ -9,7 +9,7 @@ public class PlantCurrentLocation
     public string DisplayName { get; set; } = string.Empty;
     public DateTime? PlantEndDate { get; set; }
 
-
+    public string? HeroFilePath { get; set; }
     public int? LocationId { get; set; }
     public int? PlantLocationHistoryId { get; set; }
     public string? LocationName { get; set; } = string.Empty;
