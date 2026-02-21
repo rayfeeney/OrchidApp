@@ -10,7 +10,7 @@ set -Eeuo pipefail
 # ---------- CONFIGURATION ----------
 DB_NAME="orchids"
 BACKUP_DIR="/home/raymond-23/orchid_backups"
-LOG_FILE="/var/log/orchid_backup.log"
+LOG_FILE="/home/raymond-23/orchid_backup.log"
 REMOTE="orchidcrypt:"
 RETENTION_DAYS=14
 
