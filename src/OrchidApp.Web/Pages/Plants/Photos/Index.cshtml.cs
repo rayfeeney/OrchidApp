@@ -7,6 +7,9 @@ namespace OrchidApp.Web.Pages.Plants.Photos;
 
 public class IndexModel : PageModel
 {
+    [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
+
     private readonly OrchidDbContext _context;
 
     public IndexModel(OrchidDbContext context)
@@ -26,9 +29,30 @@ public class IndexModel : PageModel
     public int? PreviousPhotoId { get; private set; }
     public int? NextPhotoId { get; private set; }
 
+    public string PlantDisplayName { get; private set; } = string.Empty;
+    public string PlantTag { get; private set; } = string.Empty;
+    public string? LocationName { get; private set; }
+
     public async Task<IActionResult> OnGetAsync(int plantId)
     {
         PlantId = plantId;
+
+        var plant = await _context.PlantActiveCurrentLocations
+            .Where(p => p.PlantId == plantId)
+            .Select(p => new
+            {
+                DisplayName = p.DisplayName!,
+                PlantTag = p.PlantTag!,
+                p.LocationName
+            })
+            .FirstOrDefaultAsync();
+
+        if (plant == null)
+            return NotFound();
+
+        PlantDisplayName = plant.DisplayName;
+        PlantTag = plant.PlantTag;
+        LocationName = plant.LocationName;
 
         Photos = await _context.PlantPhotos
             .Where(p => p.PlantId == plantId && p.IsActive)
@@ -42,14 +66,16 @@ public class IndexModel : PageModel
             })
             .ToListAsync();
 
-        if (Photos.Count == 0)
-        {
-            return RedirectToPage("/Plants/Details", new { id = plantId });
-        }
-
-        FocusPhoto = FocusPhotoId.HasValue
-            ? Photos.FirstOrDefault(p => p.PlantPhotoId == FocusPhotoId.Value)
-            : Photos.FirstOrDefault(p => p.IsHero) ?? Photos.First();
+            if (Photos.Any())
+            {
+                FocusPhoto = FocusPhotoId.HasValue
+                    ? Photos.FirstOrDefault(p => p.PlantPhotoId == FocusPhotoId.Value)
+                    : Photos.FirstOrDefault(p => p.IsHero) ?? Photos.First();
+            }
+            else
+            {
+                FocusPhoto = null;
+            }
 
         // Work out previous/next based on the current ordering of Photos
         var focusIndex = Photos.FindIndex(p => p.PlantPhotoId == FocusPhoto?.PlantPhotoId);

@@ -33,13 +33,9 @@
 <form method="post">
     <input type="hidden" asp-for="EventType" />
     
-    <button type="submit" class="btn btn-danger">
-        Confirm Remove
-    </button>
-
-    <a asp-page="/Plants/Details"
-       asp-route-plantId="@Model.PlantId"
-       class="btn btn-secondary">
-        Cancel
-    </a>
+<partial name="_FormActionsDanger"
+         model="@(Model.ReturnUrl 
+                  ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }),
+                  "Confirm remove")" />
+                  
 </form>

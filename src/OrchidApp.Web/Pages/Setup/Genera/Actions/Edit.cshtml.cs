@@ -7,6 +7,9 @@ namespace OrchidApp.Web.Pages.Setup.Genera.Actions;
 
 public class EditModel : PageModel
 {
+    [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
+
     private readonly OrchidDbContext _db;
 
     public EditModel(OrchidDbContext db)

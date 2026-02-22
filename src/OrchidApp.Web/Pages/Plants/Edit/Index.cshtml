@@ -17,60 +17,64 @@
 
     <input type="hidden" asp-for="PlantId" />
 
-    <div class="form-floating mb-3">
+    <div class="mb-3">
+        <label asp-for="TaxonId" class="form-label">Species / hybrid</label>
         <select asp-for="TaxonId"
                 asp-items="Model.TaxonOptions"
                 class="form-select"></select>
-        <label asp-for="TaxonId">Species / hybrid</label>
     </div>
 
-    <div class="form-floating mb-3">
+    <div class="mb-3">
+        <label asp-for="PlantTag" class="form-label"></label>
         <input asp-for="PlantTag" class="form-control" />
-        <label asp-for="PlantTag">Plant tag</label>
         <span asp-validation-for="PlantTag" class="text-danger"></span>
     </div>
 
-    <div class="form-floating mb-3">
+    <div class="mb-3">
+        <label asp-for="PlantName" class="form-label"></label>
         <input asp-for="PlantName" class="form-control" />
-        <label asp-for="PlantName">Plant name</label>
         <span asp-validation-for="PlantName" class="text-danger"></span>
     </div>
 
-    <div class="form-floating mb-3">
-        <input asp-for="AcquisitionDate" type="datetime-local" class="form-control" />
-        <label asp-for="AcquisitionDate">Acquisition date</label>
+    <div class="mb-3">
+        <label asp-for="AcquisitionDate" class="form-label"></label>
+        <input asp-for="AcquisitionDate"
+               type="datetime-local"
+               class="form-control" />
         <span asp-validation-for="AcquisitionDate" class="text-danger"></span>
     </div>
 
-    <div class="form-floating mb-3">
+    <div class="mb-3">
+        <label asp-for="AcquisitionSource" class="form-label"></label>
         <input asp-for="AcquisitionSource" class="form-control" />
-        <label asp-for="AcquisitionSource">Acquisition source</label>
         <span asp-validation-for="AcquisitionSource" class="text-danger"></span>
     </div>
 
-    <div class="form-floating mb-3">
-        <input asp-for="EndDate" type="datetime-local" class="form-control" />
-        <label asp-for="EndDate">End date</label>
+    <div class="mb-3">
+        <label asp-for="EndDate" class="form-label"></label>
+        <input asp-for="EndDate"
+               type="datetime-local"
+               class="form-control" />
         <span asp-validation-for="EndDate" class="text-danger"></span>
     </div>
 
-    <div class="form-floating mb-3">
-        <textarea asp-for="EndNotes" class="form-control" style="height: 120px"></textarea>
-        <label asp-for="EndNotes">End notes</label>
+    <div class="mb-3">
+        <label asp-for="EndNotes" class="form-label"></label>
+        <textarea asp-for="EndNotes"
+                  class="form-control"
+                  rows="4"></textarea>
         <span asp-validation-for="EndNotes" class="text-danger"></span>
     </div>
 
-    <div class="form-floating mb-3">
-        <textarea asp-for="PlantNotes" class="form-control" style="height: 160px"></textarea>
-        <label asp-for="PlantNotes">Plant notes</label>
+    <div class="mb-3">
+        <label asp-for="PlantNotes" class="form-label"></label>
+        <textarea asp-for="PlantNotes"
+                  class="form-control"
+                  rows="5"></textarea>
         <span asp-validation-for="PlantNotes" class="text-danger"></span>
     </div>
 
-    <div class="d-flex gap-2 mt-4">
-        <button type="submit" class="btn btn-primary">Save</button>
-        <a class="btn btn-outline-secondary"
-           asp-page="/Plants/Details"
-           asp-route-plantId="@Model.PlantId">Cancel</a>
-    </div>
+    <partial name="_FormActions"
+             model="@(Model.ReturnUrl ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }), "Save")" />
 
 </form>

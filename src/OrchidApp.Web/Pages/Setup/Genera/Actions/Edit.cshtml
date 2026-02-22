@@ -17,16 +17,7 @@
         <textarea asp-for="Genus.Notes" class="form-control"></textarea>
     </div>
 
-    <div class="d-grid gap-2 mt-4">
-        <button type="submit" class="btn btn-primary btn-lg">
-            Save
-        </button>
-
-        <a asp-page="/Setup/Genera/Details"
-           asp-route-id="@Model.Genus.GenusId"
-           class="btn btn-outline-secondary btn-lg">
-            Cancel
-        </a>
-    </div>
+    <partial name="_FormActions"
+             model="@((Model.ReturnUrl ?? Url.Page("/Setup/Genera/Details", new { id = Model.Genus.GenusId }), "Save"))" />
 
 </form>

@@ -43,16 +43,7 @@
         <textarea asp-for="Taxon.TaxonNotes" class="form-control"></textarea>
     </div>
 
-    <div class="d-grid gap-2 mt-4">
-        <button type="submit" class="btn btn-primary btn-lg">
-            Save
-        </button>
-
-        <a asp-page="/Setup/Taxa/Details"
-           asp-route-id="@Model.Taxon.TaxonId"
-           class="btn btn-outline-secondary btn-lg">
-            Cancel
-        </a>
-    </div>
+    <partial name="_FormActions"
+             model="@((Model.ReturnUrl ?? Url.Page("/Setup/Taxa/Details", new { id = Model.Taxon.TaxonId }), "Save"))" />
 
 </form>

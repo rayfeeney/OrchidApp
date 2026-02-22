@@ -7,6 +7,9 @@ namespace OrchidApp.Web.Pages.Setup.Taxa.Actions;
 
 public class RemoveModel : PageModel
 {
+    [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
+
     private readonly OrchidDbContext _db;
 
     public RemoveModel(OrchidDbContext db)
@@ -38,6 +41,9 @@ public class RemoveModel : PageModel
 
         _db.SaveChanges();
 
-        return RedirectToPage("/Setup/Taxa/Details", new { id = id });
+        if (!string.IsNullOrWhiteSpace(ReturnUrl))
+            return LocalRedirect(ReturnUrl);
+
+        return RedirectToPage("/Setup/Taxa/Details", new { id });
     }
 }

@@ -42,15 +42,7 @@
         <textarea class="form-control" asp-for="TaxonNotes"></textarea>
     </div>
 
-    <div class="d-grid gap-2">
-        <button type="submit" class="btn btn-lg btn-primary">
-            Add species/hybrid
-        </button>
-
-        <a asp-page="/Setup/Taxa/Index"
-           class="btn btn-lg btn-outline-secondary">
-            Cancel
-        </a>
-    </div>
+    <partial name="_FormActions"
+             model="@((Model.ReturnUrl ?? Url.Page("/Setup/Taxa/Index"), "Add species/hybrid"))" />
 
 </form>

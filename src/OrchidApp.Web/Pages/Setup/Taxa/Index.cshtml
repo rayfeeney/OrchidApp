@@ -5,6 +5,7 @@
 
 <div class="d-grid gap-2 mb-4">
     <a asp-page="/Setup/Taxa/Actions/Add"
+    asp-route-returnUrl="@(Request.Path + Request.QueryString)"
        class="btn btn-lg btn-primary">
         Add species/hybrid
     </a>
@@ -25,6 +26,7 @@ else
         {
             <a asp-page="/Setup/Taxa/Details"
             asp-route-id="@taxon.TaxonId"
+            asp-route-returnUrl="@(Request.Path + Request.QueryString)"
             class="btn btn-lg text-start @(taxon.IsActive ? "btn-outline-primary" : "btn-outline-secondary text-muted")">
 
                 @taxon.DisplayName
@@ -41,9 +43,5 @@ else
     }
 }
 
-<div class="mt-4">
-    <a asp-page="/Setup/Index"
-       class="btn btn-outline-secondary btn-lg w-100">
-        ← Back to setup
-    </a>
-</div>
+<partial name="_BackFullWidth"
+         model="@(Model.ReturnUrl ?? Url.Page("/Setup/Index"))" />

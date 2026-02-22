@@ -213,11 +213,9 @@
         </div>
     }
 
-    <button type="submit" class="btn btn-primary">Save</button>
+    <partial name="_FormActions"
+            model="@(Model.ReturnUrl 
+                    ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }), 
+                    "Save")" />
 
-    <a asp-page="/Plants/Details"
-       asp-route-plantId="@Model.PlantId"
-       class="btn btn-secondary">
-        Cancel
-    </a>
 </form>

@@ -200,7 +200,103 @@ Correctness is enforced at the data layer.
 
 ------------------------------------------------------------------------
 
-# 8. Automation Layer --- Enforcement Mechanism
+# 8. UI Architecture — Navigation Contract
+
+OrchidApp enforces a strict and consistent navigation layout across all
+Razor Pages.
+
+Navigation behaviour is considered part of the architectural contract.
+It must not drift through ad hoc styling or per-page experimentation.
+
+The UI layer must remain predictable, mobile-friendly and structurally
+consistent.
+
+### Navigation Design Principles
+
+-   One primary action per page.
+-   One exit action per page.
+-   No duplicate navigation controls.
+-   No mixed button sizing.
+-   No contextual improvisation.
+
+Layout consistency is enforced through shared Razor partials.
+
+### Page Type A — Navigation List Pages
+
+Examples include listing and index-style pages.
+
+Rules:
+
+-   A single Back control is permitted.
+-   The Back control must appear at the bottom of the page.
+-   It must be full-width.
+-   It must use consistent sizing (`btn-lg`).
+-   Duplicate top and bottom Back controls are not permitted.
+
+These pages are navigation-focused and should not introduce competing
+actions.
+
+### Page Type B — Form Pages (Add / Edit / Remove)
+
+Form pages follow a strict action layout:
+
+-   Back action on the bottom left.
+-   Save action on the bottom right.
+-   Both buttons use consistent sizing (`btn-lg`).
+-   Cancel buttons are not used.
+-   Save represents the single primary action.
+
+Back behaviour must use the `returnUrl` pattern where applicable.
+
+Button placement must not vary between mobile and desktop layouts.
+
+### Page Type C — Destructive Form Pages
+
+Destructive operations (e.g. Split) follow the same structural layout
+as Form Pages, with the following modification:
+
+-   The primary action must use danger styling (`btn-danger`).
+
+No additional warning buttons are permitted.
+
+### Page Type D — Content Pages
+
+Content-heavy pages (e.g. Photo browsing):
+
+-   Present content first.
+-   Provide a single full-width Back control beneath primary content.
+-   Must not interrupt content flow with premature navigation controls.
+
+### ReturnUrl Pattern
+
+Pages that provide a Back control must support a `returnUrl`
+parameter.
+
+Rules:
+
+-   Navigating pages must pass returnUrl explicitly.
+-   Back controls must honour returnUrl when present.
+-   A deterministic fallback must exist for deep links.
+-   JavaScript-based navigation history is not permitted.
+
+Navigation state must remain server-driven and explicit.
+
+### Enforcement
+
+Navigation layout must be implemented exclusively through shared
+partials located under:
+
+````
+/Pages/Shared/
+````
+
+Per-page button markup duplication is not permitted.
+
+Any new page must conform to one of the defined page types above.
+
+------------------------------------------------------------------------
+
+# 9. Automation Layer --- Enforcement Mechanism
 
 Automation enforces architectural guarantees through:
 
@@ -218,7 +314,7 @@ Automation is not optional. It is architectural enforcement.
 
 ------------------------------------------------------------------------
 
-# 9. Operations Layer --- State Protection
+# 10. Operations Layer --- State Protection
 
 OrchidApp maintains two stateful components:
 
@@ -239,7 +335,7 @@ Backups are only considered valid if restores succeed.
 
 ------------------------------------------------------------------------
 
-# 10. Non-Goals
+# 11. Non-Goals
 
 This architecture does not aim to:
 
@@ -252,7 +348,7 @@ Restrictions are intentional.
 
 ------------------------------------------------------------------------
 
-# 11. Evolution Strategy
+# 12. Evolution Strategy
 
 Change is permitted, but not everywhere equally.
 

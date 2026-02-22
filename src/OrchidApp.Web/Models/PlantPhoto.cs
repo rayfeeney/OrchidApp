@@ -18,5 +18,7 @@ namespace OrchidApp.Web.Models
 
         public DateTime CreatedDateTime { get; set; }
         public DateTime? UpdatedDateTime { get; set; }
+
+        public string PlantDisplayName { get; private set; } = string.Empty;
     }
 }

@@ -1,0 +1,13 @@
+@model (string backUrl, string saveText)
+
+<div class="d-flex justify-content-between align-items-stretch mt-4">
+    <a href="@Model.backUrl"
+       class="btn btn-outline-secondary">
+        ← Back
+    </a>
+
+    <button type="submit"
+            class="btn btn-danger">
+        @Model.saveText
+    </button>
+</div>

@@ -115,6 +115,23 @@ The web application:
 
 Application convenience must never override data correctness.
 
+### UI Navigation Contract
+
+All Razor Pages must comply with the Navigation Button Contract
+defined in `docs/architecture.md`.
+
+Contributors must:
+
+-   Use shared partials under `/Pages/Shared/` for all form and navigation actions
+-   Avoid per-page button layout duplication
+-   Implement Back behaviour using the `returnUrl` pattern
+-   Ensure pages conform to one of the defined page types
+
+Ad hoc navigation styling is not permitted.
+
+UI consistency is treated as an architectural constraint, not a
+cosmetic preference.
+
 ------------------------------------------------------------------------
 
 # Commits & Hooks

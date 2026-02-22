@@ -27,17 +27,8 @@
                     rows="3"></textarea>
         </div>
 
-        <div class="d-grid gap-2 mt-4">
-            <button type="submit"
-                    class="btn btn-primary btn-lg">
-                Add genus
-            </button>
-
-            <a asp-page="/Setup/Genera/Index"
-               class="btn btn-outline-secondary btn-lg w-100">
-                ← Back to genera
-            </a>
-        </div>
+        <partial name="_FormActions"
+                 model="@((Model.ReturnUrl ?? Url.Page("/Setup/Genera/Index"), "Add genus"))" />
 
     </form>
  

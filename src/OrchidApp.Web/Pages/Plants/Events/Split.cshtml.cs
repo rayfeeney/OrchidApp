@@ -10,6 +10,9 @@ namespace OrchidApp.Web.Pages.Plants.Events;
 
 public class SplitModel : PageModel
 {
+    [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
+
     private readonly OrchidDbContext _db;
 
     public SplitModel(OrchidDbContext db)

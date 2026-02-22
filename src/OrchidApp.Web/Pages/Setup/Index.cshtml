@@ -10,6 +10,7 @@
 <div class="d-grid gap-3 mt-4">
 
     <a asp-page="/Setup/Genera/Index"
+       asp-route-returnUrl="@(Request.Path + Request.QueryString)"
        class="btn btn-lg btn-outline-primary">
         Genera
     </a>

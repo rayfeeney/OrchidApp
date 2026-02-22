@@ -12,19 +12,23 @@
 </p>
 
 <div class="d-grid gap-2">
-@foreach (var taxon in Model.Taxa)
+@foreach (var genusGroup in Model.Taxa.GroupBy(t => t.GenusName))
 {
-    <a asp-page="/Plants/Add/Create"
-       asp-route-taxonId="@taxon.TaxonId"
-       class="btn btn-outline-primary btn-lg text-start">
-        @taxon.DisplayName
-    </a>
+    <h2 class="mt-4">@genusGroup.Key</h2>
+
+    <div class="d-grid gap-2">
+        @foreach (var taxon in genusGroup)
+        {
+            <a asp-page="/Plants/Add/Create"
+               asp-route-taxonId="@taxon.TaxonId"
+               asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+               class="btn btn-outline-primary btn-lg text-start">
+                @taxon.DisplayName
+            </a>
+        }
+    </div>
 }
 </div>
 
-<div class="mt-4">
-    <a asp-page="/Plants/Index"
-       class="btn btn-outline-secondary btn-lg w-100">
-        ← Back to plants
-    </a>
-</div>
+<partial name="_BackFullWidth"
+         model="@(Model.ReturnUrl ?? Url.Page("/Plants/Index"))" />
