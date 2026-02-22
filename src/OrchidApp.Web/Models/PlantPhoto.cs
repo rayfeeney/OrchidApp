@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace OrchidApp.Web.Models
 {
@@ -19,6 +20,7 @@ namespace OrchidApp.Web.Models
         public DateTime CreatedDateTime { get; set; }
         public DateTime? UpdatedDateTime { get; set; }
 
+        [NotMapped]
         public string PlantDisplayName { get; private set; } = string.Empty;
     }
 }

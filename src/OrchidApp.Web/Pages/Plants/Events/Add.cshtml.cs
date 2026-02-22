@@ -194,7 +194,9 @@ public class AddModel : PageModel
             switch (quickAction)
             {
                 case "photo":
+                    EventDetails = "Photo added";
                     ShowPhotoSection = true;
+                    ModelState.Remove(nameof(EventDetails));
                     break;
 
                 case "feedGrowth":
@@ -227,6 +229,10 @@ public class AddModel : PageModel
             case "Observation":
 
                 var hasPhotos = UploadedFiles != null && UploadedFiles.Any();
+                if (hasPhotos && string.IsNullOrWhiteSpace(EventDetails))
+                {
+                    EventDetails = "Photo added";
+                }
                 var typeCode = hasPhotos ? "OBS_PHOTO" : "OBS_NOTE";
                 var observationTypeId = await _resolver.GetIdAsync(typeCode);
 
