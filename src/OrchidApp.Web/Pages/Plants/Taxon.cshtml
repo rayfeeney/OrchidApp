@@ -32,6 +32,7 @@ else
                         <a class="plant-thumb-link"
                         asp-page="/Plants/Photos/Index"
                         asp-route-plantId="@plant.PlantId"
+                        asp-route-returnUrl="@(Request.Path + Request.QueryString)"
                         title="Photos">
 
                             @if (!string.IsNullOrEmpty(plant.HeroFilePath))
@@ -42,7 +43,9 @@ else
                             }
                             else
                             {
-                                <div class="plant-thumb-placeholder"></div>
+                                <div class="plant-thumb-placeholder d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-image text-muted"></i>
+                                </div>
                             }
 
                         </a>
@@ -50,7 +53,8 @@ else
                         <!-- Main area tap → Details -->
                         <a class="plant-text-link"
                         asp-page="/Plants/Details"
-                        asp-route-plantId="@plant.PlantId">
+                        asp-route-plantId="@plant.PlantId"
+                        asp-route-returnUrl="@(Request.Path + Request.QueryString)">
 
                             <div class="plant-text">
                                 <div class="plant-tag">@plant.PlantTag</div>
@@ -83,6 +87,7 @@ else
                 <a class="plant-edit"
                 asp-page="/Plants/Edit/Index"
                 asp-route-plantId="@plant.PlantId"
+                asp-route-returnUrl="@(Request.Path + Request.QueryString)"
                 title="Edit plant">
                     <i class="bi bi-pencil"></i>
                 </a>
@@ -92,9 +97,5 @@ else
     </div>
 }
 
-<div class="mt-4">
-    <a asp-page="/Plants/Index"
-       class="btn btn-outline-secondary btn-lg w-100">
-        ← Back to plants
-    </a>
-</div>
+<partial name="_BackFullWidth"
+         model="@(Model.ReturnUrl ?? Url.Page("/Plants/Index"))" />

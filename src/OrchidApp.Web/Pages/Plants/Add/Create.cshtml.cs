@@ -10,6 +10,9 @@ namespace OrchidApp.Web.Pages.Plants.Add;
 [BindProperties]
 public class CreateModel : PageModel
 {
+    [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
+
     private readonly OrchidDbContext _db;
 
     public CreateModel(OrchidDbContext db)

@@ -11,6 +11,9 @@ namespace OrchidApp.Web.Pages.Setup.Taxa.Actions;
 
 public class AddModel : PageModel
 {
+    [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
+
     private readonly OrchidDbContext _db;
 
     public AddModel(OrchidDbContext db)

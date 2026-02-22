@@ -64,6 +64,9 @@ namespace OrchidApp.Web.Pages.Plants.Events;
 
 public class AddModel : PageModel
 {
+    [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
+
     private readonly OrchidDbContext _db;
     private readonly ObservationTypeResolver _resolver;
     private readonly IWebHostEnvironment _env;

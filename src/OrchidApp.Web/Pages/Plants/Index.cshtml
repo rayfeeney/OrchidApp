@@ -9,6 +9,7 @@
 
 <div class="d-grid gap-2 mb-4">
     <a asp-page="/Plants/Add/Index"
+       asp-route-returnUrl="@(Request.Path + Request.QueryString)"
        class="btn btn-primary btn-lg">
         Add plant
     </a>
@@ -19,6 +20,7 @@
 {
     <a asp-page="/Plants/Taxon"
        asp-route-taxonId="@taxon.TaxonId"
+       asp-route-returnUrl="@(Request.Path + Request.QueryString)"
        class="btn btn-outline-primary btn-lg text-start d-flex justify-content-between align-items-center">
 
         <span>@taxon.DisplayName</span>
@@ -30,9 +32,5 @@
 }
 </div>
 
-<div class="mt-4">
-    <a asp-page="/Index"
-       class="btn btn-outline-secondary btn-lg w-100">
-        ← Back to home
-    </a>
-</div>
+<partial name="_BackFullWidth"
+         model="@(Model.ReturnUrl ?? Url.Page("/Index"))" />

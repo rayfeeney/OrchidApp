@@ -8,6 +8,9 @@ namespace OrchidApp.Web.Pages.Plants;
 
 public class TaxonModel : PageModel
 {
+    [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
+
     private readonly OrchidDbContext _db;
 
     public TaxonModel(OrchidDbContext db)

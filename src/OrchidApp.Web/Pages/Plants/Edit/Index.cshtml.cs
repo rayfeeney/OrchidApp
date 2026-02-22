@@ -11,6 +11,9 @@ namespace OrchidApp.Web.Pages.Plants.Edit;
 
 public class IndexModel : PageModel
 {
+    [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
+
     private readonly OrchidDbContext _db;
 
     public IndexModel(OrchidDbContext db)

@@ -71,16 +71,12 @@
         </button>
     </div>
 
-    <button type="submit"
-            asp-page-handler="Split"
-            class="btn btn-danger w-100">
-        Confirm split
-    </button>
+    <div class="mt-4">
+        <partial name="_FormActionsDangerHandler"
+                model="@(Model.ReturnUrl
+                        ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }),
+                        "Split",
+                        "Confirm split")" />
+    </div>
 
 </form>
-
-<a asp-page="/Plants/Details"
-   asp-route-plantId="@Model.PlantId"
-   class="btn btn-outline-secondary">
-    Cancel
-</a>

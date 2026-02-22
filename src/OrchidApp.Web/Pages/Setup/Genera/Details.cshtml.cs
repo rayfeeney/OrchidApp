@@ -7,6 +7,9 @@ namespace OrchidApp.Web.Pages.Setup.Genera;
 
 public class DetailsModel : PageModel
 {
+    [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
+    
     private readonly OrchidDbContext _db;
 
     public DetailsModel(OrchidDbContext db)

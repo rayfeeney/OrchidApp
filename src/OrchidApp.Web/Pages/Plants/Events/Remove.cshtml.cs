@@ -66,6 +66,9 @@ namespace OrchidApp.Web.Pages.Plants.Events;
 
 public class RemoveModel : PageModel
 {
+    [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
+
     private readonly OrchidDbContext _db;
 
     public RemoveModel(OrchidDbContext db)
