@@ -153,20 +153,41 @@ Application should now be accessible at:
 
 Upgrades must always follow this sequence.
 
+## 4.1 SQL Maria DB objects upgrade
+
+If SQL objects are included in the upgrade, these must be applied first. 
+
+This is yet to be documented.
+
+## 4.2 Web app upgrade 
+
 Never edit files inside `publish/`.
 
 Never manually copy files.
 
-## 4.1 Pull Latest Code
+### 4.2.1 Confirm tree is clean
 
-    cd /opt/orchidapp
+    git status
+
+If the working tree is clean, proceed.
+
+If not, resolve the issues before proceeding.
+
+### 4.2.2 Stop the service
+
+    sudo systemctl stop orchidapp
+
+### 4.2.3 Pull Latest Code
+
+    cd /opt/orchidapp/src
     git pull
 
-## 4.2 Publish
+### 4.2.4 Publish
 
-    dotnet publish src/OrchidApp.Web/OrchidApp.Web.csproj -c Release -o ./publish
+    cd /opt/orchidapp/src/OrchidApp.Web
+    dotnet publish -c Release -o /opt/orchidapp/publish
 
-## 4.3 Restart Service
+### 4.2.5 Restart Service
 
     sudo systemctl restart orchidapp
 
