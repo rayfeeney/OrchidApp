@@ -12,39 +12,45 @@
     }
 </h1>
 
-<dl class="row mt-3">
+<div class="card mt-3">
+    <div class="card-body">
 
-    <dt class="col-sm-3">Genus</dt>
-    <dd class="col-sm-9">@Model.Taxon.GenusName</dd>
+        <dl class="row mb-0">
 
-    @if (!string.IsNullOrWhiteSpace(Model.Taxon.SpeciesName))
-    {
-        <dt class="col-sm-3">Species</dt>
-        <dd class="col-sm-9">@Model.Taxon.SpeciesName</dd>
-    }
+            <dt class="col-sm-3 fw-bold">Genus</dt>
+            <dd class="col-sm-9">@Model.Taxon.GenusName</dd>
 
-    @if (!string.IsNullOrWhiteSpace(Model.Taxon.HybridName))
-    {
-        <dt class="col-sm-3">Hybrid</dt>
-        <dd class="col-sm-9">@Model.Taxon.HybridName</dd>
-    }
+            @if (!string.IsNullOrWhiteSpace(Model.Taxon.SpeciesName))
+            {
+                <dt class="col-sm-3 fw-bold">Species</dt>
+                <dd class="col-sm-9">@Model.Taxon.SpeciesName</dd>
+            }
 
-    @* <dt class="col-sm-3">Growth Code</dt>
-    <dd class="col-sm-9">
-        @(string.IsNullOrWhiteSpace(Model.Taxon.GrowthCode) ? "—" : Model.Taxon.GrowthCode)
-    </dd> *@
+            @if (!string.IsNullOrWhiteSpace(Model.Taxon.HybridName))
+            {
+                <dt class="col-sm-3 fw-bold">Hybrid</dt>
+                <dd class="col-sm-9">@Model.Taxon.HybridName</dd>
+            }
 
-    <dt class="col-sm-3">Growth Notes</dt>
-    <dd class="col-sm-9">
-        @(string.IsNullOrWhiteSpace(Model.Taxon.GrowthNotes) ? "—" : Model.Taxon.GrowthNotes)
-    </dd>
+            <dt class="col-sm-3 fw-bold">Growth Code</dt>
+            <dd class="col-sm-9">
+                @(string.IsNullOrWhiteSpace(Model.Taxon.GrowthCode) ? "—" : Model.Taxon.GrowthCode)
+            </dd>
 
-    <dt class="col-sm-3">Species/Hybrid notes</dt>
-    <dd class="col-sm-9">
-        @(string.IsNullOrWhiteSpace(Model.Taxon.TaxonNotes) ? "—" : Model.Taxon.TaxonNotes)
-    </dd>
+            <dt class="col-sm-3 fw-bold">Growth Notes</dt>
+            <dd class="col-sm-9">
+                @(string.IsNullOrWhiteSpace(Model.Taxon.GrowthNotes) ? "—" : Model.Taxon.GrowthNotes)
+            </dd>
 
-</dl>
+            <dt class="col-sm-3 fw-bold">Species / Hybrid notes</dt>
+            <dd class="col-sm-9">
+                @(string.IsNullOrWhiteSpace(Model.Taxon.TaxonNotes) ? "—" : Model.Taxon.TaxonNotes)
+            </dd>
+
+        </dl>
+
+    </div>
+</div>
 
 @if (Model.Taxon != null)
 {
