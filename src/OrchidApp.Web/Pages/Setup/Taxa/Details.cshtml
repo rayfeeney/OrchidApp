@@ -32,10 +32,10 @@
                 <dd class="col-sm-9">@Model.Taxon.HybridName</dd>
             }
 
-            <dt class="col-sm-3 fw-bold">Growth Code</dt>
+            @* <dt class="col-sm-3 fw-bold">Growth Code</dt>
             <dd class="col-sm-9">
                 @(string.IsNullOrWhiteSpace(Model.Taxon.GrowthCode) ? "—" : Model.Taxon.GrowthCode)
-            </dd>
+            </dd> *@
 
             <dt class="col-sm-3 fw-bold">Growth Notes</dt>
             <dd class="col-sm-9">
