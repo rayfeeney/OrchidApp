@@ -6,14 +6,12 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using OrchidApp.Web.Data;
+using OrchidApp.Web.Models;
 
 namespace OrchidApp.Web.Pages.Plants.Edit;
 
 public class IndexModel : PageModel
 {
-    [BindProperty(SupportsGet = true)]
-    public string? ReturnUrl { get; set; }
-
     private readonly OrchidDbContext _db;
 
     public IndexModel(OrchidDbContext db)
@@ -21,11 +19,27 @@ public class IndexModel : PageModel
         _db = db;
     }
 
+    // =========================
+    // Route + State
+    // =========================
+
     [BindProperty(SupportsGet = true)]
     public int PlantId { get; set; }
 
+    [BindProperty]
+    public int GenusId { get; set; }
+
     [BindProperty, Required]
     public int TaxonId { get; set; }
+
+    public string? SelectedDisplayName { get; private set; }
+
+    public SelectList GenusOptions { get; private set; } = default!;
+    public SelectList TaxonOptions { get; private set; } = default!;
+
+    // =========================
+    // Editable Fields
+    // =========================
 
     [BindProperty, StringLength(50)]
     public string? PlantTag { get; set; }
@@ -33,7 +47,6 @@ public class IndexModel : PageModel
     [BindProperty, StringLength(100)]
     public string? PlantName { get; set; }
 
-    // Required: you said acquisitionDate NULL should never be allowed in edit
     [BindProperty, Required]
     public DateTime AcquisitionDate { get; set; }
 
@@ -49,11 +62,12 @@ public class IndexModel : PageModel
     [BindProperty]
     public string? PlantNotes { get; set; }
 
-    public SelectList TaxonOptions { get; private set; } = default!;
+    // =========================
+    // GET
+    // =========================
 
-    public async Task<IActionResult> OnGetAsync()
+    public async Task<IActionResult> OnGetAsync(int? genusId, int? taxonId)
     {
-        // Load plant row (assumes you have a Plant entity mapped to the plant table)
         var plant = await _db.Plants
             .AsNoTracking()
             .SingleOrDefaultAsync(p => p.PlantId == PlantId);
@@ -61,25 +75,61 @@ public class IndexModel : PageModel
         if (plant is null)
             return NotFound();
 
-        TaxonId = plant.TaxonId;
+        // Always load plant fields from DB
         PlantTag = plant.PlantTag;
         PlantName = plant.PlantName;
-        AcquisitionDate = plant.AcquisitionDate ?? DateTime.Now; // should be non-null in DB, but safe
+        AcquisitionDate = plant.AcquisitionDate ?? DateTime.Now;
         AcquisitionSource = plant.AcquisitionSource;
         EndDate = plant.EndDate;
         EndNotes = plant.EndNotes;
         PlantNotes = plant.PlantNotes;
 
+        // Determine effective selection
+        int effectiveTaxonId = plant.TaxonId;
+
+        if (taxonId.HasValue)
+        {
+            effectiveTaxonId = taxonId.Value;
+        }
+        else if (genusId.HasValue)
+        {
+            effectiveTaxonId = await _db.TaxonIdentities
+                .AsNoTracking()
+                .Where(t =>
+                    t.GenusId == genusId.Value &&
+                    t.IsActive &&
+                    t.IsSystemManaged)
+                .Select(t => t.TaxonId)
+                .SingleAsync();
+        }
+
+        TaxonId = effectiveTaxonId;
+
+        var selected = await _db.TaxonIdentities
+            .AsNoTracking()
+            .SingleAsync(t => t.TaxonId == TaxonId);
+
+        GenusId = selected.GenusId;
+        SelectedDisplayName = selected.DisplayName;
+
+        await LoadGenusOptionsAsync();
         await LoadTaxonOptionsAsync();
+
         return Page();
     }
 
+    // =========================
+    // SAVE
+    // =========================
+
     public async Task<IActionResult> OnPostAsync()
     {
-        await LoadTaxonOptionsAsync();
-
         if (!ModelState.IsValid)
+        {
+            await LoadGenusOptionsAsync();
+            await LoadTaxonOptionsAsync();
             return Page();
+        }
 
         try
         {
@@ -87,32 +137,96 @@ public class IndexModel : PageModel
         }
         catch (DbException ex)
         {
-            // This will surface your SIGNAL MESSAGE_TEXT nicely.
             ModelState.AddModelError(string.Empty, ex.GetBaseException().Message);
+            await LoadGenusOptionsAsync();
+            await LoadTaxonOptionsAsync();
             return Page();
         }
 
-        return RedirectToPage("/Plants/Details", new { plantId = PlantId });
+        return RedirectToPage("/Plants/Taxon", new
+        {
+            genusId = GenusId,
+            taxonId = TaxonId
+        });
+    }
+
+    // =========================
+    // GENUS CHANGE
+    // =========================
+
+    public IActionResult OnPostGenusChanged()
+    {
+        return RedirectToPage(new
+        {
+            plantId = PlantId,
+            genusId = GenusId
+        });
+    }
+
+    // =========================
+    // TAXON CHANGE
+    // =========================
+
+    public IActionResult OnPostTaxonChanged()
+    {
+        return RedirectToPage(new
+        {
+            plantId = PlantId,
+            taxonId = TaxonId
+        });
+    }
+
+    // =========================
+    // Option Loaders
+    // =========================
+
+    private async Task LoadGenusOptionsAsync()
+    {
+        var genera = await _db.Genera
+            .AsNoTracking()
+            .Where(g => g.IsActive)
+            .OrderBy(g => g.Name)
+            .Select(g => new { g.GenusId, g.Name })
+            .ToListAsync();
+
+        GenusOptions = new SelectList(genera, "GenusId", "Name", GenusId);
     }
 
     private async Task LoadTaxonOptionsAsync()
     {
-        // Prefer your projection/view if you have one. Otherwise swap this for a taxon/genus query.
         var taxa = await _db.TaxonIdentities
             .AsNoTracking()
-            .Where(t => t.IsActive)
-            .OrderBy(t => t.DisplayName)
-            .Select(t => new { t.TaxonId, t.DisplayName })
+            .Where(t => t.GenusId == GenusId && t.IsActive)
+            .OrderByDescending(t => t.IsSystemManaged)
+            .ThenBy(t => t.DisplayName)
             .ToListAsync();
 
-        TaxonOptions = new SelectList(taxa, "TaxonId", "DisplayName", TaxonId);
+        SelectedDisplayName = taxa
+            .First(t => t.TaxonId == TaxonId)
+            .DisplayName;
+
+        TaxonOptions = new SelectList(
+            taxa.Select(t => new
+            {
+                t.TaxonId,
+                Name = t.IsSystemManaged
+                    ? "sp."
+                    : t.SpeciesName ?? t.HybridName
+            }),
+            "TaxonId",
+            "Name",
+            TaxonId
+        );
     }
+
+    // =========================
+    // SP Call
+    // =========================
 
     private async Task CallSpUpdatePlantDetailsAsync()
     {
         var conn = _db.Database.GetDbConnection();
 
-        await using var _ = conn; // keep analyser calm; EF owns connection lifetime
         if (conn.State != ConnectionState.Open)
             await conn.OpenAsync();
 
