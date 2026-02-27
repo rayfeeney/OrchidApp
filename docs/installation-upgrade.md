@@ -167,6 +167,7 @@ Never manually copy files.
 
 ### 4.2.1 Confirm tree is clean
 
+    cd /opt/orchidapp
     git status
 
 If the working tree is clean, proceed.
@@ -178,13 +179,11 @@ If not, resolve the issues before proceeding.
     sudo systemctl stop orchidapp
 
 ### 4.2.3 Pull Latest Code
-
-    cd /opt/orchidapp
+    
     git pull
 
 ### 4.2.4 Publish
 
-    cd /opt/orchidapp/src/OrchidApp.Web
     dotnet publish src/OrchidApp.Web/OrchidApp.Web.csproj -c Release -o /opt/orchidapp/publish
 
 ### 4.2.5 Restart Service
