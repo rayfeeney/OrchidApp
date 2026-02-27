@@ -1,15 +1,15 @@
 @page "{plantId:int}"
 @model OrchidApp.Web.Pages.Plants.Events.SplitModel
 
-<h2>Split plant</h2>
+<h1 class="page-title fw-bold">Split plant</h1>
 
-<p>
-    You are about to split plant <strong>@Model.Plant?.PlantTag</strong>.
-</p>
+<h2 class="h5 fw-bold mb-3">
+    <span class="fw-normal text-muted">Plant:</span>
+    <span>@Model.Plant?.PlantTag</span>
+</h2>
 
-<p>
-    Splitting ends this plant. Its history 
-    will be available to view.
+<p class="text-muted">
+    Splitting ends this plant. Its history will remain available to view.
     Two or more new plants will be created.
     The original plant will no longer exist.
 </p>
@@ -19,22 +19,21 @@
 <form method="post">
 
     <div class="mb-3">
-        <label asp-for="SplitDateTime" class="form-label">
+        <label asp-for="SplitDateTime" class="fw-bold">
             Split date and time
         </label>
         <input asp-for="SplitDateTime"
-            type="datetime-local"
-            class="form-control" />
+               type="datetime-local"
+               class="form-control" />
     </div>
 
     <div class="mb-3">
-        <label asp-for="SplitReasonNotes" class="form-label">
+        <label asp-for="SplitReasonNotes" class="fw-bold">
             Reason for split (optional)
         </label>
         <textarea asp-for="SplitReasonNotes"
-                class="form-control"
-                rows="3">
-        </textarea>
+                  class="form-control"
+                  rows="3"></textarea>
     </div>
 
     <input type="hidden" asp-for="PlantId" />
@@ -42,24 +41,26 @@
 
     @for (int i = 0; i < Model.ChildCount; i++)
     {
-        <div class="card mb-3 p-3">
+        <div class="card mb-3">
+            <div class="card-body">
 
-            <div class="mb-3">
-                <label asp-for="Children[i].PlantTag" class="form-label">
-                    Child @(@i + 1) Plant Tag
-                </label>
-                <input asp-for="Children[i].PlantTag"
-                       class="form-control" />
+                <div class="mb-3">
+                    <label asp-for="Children[i].PlantTag" class="fw-bold">
+                        Child @(@i + 1) Plant tag
+                    </label>
+                    <input asp-for="Children[i].PlantTag"
+                           class="form-control" />
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Children[i].PlantName" class="fw-bold">
+                        Child @(@i + 1) Plant name (optional)
+                    </label>
+                    <input asp-for="Children[i].PlantName"
+                           class="form-control" />
+                </div>
+
             </div>
-
-            <div class="mb-3">
-                <label asp-for="Children[i].PlantName" class="form-label">
-                    Child @(@i + 1) Plant Name (optional)
-                </label>
-                <input asp-for="Children[i].PlantName"
-                       class="form-control" />
-            </div>
-
         </div>
     }
 
@@ -73,10 +74,10 @@
 
     <div class="mt-4">
         <partial name="_FormActionsDangerHandler"
-                model="@(Model.ReturnUrl
-                        ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }),
-                        "Split",
-                        "Confirm split")" />
+                 model="@(Model.ReturnUrl
+                         ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }),
+                         "Split",
+                         "Confirm split")" />
     </div>
 
 </form>
