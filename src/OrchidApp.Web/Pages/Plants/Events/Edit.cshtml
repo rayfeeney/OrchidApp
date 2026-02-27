@@ -4,121 +4,122 @@
 @{
     ViewData["Title"] = Model.EventType switch
     {
-        "Observation"   => "Edit Observation",
-        "LocationChange"=> "Edit Location",
-        "Flowering"     => "Edit Flowering",
-        "Repotting"     => "Edit Repotting",
-        _               => throw new InvalidOperationException("Unknown event type.")
+        "Observation"    => "Edit Observation",
+        "LocationChange" => "Edit Location",
+        "Flowering"      => "Edit Flowering",
+        "Repotting"      => "Edit Repotting",
+        _                => throw new InvalidOperationException("Unknown event type.")
     };
 }
 
-<h1>@ViewData["Title"]</h1>
-
-<div asp-validation-summary="ModelOnly" 
-     class="text-danger mb-3"></div>
+<h1 class="page-title fw-bold">@ViewData["Title"]</h1>
 
 @if (Model.PlantDisplayName != null)
 {
-    <p class="text-muted">
-        for <strong>@Model.PlantDisplayName</strong>
+    <h2 class="h5 fw-bold mb-3">
+        <span class="fw-normal text-muted">Plant:</span>
+        <span>@Model.PlantDisplayName</span>
         @if (!string.IsNullOrWhiteSpace(Model.PlantTag))
         {
-            <span>(Tag: @Model.PlantTag)</span>
+            <span class="fw-normal text-muted"> (Tag: @Model.PlantTag)</span>
         }
-    </p>
+    </h2>
 }
+
+<div asp-validation-summary="ModelOnly"
+     class="text-danger mb-3"></div>
 
 <form method="post">
     <input type="hidden" asp-for="EventType" />
-    
+
     @if (Model.EventType == "Observation")
     {
         <div class="mb-3">
-            <label asp-for="EventDate" class="form-label">Observed on</label>
+            <label asp-for="EventDate" class="fw-bold">Observed on</label>
             <input asp-for="EventDate"
-                type="date"
-                class="form-control"
-                asp-format="{0:yyyy-MM-dd}" />
+                   type="date"
+                   class="form-control"
+                   asp-format="{0:yyyy-MM-dd}" />
         </div>
 
         <div class="mb-3">
-            <label asp-for="EventDetails" class="form-label">Notes</label>
+            <label asp-for="EventDetails" class="fw-bold">Notes</label>
             <textarea asp-for="EventDetails"
-                    class="form-control"
-                    rows="4"></textarea>
+                      class="form-control"
+                      rows="4"></textarea>
         </div>
     }
 
     @if (Model.EventType == "LocationChange")
     {
         <div class="mb-3">
-            <label asp-for="EventDate" class="form-label">Moved on</label>
+            <label asp-for="EventDate" class="fw-bold">Moved on</label>
             <input asp-for="EventDate"
-                type="datetime-local"
-                class="form-control"
-                asp-format="{0:yyyy-MM-ddTHH:mm}" />
+                   type="datetime-local"
+                   class="form-control"
+                   asp-format="{0:yyyy-MM-ddTHH:mm}" />
         </div>
 
         @* Future: MoveReasonCode *@
         @*
         <div class="mb-3">
-            <label asp-for="MoveReasonCode" class="form-label">Move reason</label>
+            <label asp-for="MoveReasonCode" class="fw-bold">Move reason</label>
             <select asp-for="MoveReasonCode" class="form-select"></select>
         </div>
         *@
 
         <div class="mb-3">
-            <label asp-for="EventDetails" class="form-label">Move reason (notes)</label>
+            <label asp-for="EventDetails" class="fw-bold">Move reason (notes)</label>
             <textarea asp-for="EventDetails"
-                    class="form-control"
-                    rows="3"></textarea>
+                      class="form-control"
+                      rows="3"></textarea>
         </div>
 
         <div class="mb-3">
-            <label asp-for="PlantLocationNotes" class="form-label">Location notes</label>
+            <label asp-for="PlantLocationNotes" class="fw-bold">Location notes</label>
             <textarea asp-for="PlantLocationNotes"
-                    class="form-control"
-                    rows="3"></textarea>
+                      class="form-control"
+                      rows="3"></textarea>
         </div>
     }
 
     @if (Model.EventType == "Flowering")
     {
         <div class="mb-3">
-            <label asp-for="EventDate" class="form-label">Flowering started on</label>
+            <label asp-for="EventDate" class="fw-bold">Flowering started on</label>
             <input asp-for="EventDate"
-                type="date"
-                class="form-control"
-                asp-format="{0:yyyy-MM-dd}" />
+                   type="date"
+                   class="form-control"
+                   asp-format="{0:yyyy-MM-dd}" />
         </div>
 
         <div class="mb-3">
-            <label asp-for="EndDate" class="form-label">Flowering ended on</label>
+            <label asp-for="EndDate" class="fw-bold">Flowering ended on</label>
             <input asp-for="EndDate"
-                type="date"
-                class="form-control"
-                asp-format="{0:yyyy-MM-dd}" />
+                   type="date"
+                   class="form-control"
+                   asp-format="{0:yyyy-MM-dd}" />
         </div>
 
         <div class="mb-3">
-            <label asp-for="SpikeCount" class="form-label">Spike count</label>
+            <label asp-for="SpikeCount" class="fw-bold">Spike count</label>
             <input asp-for="SpikeCount"
-                type="number"
-                class="form-control" />
+                   type="number"
+                   class="form-control" />
         </div>
 
         <div class="mb-3">
-            <label asp-for="FlowerCount" class="form-label">Flower count</label>
+            <label asp-for="FlowerCount" class="fw-bold">Flower count</label>
             <input asp-for="FlowerCount"
-                type="number"
-                class="form-control" />
+                   type="number"
+                   class="form-control" />
         </div>
 
         <div class="mb-3">
-            <label asp-for="EventDetails" class="form-label">Notes</label>
+            <label asp-for="EventDetails" class="fw-bold">Notes</label>
             <textarea asp-for="EventDetails"
-                    class="form-control"
-                    rows="3"></textarea>
+                      class="form-control"
+                      rows="3"></textarea>
         </div>
     }
 
@@ -126,50 +127,50 @@
     @if (Model.EventType == "Repotting")
     {
         <div class="mb-3">
-            <label asp-for="EventDate" class="form-label">Repot date</label>
+            <label asp-for="EventDate" class="fw-bold">Repot date</label>
             <input asp-for="EventDate"
-                type="date"
-                class="form-control" />
+                   type="date"
+                   class="form-control" />
         </div>
 
         <div class="mb-3">
-            <label asp-for="OldMediumNotes" class="form-label">Old medium notes</label>
+            <label asp-for="OldMediumNotes" class="fw-bold">Old medium notes</label>
             <textarea asp-for="OldMediumNotes"
-                    class="form-control"
-                    rows="3"></textarea>
+                      class="form-control"
+                      rows="3"></textarea>
         </div>
 
         <div class="mb-3">
-            <label asp-for="NewMediumNotes" class="form-label">New medium notes</label>
+            <label asp-for="NewMediumNotes" class="fw-bold">New medium notes</label>
             <textarea asp-for="NewMediumNotes"
-                    class="form-control"
-                    rows="3"></textarea>
+                      class="form-control"
+                      rows="3"></textarea>
         </div>
 
         <div class="mb-3">
-            <label asp-for="PotSize" class="form-label">Pot size</label>
+            <label asp-for="PotSize" class="fw-bold">Pot size</label>
             <input asp-for="PotSize"
-                class="form-control" />
+                   class="form-control" />
         </div>
 
         <div class="mb-3">
-            <label asp-for="RepotReasonNotes" class="form-label">Reason notes</label>
+            <label asp-for="RepotReasonNotes" class="fw-bold">Reason notes</label>
             <textarea asp-for="RepotReasonNotes"
-                    class="form-control"
-                    rows="3"></textarea>
+                      class="form-control"
+                      rows="3"></textarea>
         </div>
 
         <div class="mb-3">
-            <label asp-for="RepottingNotes" class="form-label">Additional notes</label>
+            <label asp-for="RepottingNotes" class="fw-bold">Additional notes</label>
             <textarea asp-for="RepottingNotes"
-                    class="form-control"
-                    rows="3"></textarea>
+                      class="form-control"
+                      rows="3"></textarea>
         </div>
     }
 
     <partial name="_FormActions"
-            model="@(Model.ReturnUrl 
-                    ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }), 
-                    "Save changes")" />
-    </a>
+             model="@(Model.ReturnUrl 
+                     ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }), 
+                     "Save changes")" />
+
 </form>
