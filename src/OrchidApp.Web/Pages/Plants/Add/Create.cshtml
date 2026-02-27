@@ -5,14 +5,14 @@
     ViewData["Title"] = "Add plant";
 }
 
-<h1>Add plant</h1>
+<h1 class="page-title fw-bold">Add plant</h1>
 
 @if (Model.Taxon != null)
 {
-    <p class="h5 mb-3">
-        <span class="fw-normal text-muted">Genus and species/hybrid:</span>
-        <span class="fw-bold">@Model.Taxon.DisplayName</span>
-    </p>
+    <h2 class="h5 fw-bold mb-3">
+        <span class="fw-normal text-muted">Genus and species / hybrid:</span>
+        <span>@Model.Taxon.DisplayName</span>
+    </h2>
 }
 
 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
@@ -49,7 +49,7 @@
     <div class="mb-3">
         <label asp-for="Input.AcquisitionSource" class="fw-bold"></label>
         <small class="text-muted d-block fw-normal">
-            The source of your plant (e.g. a nursery, a friend, a swap). When you split a plant it will automatically use the Plant tage of the parent.
+            The source of your plant (e.g. a nursery, a friend, a swap). When you split a plant it will automatically use the plant tag of the parent.
         </small>
         <input asp-for="Input.AcquisitionSource" class="form-control" />
         <span asp-validation-for="Input.AcquisitionSource" class="text-danger"></span>
@@ -59,6 +59,7 @@
         <label asp-for="Input.PlantNotes" class="fw-bold"></label>
         <small class="text-muted d-block fw-normal">
             Any additional notes about your plant. This is optional, but it can help you keep track of specific care instructions, growth habits, or any other information you want to remember about your plant.
+        </small>
         <textarea asp-for="Input.PlantNotes"
                   class="form-control"
                   rows="4"></textarea>
@@ -66,6 +67,6 @@
     </div>
 
     <partial name="_FormActions"
-            model="@(Model.ReturnUrl ?? Url.Page("/Plants/Add/Index"), "Add plant")" />
+             model="@(Model.ReturnUrl ?? Url.Page("/Plants/Add/Index"), "Add plant")" />
 
 </form>
