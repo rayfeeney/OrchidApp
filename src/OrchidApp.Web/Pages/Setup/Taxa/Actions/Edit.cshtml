@@ -1,7 +1,11 @@
 @page "{id:int}"
 @model OrchidApp.Web.Pages.Setup.Taxa.Actions.EditModel
 
-<h1>Edit Species/Hybrid</h1>
+<h1 class="page-title fw-bold">Edit Species/Hybrid</h1>
+
+<p class="h5 fw-bold mb-3">
+    @Model.GenusName
+</p>
 
 <p class="text-muted fs-5">
     @Model.GenusName
@@ -28,7 +32,7 @@
         @if (!string.IsNullOrWhiteSpace(Model.Taxon.HybridName))
         {
             <div class="mb-3">
-                <label class="form-label">
+                <label class="fw-bold">
                     Hybrid <small class="text-muted">(spelling correction only)</small>
                 </label>
                 <input asp-for="Taxon.HybridName" class="form-control" />
@@ -37,17 +41,17 @@
     }
 
     @* <div class="mb-3">
-        <label class="form-label">Growth Code</label>
+        <label class="fw-bold">Growth Code</label>
         <input asp-for="Taxon.GrowthCode" class="form-control" />
     </div> *@
 
     <div class="mb-3">
-        <label class="form-label">Growth Notes</label>
+        <label class="fw-bold">Growth Notes</label>
         <textarea asp-for="Taxon.GrowthNotes" class="form-control"></textarea>
     </div>
 
     <div class="mb-3">
-        <label class="form-label">Species/Hybrid notes</label>
+        <label class="fw-bold">Species/Hybrid notes</label>
         <textarea asp-for="Taxon.TaxonNotes" class="form-control"></textarea>
     </div>
 
