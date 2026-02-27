@@ -4,8 +4,13 @@
 <h1 class="page-title fw-bold">Split plant</h1>
 
 <h2 class="h5 fw-bold mb-3">
-    <span class="fw-normal text-muted">Plant:</span>
-    <span>@Model.Plant?.PlantTag</span>
+    <span>@Model.Plant?.DisplayName</span>
+    @if (!string.IsNullOrWhiteSpace(Model.Plant?.PlantTag))
+    {
+        <span class="fw-normal text-muted">
+            (@Model.Plant.PlantTag)
+        </span>
+    }
 </h2>
 
 <p class="text-muted">
