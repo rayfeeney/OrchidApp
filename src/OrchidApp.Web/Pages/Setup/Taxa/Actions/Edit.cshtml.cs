@@ -19,6 +19,7 @@ public class EditModel : PageModel
 
     [BindProperty]
     public Taxon Taxon { get; set; } = null!;
+    public string GenusName { get; set; } = string.Empty;
 
     public IActionResult OnGet(int id)
     {
@@ -28,6 +29,11 @@ public class EditModel : PageModel
             return NotFound();
 
         Taxon = taxon;
+
+        GenusName = _db.Genera
+            .Where(g => g.GenusId == taxon.GenusId)
+            .Select(g => g.Name)
+            .Single();
 
         return Page();
     }
