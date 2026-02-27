@@ -1,19 +1,29 @@
 @page "{plantId:int}"
 @model OrchidApp.Web.Pages.Plants.Photos.IndexModel
 
-<h1 class="page-title">Photos</h1>
+<h1 class="page-title fw-bold">Photos</h1>
 
-<h1>@Model.PlantDisplayName</h1>
+<h2 class="h5 fw-bold mb-3">
+    @Model.PlantDisplayName
+</h2>
 
-<dl class="row mb-3">
-    <dt class="col-4 col-sm-3">Tag</dt>
-    <dd class="col-8 col-sm-9">@Model.PlantTag</dd>
+<div class="card mt-3 mb-3">
+    <div class="card-body">
+        <dl class="row mb-0">
 
-    <dt class="col-4 col-sm-3">Location</dt>
-    <dd class="col-8 col-sm-9">
-        @(string.IsNullOrWhiteSpace(Model.LocationName) ? "—" : Model.LocationName)
-    </dd>
-</dl>
+            <dt class="col-sm-3 fw-bold">Tag</dt>
+            <dd class="col-sm-9">
+                @(string.IsNullOrWhiteSpace(Model.PlantTag) ? "—" : Model.PlantTag)
+            </dd>
+
+            <dt class="col-sm-3 fw-bold">Location</dt>
+            <dd class="col-sm-9">
+                @(string.IsNullOrWhiteSpace(Model.LocationName) ? "—" : Model.LocationName)
+            </dd>
+
+        </dl>
+    </div>
+</div>
 
 @if (Model.FocusPhoto != null)
 {
@@ -39,8 +49,8 @@ else
         @if (Model.PreviousPhotoId.HasValue)
         {
             <a asp-route-plantId="@Model.PlantId"
-            asp-route-focusPhotoId="@Model.PreviousPhotoId"
-            class="btn btn-outline-primary btn-lg">
+               asp-route-focusPhotoId="@Model.PreviousPhotoId"
+               class="btn btn-outline-primary btn-lg">
                 ◀ Previous
             </a>
         }
@@ -52,8 +62,8 @@ else
         @if (Model.NextPhotoId.HasValue)
         {
             <a asp-route-plantId="@Model.PlantId"
-            asp-route-focusPhotoId="@Model.NextPhotoId"
-            class="btn btn-outline-primary btn-lg">
+               asp-route-focusPhotoId="@Model.NextPhotoId"
+               class="btn btn-outline-primary btn-lg">
                 Next ▶
             </a>
         }

@@ -5,9 +5,11 @@
     ViewData["Title"] = Model.DisplayName;
 }
 
-<h1 class="page-title">
+<h1 class="page-title fw-bold">
     @Model.DisplayName
-    <span class="count">@Model.Plants.Count</span>
+    <span class="fw-normal fs-6 text-muted">
+        (@Model.Plants.Count plant@(Model.Plants.Count == 1 ? "" : "s"))
+    </span>
 </h1>
 
 @if (!Model.Plants.Any())

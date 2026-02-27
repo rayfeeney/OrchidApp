@@ -12,54 +12,55 @@
     };
 }
 
-<h1>@ViewData["Title"]</h1>
-
-<div asp-validation-summary="ModelOnly"
-     class="text-danger mb-3"></div>
+<h1 class="page-title fw-bold">@ViewData["Title"]</h1>
 
 @if (Model.PlantDisplayName != null)
 {
-    <p class="text-muted">
-        for <strong>@Model.PlantDisplayName</strong>
+    <h2 class="h5 fw-bold mb-3">
+        <span class="fw-normal text-muted">Plant:</span>
+        <span>@Model.PlantDisplayName</span>
         @if (!string.IsNullOrWhiteSpace(Model.PlantTag))
         {
-            <span>(Tag: @Model.PlantTag)</span>
+            <span class="fw-normal text-muted"> (Tag: @Model.PlantTag)</span>
         }
-    </p>
+    </h2>
 }
+
+<div asp-validation-summary="ModelOnly"
+     class="text-danger mb-3"></div>
 
 <form method="post" enctype="multipart/form-data">
 
     @* Observation *@
     @if (Model.EventType == "Observation")
     {
-            <div class="mb-3 d-grid gap-2">
+        <div class="mb-3 d-grid gap-2">
 
-                <button type="submit"
-                        name="quickAction"
-                        value="photo"
-                        class="btn btn-outline-primary">
-                    📷 Add photo
-                </button>
+            <button type="submit"
+                    name="quickAction"
+                    value="photo"
+                    class="btn btn-outline-primary">
+                📷 Add photo
+            </button>
 
-                <button type="submit"
-                        name="quickAction"
-                        value="feedGrowth"
-                        class="btn btn-outline-secondary">
-                    🌱 Feed (growth)
-                </button>
+            <button type="submit"
+                    name="quickAction"
+                    value="feedGrowth"
+                    class="btn btn-outline-primary">
+                🌱 Feed (growth)
+            </button>
 
-                <button type="submit"
-                        name="quickAction"
-                        value="feedBloom"
-                        class="btn btn-outline-secondary">
-                    🌸 Feed (bloom)
-                </button>
+            <button type="submit"
+                    name="quickAction"
+                    value="feedBloom"
+                    class="btn btn-outline-primary">
+                🌸 Feed (bloom)
+            </button>
 
-            </div>
+        </div>
 
         <div class="mb-3">
-            <label asp-for="EventDate" class="form-label">Observation date</label>
+            <label asp-for="EventDate" class="fw-bold">Observation date</label>
             <input asp-for="EventDate"
                    type="date"
                    class="form-control"
@@ -69,28 +70,28 @@
         @if (Model.ShowPhotoSection)
         {
             <div class="mb-3">
-                <label class="form-label">Photos</label>
+                <label class="fw-bold">Photos</label>
                 <input type="file"
-                    name="UploadedFiles"
-                    multiple
-                    class="form-control" />
+                       name="UploadedFiles"
+                       multiple
+                       class="form-control" />
             </div>
         }
 
-            <div class="mb-3">
-                <label asp-for="EventDetails" class="form-label">Notes</label>
-                <textarea asp-for="EventDetails"
-                        class="form-control"
-                        rows="4"
-                        placeholder="e.g. Noticed new root growth, leaves firm and glossy"></textarea>
-            </div>
+        <div class="mb-3">
+            <label asp-for="EventDetails" class="fw-bold">Notes</label>
+            <textarea asp-for="EventDetails"
+                      class="form-control"
+                      rows="4"
+                      placeholder="e.g. Noticed new root growth, leaves firm and glossy"></textarea>
+        </div>
     }
 
-    @* LocationChange (stub for now) *@
+    @* LocationChange *@
     @if (Model.EventType == "LocationChange")
     {
         <div class="mb-3">
-            <label asp-for="LocationId" class="form-label">Location</label>
+            <label asp-for="LocationId" class="fw-bold">Location</label>
             <select asp-for="LocationId" class="form-select">
                 <option value="">-- select location --</option>
                 @foreach (var loc in Model.Locations)
@@ -101,25 +102,19 @@
         </div>
 
         <div class="mb-3">
-            <label asp-for="EventDate" class="form-label">Move date</label>
+            <label asp-for="EventDate" class="fw-bold">Move date</label>
             <input asp-for="EventDate"
-                type="date"
-                class="form-control" />
+                   type="date"
+                   class="form-control" />
         </div>
 
-        //Not yet implemented: MoveReasonCode
-        //<div class="mb-3">
-        //  <label asp-for="MoveReasonCode" class="form-label">Reason</label>
-        //  <input asp-for="MoveReasonCode" class="form-control" />
-        //</div>
-
         <div class="mb-3">
-            <label asp-for="EventDetails" class="form-label">Move reason</label>
+            <label asp-for="EventDetails" class="fw-bold">Move reason</label>
             <textarea asp-for="EventDetails" class="form-control"></textarea>
         </div>
 
         <div class="mb-3">
-            <label asp-for="PlantLocationNotes" class="form-label">Location notes</label>
+            <label asp-for="PlantLocationNotes" class="fw-bold">Location notes</label>
             <textarea asp-for="PlantLocationNotes" class="form-control"></textarea>
         </div>
     }
@@ -128,93 +123,92 @@
     @if (Model.EventType == "Flowering")
     {
         <div class="mb-3">
-            <label asp-for="StartDate" class="form-label">Start date</label>
+            <label asp-for="StartDate" class="fw-bold">Start date</label>
             <input asp-for="StartDate"
-                type="date"
-                class="form-control" />
+                   type="date"
+                   class="form-control" />
         </div>
 
         <div class="mb-3">
-            <label asp-for="EndDate" class="form-label">End date (optional)</label>
+            <label asp-for="EndDate" class="fw-bold">End date (optional)</label>
             <input asp-for="EndDate"
-                type="date"
-                class="form-control" />
-            <div class="form-text">
+                   type="date"
+                   class="form-control" />
+            <small class="text-muted d-block fw-normal">
                 Leave blank if currently flowering.
-            </div>
+            </small>
         </div>
 
         <div class="mb-3">
-            <label asp-for="SpikeCount" class="form-label">Spike count</label>
+            <label asp-for="SpikeCount" class="fw-bold">Spike count</label>
             <input asp-for="SpikeCount"
-                type="number"
-                class="form-control" />
+                   type="number"
+                   class="form-control" />
         </div>
 
         <div class="mb-3">
-            <label asp-for="FlowerCount" class="form-label">Flower count</label>
+            <label asp-for="FlowerCount" class="fw-bold">Flower count</label>
             <input asp-for="FlowerCount"
-                type="number"
-                class="form-control" />
+                   type="number"
+                   class="form-control" />
         </div>
 
-    <div class="mb-3">
-        <label asp-for="EventDetails" class="form-label">Notes</label>
-        <textarea asp-for="EventDetails"
-                  class="form-control"
-                  rows="4"></textarea>
-    </div>
-
+        <div class="mb-3">
+            <label asp-for="EventDetails" class="fw-bold">Notes</label>
+            <textarea asp-for="EventDetails"
+                      class="form-control"
+                      rows="4"></textarea>
+        </div>
     }
 
     @* Repotting *@
     @if (Model.EventType == "Repotting")
     {
         <div class="mb-3">
-            <label asp-for="EventDate" class="form-label">Repotting date</label>
+            <label asp-for="EventDate" class="fw-bold">Repotting date</label>
             <input asp-for="EventDate"
-                type="date"
-                class="form-control" />
+                   type="date"
+                   class="form-control" />
         </div>
 
         <div class="mb-3">
-            <label asp-for="OldMediumNotes" class="form-label">Old medium notes</label>
+            <label asp-for="OldMediumNotes" class="fw-bold">Old medium notes</label>
             <textarea asp-for="OldMediumNotes"
-                    class="form-control"
-                    rows="3"></textarea>
+                      class="form-control"
+                      rows="3"></textarea>
         </div>
 
         <div class="mb-3">
-            <label asp-for="NewMediumNotes" class="form-label">New medium notes</label>
+            <label asp-for="NewMediumNotes" class="fw-bold">New medium notes</label>
             <textarea asp-for="NewMediumNotes"
-                    class="form-control"
-                    rows="3"></textarea>
+                      class="form-control"
+                      rows="3"></textarea>
         </div>
 
         <div class="mb-3">
-            <label asp-for="PotSize" class="form-label">Pot size</label>
+            <label asp-for="PotSize" class="fw-bold">Pot size</label>
             <input asp-for="PotSize"
-                class="form-control" />
+                   class="form-control" />
         </div>
 
         <div class="mb-3">
-            <label asp-for="RepotReasonNotes" class="form-label">Repotting reason</label>
+            <label asp-for="RepotReasonNotes" class="fw-bold">Repotting reason</label>
             <textarea asp-for="RepotReasonNotes"
-                    class="form-control"
-                    rows="3"></textarea>
+                      class="form-control"
+                      rows="3"></textarea>
         </div>
 
         <div class="mb-3">
-            <label asp-for="RepottingNotes" class="form-label">Additional notes</label>
+            <label asp-for="RepottingNotes" class="fw-bold">Additional notes</label>
             <textarea asp-for="RepottingNotes"
-                    class="form-control"
-                    rows="3"></textarea>
+                      class="form-control"
+                      rows="3"></textarea>
         </div>
     }
 
     <partial name="_FormActions"
-            model="@(Model.ReturnUrl 
-                    ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }), 
-                    "Save")" />
+             model="@(Model.ReturnUrl 
+                     ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }), 
+                     "Save")" />
 
 </form>

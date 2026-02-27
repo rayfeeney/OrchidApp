@@ -5,19 +5,37 @@
     ViewData["Title"] = Model.PlantRequired.DisplayName;
 }
 
-<div class="row mb-3">
+<h1 class="page-title fw-bold">
+    @Model.PlantRequired.DisplayName
+</h1>
 
-    <!-- Left column: title + details -->
+<div class="row mt-3">
+
+    <!-- Left column: details -->
     <div class="col-12 col-md-8">
-        <h1>@Model.PlantRequired.DisplayName</h1>
 
-        <dl class="row">
-            <dt class="col-4 col-sm-3">Tag</dt>
-            <dd class="col-8 col-sm-9">@Model.PlantRequired.PlantTag</dd>
+        <div class="card">
+            <div class="card-body">
+                <dl class="row mb-0">
 
-            <dt class="col-4 col-sm-3">Location</dt>
-            <dd class="col-8 col-sm-9">@Model.PlantRequired.LocationName</dd>
-        </dl>
+                    <dt class="col-sm-3 fw-bold">Tag</dt>
+                    <dd class="col-sm-9">
+                        @(string.IsNullOrWhiteSpace(Model.PlantRequired.PlantTag)
+                            ? "—"
+                            : Model.PlantRequired.PlantTag)
+                    </dd>
+
+                    <dt class="col-sm-3 fw-bold">Location</dt>
+                    <dd class="col-sm-9">
+                        @(string.IsNullOrWhiteSpace(Model.PlantRequired.LocationName)
+                            ? "—"
+                            : Model.PlantRequired.LocationName)
+                    </dd>
+
+                </dl>
+            </div>
+        </div>
+
     </div>
 
     <!-- Right column: hero image -->
@@ -38,56 +56,55 @@
 
 </div>
 
+<h2 class="h5 fw-bold mb-3 mt-4">History</h2>
 
-<h2>History</h2>
+<div class="d-grid gap-2 d-sm-flex mb-3">
+    <a asp-page="/Plants/Events/Add"
+       asp-route-eventType="Observation"
+       asp-route-plantId="@Model.PlantRequired.PlantId"
+       asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+       class="btn btn-primary">
+        Add observation
+    </a>
 
-    <div class="d-grid gap-2 d-sm-flex mb-3">
-        <a asp-page="/Plants/Events/Add"
-        asp-route-eventType="Observation"
-        asp-route-plantId="@Model.PlantRequired.PlantId"
-        asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-        class="btn btn-primary px-3 py-2">
-            Add observation
-        </a>
+    <a asp-page="/Plants/Events/Add"
+       asp-route-eventType="LocationChange"
+       asp-route-plantId="@Model.PlantRequired.PlantId"
+       asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+       class="btn btn-primary">
+        Move plant
+    </a>
 
-        <a asp-page="/Plants/Events/Add"
-        asp-route-eventType="LocationChange"
-        asp-route-plantId="@Model.PlantRequired.PlantId"
-        asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-        class="btn btn-primary px-3 py-2">
-            Move plant
-        </a>
+    <a asp-page="/Plants/Events/Add"
+       asp-route-eventType="Flowering"
+       asp-route-plantId="@Model.PlantRequired.PlantId"
+       asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+       class="btn btn-primary">
+        Add flowering
+    </a>
 
-        <a asp-page="/Plants/Events/Add"
-        asp-route-eventType="Flowering"
-        asp-route-plantId="@Model.PlantRequired.PlantId"
-        asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-        class="btn btn-primary px-3 py-2">
-            Add flowering
-        </a>
+    <a asp-page="/Plants/Events/Add"
+       asp-route-eventType="Repotting"
+       asp-route-plantId="@Model.PlantRequired.PlantId"
+       asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+       class="btn btn-primary">
+        Add repotting
+    </a>
+</div>
 
-        <a asp-page="/Plants/Events/Add"
-        asp-route-eventType="Repotting"
-        asp-route-plantId="@Model.PlantRequired.PlantId"
-        asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-        class="btn btn-primary px-3 py-2">
-            Add repotting
+@if (Model.PlantRequired.PlantEndDate == null)
+{
+    <hr class="my-4" />
+
+    <div class="mb-4">
+        <a asp-page="/Plants/Events/Split"
+           asp-route-plantId="@Model.PlantRequired.PlantId"
+           asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+           class="btn btn-outline-secondary btn-lg w-100">
+            Split plant
         </a>
     </div>
-
-    @if (Model.PlantRequired.PlantEndDate == null)
-    {
-        <hr class="my-4" />
-
-        <div class="mb-4">
-            <a asp-page="/Plants/Events/Split"
-            asp-route-plantId="@Model.PlantRequired.PlantId"
-            asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-            class="btn btn-outline-secondary btn-lg w-100">
-                Split plant
-            </a>
-        </div>
-    }
+}
 
 @if (!Model.LifecycleEvents.Any())
 {
@@ -111,100 +128,29 @@ else
                 </td>
                 <td>
                     <strong>@ev.EventType</strong><br />
-                    @ev.EventSummary
+                    @(string.IsNullOrWhiteSpace(ev.EventSummary)
+                        ? "—"
+                        : ev.EventSummary)
 
-                    @if (ev.EventType == "Observation" && ev.SourceTable == "plantevent")
-                    {
-                        <div class="d-flex gap-2 mt-2">
-                            <a asp-page="/Plants/Events/Edit"
-                            asp-route-plantId="@Model.PlantRequired.PlantId"
-                            asp-route-sourceId="@ev.SourceId"
-                            asp-route-eventType="Observation"
-                            asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-                            class="btn btn-sm btn-outline-secondary">
-                                Edit
-                            </a>
+                    <div class="d-flex gap-2 mt-2">
+                        <a asp-page="/Plants/Events/Edit"
+                           asp-route-plantId="@Model.PlantRequired.PlantId"
+                           asp-route-sourceId="@ev.SourceId"
+                           asp-route-eventType="@ev.EventType"
+                           asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+                           class="btn btn-sm btn-outline-secondary">
+                            Edit
+                        </a>
 
-                            <a asp-page="/Plants/Events/Remove"
-                            asp-route-plantId="@Model.PlantRequired.PlantId"
-                            asp-route-sourceId="@ev.SourceId"
-                            asp-route-eventType="Observation"
-                            asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-                            class="btn btn-sm btn-outline-danger">
-                                Remove
-                            </a>
-                        </div>
-                    }
-
-                    @if (ev.EventType == "LocationChange" && ev.SourceTable == "plantlocationhistory")
-                    {
-                        <div class="d-flex gap-2 mt-2">
-                            <a asp-page="/Plants/Events/Edit"
-                            asp-route-plantId="@Model.PlantRequired.PlantId"
-                            asp-route-sourceId="@ev.SourceId"
-                            asp-route-eventType="LocationChange"
-                            asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-                            class="btn btn-sm btn-outline-secondary">
-                                Edit
-                            </a>
-
-                            <a asp-page="/Plants/Events/Remove"
-                            asp-route-plantId="@Model.PlantRequired.PlantId"
-                            asp-route-sourceId="@ev.SourceId"
-                            asp-route-eventType="LocationChange"
-                            asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-                            class="btn btn-sm btn-outline-danger">
-                                Remove
-                            </a>
-                        </div>
-                    }
-
-                    @if (ev.EventType == "Flowering" && ev.SourceTable == "flowering")
-                    {
-                        <div class="d-flex gap-2 mt-2">
-                            <a asp-page="/Plants/Events/Edit"
-                            asp-route-plantId="@Model.PlantRequired.PlantId"
-                            asp-route-sourceId="@ev.SourceId"
-                            asp-route-eventType="Flowering"
-                            asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-                            class="btn btn-sm btn-outline-secondary">
-                                Edit
-                            </a>
-
-                            <a asp-page="/Plants/Events/Remove"
-                            asp-route-plantId="@Model.PlantRequired.PlantId"
-                            asp-route-sourceId="@ev.SourceId"
-                            asp-route-eventType="Flowering"
-                            asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-                            class="btn btn-sm btn-outline-danger">
-                                Remove
-                            </a>
-                        </div>
-                    }
-
-                    @if (ev.EventType == "Repotting" && ev.SourceTable == "repotting")
-                    {
-                        <div class="d-flex gap-2 mt-2">
-                            <a asp-page="/Plants/Events/Edit"
-                            asp-route-plantId="@Model.PlantRequired.PlantId"
-                            asp-route-sourceId="@ev.SourceId"
-                            asp-route-eventType="Repotting"
-                            asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-                            class="btn btn-sm btn-outline-secondary">
-                                Edit
-                            </a>
-
-                            <a asp-page="/Plants/Events/Remove"
-                            asp-route-plantId="@Model.PlantRequired.PlantId"
-                            asp-route-sourceId="@ev.SourceId"
-                            asp-route-eventType="Repotting"
-                            asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-                            class="btn btn-sm btn-outline-danger">
-                                Remove
-                            </a>
-                        </div>
-                    }
-
+                        <a asp-page="/Plants/Events/Remove"
+                           asp-route-plantId="@Model.PlantRequired.PlantId"
+                           asp-route-sourceId="@ev.SourceId"
+                           asp-route-eventType="@ev.EventType"
+                           asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+                           class="btn btn-sm btn-outline-danger">
+                            Remove
+                        </a>
+                    </div>
                 </td>
             </tr>
         }

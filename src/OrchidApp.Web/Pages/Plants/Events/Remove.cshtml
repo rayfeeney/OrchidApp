@@ -12,30 +12,46 @@
     };
 }
 
-<h1>@ViewData["Title"]</h1>
+<h1 class="page-title fw-bold">@ViewData["Title"]</h1>
+
+<h2 class="h5 fw-bold mb-3">
+    <span class="fw-normal text-muted">
+        You are about to remove the following:
+    </span>
+</h2>
 
 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-<p class="text-muted">
-    You are about to remove the following.
-</p>
+<div class="card mt-3 mb-3">
+    <div class="card-body">
+        <dl class="row mb-0">
 
-<div class="border rounded p-3 mb-3">
-    <strong>@Model.Event!.EventType</strong><br />
-    <span class="text-muted">
-        @Model.Event.EventDateTime.ToString("dd/MM/yyyy")
-    </span>
-    <p class="mt-2">
-        @Model.Event.EventSummary
-    </p>
+            <dt class="col-sm-3 fw-bold">Event</dt>
+            <dd class="col-sm-9">
+                @Model.Event!.EventType
+            </dd>
+
+            <dt class="col-sm-3 fw-bold">Date</dt>
+            <dd class="col-sm-9">
+                @Model.Event.EventDateTime.ToString("dd/MM/yyyy")
+            </dd>
+
+            <dt class="col-sm-3 fw-bold">Summary</dt>
+            <dd class="col-sm-9">
+                @(string.IsNullOrWhiteSpace(Model.Event.EventSummary)
+                    ? "—"
+                    : Model.Event.EventSummary)
+            </dd>
+
+        </dl>
+    </div>
 </div>
 
 <form method="post">
     <input type="hidden" asp-for="EventType" />
-    
-<partial name="_FormActionsDanger"
-         model="@(Model.ReturnUrl 
-                  ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }),
-                  "Confirm remove")" />
-                  
+
+    <partial name="_FormActionsDanger"
+             model="@(Model.ReturnUrl 
+                      ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }),
+                      "Confirm remove")" />
 </form>

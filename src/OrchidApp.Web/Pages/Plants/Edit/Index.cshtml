@@ -1,11 +1,14 @@
 @page "{plantId:int}"
 @model OrchidApp.Web.Pages.Plants.Edit.IndexModel
 
-<h1 class="page-title">Edit plant</h1>
+<h1 class="page-title fw-bold">Edit plant</h1>
 
 @if (!string.IsNullOrEmpty(Model.SelectedDisplayName))
 {
-    <h5 class="text-muted mb-3">@Model.SelectedDisplayName</h5>
+    <h2 class="h5 fw-bold mb-3">
+        <span class="fw-normal text-muted">Current genus and species / hybrid:</span>
+        <span>@Model.SelectedDisplayName</span>
+    </h2>
 }
 
 @if (!ViewData.ModelState.IsValid)
@@ -21,19 +24,21 @@
 <!-- ========================= -->
 <!-- Genus Change Form -->
 <!-- ========================= -->
-<form method="post" asp-page-handler="GenusChanged" class="mb-3">
+<form method="post" asp-page-handler="GenusChanged" class="mb-4">
     <input type="hidden" asp-for="PlantId" />
 
-    <label class="form-label">Genus</label>
-    <div class="input-group">
-        <select asp-for="GenusId"
-                asp-items="Model.GenusOptions"
-                class="form-select">
-        </select>
-        <button type="submit"
-                class="btn btn-outline-secondary">
-            Change
-        </button>
+    <div class="mb-3">
+        <label class="fw-bold">Genus</label>
+        <div class="input-group">
+            <select asp-for="GenusId"
+                    asp-items="Model.GenusOptions"
+                    class="form-select">
+            </select>
+            <button type="submit"
+                    class="btn btn-outline-secondary">
+                Change
+            </button>
+        </div>
     </div>
 </form>
 
@@ -44,16 +49,18 @@
     <input type="hidden" asp-for="PlantId" />
     <input type="hidden" asp-for="GenusId" />
 
-    <label class="form-label">Species / hybrid</label>
-    <div class="input-group">
-        <select asp-for="TaxonId"
-                asp-items="Model.TaxonOptions"
-                class="form-select">
-        </select>
-        <button type="submit"
-                class="btn btn-outline-secondary">
-            Change
-        </button>
+    <div class="mb-3">
+        <label class="fw-bold">Species / hybrid</label>
+        <div class="input-group">
+            <select asp-for="TaxonId"
+                    asp-items="Model.TaxonOptions"
+                    class="form-select">
+            </select>
+            <button type="submit"
+                    class="btn btn-outline-secondary">
+                Change
+            </button>
+        </div>
     </div>
 </form>
 
@@ -67,19 +74,19 @@
     <input type="hidden" asp-for="TaxonId" />
 
     <div class="mb-3">
-        <label class="form-label">Plant tag</label>
+        <label class="fw-bold">Plant tag</label>
         <input asp-for="PlantTag" class="form-control" />
         <span asp-validation-for="PlantTag" class="text-danger"></span>
     </div>
 
     <div class="mb-3">
-        <label class="form-label">Plant name</label>
+        <label class="fw-bold">Plant name</label>
         <input asp-for="PlantName" class="form-control" />
         <span asp-validation-for="PlantName" class="text-danger"></span>
     </div>
 
     <div class="mb-3">
-        <label class="form-label">Acquired on</label>
+        <label class="fw-bold">Acquired on</label>
         <input asp-for="AcquisitionDate"
                type="datetime-local"
                class="form-control"
@@ -88,13 +95,13 @@
     </div>
 
     <div class="mb-3">
-        <label class="form-label">Acquired from</label>
+        <label class="fw-bold">Acquired from</label>
         <input asp-for="AcquisitionSource" class="form-control" />
         <span asp-validation-for="AcquisitionSource" class="text-danger"></span>
     </div>
 
     <div class="mb-3">
-        <label class="form-label">End date</label>
+        <label class="fw-bold">End date</label>
         <input asp-for="EndDate"
                type="datetime-local"
                class="form-control"
@@ -103,7 +110,7 @@
     </div>
 
     <div class="mb-3">
-        <label class="form-label">End notes</label>
+        <label class="fw-bold">End notes</label>
         <textarea asp-for="EndNotes"
                   class="form-control"
                   rows="4"></textarea>
@@ -111,7 +118,7 @@
     </div>
 
     <div class="mb-3">
-        <label class="form-label">Plant notes</label>
+        <label class="fw-bold">Plant notes</label>
         <textarea asp-for="PlantNotes"
                   class="form-control"
                   rows="5"></textarea>
