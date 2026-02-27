@@ -179,13 +179,13 @@ If not, resolve the issues before proceeding.
 
 ### 4.2.3 Pull Latest Code
 
-    cd /opt/orchidapp/src
+    cd /opt/orchidapp
     git pull
 
 ### 4.2.4 Publish
 
     cd /opt/orchidapp/src/OrchidApp.Web
-    dotnet publish -c Release -o /opt/orchidapp/publish
+    dotnet publish src/OrchidApp.Web/OrchidApp.Web.csproj -c Release -o /opt/orchidapp/publish
 
 ### 4.2.5 Restart Service
 
