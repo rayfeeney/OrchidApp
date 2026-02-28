@@ -4,7 +4,8 @@
 <h1 class="page-title fw-bold">Setup</h1>
 
 <p class="text-muted">
-    Use this area to manage reference information such as genera, species and locations.
+Before adding plants, define the plant groups (such as Phalaenopsis or Cattleya) 
+and the locations where you keep them.
 </p>
 
 <div class="d-grid gap-3 mt-4">
@@ -12,19 +13,19 @@
     <a asp-page="/Setup/Genera/Index"
        asp-route-returnUrl="@(Request.Path + Request.QueryString)"
        class="btn btn-lg btn-outline-primary">
-        Genera
+        Plant groups (Genera)
     </a>
 
     <a asp-page="/Setup/Taxa/Index"
        class="btn btn-lg btn-outline-primary">
-        Species & hybrids
+        Plant varieties (species & hybrids)
     </a>
 
     <a asp-page="/Setup/Locations/Index"
        class="btn btn-lg btn-outline-primary disabled"
        tabindex="-1"
        aria-disabled="true">
-        Locations (coming soon)
+        Growing locations (coming soon)
     </a>
 
 </div>

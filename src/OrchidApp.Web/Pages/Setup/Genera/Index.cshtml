@@ -1,12 +1,22 @@
 @page
 @model OrchidApp.Web.Pages.Setup.Genera.IndexModel
 
-<h1>Genera</h1>
+<h1 class="page-title fw-bold">Plant groups (Genera)</h1>
+
+<h2 class="h5 fw-bold mb-3">
+The main botanical groups your plants belong to
+</h2>
+
+<p class="text-muted">
+A plant group is formally called a <strong>genus</strong>.
+Examples include Phalaenopsis and Cattleya.
+You only need to add each genus once.
+</p>
 
 <div class="d-grid gap-2 mb-4">
     <a asp-page="/Setup/Genera/Actions/Add"
        class="btn btn-primary btn-lg">
-        Add genus
+        Add a plant group (genus)
     </a>
 </div>
 
@@ -14,9 +24,9 @@
 @foreach (var genus in Model.Genera)
 {
     <a asp-page="/Setup/Genera/Details"
-    asp-route-id="@genus.GenusId"
-    asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-    class="btn btn-lg text-start @(genus.IsActive ? "btn-outline-primary" : "btn-outline-secondary text-muted")">
+       asp-route-id="@genus.GenusId"
+       asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+       class="btn btn-lg text-start @(genus.IsActive ? "btn-outline-primary" : "btn-outline-secondary text-muted")">
 
         @genus.Name
 
