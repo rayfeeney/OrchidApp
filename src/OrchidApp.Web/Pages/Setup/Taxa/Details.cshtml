@@ -1,7 +1,7 @@
 @page "{id:int}"
 @model OrchidApp.Web.Pages.Setup.Taxa.DetailsModel
 
-<h1 class="d-flex align-items-center gap-2">
+<h1 class="page-title fw-bold d-flex align-items-center gap-2">
     @Model.Taxon!.DisplayName
 
     @if (!Model.Taxon.IsActive)
@@ -12,37 +12,46 @@
     }
 </h1>
 
+<h2 class="h5 fw-bold mb-3">
+Species / hybrid details
+</h2>
+
 <div class="card mt-3">
     <div class="card-body">
 
         <dl class="row mb-0">
 
-            <dt class="col-sm-3 fw-bold">Genus</dt>
+            <dt class="col-sm-3 fw-bold">
+                @Html.DisplayNameFor(m => m.Taxon!.GenusName)
+            </dt>
             <dd class="col-sm-9">@Model.Taxon.GenusName</dd>
 
             @if (!string.IsNullOrWhiteSpace(Model.Taxon.SpeciesName))
             {
-                <dt class="col-sm-3 fw-bold">Species</dt>
+                <dt class="col-sm-3 fw-bold">
+                    @Html.DisplayNameFor(m => m.Taxon!.SpeciesName)
+                </dt>
                 <dd class="col-sm-9">@Model.Taxon.SpeciesName</dd>
             }
 
             @if (!string.IsNullOrWhiteSpace(Model.Taxon.HybridName))
             {
-                <dt class="col-sm-3 fw-bold">Hybrid</dt>
+                <dt class="col-sm-3 fw-bold">
+                    @Html.DisplayNameFor(m => m.Taxon!.HybridName)
+                </dt>
                 <dd class="col-sm-9">@Model.Taxon.HybridName</dd>
             }
 
-            @* <dt class="col-sm-3 fw-bold">Growth Code</dt>
-            <dd class="col-sm-9">
-                @(string.IsNullOrWhiteSpace(Model.Taxon.GrowthCode) ? "—" : Model.Taxon.GrowthCode)
-            </dd> *@
-
-            <dt class="col-sm-3 fw-bold">Growth Notes</dt>
+            <dt class="col-sm-3 fw-bold">
+                @Html.DisplayNameFor(m => m.Taxon!.GrowthNotes)
+            </dt>
             <dd class="col-sm-9">
                 @(string.IsNullOrWhiteSpace(Model.Taxon.GrowthNotes) ? "—" : Model.Taxon.GrowthNotes)
             </dd>
 
-            <dt class="col-sm-3 fw-bold">Species / Hybrid notes</dt>
+            <dt class="col-sm-3 fw-bold">
+                @Html.DisplayNameFor(m => m.Taxon!.TaxonNotes)
+            </dt>
             <dd class="col-sm-9">
                 @(string.IsNullOrWhiteSpace(Model.Taxon.TaxonNotes) ? "—" : Model.Taxon.TaxonNotes)
             </dd>
@@ -60,14 +69,14 @@
            asp-route-id="@Model.Taxon.TaxonId"
            asp-route-returnUrl="@(Request.Path + Request.QueryString)"
            class="btn btn-primary btn-lg">
-            Edit
+            Edit species / hybrid
         </a>
 
         <a asp-page="/Setup/Taxa/Actions/Remove"
-            asp-route-id="@Model.Taxon.TaxonId"
-            asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-            class="btn btn-outline-danger btn-lg">
-             Deactivate
+           asp-route-id="@Model.Taxon.TaxonId"
+           asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+           class="btn btn-outline-danger btn-lg">
+            Deactivate species / hybrid
         </a>
 
     </div>

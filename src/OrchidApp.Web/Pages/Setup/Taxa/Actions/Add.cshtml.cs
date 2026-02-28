@@ -24,18 +24,23 @@ public class AddModel : PageModel
     public List<GenusLookup> Genera { get; private set; } = [];
 
     [BindProperty, Required]
+    [Display(Name = "Genus")]
     public int GenusId { get; set; }
 
     [BindProperty]
+    [Display(Name = "Species name")]
     public string? SpeciesName { get; set; }
 
     [BindProperty]
+    [Display(Name = "Hybrid name")]
     public string? HybridName { get; set; }
 
     [BindProperty]
+    [Display(Name = "Growth notes")]
     public string? GrowthNotes { get; set; }
 
     [BindProperty]
+    [Display(Name = "Notes")]
     public string? TaxonNotes { get; set; }
 
     public async Task OnGetAsync()
