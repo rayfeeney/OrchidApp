@@ -1,7 +1,7 @@
 @page "{id:int}"
 @model OrchidApp.Web.Pages.Setup.Genera.DetailsModel
 
-<h1 class="d-flex align-items-center gap-2">
+<h1 class="page-title fw-bold d-flex align-items-center gap-2">
     @Model.Genus!.Name
 
     @if (!Model.Genus.IsActive)
@@ -12,17 +12,27 @@
     }
 </h1>
 
-<dl class="row mt-3">
+<h2 class="h5 fw-bold mb-3">
+Genus details
+</h2>
 
-    <dt class="col-sm-3">Genus</dt>
-    <dd class="col-sm-9">@Model.Genus.Name</dd>
+<div class="card mt-3">
+    <div class="card-body">
 
-    <dt class="col-sm-3">Notes</dt>
-    <dd class="col-sm-9">
-        @(string.IsNullOrWhiteSpace(Model.Genus.Notes) ? "—" : Model.Genus.Notes)
-    </dd>
+        <dl class="row mb-0">
 
-</dl>
+            <dt class="col-sm-3 fw-bold">@Html.DisplayNameFor(m => m.Genus!.Name)</dt>
+            <dd class="col-sm-9">@Model.Genus.Name</dd>
+
+            <dt class="col-sm-3 fw-bold">@Html.DisplayNameFor(m => m.Genus!.Notes)</dt>
+            <dd class="col-sm-9">
+                @(string.IsNullOrWhiteSpace(Model.Genus.Notes) ? "—" : Model.Genus.Notes)
+            </dd>
+
+        </dl>
+
+    </div>
+</div>
 
 <div class="d-grid gap-2 mt-4">
 
@@ -30,12 +40,10 @@
        asp-route-id="@Model.Genus!.GenusId"
        asp-route-returnUrl="@(Request.Path + Request.QueryString)"
        class="btn btn-primary btn-lg">
-        Edit
+        Edit genus
     </a>
 
 </div>
 
-    <partial name="_BackFullWidth"
-             model="@(Model.ReturnUrl ?? Url.Page("/Setup/Genera/Index"))" />
-
-</p>
+<partial name="_BackFullWidth"
+         model="@(Model.ReturnUrl ?? Url.Page("/Setup/Genera/Index"))" />

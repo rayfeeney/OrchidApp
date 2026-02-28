@@ -20,9 +20,11 @@ public class AddModel : PageModel
     }
 
     [BindProperty, Required]
+    [Display(Name = "Genus name")]
     public string GenusName { get; set; } = string.Empty;
 
     [BindProperty]
+    [Display(Name = "Notes")]
     public string? GenusNotes { get; set; }
 
     public IActionResult OnGet()

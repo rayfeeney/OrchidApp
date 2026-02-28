@@ -1,7 +1,17 @@
 @page
 @model OrchidApp.Web.Pages.Setup.Genera.Actions.AddModel
 
-<h1>Add genus</h1>
+<h1 class="page-title fw-bold">Add genus</h1>
+
+<h2 class="h5 fw-bold mb-3">
+Create a new botanical group for your plants
+</h2>
+
+<p class="text-muted">
+A plant group is formally called a <strong>genus</strong>.
+For example: Phalaenopsis, Cattleya or Dendrobium.
+Each genus only needs to be added once.
+</p>
 
 <div class="mt-4">
 
@@ -12,24 +22,32 @@
     <form method="post">
 
         <div class="mb-3">
-            <label class="form-label">Genus name</label>
+            <label asp-for="GenusName" class="fw-bold"></label>
+            <small class="text-muted d-block fw-normal">
+                Enter the botanical genus name.
+            </small>
             <input asp-for="GenusName"
                    class="form-control"
                    autocomplete="off" />
+            <span asp-validation-for="GenusName"
+                  class="text-danger"></span>
         </div>
 
         <div class="mb-3">
-            <label asp-for="GenusNotes" class="form-label">
-                Notes (optional)
-            </label>
+            <label asp-for="GenusNotes" class="fw-bold"></label>
+            <small class="text-muted d-block fw-normal">
+                Optional notes about this plant group.
+            </small>
             <textarea asp-for="GenusNotes"
-                    class="form-control"
-                    rows="3"></textarea>
+                      class="form-control"
+                      rows="3"></textarea>
+            <span asp-validation-for="GenusNotes"
+                  class="text-danger"></span>
         </div>
 
         <partial name="_FormActions"
                  model="@((Model.ReturnUrl ?? Url.Page("/Setup/Genera/Index"), "Add genus"))" />
 
     </form>
- 
+
 </div>
