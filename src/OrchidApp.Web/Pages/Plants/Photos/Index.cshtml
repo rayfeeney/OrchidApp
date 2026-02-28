@@ -37,6 +37,30 @@
              class="img-fluid rounded shadow"
              style="max-height:60vh;" />
 
+        @if (!Model.FocusPhoto.IsHero)
+        {
+            <form method="post"
+                  asp-page-handler="SetHero"
+                  class="mt-3">
+
+                <input type="hidden" name="plantId" value="@Model.PlantId" />
+                <input type="hidden" name="photoId" value="@Model.FocusPhoto.PlantPhotoId" />
+
+                <button type="submit"
+                        class="btn btn-outline-primary btn-lg">
+                    Set as main image
+                </button>
+            </form>
+        }
+        else
+        {
+            <div class="mt-3">
+                <span class="badge bg-success">
+                    Main image
+                </span>
+            </div>
+        }
+
     </div>
     
 }
