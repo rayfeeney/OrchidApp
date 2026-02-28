@@ -5,7 +5,7 @@
     ViewData["Title"] = Model.EventType switch
     {
         "Observation" => "Add Observation",
-        "LocationChange" => "Move Location",
+        "LocationChange" => "Move Plant",
         "Flowering" => "Add Flowering",
         "Repotting" => "Add Repotting",
         _ => "Add Event"
@@ -17,13 +17,42 @@
 @if (Model.PlantDisplayName != null)
 {
     <h2 class="h5 fw-bold mb-3">
-        <span class="fw-normal text-muted">Plant:</span>
-        <span>@Model.PlantDisplayName</span>
+        @Model.PlantDisplayName
         @if (!string.IsNullOrWhiteSpace(Model.PlantTag))
         {
-            <span class="fw-normal text-muted"> (Tag: @Model.PlantTag)</span>
+            <span class="fw-normal text-muted">
+                (Tag: @Model.PlantTag)
+            </span>
         }
     </h2>
+
+    @if (Model.EventType == "Observation")
+    {
+        <p class="text-muted small mb-3">
+            Record something you’ve noticed about this plant.
+        </p>
+    }
+
+    @if (Model.EventType == "LocationChange")
+    {
+        <p class="text-muted small mb-3">
+            Record that this plant has been moved to a new location.
+        </p>
+    }
+
+    @if (Model.EventType == "Flowering")
+    {
+        <p class="text-muted small mb-3">
+            Record a flowering period for this plant.
+        </p>
+    }
+
+    @if (Model.EventType == "Repotting")
+    {
+        <p class="text-muted small mb-3">
+            Record that this plant has been repotted.
+        </p>
+    }
 }
 
 <div asp-validation-summary="ModelOnly"
@@ -35,6 +64,10 @@
     @if (Model.EventType == "Observation")
     {
         <div class="mb-3 d-grid gap-2">
+
+        <p class="text-muted small mb-2">
+        Choose a quick action or add general notes below.
+        </p>
 
             <button type="submit"
                     name="quickAction"
@@ -90,6 +123,11 @@
     @* LocationChange *@
     @if (Model.EventType == "LocationChange")
     {
+
+    <p class="text-muted small mb-3">
+    This records when the plant moved. Previous locations will be kept in its history.
+    </p>
+
         <div class="mb-3">
             <label asp-for="LocationId" class="fw-bold">Location</label>
             <select asp-for="LocationId" class="form-select">
@@ -124,6 +162,9 @@
     {
         <div class="mb-3">
             <label asp-for="StartDate" class="fw-bold">Start date</label>
+            <small class="text-muted d-block fw-normal">
+            Date flowering began.
+            </small>
             <input asp-for="StartDate"
                    type="date"
                    class="form-control" />
@@ -172,14 +213,14 @@
         </div>
 
         <div class="mb-3">
-            <label asp-for="OldMediumNotes" class="fw-bold">Old medium notes</label>
+            <label asp-for="OldMediumNotes" class="fw-bold">Previous medium</label>
             <textarea asp-for="OldMediumNotes"
                       class="form-control"
                       rows="3"></textarea>
         </div>
 
         <div class="mb-3">
-            <label asp-for="NewMediumNotes" class="fw-bold">New medium notes</label>
+            <label asp-for="NewMediumNotes" class="fw-bold">New medium</label>
             <textarea asp-for="NewMediumNotes"
                       class="form-control"
                       rows="3"></textarea>
@@ -192,7 +233,7 @@
         </div>
 
         <div class="mb-3">
-            <label asp-for="RepotReasonNotes" class="fw-bold">Repotting reason</label>
+            <label asp-for="RepotReasonNotes" class="fw-bold">Reason for repotting</label>
             <textarea asp-for="RepotReasonNotes"
                       class="form-control"
                       rows="3"></textarea>
@@ -207,8 +248,8 @@
     }
 
     <partial name="_FormActions"
-             model="@(Model.ReturnUrl 
-                     ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }), 
-                     "Save")" />
+            model="@(Model.ReturnUrl 
+                    ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }), 
+                    ViewData["Title"]?.ToString() ?? "Save")" />
 
 </form>

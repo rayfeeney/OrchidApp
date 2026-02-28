@@ -5,6 +5,10 @@
 
 <h2 class="h5 fw-bold mb-3">
     @Model.PlantDisplayName
+    @if (!string.IsNullOrWhiteSpace(Model.PlantTag))
+    {
+        <span class="fw-normal text-muted"> (@Model.PlantTag)</span>
+    }
 </h2>
 
 <div class="card mt-3 mb-3">
@@ -34,16 +38,22 @@
              style="max-height:60vh;" />
 
     </div>
+    
 }
 else
 {
     <div class="alert alert-info mt-3 text-center">
-        No photos have been added for this plant yet.
+        No photos have been added yet.
+        Add a photo from the plant’s History using “Add observation”.
     </div>
 }
 
 @if (Model.Photos.Count > 0)
 {
+<p class="text-muted small mt-3 text-center">
+    Tap a thumbnail below to view a different photo.
+</p>
+
     <div class="d-flex justify-content-between mt-3 mb-3">
 
         @if (Model.PreviousPhotoId.HasValue)
@@ -51,7 +61,7 @@ else
             <a asp-route-plantId="@Model.PlantId"
                asp-route-focusPhotoId="@Model.PreviousPhotoId"
                class="btn btn-outline-primary btn-lg">
-                ◀ Previous
+                ◀ Previous photo
             </a>
         }
         else
@@ -64,7 +74,7 @@ else
             <a asp-route-plantId="@Model.PlantId"
                asp-route-focusPhotoId="@Model.NextPhotoId"
                class="btn btn-outline-primary btn-lg">
-                Next ▶
+                Next photo ▶
             </a>
         }
 

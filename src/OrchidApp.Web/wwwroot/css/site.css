@@ -79,6 +79,11 @@ body.env-dev {
   background-color: #fff6d6;
 }
 
+.event-summary {
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
 /* --- Taxon page layout (card + thumbnail + edit) --- */
 
 .plant-card-wrapper {

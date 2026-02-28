@@ -10,10 +10,13 @@
 @if (Model.Taxon != null)
 {
     <h2 class="h5 fw-bold mb-3">
-        <span class="fw-normal text-muted">Genus and species / hybrid:</span>
-        <span>@Model.Taxon.DisplayName</span>
+        @Model.Taxon.DisplayName
     </h2>
 }
+
+<p class="text-muted small mb-3">
+This plant will be recorded under this species / hybrid. You can edit these details later if needed.
+</p>
 
 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
@@ -22,7 +25,7 @@
     <div class="mb-3">
         <label asp-for="Input.PlantTag" class="fw-bold"></label>
         <small class="text-muted d-block fw-normal">
-            Every plant must have a unique tag. You can use any combination of letters and numbers, but it must be unique across your collection.
+            Every plant needs a unique tag. It can contain any characters.
         </small>
         <input asp-for="Input.PlantTag" class="form-control" />
         <span asp-validation-for="Input.PlantTag" class="text-danger"></span>
@@ -31,7 +34,7 @@
     <div class="mb-3">
         <label asp-for="Input.PlantName" class="fw-bold"></label>
         <small class="text-muted d-block fw-normal">
-            The name of your plant. This is optional, but it can help you identify your plants more easily.
+            Optional. A personal name to help you recognise this plant.
         </small>
         <input asp-for="Input.PlantName" class="form-control" />
         <span asp-validation-for="Input.PlantName" class="text-danger"></span>
@@ -40,7 +43,7 @@
     <div class="mb-3">
         <label asp-for="Input.AcquisitionDate" class="fw-bold"></label>
         <small class="text-muted d-block fw-normal">
-            The date you acquired the plant. This is optional, but it can help you keep track of how long you've had your plants and when they might need to be repotted or divided.
+            Optional. The date you obtained the plant.
         </small>
         <input asp-for="Input.AcquisitionDate" class="form-control" />
         <span asp-validation-for="Input.AcquisitionDate" class="text-danger"></span>
@@ -49,7 +52,7 @@
     <div class="mb-3">
         <label asp-for="Input.AcquisitionSource" class="fw-bold"></label>
         <small class="text-muted d-block fw-normal">
-            The source of your plant (e.g. a nursery, a friend, a swap). When you split a plant it will automatically use the plant tag of the parent.
+            Optional. Where the plant came from (e.g. nursery, friend, swap).
         </small>
         <input asp-for="Input.AcquisitionSource" class="form-control" />
         <span asp-validation-for="Input.AcquisitionSource" class="text-danger"></span>
@@ -58,7 +61,7 @@
     <div class="mb-3">
         <label asp-for="Input.PlantNotes" class="fw-bold"></label>
         <small class="text-muted d-block fw-normal">
-            Any additional notes about your plant. This is optional, but it can help you keep track of specific care instructions, growth habits, or any other information you want to remember about your plant.
+            Optional. Any additional notes about this plant.
         </small>
         <textarea asp-for="Input.PlantNotes"
                   class="form-control"

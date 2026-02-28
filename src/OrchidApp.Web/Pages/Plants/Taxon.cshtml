@@ -12,36 +12,44 @@
     </span>
 </h1>
 
+<h2 class="h5 fw-bold mb-3">
+    Plants recorded under this species / hybrid
+</h2>
+
 @if (!Model.Plants.Any())
 {
     <div class="empty-state">
-        <p>You don’t have any plants of this species/hybrid yet.</p>
+        <p class="text-muted">
+            You don’t have any plants recorded under this species / hybrid yet.
+        </p>
     </div>
 }
 else
 {
+    <p class="text-muted small mb-3">
+        Tap a plant to view details. Tap the image to see photos. Tap the pencil icon to edit the details of the plant.
+    </p>
+
     <div class="card-list">
         @foreach (var plant in Model.Plants)
         {
             <div class="plant-card-wrapper">
 
-                <!-- Card container (no longer a link) -->
                 <div class="plant-card">
-
                     <div class="plant-main">
 
-                        <!-- Thumbnail tap → Photos -->
+                        <!-- Thumbnail → Photos -->
                         <a class="plant-thumb-link"
-                        asp-page="/Plants/Photos/Index"
-                        asp-route-plantId="@plant.PlantId"
-                        asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-                        title="Photos">
+                           asp-page="/Plants/Photos/Index"
+                           asp-route-plantId="@plant.PlantId"
+                           asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+                           title="Photos">
 
                             @if (!string.IsNullOrEmpty(plant.HeroFilePath))
                             {
                                 <img src="/@plant.HeroFilePath"
-                                    class="plant-thumb"
-                                    alt="" />
+                                     class="plant-thumb"
+                                     alt="" />
                             }
                             else
                             {
@@ -52,11 +60,11 @@ else
 
                         </a>
 
-                        <!-- Main area tap → Details -->
+                        <!-- Main area → Details -->
                         <a class="plant-text-link"
-                        asp-page="/Plants/Details"
-                        asp-route-plantId="@plant.PlantId"
-                        asp-route-returnUrl="@(Request.Path + Request.QueryString)">
+                           asp-page="/Plants/Details"
+                           asp-route-plantId="@plant.PlantId"
+                           asp-route-returnUrl="@(Request.Path + Request.QueryString)">
 
                             <div class="plant-text">
                                 <div class="plant-tag">@plant.PlantTag</div>
@@ -66,16 +74,16 @@ else
                                     <div class="plant-name">@plant.PlantName</div>
                                 }
 
-                                <div class="location-line">@plant.LocationName</div>
-
                                 <div class="since">
                                     @if (plant.LocationStartDateTime.HasValue)
                                     {
-                                        <text>There since @plant.LocationStartDateTime.Value.ToString("dd/MM/yyyy")</text>
+                                        <text>
+                                            At this location since @plant.LocationStartDateTime.Value.ToString("dd/MM/yyyy")
+                                        </text>
                                     }
                                     else
                                     {
-                                        <text>No location yet recorded</text>
+                                        <text>No location recorded yet</text>
                                     }
                                 </div>
                             </div>
@@ -85,12 +93,12 @@ else
                     </div>
                 </div>
 
-                <!-- Pencil tap → Edit -->
+                <!-- Edit -->
                 <a class="plant-edit"
-                asp-page="/Plants/Edit/Index"
-                asp-route-plantId="@plant.PlantId"
-                asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-                title="Edit plant">
+                   asp-page="/Plants/Edit/Index"
+                   asp-route-plantId="@plant.PlantId"
+                   asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+                   title="Edit plant">
                     <i class="bi bi-pencil"></i>
                 </a>
 

@@ -1,16 +1,28 @@
 @page
 @model OrchidApp.Web.Pages.Setup.Taxa.Actions.AddModel
 
-<h1>Add species or hybrid</h1>
+<h1 class="page-title fw-bold">Add species / hybrid</h1>
+
+<h2 class="h5 fw-bold mb-3">
+Create a botanical name within a genus
+</h2>
+
+<p class="text-muted">
+A plant belongs to one genus and is identified by either a species or a registered hybrid.
+Enter one name only.
+</p>
 
 <form method="post" class="mt-4">
 
     <div asp-validation-summary="ModelOnly"
-        class="alert alert-danger">
+         class="alert alert-danger">
     </div>
 
     <div class="mb-3">
-        <label class="form-label">Genus</label>
+        <label asp-for="GenusId" class="fw-bold"></label>
+        <small class="text-muted d-block fw-normal">
+            Select the genus this species or hybrid belongs to.
+        </small>
         <select class="form-select" asp-for="GenusId" required>
             <option value="">Select a genus</option>
             @foreach (var g in Model.Genera)
@@ -18,31 +30,46 @@
                 <option value="@g.GenusId">@g.GenusName</option>
             }
         </select>
+        <span asp-validation-for="GenusId" class="text-danger"></span>
     </div>
 
     <div class="mb-3">
-        <label class="form-label">Species name</label>
+        <label asp-for="SpeciesName" class="fw-bold"></label>
+        <small class="text-muted d-block fw-normal">
+            Leave blank if adding a hybrid.
+        </small>
         <input class="form-control" asp-for="SpeciesName" />
-        <div class="form-text">Leave blank if adding a hybrid</div>
+        <span asp-validation-for="SpeciesName" class="text-danger"></span>
     </div>
 
     <div class="mb-3">
-        <label class="form-label">Hybrid name</label>
+        <label asp-for="HybridName" class="fw-bold"></label>
+        <small class="text-muted d-block fw-normal">
+            Leave blank if adding a species.
+        </small>
         <input class="form-control" asp-for="HybridName" />
-        <div class="form-text">Leave blank if adding a species</div>
+        <span asp-validation-for="HybridName" class="text-danger"></span>
     </div>
 
     <div class="mb-3">
-        <label class="form-label">Growth notes (optional)</label>
+        <label asp-for="GrowthNotes" class="fw-bold"></label>
+        <small class="text-muted d-block fw-normal">
+            Optional notes about growth characteristics.
+        </small>
         <textarea class="form-control" asp-for="GrowthNotes"></textarea>
+        <span asp-validation-for="GrowthNotes" class="text-danger"></span>
     </div>
 
     <div class="mb-3">
-        <label class="form-label">Species or hybrid notes (optional)</label>
+        <label asp-for="TaxonNotes" class="fw-bold"></label>
+        <small class="text-muted d-block fw-normal">
+            Optional notes about this species or hybrid.
+        </small>
         <textarea class="form-control" asp-for="TaxonNotes"></textarea>
+        <span asp-validation-for="TaxonNotes" class="text-danger"></span>
     </div>
 
     <partial name="_FormActions"
-             model="@((Model.ReturnUrl ?? Url.Page("/Setup/Taxa/Index"), "Add species/hybrid"))" />
+             model="@((Model.ReturnUrl ?? Url.Page("/Setup/Taxa/Index"), "Add species / hybrid"))" />
 
 </form>

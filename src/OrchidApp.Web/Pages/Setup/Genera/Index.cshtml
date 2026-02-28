@@ -10,15 +10,19 @@ The main botanical groups your plants belong to
 <p class="text-muted">
 A plant group is formally called a <strong>genus</strong>.
 Examples include Phalaenopsis and Cattleya.
-You only need to add each genus once.
+Each genus only needs to be added once.
 </p>
 
 <div class="d-grid gap-2 mb-4">
     <a asp-page="/Setup/Genera/Actions/Add"
        class="btn btn-primary btn-lg">
-        Add a plant group (genus)
+        Add genus
     </a>
 </div>
+
+<p class="text-muted small mb-2">
+    Select a genus to view or edit its details.
+</p>
 
 <div class="d-grid gap-2">
 @foreach (var genus in Model.Genera)

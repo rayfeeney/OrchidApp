@@ -5,16 +5,21 @@
     ViewData["Title"] = "Add plant";
 }
 
-<h1>Select genus and species/hybrid</h1>
+<h1 class="page-title fw-bold">Add plant</h1>
 
 <h2 class="h5 fw-bold mb-3">
-    Choose the genus and species/hybrid for the new plant.
+Select the genus and species / hybrid
 </h2>
+
+<p class="text-muted small mb-3">
+Choose the botanical name for the new plant.
+You’ll enter the plant’s details next.
+</p>
 
 <div class="d-grid gap-2">
 @foreach (var genusGroup in Model.Taxa.GroupBy(t => t.GenusName))
 {
-    <h2 class="mt-4">@genusGroup.Key</h2>
+    <h2 class="h6 fw-bold mt-4 mb-2">@genusGroup.Key</h2>
 
     <div class="d-grid gap-2">
         @foreach (var taxon in genusGroup)
