@@ -9,6 +9,10 @@
     @Model.PlantRequired.DisplayName
 </h1>
 
+<h2 class="h5 fw-bold mb-3">
+Plant details
+</h2>
+
 <div class="row mt-3">
 
     <!-- Left column: details -->
@@ -18,14 +22,27 @@
             <div class="card-body">
                 <dl class="row mb-0">
 
-                    <dt class="col-sm-3 fw-bold">Tag</dt>
+                    <dt class="col-sm-3 fw-bold">
+                        @Html.DisplayNameFor(m => m.PlantRequired.PlantTag)
+                    </dt>
                     <dd class="col-sm-9">
                         @(string.IsNullOrWhiteSpace(Model.PlantRequired.PlantTag)
                             ? "—"
                             : Model.PlantRequired.PlantTag)
                     </dd>
 
-                    <dt class="col-sm-3 fw-bold">Location</dt>
+                    <dt class="col-sm-3 fw-bold">
+                        @Html.DisplayNameFor(m => m.PlantRequired.PlantName)
+                    </dt>
+                    <dd class="col-sm-9">
+                        @(string.IsNullOrWhiteSpace(Model.PlantRequired.PlantName)
+                            ? "—"
+                            : Model.PlantRequired.PlantName)
+                    </dd>
+
+                    <dt class="col-sm-3 fw-bold">
+                        @Html.DisplayNameFor(m => m.PlantRequired.LocationName)
+                    </dt>
                     <dd class="col-sm-9">
                         @(string.IsNullOrWhiteSpace(Model.PlantRequired.LocationName)
                             ? "—"
@@ -52,11 +69,19 @@
                      style="max-height:250px; object-fit:cover;" />
             </a>
         </div>
+
+        <p class="text-muted small mt-2 mb-0 text-md-end">
+            Tap image to view photos
+        </p>
     }
 
 </div>
 
 <h2 class="h5 fw-bold mb-3 mt-4">History</h2>
+
+<p class="text-muted small mb-3">
+Record observations, moves, repotting and flowering events.
+</p>
 
 <div class="d-grid gap-2 d-sm-flex mb-3">
     <a asp-page="/Plants/Events/Add"
@@ -97,6 +122,11 @@
     <hr class="my-4" />
 
     <div class="mb-4">
+
+        <p class="text-muted small mb-2">
+            Splitting ends this plant and creates new plants.
+        </p>
+
         <a asp-page="/Plants/Events/Split"
            asp-route-plantId="@Model.PlantRequired.PlantId"
            asp-route-returnUrl="@(Request.Path + Request.QueryString)"
@@ -108,54 +138,101 @@
 
 @if (!Model.LifecycleEvents.Any())
 {
-    <p class="text-muted">No history recorded.</p>
+    <p class="text-muted">No events recorded yet.</p>
 }
 else
 {
-    <table class="table table-sm">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Event</th>
-            </tr>
-        </thead>
-        <tbody>
-        @foreach (var ev in Model.LifecycleEvents)
-        {
-            <tr>
-                <td class="text-nowrap">
-                    @ev.EventDateTime.ToString("dd/MM/yyyy")
-                </td>
-                <td>
-                    <strong>@ev.EventType</strong><br />
-                    @(string.IsNullOrWhiteSpace(ev.EventSummary)
-                        ? "—"
-                        : ev.EventSummary)
+    <div class="d-grid gap-3">
+    @foreach (var ev in Model.LifecycleEvents)
+    {
+        <div class="card">
+            <div class="card-body">
 
-                    <div class="d-flex gap-2 mt-2">
-                        <a asp-page="/Plants/Events/Edit"
-                           asp-route-plantId="@Model.PlantRequired.PlantId"
-                           asp-route-sourceId="@ev.SourceId"
-                           asp-route-eventType="@ev.EventType"
-                           asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-                           class="btn btn-sm btn-outline-secondary">
-                            Edit
-                        </a>
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="d-flex justify-content-between align-items-start gap-3">
 
-                        <a asp-page="/Plants/Events/Remove"
-                           asp-route-plantId="@Model.PlantRequired.PlantId"
-                           asp-route-sourceId="@ev.SourceId"
-                           asp-route-eventType="@ev.EventType"
-                           asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-                           class="btn btn-sm btn-outline-danger">
-                            Remove
-                        </a>
+                            <div class="d-flex align-items-center gap-2">
+
+                                @{
+                                    var badgeClass = "bg-secondary";
+                                    var iconClass = "bi-journal-text";
+                                    var label = ev.EventType;
+
+                                    if (ev.EventType == "LocationChange")
+                                    {
+                                        badgeClass = "bg-info text-dark";
+                                        iconClass = "bi-geo-alt";
+                                        label = "Move";
+                                    }
+                                    else if (ev.EventType == "Flowering")
+                                    {
+                                        badgeClass = "bg-success";
+                                        iconClass = "bi-flower1";
+                                    }
+                                    else if (ev.EventType == "Repotting")
+                                    {
+                                        badgeClass = "bg-warning text-dark";
+                                        iconClass = "bi-arrow-repeat";
+                                    }
+                                }
+
+                                <span class="badge @badgeClass">
+                                    <i class="bi @iconClass me-1"></i>
+                                    @label
+                                </span>
+
+                            </div>
+
+                            <div class="text-muted small text-nowrap">
+                                @ev.EventDateTime.ToString("dd/MM/yyyy")
+                            </div>
+
+                        </div>
                     </div>
-                </td>
-            </tr>
-        }
-        </tbody>
-    </table>
+                </div>
+
+                <div class="mt-3">
+
+                    @if (!string.IsNullOrWhiteSpace(ev.EventSummary))
+                    {
+                        <div class="event-summary">
+                            @ev.EventSummary
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-muted">
+                            No additional details recorded.
+                        </div>
+                    }
+
+                </div>
+
+                <div class="d-flex gap-2 mt-3">
+                    <a asp-page="/Plants/Events/Edit"
+                    asp-route-plantId="@Model.PlantRequired.PlantId"
+                    asp-route-sourceId="@ev.SourceId"
+                    asp-route-eventType="@ev.EventType"
+                    asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+                    class="btn btn-sm btn-outline-secondary">
+                        Edit event
+                    </a>
+
+                    <a asp-page="/Plants/Events/Remove"
+                    asp-route-plantId="@Model.PlantRequired.PlantId"
+                    asp-route-sourceId="@ev.SourceId"
+                    asp-route-eventType="@ev.EventType"
+                    asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+                    class="btn btn-sm btn-outline-danger">
+                        Remove event
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    }
+    </div>
 }
 
 <partial name="_BackFullWidth"

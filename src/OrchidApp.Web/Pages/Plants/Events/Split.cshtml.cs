@@ -5,6 +5,7 @@ using OrchidApp.Web.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using MySqlConnector;
+using System.ComponentModel.DataAnnotations;
 
 namespace OrchidApp.Web.Pages.Plants.Events;
 
@@ -41,7 +42,10 @@ public class SplitModel : PageModel
 
     public class ChildInput
     {
+        [Required]
+        [Display(Name = "Plant tag")]
         public string? PlantTag { get; set; }
+        [Display(Name = "Plant name")]
         public string? PlantName { get; set; }
     }
 

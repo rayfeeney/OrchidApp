@@ -51,6 +51,7 @@ public class DetailsModel : PageModel
         LifecycleEvents = _db.PlantLifecycleHistory
             .Where(e => e.PlantId == PlantId)
             .OrderByDescending(e => e.EventDateTime)
+            .ThenByDescending(e => e.SourceId)
             .ToList();
 
         return Page();

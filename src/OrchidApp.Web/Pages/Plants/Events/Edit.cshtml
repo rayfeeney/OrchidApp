@@ -4,10 +4,10 @@
 @{
     ViewData["Title"] = Model.EventType switch
     {
-        "Observation"    => "Edit Observation",
-        "LocationChange" => "Edit Location",
-        "Flowering"      => "Edit Flowering",
-        "Repotting"      => "Edit Repotting",
+        "Observation"    => "Edit observation",
+        "LocationChange" => "Edit move",
+        "Flowering"      => "Edit flowering",
+        "Repotting"      => "Edit repotting",
         _                => throw new InvalidOperationException("Unknown event type.")
     };
 }
@@ -17,13 +17,42 @@
 @if (Model.PlantDisplayName != null)
 {
     <h2 class="h5 fw-bold mb-3">
-        <span class="fw-normal text-muted">Plant:</span>
-        <span>@Model.PlantDisplayName</span>
+        @Model.PlantDisplayName
         @if (!string.IsNullOrWhiteSpace(Model.PlantTag))
         {
-            <span class="fw-normal text-muted"> (Tag: @Model.PlantTag)</span>
+            <span class="fw-normal text-muted">
+                (Tag: @Model.PlantTag)
+            </span>
         }
     </h2>
+}
+
+@if (Model.EventType == "Observation")
+{
+    <p class="text-muted small mb-3">
+        Update details of this observation.
+    </p>
+}
+
+@if (Model.EventType == "LocationChange")
+{
+    <p class="text-muted small mb-3">
+        Adjust when this plant was moved. Previous location history will be preserved.
+    </p>
+}
+
+@if (Model.EventType == "Flowering")
+{
+    <p class="text-muted small mb-3">
+        Update this flowering record.
+    </p>
+}
+
+@if (Model.EventType == "Repotting")
+{
+    <p class="text-muted small mb-3">
+        Update this repotting record.
+    </p>
 }
 
 <div asp-validation-summary="ModelOnly"
@@ -69,7 +98,7 @@
         *@
 
         <div class="mb-3">
-            <label asp-for="EventDetails" class="fw-bold">Move reason (notes)</label>
+            <label asp-for="EventDetails" class="fw-bold">Reason for move</label>
             <textarea asp-for="EventDetails"
                       class="form-control"
                       rows="3"></textarea>
@@ -134,14 +163,14 @@
         </div>
 
         <div class="mb-3">
-            <label asp-for="OldMediumNotes" class="fw-bold">Old medium notes</label>
+            <label asp-for="OldMediumNotes" class="fw-bold">Previous medium</label>
             <textarea asp-for="OldMediumNotes"
                       class="form-control"
                       rows="3"></textarea>
         </div>
 
         <div class="mb-3">
-            <label asp-for="NewMediumNotes" class="fw-bold">New medium notes</label>
+            <label asp-for="NewMediumNotes" class="fw-bold">New medium</label>
             <textarea asp-for="NewMediumNotes"
                       class="form-control"
                       rows="3"></textarea>
@@ -154,7 +183,7 @@
         </div>
 
         <div class="mb-3">
-            <label asp-for="RepotReasonNotes" class="fw-bold">Reason notes</label>
+            <label asp-for="RepotReasonNotes" class="fw-bold">Reason for repotting</label>
             <textarea asp-for="RepotReasonNotes"
                       class="form-control"
                       rows="3"></textarea>
@@ -169,8 +198,8 @@
     }
 
     <partial name="_FormActions"
-             model="@(Model.ReturnUrl 
-                     ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }), 
-                     "Save changes")" />
+            model="@(Model.ReturnUrl 
+                    ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }), 
+                    ViewData["Title"]?.ToString() ?? "Save changes")" />
 
 </form>

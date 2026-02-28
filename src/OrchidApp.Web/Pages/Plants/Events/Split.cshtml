@@ -14,9 +14,13 @@
 </h2>
 
 <p class="text-muted">
-    Splitting ends this plant. Its history will remain available to view.
-    Two or more new plants will be created.
-    The original plant will no longer exist.
+Splitting ends this plant’s lifecycle and creates new plants.
+The original plant will remain in your records but can no longer be edited.
+Its history will still be available to view.
+</p>
+
+<p class="text-muted small mb-3">
+This action cannot be undone.
 </p>
 
 <div asp-validation-summary="All" class="text-danger mb-3"></div>
@@ -44,25 +48,43 @@
     <input type="hidden" asp-for="PlantId" />
     <input type="hidden" asp-for="ChildCount" />
 
+    <h2 class="h5 fw-bold mt-4 mb-3">
+    New plants
+    </h2>
+
+    <p class="text-muted small mb-3">
+    Enter the details for each new plant created by this split.
+    </p>
+
     @for (int i = 0; i < Model.ChildCount; i++)
     {
         <div class="card mb-3">
+            <div class="card-header fw-bold">
+                New plant @(@i + 1)
+            </div>
+
             <div class="card-body">
 
                 <div class="mb-3">
-                    <label asp-for="Children[i].PlantTag" class="fw-bold">
-                        Child @(@i + 1) Plant tag
-                    </label>
+                    <label asp-for="Children[i].PlantTag" class="fw-bold"></label>
+                    <small class="text-muted d-block fw-normal">
+                        Required. Must be unique within your collection.
+                    </small>
                     <input asp-for="Children[i].PlantTag"
-                           class="form-control" />
+                        class="form-control" />
+                    <span asp-validation-for="Children[i].PlantTag"
+                        class="text-danger"></span>
                 </div>
 
                 <div class="mb-3">
-                    <label asp-for="Children[i].PlantName" class="fw-bold">
-                        Child @(@i + 1) Plant name (optional)
-                    </label>
+                    <label asp-for="Children[i].PlantName" class="fw-bold"></label>
+                    <small class="text-muted d-block fw-normal">
+                        Optional. A personal name to help you recognise this plant.
+                    </small>
                     <input asp-for="Children[i].PlantName"
-                           class="form-control" />
+                        class="form-control" />
+                    <span asp-validation-for="Children[i].PlantName"
+                        class="text-danger"></span>
                 </div>
 
             </div>
@@ -73,7 +95,7 @@
         <button type="submit"
                 asp-page-handler="AddChild"
                 class="btn btn-outline-secondary w-100">
-            Add another child
+            Add another new plant
         </button>
     </div>
 

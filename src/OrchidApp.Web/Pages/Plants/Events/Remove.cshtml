@@ -4,21 +4,23 @@
 @{
     ViewData["Title"] = Model.EventType switch
     {
-        "Observation"    => "Remove Observation Record",
-        "LocationChange" => "Remove Location Record",
-        "Flowering"      => "Remove Flowering Record",
-        "Repotting"      => "Remove Repotting Record",
-        _                => "Remove Event Record"
+        "Observation"    => "Remove observation",
+        "LocationChange" => "Remove location",
+        "Flowering"      => "Remove flowering",
+        "Repotting"      => "Remove repotting",
+        _                => "Remove event"
     };
 }
 
 <h1 class="page-title fw-bold">@ViewData["Title"]</h1>
 
 <h2 class="h5 fw-bold mb-3">
-    <span class="fw-normal text-muted">
-        You are about to remove the following:
-    </span>
+Confirm removal
 </h2>
+
+<p class="text-muted small mb-3">
+This event will be permanently removed from the plant’s history.
+</p>
 
 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
@@ -26,9 +28,20 @@
     <div class="card-body">
         <dl class="row mb-0">
 
+            @{
+                var eventLabel = Model.Event!.EventType switch
+                {
+                    "Observation"    => "Observation",
+                    "LocationChange" => "Move",
+                    "Flowering"      => "Flowering",
+                    "Repotting"      => "Repotting",
+                    _                => Model.Event.EventType
+                };
+            }
+
             <dt class="col-sm-3 fw-bold">Event</dt>
             <dd class="col-sm-9">
-                @Model.Event!.EventType
+                @eventLabel
             </dd>
 
             <dt class="col-sm-3 fw-bold">Date</dt>
@@ -53,5 +66,5 @@
     <partial name="_FormActionsDanger"
              model="@(Model.ReturnUrl 
                       ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }),
-                      "Confirm remove")" />
+                      "Remove event")" />
 </form>
