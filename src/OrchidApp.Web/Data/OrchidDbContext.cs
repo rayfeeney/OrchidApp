@@ -85,7 +85,16 @@ public class OrchidDbContext : DbContext
         // =========================
         // Plant Photo table mapping
         // =========================
-        modelBuilder.Entity<PlantPhoto>()                   .ToTable("plantphoto");
+        modelBuilder.Entity<PlantPhoto>(entity =>
+        {
+            entity.ToTable("plantphoto");
+
+            entity.Property(p => p.UpdatedDateTime)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .Metadata.SetAfterSaveBehavior(
+                    Microsoft.EntityFrameworkCore.Metadata.PropertySaveBehavior.Ignore);
+        });
 
         // =========================
         // Location table mapping
