@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS `plantsplit` (
   `isActive` tinyint(1) NOT NULL DEFAULT '1' COMMENT '1 = active record; 0 = logically removed (soft delete)',
   PRIMARY KEY (`plantSplitId`),
   UNIQUE KEY `uxPlantSplit_parentPlantId` (`parentPlantId`),
-  KEY `ixPlantSplitParent` (`parentPlantId`)
+  KEY `ixPlantSplitParent` (`parentPlantId`),
+  CONSTRAINT `chkPlantSplitIsActive` CHECK ((`isActive` in (0,1)))
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
