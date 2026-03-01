@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS `plantphoto` (
   `mimeType` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'MIME content type of the stored file (e.g. image/jpeg)',
   `isHero` tinyint(1) NOT NULL DEFAULT '0' COMMENT '1 = this photo is the plant hero image; at most one active hero per plant',
   `createdDateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Record creation timestamp (local time)',
-  `updatedDateTime` datetime DEFAULT NULL COMMENT 'Last update timestamp (local time)',
+  `updatedDateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `isActive` tinyint(1) NOT NULL DEFAULT '1' COMMENT '1 = active record; 0 = logically removed (soft delete)',
   `heroPlantId` int GENERATED ALWAYS AS ((case when ((`isHero` = 1) and (`isActive` = 1)) then `plantId` else NULL end)) STORED COMMENT 'Helper column used to enforce single active hero photo per plant',
   PRIMARY KEY (`plantPhotoId`),
