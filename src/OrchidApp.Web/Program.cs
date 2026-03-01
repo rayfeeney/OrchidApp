@@ -24,6 +24,8 @@ builder.Services.AddDbContext<OrchidDbContext>(options =>
 
 });
 
+builder.Services.AddSingleton<PhotoPipeline>();
+
 builder.Services.AddScoped<ObservationTypeResolver>();
 
 

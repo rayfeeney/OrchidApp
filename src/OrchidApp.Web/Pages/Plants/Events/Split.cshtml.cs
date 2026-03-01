@@ -101,10 +101,15 @@ public class SplitModel : PageModel
 
     public async Task<IActionResult> OnPostSplit()
     {
-        var parent = _db.PlantCurrentLocations
+        var parentPlant = _db.Plants
             .FirstOrDefault(p => p.PlantId == PlantId);
 
-        if (parent == null || parent.PlantEndDate != null)
+        if (parentPlant == null)
+        {
+            return NotFound();
+        }
+
+        if (parentPlant.EndDate != null)
         {
             ModelState.AddModelError(string.Empty,
                 "This plant can no longer be split.");
@@ -187,6 +192,24 @@ public class SplitModel : PageModel
             ? null
             : SplitReasonNotes.Trim();
 
+        // Guard: no future splits
+        if (SplitDateTime > DateTime.Now)
+        {
+            ModelState.AddModelError(nameof(SplitDateTime),
+                "Split date and time cannot be in the future.");
+            EnsureChildListLength();
+            return Page();
+        }
+
+        // Guard: cannot split before plant started
+        if (SplitDateTime < parentPlant!.AcquisitionDate)
+        {
+            ModelState.AddModelError(nameof(SplitDateTime),
+                "Split date and time cannot be before this plant’s lifecycle began.");
+            EnsureChildListLength();
+            return Page();
+        }
+
         try
         {
             var parameters = new[]
@@ -204,7 +227,7 @@ public class SplitModel : PageModel
                 parameters
             );
 
-            return RedirectToPage("/Plants/Index");
+            return RedirectToPage("/Plants/Details", new { plantId = PlantId });
         }
         catch (Exception ex)
         {
