@@ -70,15 +70,18 @@ public class AddModel : PageModel
     private readonly OrchidDbContext _db;
     private readonly ObservationTypeResolver _resolver;
     private readonly IWebHostEnvironment _env;
+    private readonly PhotoPipeline _photoPipeline;
 
     public AddModel(
         OrchidDbContext db,
         ObservationTypeResolver resolver,
-        IWebHostEnvironment env)
+        IWebHostEnvironment env,
+        PhotoPipeline photoPipeline)
     {
         _db = db;
         _resolver = resolver;
         _env = env;
+        _photoPipeline = photoPipeline;
     }
 
     [FromRoute]
@@ -250,46 +253,49 @@ public class AddModel : PageModel
 
                 if (UploadedFiles != null && UploadedFiles.Any())
                 {
-                    var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "plants");
-
-                    // Ensure directory exists (Linux-safe, idempotent)
-                    Directory.CreateDirectory(uploadsFolder);
+                    var uploadsRoot = "/opt/orchidapp/uploads";
 
                     var heroExists = _db.PlantPhotos
                         .Any(p => p.PlantId == PlantId && p.IsHero && p.IsActive);
 
                     foreach (var file in UploadedFiles)
                     {
-                        if (file.Length > 0)
+                        if (file.Length <= 0)
+                            continue;
+
+                        string relativePath;
+
+                        try
                         {
-                            var uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
-                            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                            using (var stream = new FileStream(filePath, FileMode.Create))
-                            {
-                                await file.CopyToAsync(stream);
-                            }
-
-                            var photo = new PlantPhoto
-                            {
-                                PlantEventId = observation.PlantEventId,
-                                PlantId = PlantId,
-                                FileName = file.FileName,
-                                FilePath = Path.Combine("uploads", "plants", uniqueFileName),
-                                MimeType = file.ContentType,
-                                IsHero = !heroExists,
-                                IsActive = true,
-                                CreatedDateTime = DateTime.Now
-                            };
-
-                            _db.PlantPhotos.Add(photo);
-
-                            // If we just assigned the first hero, prevent further ones
-                            if (!heroExists)
-                            {
-                                heroExists = true;
-                            }
+                            relativePath = await _photoPipeline.ProcessAndSaveAsync(
+                                file.OpenReadStream(),
+                                PlantId,
+                                uploadsRoot,
+                                HttpContext.RequestAborted);
                         }
+                        catch (InvalidOperationException ex)
+                        {
+                            ModelState.AddModelError(string.Empty, ex.Message);
+                            LoadLookups();
+                            return Page();
+                        }
+
+                        var photo = new PlantPhoto
+                        {
+                            PlantEventId = observation.PlantEventId,
+                            PlantId = PlantId,
+                            FileName = file.FileName,
+                            FilePath = relativePath,
+                            MimeType = "image/jpeg", // we now always save as JPEG
+                            IsHero = !heroExists,
+                            IsActive = true,
+                            CreatedDateTime = DateTime.Now
+                        };
+
+                        _db.PlantPhotos.Add(photo);
+
+                        if (!heroExists)
+                            heroExists = true;
                     }
 
                     await _db.SaveChangesAsync();
