@@ -6,20 +6,15 @@
 @if (!string.IsNullOrEmpty(Model.SelectedDisplayName))
 {
     <h2 class="h5 fw-bold mb-3">
-        <span class="fw-normal text-muted">Current genus and species / hybrid:</span>
-        <span>@Model.SelectedDisplayName</span>
+        @Model.SelectedDisplayName
     </h2>
+
+    <p class="text-muted small mb-3">
+        Change genus or species / hybrid first. Then update plant details and save.
+    </p>
 }
 
-@if (!ViewData.ModelState.IsValid)
-{
-    <div class="text-danger mb-3">
-        @foreach (var err in ViewData.ModelState.Values.SelectMany(v => v.Errors))
-        {
-            <div>@err.ErrorMessage</div>
-        }
-    </div>
-}
+<div asp-validation-summary="All" class="text-danger mb-3"></div>
 
 <!-- ========================= -->
 <!-- Genus Change Form -->
@@ -28,39 +23,51 @@
     <input type="hidden" asp-for="PlantId" />
 
     <div class="mb-3">
-        <label class="fw-bold">Genus</label>
+        <label asp-for="GenusId" class="fw-bold"></label>
+        <small class="text-muted d-block fw-normal">
+            Changing genus will reset the species / hybrid list to match that genus. Select the Change genus button to update.
+        </small>
+
         <div class="input-group">
             <select asp-for="GenusId"
                     asp-items="Model.GenusOptions"
                     class="form-select">
             </select>
-            <button type="submit"
-                    class="btn btn-outline-secondary">
-                Change
+
+            <button type="submit" class="btn btn-outline-secondary">
+                Change genus
             </button>
         </div>
+
+        <span asp-validation-for="GenusId" class="text-danger"></span>
     </div>
 </form>
 
 <!-- ========================= -->
-<!-- Taxon Change Form -->
+<!-- Species / Hybrid Change Form -->
 <!-- ========================= -->
 <form method="post" asp-page-handler="TaxonChanged" class="mb-4">
     <input type="hidden" asp-for="PlantId" />
     <input type="hidden" asp-for="GenusId" />
 
     <div class="mb-3">
-        <label class="fw-bold">Species / hybrid</label>
+        <label asp-for="TaxonId" class="fw-bold"></label>
+        <small class="text-muted d-block fw-normal">
+            Select the correct species / hybrid for this plant. Select the Change species / hybrid button to update.
+        </small>
+
         <div class="input-group">
             <select asp-for="TaxonId"
                     asp-items="Model.TaxonOptions"
                     class="form-select">
             </select>
-            <button type="submit"
-                    class="btn btn-outline-secondary">
-                Change
+
+            <button type="submit" class="btn btn-outline-secondary">
+                Change species / hybrid
             </button>
         </div>
+
+        <span asp-validation-for="TaxonId" class="text-danger"></span>
     </div>
 </form>
 
@@ -74,43 +81,61 @@
     <input type="hidden" asp-for="TaxonId" />
 
     <div class="mb-3">
-        <label class="fw-bold">Plant tag</label>
+        <label asp-for="PlantTag" class="fw-bold"></label>
+        <small class="text-muted d-block fw-normal">
+            Required. Must be unique within your collection.
+        </small>
         <input asp-for="PlantTag" class="form-control" />
         <span asp-validation-for="PlantTag" class="text-danger"></span>
     </div>
 
     <div class="mb-3">
-        <label class="fw-bold">Plant name</label>
+        <label asp-for="PlantName" class="fw-bold"></label>
+        <small class="text-muted d-block fw-normal">
+            Optional. A personal name to help you recognise this plant.
+        </small>
         <input asp-for="PlantName" class="form-control" />
         <span asp-validation-for="PlantName" class="text-danger"></span>
     </div>
 
     <div class="mb-3">
-        <label class="fw-bold">Acquired on</label>
+        <label asp-for="AcquisitionDate" class="fw-bold"></label>
+        <small class="text-muted d-block fw-normal">
+            Optional. When you obtained the plant.
+        </small>
         <input asp-for="AcquisitionDate"
                type="datetime-local"
                class="form-control"
-               value="@Model.AcquisitionDate.ToString("yyyy-MM-ddTHH:mm")" />
+               asp-format="{0:yyyy-MM-ddTHH:mm}" />
         <span asp-validation-for="AcquisitionDate" class="text-danger"></span>
     </div>
 
     <div class="mb-3">
-        <label class="fw-bold">Acquired from</label>
+        <label asp-for="AcquisitionSource" class="fw-bold"></label>
+        <small class="text-muted d-block fw-normal">
+            Optional. Where the plant came from (e.g. nursery, friend, swap).
+        </small>
         <input asp-for="AcquisitionSource" class="form-control" />
         <span asp-validation-for="AcquisitionSource" class="text-danger"></span>
     </div>
 
     <div class="mb-3">
-        <label class="fw-bold">End date</label>
+        <label asp-for="EndDate" class="fw-bold"></label>
+        <small class="text-muted d-block fw-normal">
+            Usually left blank. Set only when ending a plant’s lifecycle (for example after a split).
+        </small>
         <input asp-for="EndDate"
                type="datetime-local"
                class="form-control"
-               value="@(Model.EndDate?.ToString("yyyy-MM-ddTHH:mm"))" />
+               asp-format="{0:yyyy-MM-ddTHH:mm}" />
         <span asp-validation-for="EndDate" class="text-danger"></span>
     </div>
 
     <div class="mb-3">
-        <label class="fw-bold">End notes</label>
+        <label asp-for="EndNotes" class="fw-bold"></label>
+        <small class="text-muted d-block fw-normal">
+            Optional. Why the plant ended (for example split, lost, given away).
+        </small>
         <textarea asp-for="EndNotes"
                   class="form-control"
                   rows="4"></textarea>
@@ -118,7 +143,10 @@
     </div>
 
     <div class="mb-3">
-        <label class="fw-bold">Plant notes</label>
+        <label asp-for="PlantNotes" class="fw-bold"></label>
+        <small class="text-muted d-block fw-normal">
+            Optional. Any notes about this plant (care, habits, reminders).
+        </small>
         <textarea asp-for="PlantNotes"
                   class="form-control"
                   rows="5"></textarea>
@@ -126,14 +154,15 @@
     </div>
 
     <div class="d-flex justify-content-between align-items-stretch mt-4">
-        <a href="@Url.Page("/Plants/Taxon", new { genusId = Model.GenusId, taxonId = Model.TaxonId })"
+        <a asp-page="/Plants/Details"
+           asp-route-plantId="@Model.PlantId"
            class="btn btn-outline-secondary btn-lg">
-            ← Back
+            ← Back to plant
         </a>
 
         <button type="submit"
                 class="btn btn-primary btn-lg">
-            Save
+            Save changes
         </button>
     </div>
 
