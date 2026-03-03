@@ -1,7 +1,11 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using OrchidApp.Web.Data;
+using OrchidApp.Web.Models;
+using OrchidApp.Web.Services;
+using System.ComponentModel.DataAnnotations;
 
 namespace OrchidApp.Web.Pages.Plants.Photos;
 
@@ -11,10 +15,17 @@ public class IndexModel : PageModel
     public string? ReturnUrl { get; set; }
 
     private readonly OrchidDbContext _context;
+    private readonly ObservationTypeResolver _resolver;
+    private readonly PhotoPipeline _photoPipeline;
 
-    public IndexModel(OrchidDbContext context)
+    public IndexModel(
+        OrchidDbContext context,
+        ObservationTypeResolver resolver,
+        PhotoPipeline photoPipeline)
     {
         _context = context;
+        _resolver = resolver;
+        _photoPipeline = photoPipeline;
     }
 
     public int PlantId { get; private set; }
@@ -33,10 +44,80 @@ public class IndexModel : PageModel
     public string PlantTag { get; private set; } = string.Empty;
     public string? LocationName { get; private set; }
 
-    public async Task<IActionResult> OnGetAsync(int plantId)
+    [BindProperty]
+    [Display(Name = "Photos")]
+    public List<IFormFile> UploadFiles { get; set; } = new();
+
+    [BindProperty]
+    [Display(Name = "Notes")]
+    public string? UploadNotes { get; set; }
+
+    public async Task<IActionResult> OnGetAsync(int plantId, CancellationToken ct)
     {
         PlantId = plantId;
 
+        var ok = await LoadAsync(plantId, FocusPhotoId, ct);
+        if (!ok)
+            return NotFound();
+
+        return Page();
+    }
+
+    public async Task<IActionResult> OnPostSetHeroAsync(int plantId, int photoId, CancellationToken ct)
+    {
+        await _context.Database.ExecuteSqlRawAsync(
+            "CALL spSetHeroPhoto({0}, {1})",
+            new object[] { plantId, photoId },
+            ct);
+
+        return RedirectToPage(new { plantId, focusPhotoId = photoId });
+    }
+
+    public async Task<IActionResult> OnPostUploadAsync(int plantId, string? returnUrl, CancellationToken ct)
+    {
+        PlantId = plantId;
+        ReturnUrl = returnUrl;
+
+        if (UploadFiles == null || UploadFiles.Count == 0)
+        {
+            ModelState.AddModelError(nameof(UploadFiles), "Select at least one photo.");
+
+            var ok = await LoadAsync(plantId, focusPhotoId: FocusPhotoId, ct);
+            if (!ok)
+                return NotFound();
+
+            return Page();
+        }
+
+        var prefix = "Photo added";
+        var combinedNotes = string.IsNullOrWhiteSpace(UploadNotes)
+            ? prefix
+            : $"{prefix} {UploadNotes.Trim()}";
+
+        try
+        {
+            await AddPhotoObservationAsync(plantId, UploadFiles, combinedNotes, ct);
+        }
+        catch (InvalidOperationException ex)
+        {
+            // PhotoPipeline validation errors (too large, bad format, etc)
+            ModelState.AddModelError(string.Empty, ex.Message);
+
+            var ok = await LoadAsync(plantId, focusPhotoId: FocusPhotoId, ct);
+            if (!ok)
+                return NotFound();
+
+            return Page();
+        }
+
+        if (!string.IsNullOrWhiteSpace(returnUrl))
+            return LocalRedirect(returnUrl);
+
+        return RedirectToPage(new { plantId });
+    }
+
+    private async Task<bool> LoadAsync(int plantId, int? focusPhotoId, CancellationToken ct)
+    {
         var plant = await _context.PlantActiveCurrentLocations
             .Where(p => p.PlantId == plantId)
             .Select(p => new
@@ -45,10 +126,10 @@ public class IndexModel : PageModel
                 PlantTag = p.PlantTag!,
                 p.LocationName
             })
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(ct);
 
         if (plant == null)
-            return NotFound();
+            return false;
 
         PlantDisplayName = plant.DisplayName;
         PlantTag = plant.PlantTag;
@@ -64,44 +145,85 @@ public class IndexModel : PageModel
                 IsHero = p.IsHero,
                 CreatedDateTime = p.CreatedDateTime
             })
-            .ToListAsync();
+            .ToListAsync(ct);
 
-            if (Photos.Any())
-            {
-                FocusPhoto = FocusPhotoId.HasValue
-                    ? Photos.FirstOrDefault(p => p.PlantPhotoId == FocusPhotoId.Value)
-                    : Photos.FirstOrDefault(p => p.IsHero) ?? Photos.First();
-            }
-            else
-            {
-                FocusPhoto = null;
-            }
+        if (Photos.Any())
+        {
+            FocusPhoto = focusPhotoId.HasValue
+                ? Photos.FirstOrDefault(p => p.PlantPhotoId == focusPhotoId.Value)
+                : Photos.FirstOrDefault(p => p.IsHero) ?? Photos.First();
+        }
+        else
+        {
+            FocusPhoto = null;
+        }
 
-        // Work out previous/next based on the current ordering of Photos
         var focusIndex = Photos.FindIndex(p => p.PlantPhotoId == FocusPhoto?.PlantPhotoId);
 
-        if (focusIndex > 0)
-        {
-            PreviousPhotoId = Photos[focusIndex - 1].PlantPhotoId;
-        }
+        PreviousPhotoId = focusIndex > 0 ? Photos[focusIndex - 1].PlantPhotoId : null;
+        NextPhotoId = (focusIndex >= 0 && focusIndex < Photos.Count - 1)
+            ? Photos[focusIndex + 1].PlantPhotoId
+            : null;
 
-        if (focusIndex >= 0 && focusIndex < Photos.Count - 1)
-        {
-            NextPhotoId = Photos[focusIndex + 1].PlantPhotoId;
-        }
-
-        return Page();
+        return true;
     }
 
-    public async Task<IActionResult> OnPostSetHeroAsync(int plantId, int photoId)
+    private async Task AddPhotoObservationAsync(
+        int plantId,
+        List<IFormFile> files,
+        string? notes,
+        CancellationToken ct)
     {
-        await _context.Database.ExecuteSqlRawAsync(
-            "CALL spSetHeroPhoto({0}, {1})",
-            plantId,
-            photoId);
+        // Always a photo observation from this page
+        var observationTypeId = await _resolver.GetIdAsync("OBS_PHOTO");
 
-        return RedirectToPage(
-            new { plantId = plantId, focusPhotoId = photoId });
+        var observation = new PlantEvent
+        {
+            PlantId = plantId,
+            EventDateTime = DateTime.Now,
+            ObservationTypeId = observationTypeId,
+            EventDetails = notes,
+            IsActive = true
+        };
+
+        _context.PlantEvent.Add(observation);
+        await _context.SaveChangesAsync(ct); // must save first to get PlantEventId
+
+        var uploadsRoot = "/opt/orchidapp/uploads";
+
+        var heroExists = await _context.PlantPhotos
+            .AnyAsync(p => p.PlantId == plantId && p.IsHero && p.IsActive, ct);
+
+        foreach (var file in files)
+        {
+            if (file == null || file.Length <= 0)
+                continue;
+
+            var relativePath = await _photoPipeline.ProcessAndSaveAsync(
+                file.OpenReadStream(),
+                plantId,
+                uploadsRoot,
+                ct);
+
+            var photo = new PlantPhoto
+            {
+                PlantEventId = observation.PlantEventId,
+                PlantId = plantId,
+                FileName = file.FileName,
+                FilePath = relativePath,
+                MimeType = "image/jpeg", // pipeline always saves as JPEG
+                IsHero = !heroExists,
+                IsActive = true,
+                CreatedDateTime = DateTime.Now
+            };
+
+            _context.PlantPhotos.Add(photo);
+
+            if (!heroExists)
+                heroExists = true;
+        }
+
+        await _context.SaveChangesAsync(ct);
     }
 
     public sealed class PhotoItem

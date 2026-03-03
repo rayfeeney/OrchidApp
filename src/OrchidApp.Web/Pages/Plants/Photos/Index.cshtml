@@ -29,6 +29,7 @@
     </div>
 </div>
 
+
 @if (Model.FocusPhoto != null)
 {
     <div class="text-center">
@@ -62,7 +63,6 @@
         }
 
     </div>
-    
 }
 else
 {
@@ -74,9 +74,9 @@ else
 
 @if (Model.Photos.Count > 0)
 {
-<p class="text-muted small mt-3 text-center">
-    Tap a thumbnail below to view a different photo.
-</p>
+    <p class="text-muted small mt-3 text-center">
+        Tap a thumbnail below to view a different photo.
+    </p>
 
     <div class="d-flex justify-content-between mt-3 mb-3">
 
@@ -125,6 +125,66 @@ else
         </div>
     </div>
 }
+
+<div class="card mt-3 mb-3">
+    <div class="card-body">
+
+        <h2 class="h5 fw-bold mb-3">Add photos</h2>
+
+        <div asp-validation-summary="ModelOnly"
+             class="text-danger mb-3"></div>
+
+        <form method="post"
+              enctype="multipart/form-data"
+              asp-page-handler="Upload">
+
+            <input type="hidden" name="plantId" value="@Model.PlantId" />
+            <input type="hidden" name="returnUrl"
+                   value="@(Model.ReturnUrl ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }))" />
+
+            <div class="mb-3">
+                <label asp-for="UploadFiles" class="fw-bold">
+                    Photos
+                    <small class="text-muted d-block fw-normal">
+                        You can select more than one photo.
+                    </small>
+                </label>
+
+                <input asp-for="UploadFiles"
+                       type="file"
+                       accept="image/*"
+                       multiple
+                       class="form-control" />
+
+                <span asp-validation-for="UploadFiles" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="UploadNotes" class="fw-bold">
+                    Notes
+                    <small class="text-muted d-block fw-normal">
+                        Optional.
+                    </small>
+                </label>
+
+                <input asp-for="UploadNotes" class="form-control" />
+
+                <span asp-validation-for="UploadNotes" class="text-danger"></span>
+            </div>
+
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    Upload photos
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+
+
 
 <partial name="_BackFullWidth"
          model="@(Model.ReturnUrl ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }))" />

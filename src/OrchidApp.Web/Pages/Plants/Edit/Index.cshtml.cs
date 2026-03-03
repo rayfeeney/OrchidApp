@@ -27,9 +27,11 @@ public class IndexModel : PageModel
     public int PlantId { get; set; }
 
     [BindProperty]
+    [Display(Name = "Genus")]
     public int GenusId { get; set; }
 
     [BindProperty, Required]
+    [Display(Name = "Species / hybrid")]
     public int TaxonId { get; set; }
 
     public string? SelectedDisplayName { get; private set; }
@@ -42,24 +44,31 @@ public class IndexModel : PageModel
     // =========================
 
     [BindProperty, StringLength(50)]
+    [Display(Name = "Plant tag")]
     public string? PlantTag { get; set; }
 
     [BindProperty, StringLength(100)]
+    [Display(Name = "Plant name")]
     public string? PlantName { get; set; }
 
     [BindProperty, Required]
+    [Display(Name = "Acquired on")]
     public DateTime AcquisitionDate { get; set; }
 
     [BindProperty, StringLength(150)]
+    [Display(Name = "Acquired from")]
     public string? AcquisitionSource { get; set; }
 
     [BindProperty]
+    [Display(Name = "End date")]
     public DateTime? EndDate { get; set; }
 
     [BindProperty]
+    [Display(Name = "End notes")]
     public string? EndNotes { get; set; }
 
     [BindProperty]
+    [Display(Name = "Plant notes")]
     public string? PlantNotes { get; set; }
 
     // =========================
@@ -145,7 +154,6 @@ public class IndexModel : PageModel
 
         return RedirectToPage("/Plants/Taxon", new
         {
-            genusId = GenusId,
             taxonId = TaxonId
         });
     }
