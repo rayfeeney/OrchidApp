@@ -23,6 +23,7 @@ public class OrchidDbContext : DbContext
     public DbSet<Location> Location =>                                      Set<Location>();
     public DbSet<Flowering> Flowering =>                                    Set<Flowering>();
     public DbSet<Repotting> Repotting =>                                    Set<Repotting>();
+    public DbSet<Location> Locations { get; set; } = null!;
     public DbSet<PlantPhoto> PlantPhotos { get; set; }
     public DbSet<ObservationType> ObservationTypes { get; set; }
 

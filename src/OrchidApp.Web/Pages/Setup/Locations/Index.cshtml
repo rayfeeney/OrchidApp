@@ -1,0 +1,57 @@
+@page
+@model OrchidApp.Web.Pages.Setup.Locations.IndexModel
+
+<h1 class="page-title fw-bold">Locations</h1>
+
+<h2 class="h5 fw-bold mb-3">
+Locations where you grow your plants, such as greenhouses, gardens or rooms.
+</h2>
+
+<p class="text-muted">
+Each location represents a growing environment for your plants.
+</p>
+
+<div class="d-grid gap-2 mb-4">
+    <a asp-page="/Setup/Locations/Actions/Add"
+       asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+       class="btn btn-lg btn-primary">
+        Add location
+    </a>
+</div>
+
+@if (!Model.Locations.Any())
+{
+    <p class="text-muted">
+        No locations have been added yet.
+    </p>
+}
+else
+{
+    <p class="text-muted small mb-2">
+        Select a location to view or edit its details.
+    </p>
+
+    <div class="d-grid gap-2">
+    @foreach (var location in Model.Locations)
+    {
+        <a asp-page="/Setup/Locations/Details"
+            asp-route-locationId="@location.LocationId"
+            asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+            class="btn btn-lg text-start @(location.IsActive ? "btn-outline-primary" : "btn-outline-secondary text-muted")">
+
+            @location.DisplayName
+
+            @if (!location.IsActive)
+            {
+                <span class="badge bg-secondary ms-2">
+                    Inactive
+                </span>
+            }
+        </a>
+    }
+    </div>
+
+}
+
+<partial name="_BackFullWidth"
+         model="@(Model.ReturnUrl ?? Url.Page("/Setup/Index"))" />
