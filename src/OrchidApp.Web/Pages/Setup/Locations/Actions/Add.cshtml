@@ -1,0 +1,74 @@
+@page
+@model OrchidApp.Web.Pages.Setup.Locations.Actions.AddModel
+
+<h1 class="page-title fw-bold">Add location</h1>
+
+<h2 class="h5 fw-bold mb-3">
+Create a new location where plants can be grown.
+</h2>
+
+<p class="text-muted">
+Locations represent the environments where your plants are grown, such as greenhouses, rooms, garden areas or grow tents.  
+You can move plants between locations over time to reflect seasonal or environmental changes.
+</p>
+
+<form method="post">
+
+    <div class="mb-3">
+        <label asp-for="Input.LocationName" class="fw-bold"></label>
+        <small class="text-muted d-block fw-normal">
+        Provide a short name that clearly identifies the place where plants are kept.
+        </small>
+        <input asp-for="Input.LocationName" class="form-control" />
+        <span asp-validation-for="Input.LocationName" class="text-danger"></span>
+    </div>
+
+   @*  <div class="mb-3">
+        <label asp-for="Input.LocationTypeCode" class="fw-bold"></label>
+        <input asp-for="Input.LocationTypeCode" class="form-control" />
+        <span asp-validation-for="Input.LocationTypeCode" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Input.ClimateCode" class="fw-bold"></label>
+        <input asp-for="Input.ClimateCode" class="form-control" />
+        <span asp-validation-for="Input.ClimateCode" class="text-danger"></span>
+    </div> *@
+
+    <div class="mb-3">
+        <label asp-for="Input.LocationNotes" class="fw-bold"></label>
+        <small class="text-muted d-block fw-normal">
+        Optional notes describing this location, such as lighting, humidity, or special conditions.
+        </small>
+        <textarea asp-for="Input.LocationNotes" class="form-control"></textarea>
+        <span asp-validation-for="Input.LocationNotes" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Input.ClimateNotes" class="fw-bold"></label>
+        <small class="text-muted d-block fw-normal">
+        Describe the typical climate conditions for this location, such as temperature range, humidity, or seasonal variation.
+        </small>
+        <textarea asp-for="Input.ClimateNotes" class="form-control"></textarea>
+        <span asp-validation-for="Input.ClimateNotes" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Input.LocationGeneralNotes" class="fw-bold"></label>
+        <small class="text-muted d-block fw-normal">
+        Any additional information about this location that may be useful when reviewing plant growth or care.
+        </small>
+        <textarea asp-for="Input.LocationGeneralNotes" class="form-control"></textarea>
+        <span asp-validation-for="Input.LocationGeneralNotes" class="text-danger"></span>
+    </div>
+
+    <div class="d-grid gap-2 mt-4">
+        <button type="submit" class="btn btn-primary btn-lg">
+            Add location
+        </button>
+    </div>
+
+</form>
+
+<partial name="_BackFullWidth"
+         model="@(Model.ReturnUrl ?? Url.Page("/Setup/Locations/Index"))" />
