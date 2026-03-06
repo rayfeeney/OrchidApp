@@ -1,0 +1,60 @@
+﻿@page "{locationId:int}"
+@model OrchidApp.Web.Pages.Setup.Locations.Actions.EditModel
+
+<h1 class="page-title fw-bold">Edit location</h1>
+
+<h2 class="h5 fw-bold mb-3">
+    @Model.Input.LocationName
+</h2>
+
+<form method="post">
+
+    <div class="mb-3">
+        <label asp-for="Input.LocationName" class="fw-bold"></label>
+        <small class="text-muted d-block fw-normal">
+            Provide a short name that clearly identifies this location.
+        </small>
+        <input asp-for="Input.LocationName" class="form-control" />
+        <span asp-validation-for="Input.LocationName" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Input.LocationTypeCode" class="fw-bold"></label>
+        <input asp-for="Input.LocationTypeCode" class="form-control" />
+        <span asp-validation-for="Input.LocationTypeCode" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Input.ClimateCode" class="fw-bold"></label>
+        <input asp-for="Input.ClimateCode" class="form-control" />
+        <span asp-validation-for="Input.ClimateCode" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Input.LocationNotes" class="fw-bold"></label>
+        <textarea asp-for="Input.LocationNotes" class="form-control"></textarea>
+        <span asp-validation-for="Input.LocationNotes" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Input.ClimateNotes" class="fw-bold"></label>
+        <textarea asp-for="Input.ClimateNotes" class="form-control"></textarea>
+        <span asp-validation-for="Input.ClimateNotes" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Input.LocationGeneralNotes" class="fw-bold"></label>
+        <textarea asp-for="Input.LocationGeneralNotes" class="form-control"></textarea>
+        <span asp-validation-for="Input.LocationGeneralNotes" class="text-danger"></span>
+    </div>
+
+    <div class="d-grid gap-2 mt-4">
+        <button type="submit" class="btn btn-primary btn-lg">
+            Save changes
+        </button>
+    </div>
+
+</form>
+
+<partial name="_BackFullWidth"
+         model="@(Model.ReturnUrl ?? Url.Page("/Setup/Locations/Details", new { locationId = Model.LocationId }))" />
