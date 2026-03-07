@@ -11,8 +11,6 @@ CREATE TABLE IF NOT EXISTS `repotting` (
   `createdDateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Record creation timestamp (local time)',
   `isActive` tinyint NOT NULL DEFAULT '1' COMMENT 'Indicates whether this record is valid for use; inactive records represent superseded or erroneous entries retained for audit purposes',
   `updatedDateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last update timestamp (local time)',
-  `oldMediumCode` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Previous potting medium',
-  `newMediumCode` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'New potting medium',
   `oldGrowthMediumId` int DEFAULT NULL COMMENT 'Foreign key to growthmedium.growthMediumId representing the old growth medium used before repotting',
   `newGrowthMediumId` int DEFAULT NULL COMMENT 'Foreign key to growthmedium.growthMediumId representing the new growth medium used after repotting',
   PRIMARY KEY (`repottingId`),
