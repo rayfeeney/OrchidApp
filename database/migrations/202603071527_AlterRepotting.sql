@@ -1,7 +1,7 @@
 USE orchids;
 
 ALTER TABLE repotting
-DROP COLUMN IF EXISTS oldMediumCode;
+DROP COLUMN oldMediumCode;
 
 ALTER TABLE repotting
-DROP COLUMN IF EXISTS newMediumCode;
+DROP COLUMN newMediumCode;
