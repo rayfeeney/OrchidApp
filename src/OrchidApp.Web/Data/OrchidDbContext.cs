@@ -22,6 +22,7 @@ public class OrchidDbContext : DbContext
     public DbSet<PlantEvent> PlantEvent =>                                  Set<PlantEvent>();
     public DbSet<Location> Location =>                                      Set<Location>();
     public DbSet<Flowering> Flowering =>                                    Set<Flowering>();
+    public DbSet<GrowthMedium> GrowthMedia =>                               Set<GrowthMedium>();
     public DbSet<Repotting> Repotting =>                                    Set<Repotting>();
     public DbSet<Location> Locations { get; set; } = null!;
     public DbSet<PlantPhoto> PlantPhotos { get; set; }
@@ -132,6 +133,22 @@ public class OrchidDbContext : DbContext
         });
 
         // =========================
+        // Growth Medium table mapping
+        // =========================
+        modelBuilder.Entity<GrowthMedium>(entity =>
+        {
+            entity.ToTable("growthmedium");
+            entity.HasKey(e => e.GrowthMediumId);
+
+            entity.Property(e => e.GrowthMediumId)  .HasColumnName("growthMediumId");
+            entity.Property(e => e.Name)            .HasColumnName("name");
+            entity.Property(e => e.Description)     .HasColumnName("description");
+            entity.Property(e => e.IsActive)        .HasColumnName("isActive");
+            entity.Property(e => e.CreatedDateTime) .HasColumnName("createdDateTime");
+            entity.Property(e => e.UpdatedDateTime) .HasColumnName("updatedDateTime");
+        });
+
+        // =========================
         // Repotting table mapping
         // =========================
         modelBuilder.Entity<Repotting>(entity =>
@@ -142,8 +159,8 @@ public class OrchidDbContext : DbContext
             entity.Property(e => e.RepottingId)             .HasColumnName("repottingId");
             entity.Property(e => e.PlantId)                 .HasColumnName("plantId");
             entity.Property(e => e.RepotDate)               .HasColumnName("repotDate");
-            entity.Property(e => e.OldMediumCode)           .HasColumnName("oldMediumCode");
-            entity.Property(e => e.NewMediumCode)           .HasColumnName("newMediumCode");
+            entity.Property(e => e.OldGrowthMediumId)       .HasColumnName("oldGrowthMediumId");
+            entity.Property(e => e.NewGrowthMediumId)       .HasColumnName("newGrowthMediumId");
             entity.Property(e => e.RepotReasonCode)         .HasColumnName("repotReasonCode");
             entity.Property(e => e.OldMediumNotes)          .HasColumnName("oldMediumNotes");
             entity.Property(e => e.NewMediumNotes)          .HasColumnName("newMediumNotes");

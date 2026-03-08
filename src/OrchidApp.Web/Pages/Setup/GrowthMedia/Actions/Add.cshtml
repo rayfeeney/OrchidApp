@@ -1,0 +1,45 @@
+@page
+@model OrchidApp.Web.Pages.Setup.GrowthMedia.Actions.AddModel
+
+<h1 class="page-title fw-bold">Add growth medium</h1>
+
+<h2 class="h5 fw-bold mb-3">
+    Create a new growing medium for use in potting records.
+</h2>
+
+<p class="text-muted mb-3">
+    Growth media represent the materials your plants are potted in, such as bark, sphagnum moss, LECA or mixed substrates. 
+    These entries are used when recording potting events so you can track changes over time consistently.
+</p>
+<div asp-validation-summary="ModelOnly"
+     class="text-danger mb-3"></div>
+
+<form method="post">
+
+    <div class="mb-3">
+        <label asp-for="Input.Name" class="fw-bold"></label>
+        <small class="text-muted d-block fw-normal">
+            The name shown when selecting a medium during repotting.
+        </small>
+        <input asp-for="Input.Name"
+               class="form-control" />
+        <span asp-validation-for="Input.Name"
+              class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Input.Description" class="fw-bold"></label>
+        <small class="text-muted d-block fw-normal">
+            Optional additional information about this medium.
+        </small>
+        <textarea asp-for="Input.Description"
+                  class="form-control"
+                  rows="3"></textarea>
+        <span asp-validation-for="Input.Description"
+              class="text-danger"></span>
+    </div>
+
+    <partial name="_FormActions"
+             model='(Url.Page("/Setup/GrowthMedia/Index"), "Save growth medium")' />
+
+</form>

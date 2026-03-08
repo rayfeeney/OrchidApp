@@ -11,8 +11,8 @@ public class Repotting
     public DateTime RepotDate { get; set; }
 
     // Codes intentionally present but unused for now
-    public string? OldMediumCode { get; set; }
-    public string? NewMediumCode { get; set; }
+    public int? OldGrowthMediumId { get; set; }
+    public int? NewGrowthMediumId { get; set; }
     public string? RepotReasonCode { get; set; }
 
     public string? OldMediumNotes { get; set; }
