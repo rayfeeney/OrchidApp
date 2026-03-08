@@ -96,6 +96,7 @@ CREATE TABLE IF NOT EXISTS schemaversion (
 
 & mysql `
   --default-character-set=utf8mb4 `
+  --init-command="SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci" `
   --protocol=TCP `
   --host=$MySqlHost `
   --port=$MySqlPort `
