@@ -3,7 +3,7 @@ CREATE OR REPLACE PROCEDURE `spMovePlantToLocation`(
     IN pPlantId INT,
     IN pLocationId INT,
     IN pStartDate DATE,
---    IN pMoveReasonCode VARCHAR(30),
+
     IN pMoveReasonNotes VARCHAR(500),
     IN pPlantLocationNotes VARCHAR(500)
 )
@@ -21,7 +21,7 @@ BEGIN
     SET vNow = NOW();
     SET vStart = TIMESTAMP(DATE(pStartDate), TIME(vNow));
 
-    /* ---------- Guards ---------- */
+    
 
     IF NOT EXISTS (SELECT 1 FROM plant WHERE plantId = pPlantId) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'PlantId does not exist.';
@@ -31,7 +31,7 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'LocationId does not exist.';
     END IF;
 
-    /* Current active open row */
+    
     SELECT plantLocationHistoryId, locationId, startDateTime
       INTO vCurrentId, vCurrentLocationId, vCurrentStart
     FROM plantlocationhistory
@@ -74,7 +74,7 @@ BEGIN
             SET MESSAGE_TEXT = 'Move would overlap existing history.';
     END IF;
 
-    /* ---------- Transaction ---------- */
+    
 
     START TRANSACTION;
 
@@ -91,7 +91,7 @@ BEGIN
             locationId,
             startDateTime,
             endDateTime,
---            moveReasonCode,
+
             moveReasonNotes,
             plantLocationNotes,
             isActive
@@ -101,7 +101,7 @@ BEGIN
             pLocationId,
             vStart,
             NULL,
---            pMoveReasonCode,
+
             pMoveReasonNotes,
             pPlantLocationNotes,
             1
