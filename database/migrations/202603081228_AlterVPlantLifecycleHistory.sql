@@ -16,9 +16,9 @@ WITH plant_identity AS (
 SELECT
     pi.plantId,
     pe.eventDateTime,
-    'Observation' COLLATE utf8mb4_unicode_ci AS eventType,
-    pe.eventDetails COLLATE utf8mb4_unicode_ci AS eventSummary,
-    'plantevent' COLLATE utf8mb4_unicode_ci AS sourceTable,
+    'Observation'  AS eventType,
+    pe.eventDetails  AS eventSummary,
+    'plantevent'  AS sourceTable,
     pe.plantEventId AS sourceId
 FROM plant_identity pi
 JOIN plantevent pe ON pe.plantId = pi.plantId
@@ -30,7 +30,7 @@ UNION ALL
 SELECT
     pi.plantId,
     CAST(r.repotDate AS DATETIME) AS eventDateTime,
-    'Repotting' COLLATE utf8mb4_unicode_ci AS eventType,
+    'Repotting'  AS eventType,
     (
         CONCAT(
             'Repotted',
@@ -62,8 +62,8 @@ SELECT
                 ELSE ''
             END
         )
-    ) COLLATE utf8mb4_unicode_ci AS eventSummary,
-    'repotting' COLLATE utf8mb4_unicode_ci AS sourceTable,
+    )  AS eventSummary,
+    'repotting'  AS sourceTable,
     r.repottingId AS sourceId
 FROM plant_identity pi
 JOIN repotting r ON r.plantId = pi.plantId
@@ -79,7 +79,7 @@ UNION ALL
 SELECT
     pi.plantId,
     CAST(f.startDate AS DATETIME) AS eventDateTime,
-    'Flowering' COLLATE utf8mb4_unicode_ci AS eventType,
+    'Flowering'  AS eventType,
     (
         CONCAT(
             'Flowered',
@@ -125,8 +125,8 @@ SELECT
                 ELSE ''
             END
         )
-    ) COLLATE utf8mb4_unicode_ci AS eventSummary,
-    'flowering' COLLATE utf8mb4_unicode_ci AS sourceTable,
+    )  AS eventSummary,
+    'flowering'  AS sourceTable,
     f.floweringId AS sourceId
 FROM plant_identity pi
 JOIN flowering f ON f.plantId = pi.plantId
@@ -138,7 +138,7 @@ UNION ALL
 SELECT
     pi.plantId,
     plh.startDateTime AS eventDateTime,
-    'LocationChange' COLLATE utf8mb4_unicode_ci AS eventType,
+    'LocationChange'  AS eventType,
     (
         CONCAT(
             'Moved to ',
@@ -161,8 +161,8 @@ SELECT
                 ELSE ''
             END
         )
-    ) COLLATE utf8mb4_unicode_ci AS eventSummary,
-    'plantlocationhistory' COLLATE utf8mb4_unicode_ci AS sourceTable,
+    )  AS eventSummary,
+    'plantlocationhistory'  AS sourceTable,
     plh.plantLocationHistoryId AS sourceId
 FROM plant_identity pi
 JOIN plantlocationhistory plh ON plh.plantId = pi.plantId
