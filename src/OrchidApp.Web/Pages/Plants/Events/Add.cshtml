@@ -213,14 +213,40 @@
         </div>
 
         <div class="mb-3">
-            <label asp-for="OldMediumNotes" class="fw-bold">Previous medium</label>
+            <label asp-for="OldGrowthMediumId" class="fw-bold">Previous medium</label>
+            <select asp-for="OldGrowthMediumId" class="form-select">
+                <option value="">—</option>
+                @foreach (var medium in Model.GrowthMedia)
+                {
+                    <option value="@medium.GrowthMediumId">
+                        @medium.Name
+                    </option>
+                }
+            </select>
+        </div>
+        
+        <div class="mb-3">
+            <label asp-for="OldMediumNotes" class="fw-bold">Optional. Previous medium condition</label>
             <textarea asp-for="OldMediumNotes"
                       class="form-control"
                       rows="3"></textarea>
         </div>
 
         <div class="mb-3">
-            <label asp-for="NewMediumNotes" class="fw-bold">New medium</label>
+            <label asp-for="NewGrowthMediumId" class="fw-bold">New medium</label>
+            <select asp-for="NewGrowthMediumId" class="form-select">
+                <option value="">-- select medium --</option>
+                @foreach (var medium in Model.GrowthMedia)
+                {
+                    <option value="@medium.GrowthMediumId">
+                        @medium.Name
+                    </option>
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="NewMediumNotes" class="fw-bold">Optional. Notes about the new medium</label>
             <textarea asp-for="NewMediumNotes"
                       class="form-control"
                       rows="3"></textarea>

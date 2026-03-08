@@ -1,0 +1,43 @@
+@page "{growthMediumId:int}"
+@model OrchidApp.Web.Pages.Setup.GrowthMedia.Actions.EditModel
+
+<h1 class="page-title fw-bold">Edit growth medium</h1>
+
+<h2 class="h5 fw-bold mb-3">
+    Update the name or description of this growing medium.
+</h2>
+
+<div asp-validation-summary="ModelOnly"
+     class="text-danger mb-3"></div>
+
+<form method="post">
+
+    <div class="mb-3">
+        <label asp-for="Input.Name" class="fw-bold"></label>
+        <small class="text-muted d-block fw-normal">
+            The name shown when selecting a medium during repotting.
+        </small>
+        <input asp-for="Input.Name"
+               class="form-control" />
+        <span asp-validation-for="Input.Name"
+              class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Input.Description" class="fw-bold"></label>
+        <small class="text-muted d-block fw-normal">
+            Optional additional information about this medium.
+        </small>
+        <textarea asp-for="Input.Description"
+                  class="form-control"
+                  rows="3"></textarea>
+        <span asp-validation-for="Input.Description"
+              class="text-danger"></span>
+    </div>
+
+    <partial name="_FormActions"
+             model='(Url.Page("/Setup/GrowthMedia/Details",
+                     new { growthMediumId = Model.GrowthMediumId }),
+                     "Save changes")' />
+
+</form>

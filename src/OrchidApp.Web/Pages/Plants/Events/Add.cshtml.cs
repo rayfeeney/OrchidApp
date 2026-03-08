@@ -135,6 +135,13 @@ public class AddModel : PageModel
     public string? PlantLocationNotes { get; set; }
 
     // Repotting-specific fields
+    // Repotting-specific fields
+    [BindProperty]
+    public int? OldGrowthMediumId { get; set; }
+
+    [BindProperty]
+    public int? NewGrowthMediumId { get; set; }
+
     [BindProperty]
     public string? OldMediumNotes { get; set; }
 
@@ -150,16 +157,20 @@ public class AddModel : PageModel
     [BindProperty]
     public string? RepottingNotes { get; set; }
 
-    // For populating Location dropdown
+    // For populating dropdowns
     public List<Location> Locations { get; private set; } = new();
+    public List<GrowthMedium> GrowthMedia { get; private set; } = new();
     private void LoadLookups()
     {
         Locations = _db.Location
                     .Where(l => l.IsActive)
                     .OrderBy(l => l.LocationName)
                     .ToList();
+        GrowthMedia = _db.GrowthMedia
+                             .Where(g => g.IsActive)
+                             .OrderBy(g => g.Name)
+                             .ToList();
     }
-
 
     public IActionResult OnGet()
     {
@@ -401,7 +412,9 @@ public class AddModel : PageModel
                 {
                     PlantId = PlantId,
                     RepotDate = EventDate.Date,
+                    OldGrowthMediumId = OldGrowthMediumId,
                     OldMediumNotes = string.IsNullOrWhiteSpace(OldMediumNotes) ? null : OldMediumNotes,
+                    NewGrowthMediumId = NewGrowthMediumId,
                     NewMediumNotes = string.IsNullOrWhiteSpace(NewMediumNotes) ? null : NewMediumNotes,
                     PotSize = string.IsNullOrWhiteSpace(PotSize) ? null : PotSize,
                     RepotReasonNotes = string.IsNullOrWhiteSpace(RepotReasonNotes) ? null : RepotReasonNotes,

@@ -1,0 +1,43 @@
+@page "{growthMediumId:int}"
+@model OrchidApp.Web.Pages.Setup.GrowthMedia.DetailsModel
+
+<h1 class="page-title fw-bold">Growth medium</h1>
+
+<h2 class="h5 fw-bold mb-3">
+    @Model.GrowthMedium!.Name
+</h2>
+ 
+<div class="card mt-3">
+    <div class="card-body">
+
+        <dl class="row mb-0">
+
+            <dt class="col-sm-3 fw-bold">Name</dt>
+            <dd class="col-sm-9">
+                @Model.GrowthMedium.Name
+            </dd>
+
+            <dt class="col-sm-3 fw-bold">Description</dt>
+            <dd class="col-sm-9">
+                @(string.IsNullOrWhiteSpace(Model.GrowthMedium.Description)
+                    ? "—"
+                    : Model.GrowthMedium.Description)
+            </dd>
+
+        </dl>
+
+    </div>
+</div>
+
+<div class="d-grid gap-2 mt-4">
+
+    <a asp-page="/Setup/GrowthMedia/Actions/Edit"
+    asp-route-growthMediumId="@Model.GrowthMedium.GrowthMediumId"
+    asp-route-returnUrl="@(Model.ReturnUrl ?? Url.Page("/Setup/GrowthMedia/Index"))"
+    class="btn btn-lg btn-primary">
+        Edit growth medium
+    </a>
+
+    <partial name="_BackFullWidth"
+            model='@Url.Page("/Setup/GrowthMedia/Index")' />
+</div>

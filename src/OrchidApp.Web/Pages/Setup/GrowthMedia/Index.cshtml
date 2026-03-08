@@ -1,0 +1,56 @@
+@page
+@model OrchidApp.Web.Pages.Setup.GrowthMedia.IndexModel
+
+<h1 class="page-title fw-bold">Growth media</h1>
+
+<h2 class="h5 fw-bold mb-3">
+    Manage the growing media used when recording potting events.
+</h2>
+
+<p class="text-muted mb-3">
+    Growth media are used in repotting records and splitting records. Add and edit entries here
+    so they can be selected consistently across the app.
+</p>
+
+<div class="d-grid gap-2 mb-3">
+    <a asp-page="Actions/Add"
+       class="btn btn-primary btn-lg">
+        Add growth medium
+    </a>
+</div>
+
+@if (!Model.GrowthMedia.Any())
+{
+    <p class="text-muted">
+        No growth media have been added yet.
+    </p>
+}
+else
+{
+    <p class="text-muted small mb-2">
+        Select a growth medium to view or edit its details.
+    </p>
+
+    <div class="d-grid gap-2">
+    @foreach (var medium in Model.GrowthMedia)
+    {
+        <a asp-page="/Setup/GrowthMedia/Details"
+           asp-route-growthMediumId="@medium.GrowthMediumId"
+           asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+           class="btn btn-lg text-start btn-outline-primary">
+
+            @medium.Name
+
+            @if (!string.IsNullOrWhiteSpace(medium.Description))
+            {
+                <div class="small text-muted">
+                    @medium.Description
+                </div>
+            }
+        </a>
+    }
+    </div>
+}
+
+<partial name="_BackFullWidth"
+         model='@Url.Page("/Setup/Index")' />

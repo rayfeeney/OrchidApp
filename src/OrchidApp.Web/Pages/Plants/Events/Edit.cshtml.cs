@@ -7,6 +7,7 @@ using System.Data;
 using System.Data.Common;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
+using OrchidApp.Web.Models;
 
 namespace OrchidApp.Web.Pages.Plants.Events;
 
@@ -110,6 +111,8 @@ public class EditModel : PageModel
     public int? FlowerCount { get; set; }
 
     // Repotting-specific fields
+    [BindProperty] public int? OldGrowthMediumId { get; set; }
+    [BindProperty] public int? NewGrowthMediumId { get; set; }
     [BindProperty] public string? OldMediumNotes { get; set; }
     [BindProperty] public string? NewMediumNotes { get; set; }
     [BindProperty] public string? PotSize { get; set; }
@@ -118,6 +121,8 @@ public class EditModel : PageModel
 
     public string? PlantDisplayName { get; private set; }
     public string? PlantTag { get; private set; }
+
+    public List<GrowthMedium> GrowthMedia { get; private set; } = new();
 
     public IActionResult OnGet()
     {
@@ -214,11 +219,20 @@ public class EditModel : PageModel
                 }
 
                 EventDate = repotting.RepotDate;
+                OldGrowthMediumId = repotting.OldGrowthMediumId;
+                NewGrowthMediumId = repotting.NewGrowthMediumId;
                 OldMediumNotes = repotting.OldMediumNotes;
                 NewMediumNotes = repotting.NewMediumNotes;
                 PotSize = repotting.PotSize;
                 RepotReasonNotes = repotting.RepotReasonNotes;
                 RepottingNotes = repotting.RepottingNotes;
+
+                GrowthMedia = _db.GrowthMedia
+                    .Where(g => g.IsActive
+                        || g.GrowthMediumId == OldGrowthMediumId
+                        || g.GrowthMediumId == NewGrowthMediumId)
+                    .OrderBy(g => g.Name)
+                    .ToList();
 
                 break;
 
@@ -234,7 +248,19 @@ public class EditModel : PageModel
     {
         
         if (!ModelState.IsValid)
+        {
+            if (EventType == "Repotting")
+            {
+                GrowthMedia = _db.GrowthMedia
+                    .Where(g => g.IsActive
+                        || g.GrowthMediumId == OldGrowthMediumId
+                        || g.GrowthMediumId == NewGrowthMediumId)
+                    .OrderBy(g => g.Name)
+                    .ToList();
+            }
+
             return Page();
+        }
 
         switch (EventType)
         {
@@ -337,6 +363,8 @@ public class EditModel : PageModel
                 }
 
                 repotting.RepotDate = EventDate.Date;
+                repotting.OldGrowthMediumId = OldGrowthMediumId;
+                repotting.NewGrowthMediumId = NewGrowthMediumId;
                 repotting.OldMediumNotes = string.IsNullOrWhiteSpace(OldMediumNotes) ? null : OldMediumNotes;
                 repotting.NewMediumNotes = string.IsNullOrWhiteSpace(NewMediumNotes) ? null : NewMediumNotes;
                 repotting.PotSize = string.IsNullOrWhiteSpace(PotSize) ? null : PotSize;

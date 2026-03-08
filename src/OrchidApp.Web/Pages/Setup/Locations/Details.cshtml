@@ -50,10 +50,7 @@
 </div>
 
 <div class="d-grid gap-2 mt-4">
-<p>
-    LocationId route: @Model.LocationId <br />
-    Location entity Id: @Model.Location.LocationId
-</p>
+
     <a asp-page="/Setup/Locations/Actions/Edit"
     asp-route-locationId="@Model.Location.LocationId"
     asp-route-returnUrl="@(Model.ReturnUrl ?? Url.Page("/Setup/Locations/Index"))"
