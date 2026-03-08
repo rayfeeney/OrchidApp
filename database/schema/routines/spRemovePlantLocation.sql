@@ -13,7 +13,7 @@ BEGIN
 
     START TRANSACTION;
 
-        /* ---------- Load target (locked) ---------- */
+        
 
         SELECT plantId, startDateTime, endDateTime
           INTO vPlantId, vStart, vEnd
@@ -29,7 +29,7 @@ BEGIN
 
         SET vIsCurrent = IF(vEnd IS NULL, 1, 0);
 
-        /* ---------- Guard: previous ambiguity ---------- */
+        
 
         IF (
             SELECT COUNT(*)
@@ -50,7 +50,7 @@ BEGIN
           AND endDateTime = vStart
         LIMIT 1;
 
-        /* ---------- Guard: next ambiguity ---------- */
+        
 
         IF vIsCurrent = 0 AND (
             SELECT COUNT(*)
@@ -73,7 +73,7 @@ BEGIN
             LIMIT 1;
         END IF;
 
-        /* ---------- Re-stitch ---------- */
+        
 
         UPDATE plantlocationhistory
         SET isActive = 0
@@ -93,7 +93,7 @@ BEGIN
             END IF;
         END IF;
 
-        /* ---------- Post-invariant ---------- */
+        
 
         IF (
             SELECT COUNT(*)
