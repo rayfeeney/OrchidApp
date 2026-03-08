@@ -1,5 +1,12 @@
+USE orchids;
+
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+DROP PROCEDURE IF EXISTS spAddTaxon;
+
 DELIMITER //
-CREATE OR REPLACE PROCEDURE `spAddTaxon`(
+
+CREATE PROCEDURE `spAddTaxon`(
     IN  pGenusId      INT,
     IN  pSpeciesName  VARCHAR(100),
     IN  pHybridName   VARCHAR(150),
@@ -13,11 +20,11 @@ BEGIN
     DECLARE vSpeciesName VARCHAR(100);
     DECLARE vHybridName  VARCHAR(150);
 
-    
+    -- Normalise for validation
     SET vSpeciesName = NULLIF(TRIM(pSpeciesName), '');
     SET vHybridName  = NULLIF(TRIM(pHybridName), '');
 
-    
+    -- Validate genus
     SELECT COUNT(*), MAX(isActive)
     INTO vGenusExists, vGenusIsActive
     FROM genus
@@ -33,7 +40,7 @@ BEGIN
             SET MESSAGE_TEXT = 'Cannot create species/hybrid for inactive genus';
     END IF;
 
-    
+    -- Enforce shape
     IF vSpeciesName IS NULL AND vHybridName IS NULL THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Genus-only record creation is not allowed';
@@ -44,17 +51,14 @@ BEGIN
             SET MESSAGE_TEXT = 'Must be either species or hybrid, not both';
     END IF;
 
-    
+    -- Delegate insert
     CALL spAddTaxonInternal(
         pGenusId,
         pSpeciesName,
         pHybridName,
         pGrowthNotes,
         pTaxonNotes,
-        0,          
+        0,          -- isSystemManaged
         @ignoredTaxonId
     );
-END
-//
-DELIMITER ;
-
+END //
