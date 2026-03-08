@@ -1,5 +1,12 @@
+USE orchids;
+
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+DROP PROCEDURE IF EXISTS spSetHeroPhoto;
+
 DELIMITER //
-CREATE OR REPLACE PROCEDURE `spSetHeroPhoto`(
+
+CREATE PROCEDURE `spSetHeroPhoto`(
     IN pPlantId INT,
     IN pPlantPhotoId INT
 )
@@ -7,7 +14,7 @@ BEGIN
 
     DECLARE vExists INT;
 
-    
+    -- Validate photo belongs to plant and is active
     SELECT COUNT(*)
     INTO vExists
     FROM orchids.plantphoto
@@ -20,19 +27,16 @@ BEGIN
             SET MESSAGE_TEXT = 'Invalid hero selection';
     END IF;
 
-    
+    -- Clear existing hero for this plant
     UPDATE orchids.plantphoto
     SET isHero = 0
     WHERE plantId = pPlantId
       AND isHero = 1
       AND isActive = 1;
 
-    
+    -- Set new hero
     UPDATE orchids.plantphoto
     SET isHero = 1
     WHERE plantPhotoId = pPlantPhotoId;
 
-END
-//
-DELIMITER ;
-
+END //

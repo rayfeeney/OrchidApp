@@ -1,5 +1,12 @@
+USE orchids;
+
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+DROP PROCEDURE IF EXISTS spAddTaxonInternal;
+
 DELIMITER //
-CREATE OR REPLACE PROCEDURE `spAddTaxonInternal`(
+
+CREATE PROCEDURE `spAddTaxonInternal`(
     IN  pGenusId            INT,
     IN  pSpeciesName        VARCHAR(100),
     IN  pHybridName         VARCHAR(150),
@@ -14,7 +21,7 @@ BEGIN
     DECLARE vGrowthNotes TEXT;
     DECLARE vTaxonNotes  TEXT;
 
-    
+    -- Normalise inputs
     SET vSpeciesName = NULLIF(TRIM(pSpeciesName), '');
     SET vHybridName  = NULLIF(TRIM(pHybridName), '');
     SET vGrowthNotes = NULLIF(TRIM(pGrowthNotes), '');
@@ -38,7 +45,4 @@ BEGIN
     );
 
     SET pTaxonId = LAST_INSERT_ID();
-END
-//
-DELIMITER ;
-
+END //
