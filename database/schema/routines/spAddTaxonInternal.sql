@@ -14,7 +14,7 @@ BEGIN
     DECLARE vGrowthNotes TEXT;
     DECLARE vTaxonNotes  TEXT;
 
-    -- Normalise inputs
+    
     SET vSpeciesName = NULLIF(TRIM(pSpeciesName), '');
     SET vHybridName  = NULLIF(TRIM(pHybridName), '');
     SET vGrowthNotes = NULLIF(TRIM(pGrowthNotes), '');
