@@ -50,7 +50,9 @@
     @if (Model.EventType == "Repotting")
     {
         <p class="text-muted small mb-3">
-            Record that this plant has been repotted.
+            Record when this plant was repotted and the growing medium used.
+            Repotting history helps track root health and understand how long
+            a plant has been in its current medium.
         </p>
     }
 }
@@ -207,15 +209,25 @@
     {
         <div class="mb-3">
             <label asp-for="EventDate" class="fw-bold">Repotting date</label>
+            <small class="text-muted d-block fw-normal">
+                The date the plant was repotted.
+            </small>
             <input asp-for="EventDate"
-                   type="date"
-                   class="form-control" />
+                type="date"
+                class="form-control" />
         </div>
 
+        <hr class="my-4" />
+
+        <h3 class="h6 fw-bold">Previous growing medium</h3>
+
         <div class="mb-3">
-            <label asp-for="OldGrowthMediumId" class="fw-bold">Previous medium</label>
+            <label asp-for="OldGrowthMediumId" class="fw-bold">Medium</label>
+            <small class="text-muted d-block fw-normal">
+                The medium the plant was growing in before repotting.
+            </small>
             <select asp-for="OldGrowthMediumId" class="form-select">
-                <option value="">—</option>
+                <option value="">— unknown or not recorded —</option>
                 @foreach (var medium in Model.GrowthMedia)
                 {
                     <option value="@medium.GrowthMediumId">
@@ -224,16 +236,26 @@
                 }
             </select>
         </div>
-        
-        <div class="mb-3">
-            <label asp-for="OldMediumNotes" class="fw-bold">Optional. Previous medium condition</label>
-            <textarea asp-for="OldMediumNotes"
-                      class="form-control"
-                      rows="3"></textarea>
-        </div>
 
         <div class="mb-3">
-            <label asp-for="NewGrowthMediumId" class="fw-bold">New medium</label>
+            <label asp-for="OldMediumNotes" class="fw-bold">Condition notes</label>
+            <small class="text-muted d-block fw-normal">
+                Optional notes such as broken down bark, compacted moss, or root condition.
+            </small>
+            <textarea asp-for="OldMediumNotes"
+                    class="form-control"
+                    rows="3"></textarea>
+        </div>
+
+        <hr class="my-4" />
+
+        <h3 class="h6 fw-bold">New pot and medium</h3>
+
+        <div class="mb-3">
+            <label asp-for="NewGrowthMediumId" class="fw-bold">New growing medium</label>
+            <small class="text-muted d-block fw-normal">
+                The medium used after repotting.
+            </small>
             <select asp-for="NewGrowthMediumId" class="form-select">
                 <option value="">-- select medium --</option>
                 @foreach (var medium in Model.GrowthMedia)
@@ -246,30 +268,43 @@
         </div>
 
         <div class="mb-3">
-            <label asp-for="NewMediumNotes" class="fw-bold">Optional. Notes about the new medium</label>
+            <label asp-for="NewMediumNotes" class="fw-bold">Medium notes</label>
+            <small class="text-muted d-block fw-normal">
+                Optional details such as bark size, moss mix, or additives used.
+            </small>
             <textarea asp-for="NewMediumNotes"
-                      class="form-control"
-                      rows="3"></textarea>
+                    class="form-control"
+                    rows="3"></textarea>
         </div>
 
         <div class="mb-3">
             <label asp-for="PotSize" class="fw-bold">Pot size</label>
+            <small class="text-muted d-block fw-normal">
+                The pot size used after repotting (e.g. 9 cm, 4 inch).
+            </small>
             <input asp-for="PotSize"
-                   class="form-control" />
+                class="form-control" />
         </div>
 
         <div class="mb-3">
             <label asp-for="RepotReasonNotes" class="fw-bold">Reason for repotting</label>
+            <small class="text-muted d-block fw-normal">
+                Optional. For example: medium breaking down, roots overcrowded,
+                or moving to a larger pot.
+            </small>
             <textarea asp-for="RepotReasonNotes"
-                      class="form-control"
-                      rows="3"></textarea>
+                    class="form-control"
+                    rows="3"></textarea>
         </div>
 
         <div class="mb-3">
             <label asp-for="RepottingNotes" class="fw-bold">Additional notes</label>
+            <small class="text-muted d-block fw-normal">
+                Any other observations during repotting such as root condition or pests.
+            </small>
             <textarea asp-for="RepottingNotes"
-                      class="form-control"
-                      rows="3"></textarea>
+                    class="form-control"
+                    rows="3"></textarea>
         </div>
     }
 
