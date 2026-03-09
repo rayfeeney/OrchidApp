@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using OrchidApp.Web.Data;
 using OrchidApp.Web.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace OrchidApp.Web.Pages.Setup.Taxa;
 
@@ -30,5 +31,20 @@ public class DetailsModel : PageModel
         }
 
         return Page();
+    }
+
+    public async Task<IActionResult> OnPostToggleActiveAsync(int taxonId)
+    {
+        var taxon = await _db.Taxa
+            .Where(t => t.TaxonId == taxonId)
+            .Select(t => new { t.IsActive })
+            .FirstAsync();
+
+        await _db.Database.ExecuteSqlRawAsync(
+            "CALL spSetTaxonActiveState({0},{1})",
+            taxonId,
+            !taxon.IsActive);
+
+        return RedirectToPage(new { id = taxonId });
     }
 }

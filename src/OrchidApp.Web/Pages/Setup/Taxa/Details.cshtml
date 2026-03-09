@@ -72,12 +72,32 @@ Species / hybrid details
             Edit species / hybrid
         </a>
 
-        <a asp-page="/Setup/Taxa/Actions/Remove"
-           asp-route-id="@Model.Taxon.TaxonId"
-           asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-           class="btn btn-outline-danger btn-lg">
-            Deactivate species / hybrid
-        </a>
+        <form method="post" class="d-grid">
+
+            <input type="hidden" name="taxonId" value="@Model.Taxon.TaxonId" />
+
+            @if (Model.Taxon.IsSystemManaged)
+            {
+                <button type="button"
+                        class="btn btn-lg btn-outline-secondary"
+                        disabled
+                        title="This record is automatically created for the genus and must remain active.">
+                    Genus placeholder — always active
+                </button>
+            }
+            else
+            {
+                <button type="submit"
+                        asp-page-handler="ToggleActive"
+                        class="btn btn-lg @(Model.Taxon.IsActive ? "btn-outline-danger" : "btn-outline-success")"
+                        onclick="return confirm('Are you sure you want to @(Model.Taxon.IsActive ? "deactivate" : "reactivate") this species / hybrid?');">
+
+                    @(Model.Taxon.IsActive ? "Deactivate species / hybrid" : "Reactivate species / hybrid")
+
+                </button>
+            }
+
+</form>
 
     </div>
 }
