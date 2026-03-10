@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using OrchidApp.Web.Data;
 using OrchidApp.Web.Models;
+using System.Data.Common;
 
 namespace OrchidApp.Web.Pages.Setup.GrowthMedia.Actions;
 
@@ -41,20 +42,24 @@ public class EditModel : PageModel
         if (!ModelState.IsValid)
             return Page();
 
-        var entity = await _db.GrowthMedia
-            .FirstOrDefaultAsync(g => g.GrowthMediumId == GrowthMediumId);
+        try
+        {
+            await _db.Database.ExecuteSqlRawAsync(
+                "CALL spUpdateGrowthMediumDetails({0}, {1}, {2})",
+                GrowthMediumId,
+                Input.Name,
+                (object?)Input.Description ?? DBNull.Value
+            );
 
-        if (entity == null)
-            return NotFound();
-
-        entity.Name = Input.Name.Trim();
-        entity.Description = string.IsNullOrWhiteSpace(Input.Description)
-                                ? null
-                                : Input.Description.Trim();
-
-        await _db.SaveChangesAsync();
-
-        return RedirectToPage("/Setup/GrowthMedia/Details",
-            new { growthMediumId = entity.GrowthMediumId });
+            return RedirectToPage("/Setup/GrowthMedia/Details",
+                new { growthMediumId = GrowthMediumId });
+        }
+        catch (DbException ex)
+        {
+            ModelState.AddModelError("", ex.Message);
+            return Redirect(ReturnUrl ?? 
+                Url.Page("/Setup/GrowthMedia/Details",
+                    new { growthMediumId = GrowthMediumId })!);
+        }
     }
 }
