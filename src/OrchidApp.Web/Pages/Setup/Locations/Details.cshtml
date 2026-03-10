@@ -15,16 +15,6 @@
     <div class="card-body">
         <dl class="row mb-0">
 
-            <dt class="col-sm-3 fw-bold">Location type</dt>
-            <dd class="col-sm-9">
-                @(string.IsNullOrWhiteSpace(Model.Location.LocationTypeCode) ? "—" : Model.Location.LocationTypeCode)
-            </dd>
-
-            <dt class="col-sm-3 fw-bold">Climate</dt>
-            <dd class="col-sm-9">
-                @(string.IsNullOrWhiteSpace(Model.Location.ClimateCode) ? "—" : Model.Location.ClimateCode)
-            </dd>
-
             <dt class="col-sm-3 fw-bold">Location notes</dt>
             <dd class="col-sm-9">
                 @(string.IsNullOrWhiteSpace(Model.Location.LocationNotes) ? "—" : Model.Location.LocationNotes)
@@ -38,11 +28,6 @@
             <dt class="col-sm-3 fw-bold">General notes</dt>
             <dd class="col-sm-9">
                 @(string.IsNullOrWhiteSpace(Model.Location.LocationGeneralNotes) ? "—" : Model.Location.LocationGeneralNotes)
-            </dd>
-
-            <dt class="col-sm-3 fw-bold">Status</dt>
-            <dd class="col-sm-9">
-                @(Model.Location.IsActive ? "Active" : "Inactive")
             </dd>
 
         </dl>

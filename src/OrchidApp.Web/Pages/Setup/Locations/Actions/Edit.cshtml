@@ -19,31 +19,28 @@
     </div>
 
     <div class="mb-3">
-        <label asp-for="Input.LocationTypeCode" class="fw-bold"></label>
-        <input asp-for="Input.LocationTypeCode" class="form-control" />
-        <span asp-validation-for="Input.LocationTypeCode" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="Input.ClimateCode" class="fw-bold"></label>
-        <input asp-for="Input.ClimateCode" class="form-control" />
-        <span asp-validation-for="Input.ClimateCode" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
         <label asp-for="Input.LocationNotes" class="fw-bold"></label>
+        <small class="text-muted d-block fw-normal">
+            Optional notes describing this location, such as lighting, humidity, or special conditions.
+        </small>
         <textarea asp-for="Input.LocationNotes" class="form-control"></textarea>
         <span asp-validation-for="Input.LocationNotes" class="text-danger"></span>
     </div>
 
     <div class="mb-3">
         <label asp-for="Input.ClimateNotes" class="fw-bold"></label>
+        <small class="text-muted d-block fw-normal">
+            Describe the typical climate conditions for this location, such as temperature range, humidity, or seasonal variation.
+        </small>
         <textarea asp-for="Input.ClimateNotes" class="form-control"></textarea>
         <span asp-validation-for="Input.ClimateNotes" class="text-danger"></span>
     </div>
 
     <div class="mb-3">
         <label asp-for="Input.LocationGeneralNotes" class="fw-bold"></label>
+        <small class="text-muted d-block fw-normal">
+            Any additional information about this location that may be useful when reviewing plant growth or care.
+        </small>
         <textarea asp-for="Input.LocationGeneralNotes" class="form-control"></textarea>
         <span asp-validation-for="Input.LocationGeneralNotes" class="text-danger"></span>
     </div>

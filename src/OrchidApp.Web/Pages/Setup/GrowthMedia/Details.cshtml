@@ -5,6 +5,10 @@
 
 <h2 class="h5 fw-bold mb-3">
     @Model.GrowthMedium!.Name
+    @if (!Model.GrowthMedium.IsActive)
+    {
+        <span class="badge bg-secondary ms-2">Inactive</span>
+    }
 </h2>
  
 <div class="card mt-3">
@@ -37,6 +41,15 @@
     class="btn btn-lg btn-primary">
         Edit growth medium
     </a>
+
+    <form method="post" class="d-grid">
+        <button type="submit"
+                asp-page-handler="ToggleActive"
+                class="btn btn-lg @(Model.GrowthMedium.IsActive ? "btn-outline-danger" : "btn-outline-success")"
+                onclick="return confirm('Are you sure you want to @(Model.GrowthMedium.IsActive ? "deactivate" : "reactivate") this growth medium?');">
+            @(Model.GrowthMedium.IsActive ? "Deactivate growth medium" : "Reactivate growth medium")
+        </button>
+    </form>
 
     <partial name="_BackFullWidth"
             model='@Url.Page("/Setup/GrowthMedia/Index")' />

@@ -33,4 +33,20 @@ public class DetailsModel : PageModel
 
         return Page();
     }
+
+        public IActionResult OnPostToggleActive()
+    {
+        var current = _db.GrowthMedia
+                         .AsNoTracking()
+                         .FirstOrDefault(l => l.GrowthMediumId == GrowthMediumId)
+                      ?? throw new InvalidOperationException("Growth medium not found.");
+
+        _db.Database.ExecuteSqlRaw(
+            "CALL spSetGrowthMediumActiveState({0},{1})",
+            GrowthMediumId,
+            current.IsActive ? 0 : 1
+        );
+
+        return RedirectToPage(new { growthMediumId = GrowthMediumId, ReturnUrl });
+    }
 }
