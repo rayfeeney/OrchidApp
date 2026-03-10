@@ -76,26 +76,35 @@ Species / hybrid details
 
             <input type="hidden" name="taxonId" value="@Model.Taxon.TaxonId" />
 
-            @if (Model.Taxon.IsSystemManaged)
-            {
-                <button type="button"
-                        class="btn btn-lg btn-outline-secondary"
-                        disabled
-                        title="This record is automatically created for the genus and must remain active.">
-                    Genus placeholder — always active
-                </button>
-            }
-            else
-            {
-                <button type="submit"
-                        asp-page-handler="ToggleActive"
-                        class="btn btn-lg @(Model.Taxon.IsActive ? "btn-outline-danger" : "btn-outline-success")"
-                        onclick="return confirm('Are you sure you want to @(Model.Taxon.IsActive ? "deactivate" : "reactivate") this species / hybrid?');">
+        @{
+            var isSystemManaged = Model.Taxon.IsSystemManaged;
+            var isActive = Model.Taxon.IsActive;
 
-                    @(Model.Taxon.IsActive ? "Deactivate species / hybrid" : "Reactivate species / hybrid")
+            var buttonClass = isActive ? "btn-outline-danger" : "btn-outline-success";
+            var buttonText = isActive ? "Deactivate species / hybrid" : "Reactivate species / hybrid";
+            var confirmMessage = isActive
+                ? "Are you sure? This should only be done if the species / hybrid is no longer valid."
+                : "Are you sure? This will reactivate the species / hybrid.";
+        }
 
-                </button>
-            }
+        @if (isSystemManaged)
+        {
+            <button type="button"
+                    class="btn btn-lg btn-outline-secondary"
+                    disabled
+                    title="This record is automatically created for the genus and must remain active.">
+                Genus placeholder — always active
+            </button>
+        }
+        else
+        {
+            <button type="submit"
+                    asp-page-handler="ToggleActive"
+                    class="btn btn-lg @buttonClass"
+                    onclick="return confirm('@confirmMessage');">
+                @buttonText
+            </button>
+        }
 
 </form>
 
