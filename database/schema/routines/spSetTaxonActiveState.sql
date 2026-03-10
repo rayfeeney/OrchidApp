@@ -15,7 +15,7 @@ proc: BEGIN
 
     IF vIsSystemManaged = 1 AND pIsActive = 0 THEN
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'System-managed taxa cannot be deactivated';
+            SET MESSAGE_TEXT = 'System-managed records cannot be deactivated';
     END IF;
 
     IF vCurrentState = pIsActive THEN
