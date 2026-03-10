@@ -38,15 +38,7 @@ else
            asp-route-growthMediumId="@medium.GrowthMediumId"
            asp-route-returnUrl="@(Request.Path + Request.QueryString)"
            class="btn btn-lg text-start btn-outline-primary">
-
             @medium.Name
-
-            @if (!string.IsNullOrWhiteSpace(medium.Description))
-            {
-                <div class="small text-muted">
-                    @medium.Description
-                </div>
-            }
         </a>
     }
     </div>
