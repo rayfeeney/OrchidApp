@@ -2,6 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using OrchidApp.Web.Data;
 using OrchidApp.Web.Models;
+using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
+using System.Data.Common;
 
 namespace OrchidApp.Web.Pages.Setup.GrowthMedia.Actions;
 
@@ -15,7 +18,7 @@ public class AddModel : PageModel
     }
 
     [BindProperty]
-    public GrowthMedium Input { get; set; } = new();
+    public InputModel Input { get; set; } = new();
 
     public IActionResult OnGet()
     {
@@ -27,12 +30,34 @@ public class AddModel : PageModel
         if (!ModelState.IsValid)
             return Page();
 
-        Input.IsActive = true;
+        try
+        {
+            var result = await _db.GrowthMediumIdResults
+                .FromSqlRaw(
+                    "CALL spAddGrowthMedium({0}, {1})",
+                    Input.Name,
+                    Input.Description)
+                .ToListAsync();
 
-        _db.GrowthMedia.Add(Input);
-        await _db.SaveChangesAsync();
+            var id = result.First().GrowthMediumId;
 
-        return RedirectToPage("/Setup/GrowthMedia/Details",
-            new { growthMediumId = Input.GrowthMediumId });
+            return RedirectToPage("/Setup/GrowthMedia/Details",
+                new { growthMediumId = id });
+        }
+        catch (DbException ex)
+        {
+            ModelState.AddModelError("", ex.Message);
+            return Page();
+        }
+    }
+
+    public class InputModel
+    {
+        [Required]
+        [Display(Name = "Growth medium")]
+        public string Name { get; set; } = string.Empty;
+
+        [Display(Name = "Description")]
+        public string? Description { get; set; }
     }
 }

@@ -18,3 +18,8 @@ public class GrowthMedium
 
     public DateTime UpdatedDateTime { get; set; }
 }
+
+public class GrowthMediumIdResult
+{
+    public int GrowthMediumId { get; set; }
+}

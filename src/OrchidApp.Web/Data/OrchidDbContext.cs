@@ -27,6 +27,7 @@ public class OrchidDbContext : DbContext
     public DbSet<Location> Locations { get; set; } = null!;
     public DbSet<PlantPhoto> PlantPhotos { get; set; }
     public DbSet<ObservationType> ObservationTypes { get; set; }
+    public DbSet<GrowthMediumIdResult> GrowthMediumIdResults { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -147,6 +148,7 @@ public class OrchidDbContext : DbContext
             entity.Property(e => e.CreatedDateTime) .HasColumnName("createdDateTime");
             entity.Property(e => e.UpdatedDateTime) .HasColumnName("updatedDateTime");
         });
+        modelBuilder.Entity<GrowthMediumIdResult>().HasNoKey();
 
         // =========================
         // Repotting table mapping
