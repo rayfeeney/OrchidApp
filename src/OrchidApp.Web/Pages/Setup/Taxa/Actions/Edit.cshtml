@@ -9,7 +9,6 @@
 
 <p class="text-muted">
     Changing the species or hybrid name will update all plants that use this name.
-    This should normally only be used for spelling corrections or recognised taxonomic updates.
 </p>
 
 <form method="post"
@@ -20,6 +19,12 @@
          class="alert alert-danger">
     </div>
 
+    @if (Model.Taxon.IsSystemManaged)
+    {
+        <div class="alert alert-warning">
+            This is a system required record and cannot be renamed.
+        </div>
+    }
     @if (!Model.Taxon.IsSystemManaged && !string.IsNullOrWhiteSpace(Model.Taxon.SpeciesName))
     {
         <div class="mb-3">
