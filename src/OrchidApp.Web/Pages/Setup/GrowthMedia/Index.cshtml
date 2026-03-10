@@ -1,4 +1,5 @@
 @page
+@using OrchidApp.Web.Models
 @model OrchidApp.Web.Pages.Setup.GrowthMedia.IndexModel
 
 <h1 class="page-title fw-bold">Growth media</h1>
@@ -39,6 +40,13 @@ else
            asp-route-returnUrl="@(Request.Path + Request.QueryString)"
            class="btn btn-lg text-start btn-outline-primary">
             @medium.Name
+
+        @if (!medium.IsActive)
+            {
+                <span class="badge bg-secondary ms-2">
+                    Inactive
+                </span>
+            }
         </a>
     }
     </div>
