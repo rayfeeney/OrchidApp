@@ -102,6 +102,18 @@ Atomic entities (e.g. plantevent) may be written directly via EF Core.
 
 If uncertain, default to stored procedures.
 
+Stored procedures must be invoked using the execution contract defined
+in:
+
+    docs/architecture.md
+
+This defines the permitted EF Core invocation patterns, asynchronous
+execution requirements and error-handling boundaries for database
+operations.
+
+Manual command execution and non-standard invocation patterns are not
+permitted.
+
 ------------------------------------------------------------------------
 
 ## 4. Web Application Changes

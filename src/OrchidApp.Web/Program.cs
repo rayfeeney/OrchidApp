@@ -3,6 +3,7 @@ using OrchidApp.Web.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.Extensions.FileProviders;
+using OrchidApp.Web.Infrastructure;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,6 +29,7 @@ builder.Services.AddSingleton<PhotoPipeline>();
 
 builder.Services.AddScoped<ObservationTypeResolver>();
 
+builder.Services.AddScoped<IStoredProcedureExecutor, StoredProcedureExecutor>();
 
 var app = builder.Build();
 
