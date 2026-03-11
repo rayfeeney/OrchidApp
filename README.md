@@ -169,6 +169,16 @@ Heavy photo loading is isolated to dedicated pages.
 -   Atomic entities (e.g. `plantevent`) may be written via EF Core
 -   Temporal or structural entities (e.g. `plantlocationhistory`,
     `plantsplit`, propagation) must be written via stored procedures
+
+Stored procedure invocation must follow the project execution contract
+defined in:
+
+    docs/architecture.md
+
+This defines the permitted EF Core invocation patterns, asynchronous
+execution requirements and error-handling boundaries for database
+operations.
+
 -   Triggers may enforce absolute invariants but must not implement
     domain behaviour
 

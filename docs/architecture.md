@@ -169,6 +169,51 @@ branching must:
 -   Encapsulate invariant logic inside SQL
 -   Reject invalid transitions atomically
 
+## Stored Procedure Invocation Contract
+
+The application must invoke stored procedures using a strict and
+consistent EF Core execution model.
+
+Two invocation patterns are permitted:
+
+1. Command procedures (no result sets)
+
+   These must be executed using:
+
+       Database.ExecuteSqlRawAsync(...)
+
+   This applies to all structural mutations, lifecycle operations,
+   and invariant-enforcing transitions.
+
+2. Result-set procedures
+
+   Procedures that return rows must be executed using:
+
+       DbSet/KeylessEntity.FromSqlRaw(...).<async materialiser>
+
+   This applies to read projections, lookup retrieval and reporting
+   queries implemented as stored procedures.
+
+All database calls must be asynchronous.
+
+Synchronous execution is not permitted.
+
+Manual ADO.NET command execution is not permitted, as it bypasses
+transactional coordination, logging consistency and architectural
+enforcement boundaries.
+
+Interpolated execution patterns are not part of the project standard.
+
+Try/catch handling must only be used where database-level business rule
+violations need to be translated into user-facing validation or workflow
+messages.
+
+Unexpected failures must be allowed to surface through the application’s
+standard error pipeline.
+
+This contract defines the application–database command boundary and must
+remain uniform across the codebase.
+
 Examples include:
 
 -   plantlocationhistory
