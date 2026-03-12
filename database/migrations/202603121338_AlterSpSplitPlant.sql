@@ -200,4 +200,5 @@ BEGIN
     DROP TEMPORARY TABLE tmpSplitTags;
 
     COMMIT;
+
 END;
