@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using OrchidApp.Web.Data;
+using OrchidApp.Web.Models;
+using OrchidApp.Web.Infrastructure;
 
 namespace OrchidApp.Web.Pages.Setup.Genera.Actions;
 
@@ -11,11 +12,11 @@ public class AddModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string? ReturnUrl { get; set; }
 
-    private readonly OrchidDbContext _db;
+    private readonly IStoredProcedureExecutor _sp;
 
-    public AddModel(OrchidDbContext db)
+    public AddModel(IStoredProcedureExecutor sp)
     {
-        _db = db;
+        _sp = sp;
     }
 
     [BindProperty, Required]
@@ -26,7 +27,7 @@ public class AddModel : PageModel
     [Display(Name = "Notes")]
     public string? GenusNotes { get; set; }
 
-    public async Task<IActionResult> OnGetAsync()
+    public IActionResult OnGet()
     {
         return Page();
     }
@@ -36,15 +37,15 @@ public class AddModel : PageModel
         if (!ModelState.IsValid)
             return Page();
 
-        await _db.Database.ExecuteSqlRawAsync(
+        var result = await _sp.QuerySingleAsync<AddGenusResult>(
             "CALL spAddGenus(@p0, @p1);",
             GenusName,
-            (object?)GenusNotes ?? DBNull.Value
+            GenusNotes
         );
 
         if (!string.IsNullOrWhiteSpace(ReturnUrl))
             return LocalRedirect(ReturnUrl);
 
-        return RedirectToPage("/Setup/Genera/Index");
+        return RedirectToPage("/Setup/Genera/Details", new { id = result.GenusId });
     }
 }

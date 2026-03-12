@@ -1,11 +1,11 @@
 using System.Data;
+using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using OrchidApp.Web.Data;
 
 namespace OrchidApp.Web.Infrastructure;
 
-public sealed class StoredProcedureExecutor : IStoredProcedureExecutor
+public class StoredProcedureExecutor : IStoredProcedureExecutor
 {
     private readonly OrchidDbContext _db;
 
@@ -14,145 +14,42 @@ public sealed class StoredProcedureExecutor : IStoredProcedureExecutor
         _db = db;
     }
 
-    public async Task<T> ExecuteWithOutputAsync<T>(
-        string procedureName,
-        IReadOnlyCollection<StoredProcedureParameter> inputParameters,
-        IReadOnlyCollection<StoredProcedureParameter> outputParameters,
-        Func<IReadOnlyDictionary<string, object?>, T> mapOutput,
-        CancellationToken cancellationToken = default)
+    public async Task<T> QuerySingleAsync<T>(
+        string procedureCallSql,
+        params object?[] parameters
+    ) where T : new()
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(procedureName);
+        await using var conn = _db.Database.GetDbConnection();
 
-        if (mapOutput is null)
-            throw new ArgumentNullException(nameof(mapOutput));
+        if (conn.State != ConnectionState.Open)
+            await conn.OpenAsync();
 
-        inputParameters ??= Array.Empty<StoredProcedureParameter>();
-        outputParameters ??= Array.Empty<StoredProcedureParameter>();
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = procedureCallSql;
+        cmd.CommandType = CommandType.Text;
 
-        ValidateParameters(inputParameters, outputParameters);
-
-        var connection = _db.Database.GetDbConnection();
-        var shouldCloseConnection = connection.State != ConnectionState.Open;
-
-        if (shouldCloseConnection)
-            await connection.OpenAsync(cancellationToken);
-
-        try
+        for (int i = 0; i < parameters.Length; i++)
         {
-            await using var command = connection.CreateCommand();
-            command.CommandType = CommandType.Text;
-            command.CommandText = BuildCallSql(procedureName, inputParameters, outputParameters);
-
-            var currentTransaction = _db.Database.CurrentTransaction;
-            if (currentTransaction is not null)
-            {
-                command.Transaction = currentTransaction.GetDbTransaction();
-            }
-
-            AddParameters(command, inputParameters);
-            AddParameters(command, outputParameters);
-
-            await command.ExecuteNonQueryAsync(cancellationToken);
-
-            var outputs = ReadOutputs(command, outputParameters);
-
-            return mapOutput(outputs);
-        }
-        finally
-        {
-            if (shouldCloseConnection)
-                await connection.CloseAsync();
-        }
-    }
-
-    private static void ValidateParameters(
-        IReadOnlyCollection<StoredProcedureParameter> inputParameters,
-        IReadOnlyCollection<StoredProcedureParameter> outputParameters)
-    {
-        var allNames = inputParameters
-            .Concat(outputParameters)
-            .Select(p => p.Name)
-            .ToList();
-
-        var duplicateNames = allNames
-            .GroupBy(n => n, StringComparer.OrdinalIgnoreCase)
-            .Where(g => g.Count() > 1)
-            .Select(g => g.Key)
-            .ToList();
-
-        if (duplicateNames.Count != 0)
-        {
-            throw new ArgumentException(
-                $"Duplicate stored procedure parameter name(s): {string.Join(", ", duplicateNames)}");
+            var p = cmd.CreateParameter();
+            p.ParameterName = $"@p{i}";
+            p.Value = parameters[i] ?? DBNull.Value;
+            cmd.Parameters.Add(p);
         }
 
-        foreach (var parameter in inputParameters)
+        await using var reader = await cmd.ExecuteReaderAsync();
+
+        if (!await reader.ReadAsync())
+            throw new InvalidOperationException("Stored procedure returned no rows.");
+
+        var result = new T();
+
+        for (int i = 0; i < reader.FieldCount; i++)
         {
-            if (parameter.Direction != ParameterDirection.Input)
-            {
-                throw new ArgumentException(
-                    $"Input parameter '{parameter.Name}' must use ParameterDirection.Input.");
-            }
+            var prop = typeof(T).GetProperty(reader.GetName(i));
+            if (prop != null && !reader.IsDBNull(i))
+                prop.SetValue(result, reader.GetValue(i));
         }
 
-        foreach (var parameter in outputParameters)
-        {
-            if (parameter.Direction is not ParameterDirection.Output and not ParameterDirection.InputOutput)
-            {
-                throw new ArgumentException(
-                    $"Output parameter '{parameter.Name}' must use Output or InputOutput direction.");
-            }
-
-            if (parameter.DbType is null)
-            {
-                throw new ArgumentException(
-                    $"Output parameter '{parameter.Name}' must declare a DbType.");
-            }
-        }
-    }
-
-    private static string BuildCallSql(
-        string procedureName,
-        IReadOnlyCollection<StoredProcedureParameter> inputParameters,
-        IReadOnlyCollection<StoredProcedureParameter> outputParameters)
-    {
-        var parameterList = inputParameters
-            .Concat(outputParameters)
-            .Select(p => p.Name);
-
-        return $"CALL {procedureName}({string.Join(", ", parameterList)})";
-    }
-
-    private static void AddParameters(
-        IDbCommand command,
-        IReadOnlyCollection<StoredProcedureParameter> parameters)
-    {
-        foreach (var parameter in parameters)
-        {
-            var dbParameter = command.CreateParameter();
-            dbParameter.ParameterName = parameter.Name;
-            dbParameter.Direction = parameter.Direction;
-            dbParameter.Value = parameter.Value ?? DBNull.Value;
-
-            if (parameter.DbType.HasValue)
-                dbParameter.DbType = parameter.DbType.Value;
-
-            command.Parameters.Add(dbParameter);
-        }
-    }
-
-    private static IReadOnlyDictionary<string, object?> ReadOutputs(
-        IDbCommand command,
-        IReadOnlyCollection<StoredProcedureParameter> outputParameters)
-    {
-        var results = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var parameter in outputParameters)
-        {
-            var value = ((IDataParameter)command.Parameters[parameter.Name]!).Value;
-            results[parameter.Name] = value is DBNull ? null : value;
-        }
-
-        return results;
+        return result;
     }
 }

@@ -1,13 +1,11 @@
-using System.Data;
+using System.Data.Common;
 
 namespace OrchidApp.Web.Infrastructure;
 
 public interface IStoredProcedureExecutor
 {
-    Task<T> ExecuteWithOutputAsync<T>(
-        string procedureName,
-        IReadOnlyCollection<StoredProcedureParameter> inputParameters,
-        IReadOnlyCollection<StoredProcedureParameter> outputParameters,
-        Func<IReadOnlyDictionary<string, object?>, T> mapOutput,
-        CancellationToken cancellationToken = default);
+    Task<T> QuerySingleAsync<T>(
+        string procedureCallSql,
+        params object?[] parameters
+    ) where T : new();
 }
