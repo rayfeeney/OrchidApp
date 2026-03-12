@@ -1,10 +1,5 @@
-SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
-
-DROP PROCEDURE IF EXISTS spSplitPlant;
-
 DELIMITER //
-
-CREATE PROCEDURE spSplitPlant(
+CREATE OR REPLACE PROCEDURE `spSplitPlant`(
     IN pParentPlantId INT,
     IN pSplitDateTime DATETIME,
     IN pChildPlantTagsCsv TEXT,
@@ -201,6 +196,7 @@ BEGIN
 
     COMMIT;
 
-END //
-
+END
+//
 DELIMITER ;
+
