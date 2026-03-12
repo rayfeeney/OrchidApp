@@ -237,11 +237,14 @@ CREATE TABLE IF NOT EXISTS schemaversion (
             $hash = (Get-FileHash -InputStream ([IO.MemoryStream]::new($bytes)) -Algorithm SHA256).Hash
 
             # Execute migration file via stdin (production-like behaviour)
-$mysqlCommand = @"
-mysql --default-character-set=utf8mb4 --protocol=TCP --host=$MySqlHost --port=$MySqlPort --user=$User $Database < "$($file.FullName)"
-"@
-
-cmd /c $mysqlCommand
+            & mysql `
+            --default-character-set=utf8mb4 `
+            --protocol=TCP `
+            --host=$MySqlHost `
+            --port=$MySqlPort `
+            --user=$User `
+            --database=$Database `
+            --execute="source $($file.FullName)"
 
             if ($LASTEXITCODE -ne 0) {
                 throw "Migration failed: $($file.Name)"

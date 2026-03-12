@@ -24,7 +24,7 @@ for file in $(ls "$MIGRATIONS_DIR"/*.sql | sort); do
     else
         echo "Applying $filename..."
 
-        mysql "$DB_NAME" < "$file"
+        mysql "$DB_NAME" -e "source $file"
 
         checksum=$(sha256sum "$file" | awk '{print $1}')
 

@@ -4,6 +4,8 @@ SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 DROP PROCEDURE IF EXISTS spSplitPlant;
 
+DELIMITER //
+
 CREATE PROCEDURE spSplitPlant(
     IN pParentPlantId INT,
     IN pSplitDateTime DATETIME,
@@ -201,4 +203,6 @@ BEGIN
 
     COMMIT;
 
-END;
+END //
+
+DELIMITER;
