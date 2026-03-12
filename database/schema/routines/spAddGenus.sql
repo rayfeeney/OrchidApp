@@ -70,8 +70,8 @@ BEGIN
     COMMIT;
 
     SELECT
-        vGenusId AS genusId,
-        vGenusOnlyTaxonId AS genusOnlyTaxonId;
+        vGenusId AS GenusId,
+        vGenusOnlyTaxonId AS GenusOnlyTaxonId;
 END
 //
 DELIMITER ;

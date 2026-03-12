@@ -1,7 +1,7 @@
 using System.Data;
-using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using OrchidApp.Web.Data;
+using System.Reflection;
 
 namespace OrchidApp.Web.Infrastructure;
 
@@ -39,15 +39,25 @@ public class StoredProcedureExecutor : IStoredProcedureExecutor
         await using var reader = await cmd.ExecuteReaderAsync();
 
         if (!await reader.ReadAsync())
-            throw new InvalidOperationException("Stored procedure returned no rows.");
+            throw new InvalidOperationException(
+                $"Stored procedure returned no rows: {procedureCallSql}"
+            );
 
         var result = new T();
 
+        var props = typeof(T)
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .ToDictionary(p => p.Name, StringComparer.OrdinalIgnoreCase);
+
         for (int i = 0; i < reader.FieldCount; i++)
         {
-            var prop = typeof(T).GetProperty(reader.GetName(i));
-            if (prop != null && !reader.IsDBNull(i))
-                prop.SetValue(result, reader.GetValue(i));
+            var column = reader.GetName(i);
+
+            if (props.TryGetValue(column, out var prop) && !reader.IsDBNull(i))
+            {
+                var value = reader.GetValue(i);
+                prop.SetValue(result, value);
+            }
         }
 
         return result;
