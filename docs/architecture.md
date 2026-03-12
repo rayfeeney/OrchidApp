@@ -220,6 +220,59 @@ Examples include:
 -   plantsplit
 -   propagation records
 
+## Stored Procedure Return Strategy
+
+Stored procedures must communicate outcomes using result sets rather
+than OUTPUT parameters wherever possible.
+
+Result-set returns align with the application’s execution model and
+ensure consistent invocation through EF Core abstractions.
+
+Returning values via SELECT statements is the preferred mechanism for:
+
+-   Identity handoff after insert operations
+-   Procedural outcomes required for workflow continuation
+-   Lookup retrieval and projection queries
+-   Validation summaries or decision signals
+
+OUTPUT parameters are considered exceptional and must not be used as a
+default design approach.
+
+They introduce tighter coupling to provider-specific execution semantics
+and complicate asynchronous invocation patterns.
+
+Where OUTPUT parameters are genuinely required, invocation must be
+centralised within infrastructure-level execution helpers.
+
+Application PageModels and workflow orchestration code must not construct
+manual database commands.
+
+All stored procedure outcomes — whether returned via result sets or
+OUTPUT parameters — remain subject to the project’s error translation
+contract.
+
+This ensures that database-enforced business rules continue to surface
+as consistent application-level validation behaviour.
+
+The stored procedure return strategy defines how invariant enforcement
+results are communicated across the application–database boundary and
+must remain uniform across the system.
+
+Where OUTPUT parameters are required, invocation must be mediated through
+a centralised infrastructure execution boundary.
+
+Application workflow code must not construct manual database commands
+or directly manage connection state for stored procedure execution.
+
+This ensures that asynchronous execution discipline, transactional
+participation and database error translation behaviour remain consistent
+across the system.
+
+The infrastructure execution boundary exists solely to support
+exceptional stored procedure interaction patterns and must not replace
+the standard EF Core invocation model for command or result-set
+procedures.
+
 Triggers may enforce absolute invariants, but must not implement domain
 behaviour.
 

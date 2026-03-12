@@ -1,0 +1,18 @@
+
+Path                                                                                                   LineNumbe
+                                                                                                               r
+----                                                                                                   ---------
+C:\Users\rfeen\source\repos\OrchidApp\src\OrchidApp.Web\Pages\Plants\Edit\Index.cshtml.cs                    244
+C:\Users\rfeen\source\repos\OrchidApp\src\OrchidApp.Web\Pages\Plants\Events\Split.cshtml.cs                  226
+C:\Users\rfeen\source\repos\OrchidApp\src\OrchidApp.Web\Pages\Plants\Photos\Index.cshtml.cs                   69
+C:\Users\rfeen\source\repos\OrchidApp\src\OrchidApp.Web\Pages\Setup\Genera\Actions\Add.cshtml.cs              45
+C:\Users\rfeen\source\repos\OrchidApp\src\OrchidApp.Web\Pages\Setup\GrowthMedia\Actions\Add.cshtml.cs         37
+C:\Users\rfeen\source\repos\OrchidApp\src\OrchidApp.Web\Pages\Setup\GrowthMedia\Actions\Edit.cshtml.cs        48
+C:\Users\rfeen\source\repos\OrchidApp\src\OrchidApp.Web\Pages\Setup\GrowthMedia\Details.cshtml.cs             45
+C:\Users\rfeen\source\repos\OrchidApp\src\OrchidApp.Web\Pages\Setup\Locations\Actions\Add.cshtml.cs           52
+C:\Users\rfeen\source\repos\OrchidApp\src\OrchidApp.Web\Pages\Setup\Locations\Actions\Edit.cshtml.cs          75
+C:\Users\rfeen\source\repos\OrchidApp\src\OrchidApp.Web\Pages\Setup\Locations\Details.cshtml.cs               44
+C:\Users\rfeen\source\repos\OrchidApp\src\OrchidApp.Web\Pages\Setup\Taxa\Actions\Add.cshtml.cs                70
+C:\Users\rfeen\source\repos\OrchidApp\src\OrchidApp.Web\Pages\Setup\Taxa\Actions\Edit.cshtml.cs               54
+C:\Users\rfeen\source\repos\OrchidApp\src\OrchidApp.Web\Pages\Setup\Taxa\Details.cshtml.cs                    44
+

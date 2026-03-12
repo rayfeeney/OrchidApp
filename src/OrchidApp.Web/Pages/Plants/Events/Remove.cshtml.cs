@@ -6,6 +6,7 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
 using System.Data.Common;
+using OrchidApp.Web.Infrastructure;
 
 namespace OrchidApp.Web.Pages.Plants.Events;
 
@@ -122,23 +123,20 @@ public class RemoveModel : PageModel
 
         return Page();
     }
-
-    public IActionResult OnPost()
+    public async Task<IActionResult> OnPostAsync()
     {
         switch (EventType)
         {
             case "Observation":
             {
-                var plantEvent = _db.PlantEvent
-                                    .FirstOrDefault(e => e.PlantEventId == SourceId);
+                var plantEvent = await _db.PlantEvent
+                    .FirstOrDefaultAsync(e => e.PlantEventId == SourceId);
 
                 if (plantEvent == null)
-                {
                     return NotFound();
-                }
 
                 plantEvent.IsActive = false;
-                _db.SaveChanges();
+                await _db.SaveChangesAsync();
                 break;
             }
 
@@ -146,36 +144,18 @@ public class RemoveModel : PageModel
             {
                 try
                 {
-                    var conn = _db.Database.GetDbConnection();
-                    using var cmd = conn.CreateCommand();
-
-                    cmd.CommandText = "spRemovePlantLocation";
-                    cmd.CommandType = System.Data.CommandType.StoredProcedure;
-
-                    var pId = cmd.CreateParameter();
-                    pId.ParameterName = "pPlantLocationHistoryId";
-                    pId.Value = SourceId;
-                    cmd.Parameters.Add(pId);
-
-                    if (conn.State != System.Data.ConnectionState.Open)
-                    {
-                        conn.Open();
-                    }
-
-                    cmd.ExecuteNonQuery();
+                    await _db.Database.ExecuteSqlRawAsync(
+                        "CALL spRemovePlantLocation({0});",
+                        SourceId);
                 }
-                catch (System.Data.Common.DbException)
+                catch (Exception ex) when (DatabaseErrorTranslator.TryTranslate(ex, out var msg))
                 {
-                    ModelState.AddModelError(
-                        string.Empty,
-                        "This location record cannot be removed."
-                    );
+                    ModelState.AddModelError(string.Empty, msg);
 
-                    // Reload the event for redisplay
-                    Event = _db.PlantLifecycleHistory
-                            .FirstOrDefault(e =>
-                                e.SourceId == SourceId &&
-                                e.SourceTable == "plantlocationhistory");
+                    Event = await _db.PlantLifecycleHistory
+                        .FirstOrDefaultAsync(e =>
+                            e.SourceId == SourceId &&
+                            e.SourceTable == "plantlocationhistory");
 
                     return Page();
                 }
@@ -183,34 +163,35 @@ public class RemoveModel : PageModel
             }
 
             case "Flowering":
-
-                var flowering = _db.Flowering
-                    .FirstOrDefault(f => f.FloweringId == SourceId
-                                    && f.PlantId == PlantId
-                                    && f.IsActive);
+            {
+                var flowering = await _db.Flowering
+                    .FirstOrDefaultAsync(f =>
+                        f.FloweringId == SourceId &&
+                        f.PlantId == PlantId &&
+                        f.IsActive);
 
                 if (flowering == null)
                     return NotFound();
 
                 flowering.IsActive = false;
-
-                _db.SaveChanges();
+                await _db.SaveChangesAsync();
                 break;
+            }
 
             case "Repotting":
-
-                var repotting = _db.Repotting
-                    .FirstOrDefault(r => r.RepottingId == SourceId && r.IsActive);
+            {
+                var repotting = await _db.Repotting
+                    .FirstOrDefaultAsync(r =>
+                        r.RepottingId == SourceId &&
+                        r.IsActive);
 
                 if (repotting == null)
-                {
                     return NotFound();
-                }
 
                 repotting.IsActive = false;
-
-                _db.SaveChanges();
+                await _db.SaveChangesAsync();
                 break;
+            }
 
             default:
                 return NotFound();

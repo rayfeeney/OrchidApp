@@ -4,8 +4,8 @@ using OrchidApp.Web.Data;
 using OrchidApp.Web.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
-using MySqlConnector;
 using System.ComponentModel.DataAnnotations;
+using OrchidApp.Web.Infrastructure;
 
 namespace OrchidApp.Web.Pages.Plants.Events;
 
@@ -101,13 +101,11 @@ public class SplitModel : PageModel
 
     public async Task<IActionResult> OnPostSplit()
     {
-        var parentPlant = _db.Plants
-            .FirstOrDefault(p => p.PlantId == PlantId);
+        var parentPlant = await _db.Plants
+            .FirstOrDefaultAsync(p => p.PlantId == PlantId);
 
         if (parentPlant == null)
-        {
             return NotFound();
-        }
 
         if (parentPlant.EndDate != null)
         {
@@ -121,22 +119,13 @@ public class SplitModel : PageModel
             ? null
             : SplitReasonNotes.Trim();
 
-        // Ensure minimum rows
         if (ChildCount < 2)
             ChildCount = 2;
 
-        // Remove completely empty rows
         var filledChildren = Children
             .Where(c => !string.IsNullOrWhiteSpace(c.PlantTag))
             .ToList();
 
-        var tags = filledChildren
-            .Select(c => c.PlantTag!.Trim())
-            .ToList();
-
-        var csv = string.Join(",", tags);
-
-        // Rule 1: At least two children
         if (filledChildren.Count < 2)
         {
             ModelState.AddModelError(string.Empty,
@@ -145,21 +134,12 @@ public class SplitModel : PageModel
             return Page();
         }
 
-        // Rule 2: PlantTag mandatory for filled rows
-        foreach (var child in filledChildren)
-        {
-            if (string.IsNullOrWhiteSpace(child.PlantTag))
-            {
-                ModelState.AddModelError(string.Empty,
-                    "Plant tag is required for each child.");
-                EnsureChildListLength();
-                return Page();
-            }
-        }
+        var tags = filledChildren
+            .Select(c => c.PlantTag!.Trim())
+            .ToList();
 
-        // Rule 3: No duplicate tags within form
-        var duplicateTags = filledChildren
-            .GroupBy(c => c.PlantTag!.Trim())
+        var duplicateTags = tags
+            .GroupBy(t => t)
             .Where(g => g.Count() > 1)
             .Select(g => g.Key)
             .ToList();
@@ -172,27 +152,19 @@ public class SplitModel : PageModel
             return Page();
         }
 
-        // Rule 4: No duplicate plant tags in database
-        var existingTags = _db.Plants
-            .Where(p => filledChildren.Select(c => c.PlantTag!.Trim())
-                                    .Contains(p.PlantTag))
-            .Select(p => p.PlantTag)
-            .ToList();
+        var existingTags = await _db.Plants
+            .Where(p => p.PlantTag != null && tags.Contains(p.PlantTag))
+            .Select(p => p.PlantTag!)
+            .ToListAsync();
 
         if (existingTags.Any())
         {
             ModelState.AddModelError(string.Empty,
                 $"The following plant tags already exist: {string.Join(", ", existingTags)}");
-
             EnsureChildListLength();
             return Page();
         }
 
-        SplitReasonNotes = string.IsNullOrWhiteSpace(SplitReasonNotes)
-            ? null
-            : SplitReasonNotes.Trim();
-
-        // Guard: no future splits
         if (SplitDateTime > DateTime.Now)
         {
             ModelState.AddModelError(nameof(SplitDateTime),
@@ -201,8 +173,7 @@ public class SplitModel : PageModel
             return Page();
         }
 
-        // Guard: cannot split before plant started
-        if (SplitDateTime < parentPlant!.AcquisitionDate)
+        if (SplitDateTime < parentPlant.AcquisitionDate)
         {
             ModelState.AddModelError(nameof(SplitDateTime),
                 "Split date and time cannot be before this plant’s lifecycle began.");
@@ -210,34 +181,28 @@ public class SplitModel : PageModel
             return Page();
         }
 
+        var csv = string.Join(",", tags);
+
         try
         {
-            var parameters = new[]
-            {
-                new MySqlParameter("@pParentPlantId", PlantId),
-                new MySqlParameter("@pSplitDateTime", SplitDateTime),
-                new MySqlParameter("@pChildPlantTagsCsv", csv),
-                new MySqlParameter("@pSplitReasonCode", DBNull.Value),
-                new MySqlParameter("@pSplitReasonNotes", (object?)SplitReasonNotes ?? DBNull.Value),
-                new MySqlParameter("@pSplitNotes", DBNull.Value)
-            };
-
             await _db.Database.ExecuteSqlRawAsync(
-                "CALL spSplitPlant(@pParentPlantId, @pSplitDateTime, @pChildPlantTagsCsv, @pSplitReasonCode, @pSplitReasonNotes, @pSplitNotes);",
-                parameters
+                "CALL spSplitPlant({0},{1},{2},{3},{4},{5});",
+                PlantId,
+                SplitDateTime,
+                csv,
+                (object)null!,
+                (object?)SplitReasonNotes ?? (object)null!,
+                (object)null!
             );
 
             return RedirectToPage("/Plants/Details", new { plantId = PlantId });
         }
-        catch (Exception ex)
+        catch (Exception ex) when (DatabaseErrorTranslator.TryTranslate(ex, out var msg))
         {
-            ModelState.AddModelError(string.Empty,
-                ex.GetBaseException().Message);
-
+            ModelState.AddModelError(string.Empty, msg);
             EnsureChildListLength();
             return Page();
         }
-
     }
 
 }
