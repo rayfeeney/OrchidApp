@@ -12,6 +12,7 @@ using OrchidApp.Web.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Hosting;
 using System.IO;
+using OrchidApp.Web.Infrastructure;
 
 
 namespace OrchidApp.Web.Pages.Plants.Events;
@@ -318,59 +319,22 @@ public class AddModel : PageModel
             case "LocationChange":
                 try
                 {
-                    var conn = _db.Database.GetDbConnection();
-                    using var cmd = conn.CreateCommand();
-
-                    cmd.CommandText = "spMovePlantToLocation";
-                    cmd.CommandType = CommandType.StoredProcedure;
-
-                    var pPlantId = cmd.CreateParameter();
-                    pPlantId.ParameterName = "pPlantId";
-                    pPlantId.Value = PlantId;
-                    cmd.Parameters.Add(pPlantId);
-
-                    var pLocationId = cmd.CreateParameter();
-                    pLocationId.ParameterName = "pLocationId";
-                    pLocationId.Value = LocationId;
-                    cmd.Parameters.Add(pLocationId);
-
-                    // Not used for now 
-                    //var pMoveReasonCode = cmd.CreateParameter(); 
-                    //pMoveReasonCode.ParameterName = "pMoveReasonCode"; 
-                    //pMoveReasonCode.Value = (object?)MoveReasonCode ?? DBNull.Value; 
-                    //cmd.Parameters.Add(pMoveReasonCode);
-                    
-                    var pStartDateTime = cmd.CreateParameter();
-                    pStartDateTime.ParameterName = "pStartDate";
-                    pStartDateTime.Value = EventDate.Date;
-                    cmd.Parameters.Add(pStartDateTime);
-
-                    var pMoveReasonNotes = cmd.CreateParameter();
-                    pMoveReasonNotes.ParameterName = "pMoveReasonNotes";
-                    pMoveReasonNotes.Value = string.IsNullOrWhiteSpace(EventDetails)
-                                                ? DBNull.Value : EventDetails;
-                    cmd.Parameters.Add(pMoveReasonNotes);
-
-                    var pPlantLocationNotes = cmd.CreateParameter();
-                    pPlantLocationNotes.ParameterName = "pPlantLocationNotes";
-                    pPlantLocationNotes.Value = string.IsNullOrWhiteSpace(PlantLocationNotes)
-                                                    ? DBNull.Value : PlantLocationNotes;
-                    cmd.Parameters.Add(pPlantLocationNotes);
-
-                    if (conn.State != ConnectionState.Open)
+                    var parameters = new object?[]
                     {
-                        conn.Open();
-                    }
+                        PlantId,
+                        LocationId,
+                        EventDate.Date,
+                        string.IsNullOrWhiteSpace(EventDetails) ? null : EventDetails,
+                        string.IsNullOrWhiteSpace(PlantLocationNotes) ? null : PlantLocationNotes
+                    };
 
-                    cmd.ExecuteNonQuery();
+                    await _db.Database.ExecuteSqlRawAsync(
+                        @"CALL spMovePlantToLocation({0}, {1}, {2}, {3}, {4})",
+                        parameters!);
                 }
-                catch (DbException)
+                catch (Exception ex) when (DatabaseErrorTranslator.TryTranslate(ex, out var msg))
                 {
-                    ModelState.AddModelError(
-                        string.Empty,
-                        "The plant is already in this location."
-                    );
-
+                    ModelState.AddModelError(string.Empty, msg);
                     LoadLookups();
                     return Page();
                 }
@@ -402,7 +366,7 @@ public class AddModel : PageModel
                 };
 
                 _db.Flowering.Add(flowering);
-                _db.SaveChanges();
+                await _db.SaveChangesAsync();
 
                 break;
 
@@ -423,7 +387,7 @@ public class AddModel : PageModel
                 };
 
                 _db.Repotting.Add(repotting);
-                _db.SaveChanges();
+                await _db.SaveChangesAsync();
                 break;
 
             default:

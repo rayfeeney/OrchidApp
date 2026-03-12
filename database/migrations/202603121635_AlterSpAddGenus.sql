@@ -1,5 +1,10 @@
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+DROP PROCEDURE IF EXISTS spAddGenus;
+
 DELIMITER //
-CREATE OR REPLACE PROCEDURE `spAddGenus`(
+
+CREATE PROCEDURE spAddGenus(
     IN pGenusName   VARCHAR(100),
     IN pGenusNotes  TEXT
 )
@@ -70,9 +75,8 @@ BEGIN
     COMMIT;
 
     SELECT
-        vGenusId AS GenusId,
-        vGenusOnlyTaxonId AS GenusOnlyTaxonId;
-END
-//
-DELIMITER ;
+        vGenusId AS genusId,
+        vGenusOnlyTaxonId AS genusOnlyTaxonId;
+END //
 
+DELIMITER ;

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using OrchidApp.Web.Data;
 using OrchidApp.Web.Models;
 
@@ -9,7 +10,7 @@ public class DetailsModel : PageModel
 {
     [BindProperty(SupportsGet = true)]
     public string? ReturnUrl { get; set; }
-    
+
     private readonly OrchidDbContext _db;
 
     public DetailsModel(OrchidDbContext db)
@@ -19,17 +20,15 @@ public class DetailsModel : PageModel
 
     public Genus? Genus { get; private set; }
 
-    public IActionResult OnGet(int id)
+    public async Task<IActionResult> OnGetAsync(int id)
     {
-        Genus = _db.Genera
-                .SingleOrDefault(g => g.GenusId == id);
+        Genus = await _db.Genera
+            .AsNoTracking()
+            .SingleOrDefaultAsync(g => g.GenusId == id);
 
         if (Genus == null)
-        {
             return NotFound();
-        }
 
         return Page();
     }
-
 }

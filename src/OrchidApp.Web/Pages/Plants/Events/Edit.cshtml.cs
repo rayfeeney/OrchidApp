@@ -8,6 +8,8 @@ using System.Data.Common;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using OrchidApp.Web.Models;
+using System.Threading.Tasks;
+using OrchidApp.Web.Infrastructure;
 
 namespace OrchidApp.Web.Pages.Plants.Events;
 
@@ -124,7 +126,7 @@ public class EditModel : PageModel
 
     public List<GrowthMedium> GrowthMedia { get; private set; } = new();
 
-    public IActionResult OnGet()
+    public async Task<IActionResult> OnGetAsync()
     {
         // Plant context
         var plant = _db.PlantActiveSummaries.FirstOrDefault(p => p.PlantId == PlantId);
@@ -154,37 +156,26 @@ public class EditModel : PageModel
 
             case "LocationChange":
             {
-                using var conn = _db.Database.GetDbConnection();
-                using var cmd = conn.CreateCommand();
+                var row = await _db.LocationChangeEditRows
+                    .FromSqlRaw(
+                        @"SELECT 
+                            plantLocationHistoryId,
+                            startDateTime,
+                            moveReasonNotes,
+                            plantLocationNotes
+                        FROM plantlocationhistory
+                        WHERE plantLocationHistoryId = {0}
+                            AND isActive = 1",
+                        SourceId)
+                    .AsNoTracking()
+                    .SingleOrDefaultAsync();
 
-                cmd.CommandText = @"
-                    SELECT startDateTime, moveReasonNotes, plantLocationNotes
-                    FROM plantlocationhistory
-                    WHERE plantLocationHistoryId = @id
-                    AND isActive = 1";
-
-                var pId = cmd.CreateParameter();
-                pId.ParameterName = "@id";
-                pId.Value = SourceId;
-                cmd.Parameters.Add(pId);
-
-                if (conn.State != ConnectionState.Open)
-                    conn.Open();
-
-                using var reader = cmd.ExecuteReader();
-
-                if (!reader.Read())
+                if (row == null)
                     return NotFound();
 
-                EventDate = reader.GetDateTime(0);
-
-                EventDetails = reader.IsDBNull(1)
-                    ? string.Empty
-                    : reader.GetString(1);
-
-                PlantLocationNotes = reader.IsDBNull(2)
-                    ? string.Empty
-                    : reader.GetString(2);
+                EventDate = row.StartDateTime;
+                EventDetails = row.MoveReasonNotes ?? string.Empty;
+                PlantLocationNotes = row.PlantLocationNotes ?? string.Empty;
 
                 break;
             }
@@ -244,7 +235,7 @@ public class EditModel : PageModel
         return Page();
     }
 
-    public IActionResult OnPost()
+    public async Task<IActionResult> OnPostAsync()
     {
         
         if (!ModelState.IsValid)
@@ -273,51 +264,30 @@ public class EditModel : PageModel
 
                 observation.EventDateTime = EventDate.Date.Add(DateTime.Now.TimeOfDay);
                 observation.EventDetails = EventDetails;
-                _db.SaveChanges();
+                await _db.SaveChangesAsync();
                 break;
 
-            case "LocationChange":
-                try
-                {
-                    var conn = _db.Database.GetDbConnection();
-                    using var cmd = conn.CreateCommand();
+case "LocationChange":
+    try
+    {
+        var parameters = new object?[]
+        {
+            SourceId,
+            EventDate,
+            string.IsNullOrWhiteSpace(EventDetails) ? null : EventDetails,
+            string.IsNullOrWhiteSpace(PlantLocationNotes) ? null : PlantLocationNotes
+        };
 
-                    cmd.CommandText = "spEditPlantLocation";
-                    cmd.CommandType = CommandType.StoredProcedure;
-
-                    var pId = cmd.CreateParameter();
-                    pId.ParameterName = "pPlantLocationHistoryId";
-                    pId.Value = SourceId;
-                    cmd.Parameters.Add(pId);
-
-                    var pStart = cmd.CreateParameter();
-                    pStart.ParameterName = "pNewStartDateTime";
-                    pStart.Value = EventDate;
-                    cmd.Parameters.Add(pStart);
-
-                    var pReason = cmd.CreateParameter();
-                    pReason.ParameterName = "pMoveReasonNotes";
-                    pReason.Value = (object?)EventDetails ?? DBNull.Value;
-                    cmd.Parameters.Add(pReason);
-
-                    var pNotes = cmd.CreateParameter();
-                    pNotes.ParameterName = "pPlantLocationNotes";
-                    pNotes.Value = string.IsNullOrWhiteSpace(PlantLocationNotes)
-                        ? DBNull.Value
-                        : PlantLocationNotes;
-                    cmd.Parameters.Add(pNotes);
-
-                    if (conn.State != ConnectionState.Open)
-                        conn.Open();
-
-                    cmd.ExecuteNonQuery();
-                }
-                catch (DbException ex)
-                {
-                    ModelState.AddModelError(string.Empty, ex.Message);
-                    return Page();
-                }
-                break;
+        await _db.Database.ExecuteSqlRawAsync(
+            @"CALL spEditPlantLocation({0}, {1}, {2}, {3})",
+            parameters!);
+    }
+    catch (Exception ex) when (DatabaseErrorTranslator.TryTranslate(ex, out var msg))
+    {
+        ModelState.AddModelError(string.Empty, msg);
+        return Page();
+    }
+    break;
 
             case "Flowering":
 
@@ -348,7 +318,7 @@ public class EditModel : PageModel
                         ? null
                         : EventDetails;
 
-                _db.SaveChanges();
+                await _db.SaveChangesAsync();
 
                 break;
 
@@ -371,7 +341,7 @@ public class EditModel : PageModel
                 repotting.RepotReasonNotes = string.IsNullOrWhiteSpace(RepotReasonNotes) ? null : RepotReasonNotes;
                 repotting.RepottingNotes = string.IsNullOrWhiteSpace(RepottingNotes) ? null : RepottingNotes;
 
-                _db.SaveChanges();
+                await _db.SaveChangesAsync();
                 break;
 
             default:

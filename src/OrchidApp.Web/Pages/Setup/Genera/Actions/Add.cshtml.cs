@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.ComponentModel.DataAnnotations;
-using System.Data.Common;
 using OrchidApp.Web.Data;
-using Microsoft.EntityFrameworkCore;
+using OrchidApp.Web.Models;
+using OrchidApp.Web.Infrastructure;
 
 namespace OrchidApp.Web.Pages.Setup.Genera.Actions;
 
@@ -12,11 +12,11 @@ public class AddModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string? ReturnUrl { get; set; }
 
-    private readonly OrchidDbContext _db;
+    private readonly IStoredProcedureExecutor _sp;
 
-    public AddModel(OrchidDbContext db)
+    public AddModel(IStoredProcedureExecutor sp)
     {
-        _db = db;
+        _sp = sp;
     }
 
     [BindProperty, Required]
@@ -35,31 +35,17 @@ public class AddModel : PageModel
     public async Task<IActionResult> OnPostAsync()
     {
         if (!ModelState.IsValid)
-        {
             return Page();
-        }
 
-        try
-        {
-            await _db.Database.ExecuteSqlInterpolatedAsync($@"
-                CALL spAddGenus(
-                    {GenusName},
-                    {GenusNotes},
-                    @pGenusId,
-                    @pGenusOnlyTaxonId
-                );
-            ");
+        var result = await _sp.QuerySingleAsync<AddGenusResult>(
+            "CALL spAddGenus(@p0, @p1);",
+            GenusName,
+            GenusNotes
+        );
 
-            return RedirectToPage("/Setup/Genera/Index");
-        }
-        catch (DbException ex)
-        {
-            ModelState.AddModelError(
-                string.Empty,
-                $"Unable to save the genus. {ex.Message}"
-            );
+        if (!string.IsNullOrWhiteSpace(ReturnUrl))
+            return LocalRedirect(ReturnUrl);
 
-            return Page();
-        }
+        return RedirectToPage("/Setup/Genera/Details", new { id = result.GenusId });
     }
 }

@@ -233,44 +233,23 @@ public class IndexModel : PageModel
 
     private async Task CallSpUpdatePlantDetailsAsync()
     {
-        var conn = _db.Database.GetDbConnection();
+        var parameters = new object?[]
+        {
+            PlantId,
+            TaxonId,
+            PlantTag,
+            PlantName,
+            AcquisitionDate,
+            AcquisitionSource,
+            EndDate,
+            EndNotes,
+            PlantNotes
+        };
 
-        if (conn.State != ConnectionState.Open)
-            await conn.OpenAsync();
-
-        await using var cmd = conn.CreateCommand();
-        cmd.CommandType = CommandType.Text;
-        cmd.CommandText =
-            "CALL spUpdatePlantDetails(" +
-            "  @pPlantId," +
-            "  @pTaxonId," +
-            "  @pPlantTag," +
-            "  @pPlantName," +
-            "  @pAcquisitionDate," +
-            "  @pAcquisitionSource," +
-            "  @pEndDate," +
-            "  @pEndNotes," +
-            "  @pPlantNotes" +
-            ");";
-
-        cmd.Parameters.Add(MkParam(cmd, "@pPlantId", PlantId));
-        cmd.Parameters.Add(MkParam(cmd, "@pTaxonId", TaxonId));
-        cmd.Parameters.Add(MkParam(cmd, "@pPlantTag", (object?)PlantTag ?? DBNull.Value));
-        cmd.Parameters.Add(MkParam(cmd, "@pPlantName", (object?)PlantName ?? DBNull.Value));
-        cmd.Parameters.Add(MkParam(cmd, "@pAcquisitionDate", AcquisitionDate));
-        cmd.Parameters.Add(MkParam(cmd, "@pAcquisitionSource", (object?)AcquisitionSource ?? DBNull.Value));
-        cmd.Parameters.Add(MkParam(cmd, "@pEndDate", (object?)EndDate ?? DBNull.Value));
-        cmd.Parameters.Add(MkParam(cmd, "@pEndNotes", (object?)EndNotes ?? DBNull.Value));
-        cmd.Parameters.Add(MkParam(cmd, "@pPlantNotes", (object?)PlantNotes ?? DBNull.Value));
-
-        await cmd.ExecuteNonQueryAsync();
-    }
-
-    private static DbParameter MkParam(DbCommand cmd, string name, object value)
-    {
-        var p = cmd.CreateParameter();
-        p.ParameterName = name;
-        p.Value = value;
-        return p;
+        await _db.Database.ExecuteSqlRawAsync(
+            @"CALL spUpdatePlantDetails(
+                {0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}
+            );",
+            parameters!);
     }
 }

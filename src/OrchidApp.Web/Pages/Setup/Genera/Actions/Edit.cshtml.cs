@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using OrchidApp.Web.Data;
 using OrchidApp.Web.Models;
+using OrchidApp.Web.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 
 namespace OrchidApp.Web.Pages.Setup.Genera.Actions;
 
@@ -11,18 +13,22 @@ public class EditModel : PageModel
     public string? ReturnUrl { get; set; }
 
     private readonly OrchidDbContext _db;
+    private readonly IStoredProcedureExecutor _sp;
 
-    public EditModel(OrchidDbContext db)
+    public EditModel(OrchidDbContext db, IStoredProcedureExecutor sp)
     {
         _db = db;
+        _sp = sp;
     }
 
     [BindProperty]
     public Genus Genus { get; set; } = null!;
 
-    public IActionResult OnGet(int id)
+    public async Task<IActionResult> OnGetAsync(int id)
     {
-        var genus = _db.Genera.SingleOrDefault(g => g.GenusId == id);
+        var genus = await _db.Genera
+            .AsNoTracking()
+            .SingleOrDefaultAsync(g => g.GenusId == id);
 
         if (genus == null)
             return NotFound();
@@ -32,18 +38,21 @@ public class EditModel : PageModel
         return Page();
     }
 
-    public IActionResult OnPost(int id)
+    public async Task<IActionResult> OnPostAsync(int id)
     {
-        var existing = _db.Genera.SingleOrDefault(g => g.GenusId == id);
+        if (!ModelState.IsValid)
+            return Page();
 
-        if (existing == null)
-            return NotFound();
+        var result = await _sp.QuerySingleAsync<AddGenusResult>(
+            "CALL spUpdateGenus(@p0, @p1, @p2);",
+            id,
+            Genus.Name,
+            Genus.Notes
+        );
 
-        existing.Name = Genus.Name;
-        existing.Notes = Genus.Notes;
+        if (!string.IsNullOrWhiteSpace(ReturnUrl))
+            return LocalRedirect(ReturnUrl);
 
-        _db.SaveChanges();
-
-        return RedirectToPage("/Setup/Genera/Details", new { id = existing.GenusId });
+        return RedirectToPage("/Setup/Genera/Details", new { id = result.GenusId });
     }
 }

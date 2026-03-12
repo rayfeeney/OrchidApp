@@ -15,7 +15,8 @@ public class OrchidDbContext : DbContext
     public DbSet<PlantCurrentLocation> PlantCurrentLocations =>             Set<PlantCurrentLocation>();
     public DbSet<PlantLifecycleEvent> PlantLifecycleHistory =>              Set<PlantLifecycleEvent>();
     public DbSet<PlantActiveCurrentLocation> PlantActiveCurrentLocations=>  Set<PlantActiveCurrentLocation>();
-
+    public DbSet<LocationChangeEditRow> LocationChangeEditRows =>           Set<LocationChangeEditRow>();
+   
     public DbSet<Genus> Genera =>                                           Set<Genus>();
     public DbSet<Taxon> Taxa =>                                             Set<Taxon>();
     public DbSet<Plant> Plants =>                                           Set<Plant>();
@@ -46,7 +47,8 @@ public class OrchidDbContext : DbContext
             entity.Property(e => e.Notes)                   .HasColumnName("genusNotes");
             entity.Property(e => e.IsActive)                .HasColumnName("isActive");
         });
-        
+        modelBuilder.Entity<AddGenusResult>().HasNoKey();
+
         // =========================
         // Taxon table mapping
         // =========================
@@ -306,6 +308,7 @@ public class OrchidDbContext : DbContext
             entity.Property(e => e.SourceTable)             .HasColumnName("sourceTable");
             entity.Property(e => e.SourceId)                .HasColumnName("sourceId");
         });
-
+        
+        modelBuilder.Entity<LocationChangeEditRow>().HasNoKey();
     }
 }
