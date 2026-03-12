@@ -1,7 +1,8 @@
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using OrchidApp.Web.Data;
 using OrchidApp.Web.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 
 namespace OrchidApp.Web.Pages.Setup.Genera;
 
@@ -19,11 +20,11 @@ public class IndexModel : PageModel
 
     public List<Genus> Genera { get; private set; } = [];
 
-    public void OnGet()
+    public async Task OnGetAsync()
     {
-        Genera = _db.Genera
-                    .OrderBy(g => g.Name)
-                    .ToList();
+        Genera = await _db.Genera
+            .AsNoTracking()
+            .OrderBy(g => g.Name)
+            .ToListAsync();
     }
-
 }

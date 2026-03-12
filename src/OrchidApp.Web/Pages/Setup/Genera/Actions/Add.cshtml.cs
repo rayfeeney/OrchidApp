@@ -1,9 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.ComponentModel.DataAnnotations;
-using System.Data.Common;
-using OrchidApp.Web.Data;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
+using OrchidApp.Web.Data;
 
 namespace OrchidApp.Web.Pages.Setup.Genera.Actions;
 
@@ -27,7 +26,7 @@ public class AddModel : PageModel
     [Display(Name = "Notes")]
     public string? GenusNotes { get; set; }
 
-    public IActionResult OnGet()
+    public async Task<IActionResult> OnGetAsync()
     {
         return Page();
     }
@@ -35,31 +34,17 @@ public class AddModel : PageModel
     public async Task<IActionResult> OnPostAsync()
     {
         if (!ModelState.IsValid)
-        {
             return Page();
-        }
 
-        try
-        {
-            await _db.Database.ExecuteSqlInterpolatedAsync($@"
-                CALL spAddGenus(
-                    {GenusName},
-                    {GenusNotes},
-                    @pGenusId,
-                    @pGenusOnlyTaxonId
-                );
-            ");
+        await _db.Database.ExecuteSqlRawAsync(
+            "CALL spAddGenus(@p0, @p1);",
+            GenusName,
+            (object?)GenusNotes ?? DBNull.Value
+        );
 
-            return RedirectToPage("/Setup/Genera/Index");
-        }
-        catch (DbException ex)
-        {
-            ModelState.AddModelError(
-                string.Empty,
-                $"Unable to save the genus. {ex.Message}"
-            );
+        if (!string.IsNullOrWhiteSpace(ReturnUrl))
+            return LocalRedirect(ReturnUrl);
 
-            return Page();
-        }
+        return RedirectToPage("/Setup/Genera/Index");
     }
 }
