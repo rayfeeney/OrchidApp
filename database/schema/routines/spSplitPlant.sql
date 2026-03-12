@@ -12,15 +12,14 @@ BEGIN
     DECLARE vParentStart DATETIME;
     DECLARE vParentEnd DATETIME;
     DECLARE vParentPlantTag VARCHAR(100);
-
     DECLARE vSplitId INT;
+    DECLARE vChildCount INT;
 
     DECLARE vRemaining TEXT;
     DECLARE vToken TEXT;
     DECLARE vCommaPos INT;
     DECLARE vChildTag VARCHAR(100);
 
-    DECLARE vChildCount INT DEFAULT 0;
     DECLARE vErrorMessage VARCHAR(255);
 
     IF pSplitDateTime IS NULL THEN
@@ -28,15 +27,28 @@ BEGIN
             SET MESSAGE_TEXT = 'SplitDateTime is required';
     END IF;
 
+    DROP TEMPORARY TABLE IF EXISTS tmpSplitTags;
+
+    CREATE TEMPORARY TABLE tmpSplitTags (
+        tag VARCHAR(100) NOT NULL,
+        PRIMARY KEY (tag)
+    );
+
+    SET vRemaining = TRIM(COALESCE(pChildPlantTagsCsv, ''));
+
+    IF vRemaining = '' THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'At least two child plant tags are required';
+    END IF;
+
     START TRANSACTION;
 
     SELECT taxonId, plantTag, acquisitionDate, endDate
-    INTO vTaxonId, vParentPlantTag, vParentStart, vParentEnd
+      INTO vTaxonId, vParentPlantTag, vParentStart, vParentEnd
     FROM plant
     WHERE plantId = pParentPlantId
-    AND isActive = 1
+      AND isActive = 1
     FOR UPDATE;
-
 
     IF vTaxonId IS NULL THEN
         SIGNAL SQLSTATE '45000'
@@ -58,25 +70,13 @@ BEGIN
         FROM plantsplit
         WHERE parentPlantId = pParentPlantId
           AND isActive = 1
+        FOR UPDATE
     ) THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Plant has already been split';
     END IF;
 
-    CREATE TEMPORARY TABLE tmpSplitTags (
-        tag VARCHAR(100) NOT NULL,
-        PRIMARY KEY (tag)
-    );
-
-    SET vRemaining = TRIM(COALESCE(pChildPlantTagsCsv, ''));
-
-    IF vRemaining = '' THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'At least two child plant tags are required';
-    END IF;
-
     parse_loop: LOOP
-
         SET vCommaPos = LOCATE(',', vRemaining);
 
         IF vCommaPos = 0 THEN
@@ -118,7 +118,6 @@ BEGIN
         IF vRemaining = '' THEN
             LEAVE parse_loop;
         END IF;
-
     END LOOP;
 
     SELECT COUNT(*) INTO vChildCount FROM tmpSplitTags;
@@ -147,63 +146,50 @@ BEGIN
 
     SET vSplitId = LAST_INSERT_ID();
 
-    BEGIN
-        DECLARE done INT DEFAULT 0;
-        DECLARE curTag VARCHAR(100);
-        DECLARE curChildPlantId INT;
+    INSERT INTO plant (
+        taxonId,
+        plantTag,
+        acquisitionDate,
+        acquisitionSource,
+        endDate,
+        isActive
+    )
+    SELECT
+        vTaxonId,
+        tag,
+        pSplitDateTime,
+        CONCAT('From split of ', vParentPlantTag),
+        NULL,
+        1
+    FROM tmpSplitTags;
 
-        DECLARE tagCur CURSOR FOR
-            SELECT tag FROM tmpSplitTags;
+    INSERT INTO plantsplitchild (
+        plantSplitId,
+        childPlantId,
+        isActive
+    )
+    SELECT
+        vSplitId,
+        p.plantId,
+        1
+    FROM plant p
+    JOIN tmpSplitTags t
+      ON p.plantTag = t.tag
+    WHERE p.acquisitionDate = pSplitDateTime;
 
-        DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
-
-        OPEN tagCur;
-
-        child_loop: LOOP
-            FETCH tagCur INTO curTag;
-
-            IF done = 1 THEN
-                LEAVE child_loop;
-            END IF;
-
-            INSERT INTO plant (
-                taxonId,
-                plantTag,
-                acquisitionDate,
-                acquisitionSource,
-                endDate,
-                isActive
-            )
-            VALUES (
-                vTaxonId,
-                curTag,
-                pSplitDateTime,
-                CONCAT('From split of ', vParentPlantTag),
-                NULL,
-                1
-            );
-
-            SET curChildPlantId = LAST_INSERT_ID();
-
-            INSERT INTO plantsplitchild (
-                plantSplitId,
-                childPlantId,
-                isActive
-            )
-            VALUES (
-                vSplitId,
-                curChildPlantId,
-                1
-            );
-
-        END LOOP;
-
-        CLOSE tagCur;
-    END;
+    UPDATE plantlocationhistory
+    SET endDateTime = pSplitDateTime
+    WHERE plantId = pParentPlantId
+      AND endDateTime IS NULL
+      AND isActive = 1;
 
     UPDATE plant
     SET endDate = pSplitDateTime,
-        endNotes = CONCAT('Split into ', vChildCount, ' plants on ', DATE_FORMAT(pSplitDateTime, '%Y-%m-%d %H:%i:%s'))
+        endNotes = CONCAT(
+            'Split into ', vChildCount,
+            ' plants on ',
+            DATE_FORMAT(pSplitDateTime, '%Y-%m-%d %H:%i:%s')
+        )
     WHERE plantId = pParentPlantId;
 
     DROP TEMPORARY TABLE tmpSplitTags;

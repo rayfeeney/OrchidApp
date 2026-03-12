@@ -4,8 +4,6 @@ SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 DROP PROCEDURE IF EXISTS spSplitPlant;
 
-DELIMITER //
-
 CREATE PROCEDURE spSplitPlant(
     IN pParentPlantId INT,
     IN pSplitDateTime DATETIME,
@@ -202,6 +200,4 @@ BEGIN
     DROP TEMPORARY TABLE tmpSplitTags;
 
     COMMIT;
-END //
-
-DELIMITER;
+END;
