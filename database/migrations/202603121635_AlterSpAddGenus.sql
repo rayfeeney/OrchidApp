@@ -79,4 +79,4 @@ BEGIN
         vGenusOnlyTaxonId AS genusOnlyTaxonId;
 END //
 
-DELIMTER ;
+DELIMITER ;
