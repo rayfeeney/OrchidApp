@@ -13,6 +13,11 @@ proc: BEGIN
     FROM taxon
     WHERE taxonId = pTaxonId;
 
+    IF vCurrentState IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Taxon not found';
+    END IF;
+
     IF vIsSystemManaged = 1 AND pIsActive = 0 THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'System-managed records cannot be deactivated';

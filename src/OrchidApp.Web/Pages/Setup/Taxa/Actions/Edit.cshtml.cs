@@ -21,66 +21,69 @@ public class EditModel : PageModel
     [BindProperty]
     public Taxon Taxon { get; set; } = null!;
 
-    public string GenusName { get; set; } = string.Empty;
+    public string GenusName { get; private set; } = string.Empty;
 
-    public IActionResult OnGet(int id)
+    public async Task<IActionResult> OnGetAsync(int id)
     {
-        var taxon = _db.Taxa.SingleOrDefault(t => t.TaxonId == id);
+        var result = await _db.Taxa
+            .AsNoTracking()
+            .Where(t => t.TaxonId == id)
+            .Join(
+                _db.Genera,
+                t => t.GenusId,
+                g => g.GenusId,
+                (t, g) => new
+                {
+                    Taxon = t,
+                    GenusName = g.Name
+                }
+            )
+            .SingleOrDefaultAsync();
 
-        if (taxon == null)
+        if (result == null)
             return NotFound();
 
-        Taxon = taxon;
-
-        GenusName = _db.Genera
-            .Where(g => g.GenusId == taxon.GenusId)
-            .Select(g => g.Name)
-            .Single();
+        Taxon = result.Taxon;
+        GenusName = result.GenusName;
 
         return Page();
     }
 
-    public IActionResult OnPost(int id)
+    public async Task<IActionResult> OnPostAsync(int id)
     {
         if (!ModelState.IsValid)
         {
-            ReloadGenusName();
+            await ReloadGenusNameAsync();
             return Page();
         }
 
         try
         {
-            _db.Database.ExecuteSqlRaw(
+            await _db.Database.ExecuteSqlRawAsync(
                 "CALL spUpdateTaxonDetails({0}, {1}, {2}, {3}, {4}, {5})",
                 id,
-                Taxon.SpeciesName,
-                Taxon.HybridName,
-                Taxon.GrowthCode,
-                Taxon.GrowthNotes,
-                Taxon.TaxonNotes
+                (object?)Taxon.SpeciesName ?? DBNull.Value,
+                (object?)Taxon.HybridName ?? DBNull.Value,
+                (object?)Taxon.GrowthCode ?? DBNull.Value,
+                (object?)Taxon.GrowthNotes ?? DBNull.Value,
+                (object?)Taxon.TaxonNotes ?? DBNull.Value
             );
-        }
-        catch (DbUpdateException ex)
-        {
-            ModelState.AddModelError(string.Empty, ex.InnerException?.Message ?? ex.Message);
-            ReloadGenusName();
-            return Page();
         }
         catch (Exception ex)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
-            ReloadGenusName();
+            await ReloadGenusNameAsync();
             return Page();
         }
 
         return Redirect(ReturnUrl ?? Url.Page("/Setup/Taxa/Details", new { id })!);
     }
 
-    private void ReloadGenusName()
+    private async Task ReloadGenusNameAsync()
     {
-        GenusName = _db.Genera
+        GenusName = await _db.Genera
             .Where(g => g.GenusId == Taxon.GenusId)
             .Select(g => g.Name)
-            .Single();
+            .SingleAsync();
     }
 }
