@@ -19,7 +19,7 @@ public class EditModel : PageModel
     public string? ReturnUrl { get; set; }
 
     [BindProperty]
-    public Taxon Taxon { get; set; } = null!;
+    public TaxonEditDto Taxon { get; set; } = new();
 
     public string GenusName { get; private set; } = string.Empty;
 
@@ -34,7 +34,17 @@ public class EditModel : PageModel
                 g => g.GenusId,
                 (t, g) => new
                 {
-                    Taxon = t,
+                    Taxon = new TaxonEditDto
+                    {
+                        TaxonId = t.TaxonId,
+                        GenusId = t.GenusId,
+                        IsSystemManaged = t.IsSystemManaged,
+                        SpeciesName = t.SpeciesName,
+                        HybridName = t.HybridName,
+                        GrowthCode = t.GrowthCode,
+                        GrowthNotes = t.GrowthNotes,
+                        TaxonNotes = t.TaxonNotes
+                    },
                     GenusName = g.Name
                 }
             )
@@ -53,37 +63,43 @@ public class EditModel : PageModel
     {
         if (!ModelState.IsValid)
         {
-            await ReloadGenusNameAsync();
+            await ReloadGenusNameAsync(id);
             return Page();
         }
 
         try
         {
             await _db.Database.ExecuteSqlRawAsync(
-                "CALL spUpdateTaxonDetails({0}, {1}, {2}, {3}, {4}, {5})",
+                "CALL spUpdateTaxonDetails({0},{1},{2},{3},{4},{5})",
                 id,
-                (object?)Taxon.SpeciesName ?? DBNull.Value,
-                (object?)Taxon.HybridName ?? DBNull.Value,
-                (object?)Taxon.GrowthCode ?? DBNull.Value,
-                (object?)Taxon.GrowthNotes ?? DBNull.Value,
-                (object?)Taxon.TaxonNotes ?? DBNull.Value
+                (object?)Taxon.SpeciesName!,
+                (object?)Taxon.HybridName!,
+                (object?)Taxon.GrowthCode!,
+                (object?)Taxon.GrowthNotes!,
+                (object?)Taxon.TaxonNotes!
             );
         }
         catch (Exception ex)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
-            await ReloadGenusNameAsync();
+            await ReloadGenusNameAsync(id);
             return Page();
         }
 
         return Redirect(ReturnUrl ?? Url.Page("/Setup/Taxa/Details", new { id })!);
     }
 
-    private async Task ReloadGenusNameAsync()
+    private async Task ReloadGenusNameAsync(int taxonId)
     {
-        GenusName = await _db.Genera
-            .Where(g => g.GenusId == Taxon.GenusId)
-            .Select(g => g.Name)
-            .SingleAsync();
+        GenusName = await _db.Taxa
+            .Where(t => t.TaxonId == taxonId)
+            .Join(
+                _db.Genera,
+                t => t.GenusId,
+                g => g.GenusId,
+                (t, g) => g.Name
+            )
+            .SingleOrDefaultAsync()
+            ?? "(unknown genus)";
     }
 }
