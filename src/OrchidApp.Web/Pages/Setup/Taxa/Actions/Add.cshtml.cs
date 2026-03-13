@@ -27,7 +27,8 @@ private readonly OrchidDbContext _db;
 
     [BindProperty, Required]
     [Display(Name = "Genus")]
-    public int GenusId { get; set; }
+    public int? GenusId { get; set; }
+
 
     [BindProperty]
     [Display(Name = "Species name")]
@@ -60,6 +61,39 @@ private readonly OrchidDbContext _db;
 
     public async Task<IActionResult> OnPostAsync()
     {
+        SpeciesName = string.IsNullOrWhiteSpace(SpeciesName) ? null : SpeciesName.Trim();
+        HybridName = string.IsNullOrWhiteSpace(HybridName) ? null : HybridName.Trim();
+        GrowthNotes = string.IsNullOrWhiteSpace(GrowthNotes) ? null : GrowthNotes.Trim();
+        TaxonNotes = string.IsNullOrWhiteSpace(TaxonNotes) ? null : TaxonNotes.Trim();
+
+        if (SpeciesName is null && HybridName is null)
+        {
+            ModelState.AddModelError(string.Empty,
+                "You must enter either a species or a hybrid name.");
+        }
+
+        if (SpeciesName is not null && HybridName is not null)
+        {
+            ModelState.AddModelError(string.Empty,
+                "Enter either a species OR a hybrid, not both.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            await OnGetAsync();
+            return Page();
+        }
+
+        if (string.IsNullOrWhiteSpace(SpeciesName) && string.IsNullOrWhiteSpace(HybridName))
+        {
+            ModelState.AddModelError("", "Enter either a species name or a hybrid name.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(SpeciesName) && !string.IsNullOrWhiteSpace(HybridName))
+        {
+            ModelState.AddModelError("", "Enter only one: species OR hybrid.");
+        }
+
         if (!ModelState.IsValid)
         {
             await OnGetAsync();
@@ -70,7 +104,7 @@ private readonly OrchidDbContext _db;
         {
             var result = await _sp.QuerySingleAsync<AddTaxonResult>(
                 "CALL spAddTaxon(@p0,@p1,@p2,@p3,@p4);",
-                GenusId,
+                GenusId!.Value,
                 SpeciesName,
                 HybridName,
                 GrowthNotes,
