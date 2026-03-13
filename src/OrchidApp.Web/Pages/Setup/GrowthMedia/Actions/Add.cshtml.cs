@@ -4,7 +4,6 @@ using OrchidApp.Web.Data;
 using OrchidApp.Web.Models;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
-using System.Data.Common;
 
 namespace OrchidApp.Web.Pages.Setup.GrowthMedia.Actions;
 
@@ -30,25 +29,34 @@ public class AddModel : PageModel
         if (!ModelState.IsValid)
             return Page();
 
+        var entity = new GrowthMedium
+        {
+            Name = Input.Name.Trim(),
+            Description = string.IsNullOrWhiteSpace(Input.Description)
+                ? null
+                : Input.Description.Trim(),
+            IsActive = true
+        };
+
+        _db.GrowthMedia.Add(entity);
+
         try
         {
-            var result = await _db.GrowthMediumIdResults
-                .FromSqlRaw(
-                    "CALL spAddGrowthMedium({0}, {1})",
-                    Input.Name,
-                    Input.Description)
-                .ToListAsync();
-
-            var id = result.First().GrowthMediumId;
-
-            return RedirectToPage("/Setup/GrowthMedia/Details",
-                new { growthMediumId = id });
+            await _db.SaveChangesAsync();
         }
-        catch (DbException ex)
+        catch (DbUpdateException)
         {
-            ModelState.AddModelError("", ex.Message);
+            ModelState.AddModelError(
+                nameof(Input.Name),
+                "A growth medium with this name already exists."
+            );
             return Page();
         }
+
+        return RedirectToPage(
+            "/Setup/GrowthMedia/Details",
+            new { growthMediumId = entity.GrowthMediumId }
+        );
     }
 
     public class InputModel
