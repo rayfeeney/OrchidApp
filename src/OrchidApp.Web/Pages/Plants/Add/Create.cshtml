@@ -9,8 +9,13 @@
 
 @if (Model.Taxon != null)
 {
-    <h2 class="h5 fw-bold mb-3">
+    <h2 class="h5 fw-bold mb-3 @( (!Model.Taxon.GenusIsActive || !Model.Taxon.TaxonIsActive) ? "text-muted" : "" )">
         @Model.Taxon.DisplayName
+
+        @if (!Model.Taxon.GenusIsActive || !Model.Taxon.TaxonIsActive)
+        {
+            <span class="badge bg-secondary ms-2">Inactive</span>
+        }
     </h2>
 }
 

@@ -221,7 +221,7 @@ public class OrchidDbContext : DbContext
             entity.Property(e => e.TaxonId)                 .HasColumnName("taxonId");
             entity.Property(e => e.GenusId)                 .HasColumnName("genusId");
             entity.Property(e => e.GenusName)               .HasColumnName("genusName");
-            entity.Property(e => e.GenusIsActive)           .HasColumnName("GenusisActive");
+            entity.Property(e => e.GenusIsActive)           .HasColumnName("genusIsActive");
             entity.Property(e => e.SpeciesName)             .HasColumnName("speciesName");
             entity.Property(e => e.HybridName)              .HasColumnName("hybridName");
             entity.Property(e => e.DisplayName)             .HasColumnName("displayName");
@@ -264,6 +264,8 @@ public class OrchidDbContext : DbContext
 
             entity.Property(e => e.PlantId)                 .HasColumnName("plantId");
             entity.Property(e => e.TaxonId)                 .HasColumnName("taxonId");
+            entity.Property(e => e.GenusIsActive)           .HasColumnName("genusIsActive");
+            entity.Property(e => e.TaxonIsActive)           .HasColumnName("taxonIsActive");
             entity.Property(e => e.PlantTag)                .HasColumnName("plantTag");
             entity.Property(e => e.PlantName)               .HasColumnName("plantName");
             entity.Property(e => e.LocationId)              .HasColumnName("locationId");

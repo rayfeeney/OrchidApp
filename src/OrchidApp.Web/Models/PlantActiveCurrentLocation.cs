@@ -8,6 +8,9 @@ public class PlantActiveCurrentLocation
     public string? PlantTag { get; set; }
     public string? PlantName { get; set; }
 
+    public bool TaxonIsActive { get; set; }
+    public bool GenusIsActive { get; set; }
+
     public int? LocationId { get; set; }
     public string? LocationName { get; set; }
     public string? LocationTypeCode { get; set; }

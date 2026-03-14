@@ -25,7 +25,10 @@ public class DetailsModel : PageModel
     public PlantCurrentLocation? Plant { get; private set; }
     public List<PlantLifecycleEvent> LifecycleEvents { get; private set; } = [];
     public string? HeroImagePath { get; private set; }
+    public bool GenusIsActive { get; private set; }
+    public bool TaxonIsActive { get; private set; }
 
+    public bool IsInactive => !GenusIsActive || !TaxonIsActive;
 
     // Non-nullable wrapper for Razor (invariant)
     public PlantCurrentLocation PlantRequired
@@ -36,17 +39,27 @@ public class DetailsModel : PageModel
         Plant = _db.PlantCurrentLocations
                 .FirstOrDefault(p => p.PlantId == PlantId);
 
+        if (Plant == null)
+            return NotFound();
+
+        var taxon = _db.TaxonIdentities
+            .Where(t => t.TaxonId == Plant.TaxonId)
+            .Select(t => new
+            {
+                t.GenusIsActive,
+                t.TaxonIsActive
+            })
+            .Single();
+
+        GenusIsActive = taxon.GenusIsActive;
+        TaxonIsActive = taxon.TaxonIsActive;
+
         var heroPhoto = _db.PlantPhotos
             .Where(p => p.PlantId == PlantId && p.IsHero && p.IsActive)
             .Select(p => p.FilePath)
             .FirstOrDefault();
 
         HeroImagePath = heroPhoto;
-
-        if (Plant == null)
-        {
-            return NotFound();
-        }
 
         LifecycleEvents = _db.PlantLifecycleHistory
             .Where(e => e.PlantId == PlantId)
