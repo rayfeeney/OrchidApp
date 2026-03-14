@@ -53,7 +53,7 @@ public class CreateModel : PageModel
     public async Task<IActionResult> OnGetAsync()
     {
         Taxon = await _db.TaxonIdentities
-            .Where(t => t.TaxonId == TaxonId && t.IsActive)
+            .Where(t => t.TaxonId == TaxonId && t.TaxonIsActive)
             .SingleOrDefaultAsync();
 
         if (Taxon == null)
@@ -67,7 +67,7 @@ public class CreateModel : PageModel
     public async Task<IActionResult> OnPostAsync()
     {
         Taxon = await _db.TaxonIdentities
-            .Where(t => t.TaxonId == TaxonId && t.IsActive)
+            .Where(t => t.TaxonId == TaxonId && t.TaxonIsActive)
             .SingleOrDefaultAsync();
 
         if (Taxon == null)

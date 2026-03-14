@@ -5,8 +5,14 @@
     ViewData["Title"] = Model.DisplayName;
 }
 
-<h1 class="page-title fw-bold">
+<h1 class="page-title fw-bold @( (!Model.GenusIsActive || !Model.TaxonIsActive) ? "text-muted" : "" )">
     @Model.DisplayName
+
+    @if (!Model.GenusIsActive || !Model.TaxonIsActive)
+    {
+        <span class="badge bg-secondary ms-2">Inactive</span>
+    }
+
     <span class="fw-normal fs-6 text-muted">
         (@Model.Plants.Count plant@(Model.Plants.Count == 1 ? "" : "s"))
     </span>
@@ -35,7 +41,7 @@ else
         {
             <div class="plant-card-wrapper">
 
-                <div class="plant-card">
+                <div class="plant-card @( (!Model.GenusIsActive || !Model.TaxonIsActive) ? "text-muted" : "" )">
                     <div class="plant-main">
 
                         <!-- Thumbnail → Photos -->

@@ -106,7 +106,7 @@ public class IndexModel : PageModel
                 .AsNoTracking()
                 .Where(t =>
                     t.GenusId == genusId.Value &&
-                    t.IsActive &&
+                    t.TaxonIsActive &&
                     t.IsSystemManaged)
                 .Select(t => t.TaxonId)
                 .SingleAsync();
@@ -204,7 +204,7 @@ public class IndexModel : PageModel
     {
         var taxa = await _db.TaxonIdentities
             .AsNoTracking()
-            .Where(t => t.GenusId == GenusId && t.IsActive)
+            .Where(t => t.GenusId == GenusId && t.TaxonIsActive)
             .OrderByDescending(t => t.IsSystemManaged)
             .ThenBy(t => t.DisplayName)
             .ToListAsync();

@@ -20,7 +20,9 @@ public class TaxonIdentity
     [Display(Name = "Notes")]
     public string? TaxonNotes { get; set; }
 
-    public bool IsActive { get; set; }
+    public bool TaxonIsActive { get; set; }
+
+    public bool GenusIsActive { get; set; }
 
     public string? GrowthCode { get; set; }
 

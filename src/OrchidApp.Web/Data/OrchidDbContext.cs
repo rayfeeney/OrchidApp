@@ -221,11 +221,12 @@ public class OrchidDbContext : DbContext
             entity.Property(e => e.TaxonId)                 .HasColumnName("taxonId");
             entity.Property(e => e.GenusId)                 .HasColumnName("genusId");
             entity.Property(e => e.GenusName)               .HasColumnName("genusName");
+            entity.Property(e => e.GenusIsActive)           .HasColumnName("GenusisActive");
             entity.Property(e => e.SpeciesName)             .HasColumnName("speciesName");
             entity.Property(e => e.HybridName)              .HasColumnName("hybridName");
             entity.Property(e => e.DisplayName)             .HasColumnName("displayName");
             entity.Property(e => e.TaxonNotes)              .HasColumnName("taxonNotes");
-            entity.Property(e => e.IsActive)                .HasColumnName("isActive");
+            entity.Property(e => e.TaxonIsActive)           .HasColumnName("isActive");
             entity.Property(e => e.GrowthCode)              .HasColumnName("growthCode");
             entity.Property(e => e.GrowthNotes)             .HasColumnName("growthNotes");
             entity.Property(e => e.IsSystemManaged)         .HasColumnName("isSystemManaged");

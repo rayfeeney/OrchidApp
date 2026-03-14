@@ -4,7 +4,7 @@
 <h1 class="page-title fw-bold d-flex align-items-center gap-2">
     @Model.Taxon!.DisplayName
 
-    @if (!Model.Taxon.IsActive)
+    @if (!Model.Taxon.TaxonIsActive)
     {
         <span class="badge bg-secondary">
             Inactive
@@ -78,7 +78,7 @@ Species / hybrid details
 
         @{
             var isSystemManaged = Model.Taxon.IsSystemManaged;
-            var isActive = Model.Taxon.IsActive;
+            var isActive = Model.Taxon.TaxonIsActive;
 
             var buttonClass = isActive ? "btn-outline-danger" : "btn-outline-success";
             var buttonText = isActive ? "Deactivate species / hybrid" : "Reactivate species / hybrid";
