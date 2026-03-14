@@ -26,7 +26,6 @@ public class IndexModel : PageModel
             .GroupBy(p => new
             {
                 p.TaxonId,
-                p.DisplayName,
                 p.GenusName,
                 p.GenusIsActive,
                 p.TaxonIsActive
@@ -34,7 +33,7 @@ public class IndexModel : PageModel
             .Select(grp => new TaxonPlantCount
             {
                 TaxonId = grp.Key.TaxonId,
-                DisplayName = grp.Key.DisplayName,
+                DisplayName = grp.First().DisplayName,
                 GenusName = grp.Key.GenusName,
                 GenusIsActive = grp.Key.GenusIsActive,
                 TaxonIsActive = grp.Key.TaxonIsActive,
