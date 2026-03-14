@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using OrchidApp.Web.Data;
 using OrchidApp.Web.Models;
-using Microsoft.EntityFrameworkCore;
+using OrchidApp.Web.Infrastructure;
 
 namespace OrchidApp.Web.Pages.Setup.Locations;
 
@@ -23,28 +24,43 @@ public class DetailsModel : PageModel
 
     public Location Location { get; private set; } = null!;
 
-    public IActionResult OnGet()
+    public async Task<IActionResult> OnGetAsync(CancellationToken ct)
     {
-        Location = _db.Locations
-                      .AsNoTracking()
-                      .FirstOrDefault(l => l.LocationId == LocationId)
-                   ?? throw new InvalidOperationException("Location not found.");
+        Location = await _db.Locations
+            .AsNoTracking()
+            .FirstOrDefaultAsync(l => l.LocationId == LocationId, ct)
+            ?? throw new InvalidOperationException("Location not found.");
 
         return Page();
     }
 
-    public IActionResult OnPostToggleActive()
+    public async Task<IActionResult> OnPostToggleActiveAsync(CancellationToken ct)
     {
-        var current = _db.Locations
-                         .AsNoTracking()
-                         .FirstOrDefault(l => l.LocationId == LocationId)
-                      ?? throw new InvalidOperationException("Location not found.");
+        var current = await _db.Locations
+            .AsNoTracking()
+            .FirstOrDefaultAsync(l => l.LocationId == LocationId, ct);
 
-        _db.Database.ExecuteSqlRaw(
-            "CALL spSetLocationActiveState({0},{1})",
-            LocationId,
-            current.IsActive ? 0 : 1
-        );
+        if (current == null)
+            return NotFound();
+
+        try
+        {
+            await _db.Database.ExecuteSqlRawAsync(
+                "CALL spSetLocationActiveState({0},{1})",
+                LocationId,
+                current.IsActive ? 0 : 1
+            );
+        }
+        catch (Exception ex)
+        {
+            if (DatabaseErrorTranslator.TryTranslate(ex, out var message))
+            {
+                ModelState.AddModelError(string.Empty, message);
+                return await OnGetAsync(ct);
+            }
+
+            throw;
+        }
 
         return RedirectToPage(new { locationId = LocationId, ReturnUrl });
     }
