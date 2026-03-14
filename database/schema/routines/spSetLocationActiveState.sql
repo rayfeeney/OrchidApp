@@ -6,6 +6,7 @@ CREATE OR REPLACE PROCEDURE `spSetLocationActiveState`(
 BEGIN
 
     DECLARE vCurrentState TINYINT;
+    DECLARE vExists INT;
 
     IF pLocationId IS NULL THEN
         SIGNAL SQLSTATE '45000'
@@ -17,20 +18,26 @@ BEGIN
             SET MESSAGE_TEXT = 'Invalid value provided.';
     END IF;
 
+    SELECT COUNT(*) INTO vExists
+    FROM location
+    WHERE locationId = pLocationId;
+
+    IF vExists = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Location not found.';
+    END IF;
+
     SELECT isActive
     INTO vCurrentState
     FROM location
     WHERE locationId = pLocationId;
 
-    IF vCurrentState IS NULL THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Location not found.';
-    END IF;
-
     IF vCurrentState = pIsActive THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'No change required.';
     END IF;
+
+    
 
     UPDATE location
     SET isActive = pIsActive
