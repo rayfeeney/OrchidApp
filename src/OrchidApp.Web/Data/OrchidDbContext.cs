@@ -249,6 +249,8 @@ public class OrchidDbContext : DbContext
             entity.Property(e => e.SpeciesName)             .HasColumnName("speciesName");
             entity.Property(e => e.HybridName)              .HasColumnName("hybridName");
             entity.Property(e => e.DisplayName)             .HasColumnName("displayName");
+            entity.Property(e => e.GenusIsActive)           .HasColumnName("genusIsActive");
+            entity.Property(e => e.TaxonIsActive)           .HasColumnName("taxonIsActive");
         });
 
         // =========================

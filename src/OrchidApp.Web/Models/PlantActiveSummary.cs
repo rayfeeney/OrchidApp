@@ -16,4 +16,7 @@ public class PlantActiveSummary
     public string? HybridName { get; set; }
 
     public string DisplayName { get; set; } = string.Empty;
+
+    public bool GenusIsActive { get; set; }
+    public bool TaxonIsActive { get; set; }
 }
