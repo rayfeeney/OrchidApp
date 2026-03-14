@@ -1,0 +1,51 @@
+DROP PROCEDURE IF EXISTS spSetLocationActiveState;
+
+DELIMITER //
+
+CREATE PROCEDURE `spSetLocationActiveState`(
+    IN pLocationId INT,
+    IN pIsActive TINYINT
+)
+BEGIN
+
+    DECLARE vCurrentState TINYINT;
+    DECLARE vExists INT;
+
+    IF pLocationId IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'LocationId is required.';
+    END IF;
+
+    IF pIsActive NOT IN (0,1) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Invalid value provided.';
+    END IF;
+
+    SELECT COUNT(*) INTO vExists
+    FROM location
+    WHERE locationId = pLocationId;
+
+    IF vExists = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Location not found.';
+    END IF;
+
+    SELECT isActive
+    INTO vCurrentState
+    FROM location
+    WHERE locationId = pLocationId;
+
+    IF vCurrentState = pIsActive THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'No change required.';
+    END IF;
+
+    -- future invariant hook point here
+
+    UPDATE location
+    SET isActive = pIsActive
+    WHERE locationId = pLocationId;
+
+END //
+
+DELIMITER ;

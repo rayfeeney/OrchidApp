@@ -1,5 +1,5 @@
 DELIMITER //
-CREATE OR REPLACE PROCEDURE `spUpdateLocation`(
+CREATE OR REPLACE PROCEDURE `spUpdateLocationDetails`(
     IN pLocationId INT,
     IN pLocationName VARCHAR(100),
     IN pLocationTypeCode VARCHAR(30),
@@ -11,6 +11,12 @@ CREATE OR REPLACE PROCEDURE `spUpdateLocation`(
 BEGIN
 
     DECLARE vName VARCHAR(100);
+    DECLARE vExists INT;
+
+    IF pLocationId IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'LocationId is required.';
+    END IF;
 
     SET vName = NULLIF(TRIM(pLocationName), '');
 
@@ -19,11 +25,19 @@ BEGIN
             SET MESSAGE_TEXT = 'Location name is required.';
     END IF;
 
-    
+    SELECT COUNT(*) INTO vExists
+    FROM location
+    WHERE locationId = pLocationId;
+
+    IF vExists = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Location not found.';
+    END IF;
+
     IF EXISTS (
         SELECT 1
         FROM location
-        WHERE locationName = vName
+        WHERE LOWER(locationName) = LOWER(vName)
         AND locationId <> pLocationId
     ) THEN
         SIGNAL SQLSTATE '45000'
@@ -39,11 +53,6 @@ BEGIN
         climateNotes = NULLIF(TRIM(pClimateNotes), ''),
         locationGeneralNotes = NULLIF(TRIM(pLocationGeneralNotes), '')
     WHERE locationId = pLocationId;
-
-    IF ROW_COUNT() = 0 THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Location not found.';
-    END IF;
 
 END
 //

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using OrchidApp.Web.Data;
+using OrchidApp.Web.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
@@ -46,12 +47,14 @@ public class EditModel : PageModel
         public string? LocationGeneralNotes { get; set; }
     }
 
-    public IActionResult OnGet()
+    public async Task<IActionResult> OnGetAsync(CancellationToken ct)
     {
-        var location = _db.Locations
-                          .AsNoTracking()
-                          .FirstOrDefault(l => l.LocationId == LocationId)
-                       ?? throw new InvalidOperationException("Location not found.");
+        var location = await _db.Locations
+            .AsNoTracking()
+            .FirstOrDefaultAsync(l => l.LocationId == LocationId, ct);
+
+        if (location == null)
+            return NotFound();
 
         Input = new InputModel
         {
@@ -66,21 +69,34 @@ public class EditModel : PageModel
         return Page();
     }
 
-    public IActionResult OnPost()
+    public async Task<IActionResult> OnPostAsync(CancellationToken ct)
     {
         if (!ModelState.IsValid)
             return Page();
 
-        _db.Database.ExecuteSqlRaw(
-            "CALL spUpdateLocation({0},{1},{2},{3},{4},{5},{6})",
-            LocationId,
-            Input.LocationName,
-            Input.LocationTypeCode,
-            Input.LocationNotes,
-            Input.ClimateCode,
-            Input.ClimateNotes,
-            Input.LocationGeneralNotes
-        );
+        try
+        {
+            await _db.Database.ExecuteSqlRawAsync(
+                "CALL spUpdateLocationDetails({0},{1},{2},{3},{4},{5},{6})",
+                (object?)LocationId!,
+                (object?)Input.LocationName!,
+                (object?)Input.LocationTypeCode!,
+                (object?)Input.LocationNotes!,
+                (object?)Input.ClimateCode!,
+                (object?)Input.ClimateNotes!,
+                (object?)Input.LocationGeneralNotes!
+            );
+        }
+        catch (Exception ex)
+        {
+            if (DatabaseErrorTranslator.TryTranslate(ex, out var message))
+            {
+                ModelState.AddModelError(string.Empty, message);
+                return Page();
+            }
+
+            throw;
+        }
 
         return Redirect(ReturnUrl ?? Url.Page("/Setup/Locations/Details", new { locationId = LocationId })!);
     }
