@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using OrchidApp.Web.Data;
+using OrchidApp.Web.Infrastructure;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 
@@ -43,20 +44,33 @@ public class AddModel : PageModel
         public string? LocationGeneralNotes { get; set; }
     }
 
-    public IActionResult OnPost()
+    public async Task<IActionResult> OnPostAsync(CancellationToken ct)
     {
         if (!ModelState.IsValid)
             return Page();
 
-        _db.Database.ExecuteSqlRaw(
-            "CALL spAddLocation({0},{1},{2},{3},{4},{5})",
-            Input.LocationName,
-            Input.LocationTypeCode,
-            Input.LocationNotes,
-            Input.ClimateCode,
-            Input.ClimateNotes,
-            Input.LocationGeneralNotes
-        );
+        try
+        {
+            await _db.Database.ExecuteSqlRawAsync(
+                "CALL spAddLocation({0},{1},{2},{3},{4},{5})",
+                (object?)Input.LocationName!,
+                (object?)Input.LocationTypeCode!,
+                (object?)Input.LocationNotes!,
+                (object?)Input.ClimateCode!,
+                (object?)Input.ClimateNotes!,
+                (object?)Input.LocationGeneralNotes!
+            );
+        }
+        catch (Exception ex)
+        {
+            if (DatabaseErrorTranslator.TryTranslate(ex, out var message))
+            {
+                ModelState.AddModelError(string.Empty, message);
+                return Page();
+            }
+
+            throw;
+        }
 
         return Redirect(ReturnUrl ?? Url.Page("/Setup/Locations/Index")!);
     }

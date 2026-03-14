@@ -11,7 +11,6 @@ BEGIN
 
     DECLARE vName VARCHAR(100);
 
-    
     SET vName = NULLIF(TRIM(pLocationName), '');
 
     IF vName IS NULL THEN
@@ -19,11 +18,15 @@ BEGIN
             SET MESSAGE_TEXT = 'Location name is required.';
     END IF;
 
-    
+    IF CHAR_LENGTH(vName) > 100 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Location name is too long.';
+    END IF;
+
     IF EXISTS (
         SELECT 1
         FROM location
-        WHERE locationName = vName
+        WHERE LOWER(locationName) = LOWER(vName)
     ) THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'A location with this name already exists.';
