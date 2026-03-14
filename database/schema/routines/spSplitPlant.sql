@@ -38,13 +38,6 @@ BEGIN
 
     START TRANSACTION;
 
-    DROP TEMPORARY TABLE IF EXISTS tmpSplitTags;
-
-    CREATE TEMPORARY TABLE tmpSplitTags (
-        tag VARCHAR(100) NOT NULL,
-        PRIMARY KEY (tag)
-    );
-
     IF NOT EXISTS (
         SELECT 1
         FROM plant
@@ -70,10 +63,8 @@ BEGIN
         vTaxonIsActive,
         vGenusIsActive
     FROM plant p
-    JOIN taxon t
-      ON p.taxonId = t.taxonId
-    JOIN genus g
-      ON t.genusId = g.genusId
+    JOIN taxon t ON p.taxonId = t.taxonId
+    JOIN genus g ON t.genusId = g.genusId
     WHERE p.plantId = pParentPlantId
       AND p.isActive = 1
     FOR UPDATE;
@@ -104,6 +95,13 @@ BEGIN
             SET MESSAGE_TEXT = 'Plant has already been split';
     END IF;
 
+    DROP TEMPORARY TABLE IF EXISTS tmpSplitTags;
+
+    CREATE TEMPORARY TABLE tmpSplitTags (
+        tag VARCHAR(100) NOT NULL,
+        PRIMARY KEY (tag)
+    );
+
     parse_loop: LOOP
         SET vCommaPos = LOCATE(',', vRemaining);
 
@@ -123,9 +121,7 @@ BEGIN
         END IF;
 
         IF EXISTS (
-            SELECT 1
-            FROM tmpSplitTags
-            WHERE tag = vChildTag
+            SELECT 1 FROM tmpSplitTags WHERE tag = vChildTag
         ) THEN
             SET vErrorMessage = CONCAT('Duplicate child tag in split request: ', vChildTag);
             SIGNAL SQLSTATE '45000'
@@ -142,7 +138,7 @@ BEGIN
                 SET MESSAGE_TEXT = vErrorMessage;
         END IF;
 
-        INSERT INTO tmpSplitTags (tag)
+        INSERT INTO tmpSplitTags(tag)
         VALUES (vChildTag);
 
         IF vRemaining = '' THEN
@@ -150,9 +146,7 @@ BEGIN
         END IF;
     END LOOP;
 
-    SELECT COUNT(*)
-      INTO vChildCount
-    FROM tmpSplitTags;
+    SELECT COUNT(*) INTO vChildCount FROM tmpSplitTags;
 
     IF vChildCount < 2 THEN
         SIGNAL SQLSTATE '45000'
