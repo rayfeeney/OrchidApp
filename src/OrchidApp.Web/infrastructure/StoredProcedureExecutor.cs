@@ -19,7 +19,7 @@ public class StoredProcedureExecutor : IStoredProcedureExecutor
         params object?[] parameters
     ) where T : new()
     {
-        var conn = _db.Database.GetDbConnection();
+        await using var conn = _db.Database.GetDbConnection();
 
         if (conn.State != ConnectionState.Open)
             await conn.OpenAsync();
@@ -36,47 +36,30 @@ public class StoredProcedureExecutor : IStoredProcedureExecutor
             cmd.Parameters.Add(p);
         }
 
-        System.Data.Common.DbDataReader reader;
+        await using var reader = await cmd.ExecuteReaderAsync();
 
-        try
+        if (!await reader.ReadAsync())
+            throw new InvalidOperationException(
+                $"Stored procedure returned no rows: {procedureCallSql}"
+            );
+
+        var result = new T();
+
+        var props = typeof(T)
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .ToDictionary(p => p.Name, StringComparer.OrdinalIgnoreCase);
+
+        for (int i = 0; i < reader.FieldCount; i++)
         {
-            reader = await cmd.ExecuteReaderAsync();
-        }
-        catch
-        {
-            // Important: leave EF connection in clean state
-            if (conn.State == ConnectionState.Open)
-                await conn.CloseAsync();
+            var column = reader.GetName(i);
 
-            throw;
-        }
-
-        await using (reader)
-        {
-            if (!await reader.ReadAsync())
-                throw new InvalidOperationException(
-                    $"Stored procedure returned no rows: {procedureCallSql}"
-                );
-
-            var result = new T();
-
-            var props = typeof(T)
-                .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .ToDictionary(p => p.Name, StringComparer.OrdinalIgnoreCase);
-
-            for (int i = 0; i < reader.FieldCount; i++)
+            if (props.TryGetValue(column, out var prop) && !reader.IsDBNull(i))
             {
-                var column = reader.GetName(i);
-
-                if (props.TryGetValue(column, out var prop) && !reader.IsDBNull(i))
-                {
-                    var value = reader.GetValue(i);
-                    prop.SetValue(result, value);
-                }
+                var value = reader.GetValue(i);
+                prop.SetValue(result, value);
             }
-
-            return result;
         }
-    }
 
+        return result;
+    }
 }
