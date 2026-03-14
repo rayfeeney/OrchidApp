@@ -1,5 +1,8 @@
+DROP PROCEDURE IF EXISTS spAddTaxonInternal;
+
 DELIMITER //
-CREATE OR REPLACE PROCEDURE `spAddTaxonInternal`(
+
+CREATE PROCEDURE spAddTaxonInternal(
     IN  pGenusId            INT,
     IN  pSpeciesName        VARCHAR(100),
     IN  pHybridName         VARCHAR(150),
@@ -17,13 +20,13 @@ BEGIN
     DECLARE vGrowthNotes TEXT;
     DECLARE vTaxonNotes  TEXT;
 
-    
+    -- Normalisation
     SET vSpeciesName = NULLIF(TRIM(pSpeciesName), '');
     SET vHybridName  = NULLIF(TRIM(pHybridName), '');
     SET vGrowthNotes = NULLIF(TRIM(pGrowthNotes), '');
     SET vTaxonNotes  = NULLIF(TRIM(pTaxonNotes), '');
 
-    
+    -- Structural genus validation
     SELECT COUNT(*), MAX(isActive)
     INTO vGenusExists, vGenusIsActive
     FROM genus
@@ -58,7 +61,6 @@ BEGIN
 
     SET pTaxonId = LAST_INSERT_ID();
 
-END
-//
-DELIMITER ;
+END //
 
+DELIMITER ;

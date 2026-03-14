@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using OrchidApp.Web.Data;
 using OrchidApp.Web.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -17,13 +18,15 @@ public class IndexModel : PageModel
         _db = db;
     }
 
-    public IReadOnlyList<TaxonIdentity> Taxa { get; private set; } = [];
+    public IReadOnlyList<TaxonIdentity> Taxa { get; private set; }
+        = new List<TaxonIdentity>();
 
-    public void OnGet()
+    public async Task OnGetAsync()
     {
-        Taxa = _db.TaxonIdentities
-                  .OrderBy(t => t.GenusName)
-                  .ThenBy(t => t.DisplayName)
-                  .ToList();
+        Taxa = await _db.TaxonIdentities
+            .AsNoTracking()
+            .OrderBy(t => t.GenusName)
+            .ThenBy(t => t.DisplayName)
+            .ToListAsync();
     }
 }

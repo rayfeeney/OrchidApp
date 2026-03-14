@@ -19,68 +19,87 @@ public class EditModel : PageModel
     public string? ReturnUrl { get; set; }
 
     [BindProperty]
-    public Taxon Taxon { get; set; } = null!;
+    public TaxonEditDto Taxon { get; set; } = new();
 
-    public string GenusName { get; set; } = string.Empty;
+    public string GenusName { get; private set; } = string.Empty;
 
-    public IActionResult OnGet(int id)
+    public async Task<IActionResult> OnGetAsync(int id)
     {
-        var taxon = _db.Taxa.SingleOrDefault(t => t.TaxonId == id);
+        var result = await _db.Taxa
+            .AsNoTracking()
+            .Where(t => t.TaxonId == id)
+            .Join(
+                _db.Genera,
+                t => t.GenusId,
+                g => g.GenusId,
+                (t, g) => new
+                {
+                    Taxon = new TaxonEditDto
+                    {
+                        TaxonId = t.TaxonId,
+                        GenusId = t.GenusId,
+                        IsSystemManaged = t.IsSystemManaged,
+                        SpeciesName = t.SpeciesName,
+                        HybridName = t.HybridName,
+                        GrowthCode = t.GrowthCode,
+                        GrowthNotes = t.GrowthNotes,
+                        TaxonNotes = t.TaxonNotes
+                    },
+                    GenusName = g.Name
+                }
+            )
+            .SingleOrDefaultAsync();
 
-        if (taxon == null)
+        if (result == null)
             return NotFound();
 
-        Taxon = taxon;
-
-        GenusName = _db.Genera
-            .Where(g => g.GenusId == taxon.GenusId)
-            .Select(g => g.Name)
-            .Single();
+        Taxon = result.Taxon;
+        GenusName = result.GenusName;
 
         return Page();
     }
 
-    public IActionResult OnPost(int id)
+    public async Task<IActionResult> OnPostAsync(int id)
     {
         if (!ModelState.IsValid)
         {
-            ReloadGenusName();
+            await ReloadGenusNameAsync(id);
             return Page();
         }
 
         try
         {
-            _db.Database.ExecuteSqlRaw(
-                "CALL spUpdateTaxonDetails({0}, {1}, {2}, {3}, {4}, {5})",
+            await _db.Database.ExecuteSqlRawAsync(
+                "CALL spUpdateTaxonDetails({0},{1},{2},{3},{4},{5})",
                 id,
-                Taxon.SpeciesName,
-                Taxon.HybridName,
-                Taxon.GrowthCode,
-                Taxon.GrowthNotes,
-                Taxon.TaxonNotes
+                (object?)Taxon.SpeciesName!,
+                (object?)Taxon.HybridName!,
+                (object?)Taxon.GrowthCode!,
+                (object?)Taxon.GrowthNotes!,
+                (object?)Taxon.TaxonNotes!
             );
-        }
-        catch (DbUpdateException ex)
-        {
-            ModelState.AddModelError(string.Empty, ex.InnerException?.Message ?? ex.Message);
-            ReloadGenusName();
-            return Page();
         }
         catch (Exception ex)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
-            ReloadGenusName();
+            await ReloadGenusNameAsync(id);
             return Page();
         }
 
         return Redirect(ReturnUrl ?? Url.Page("/Setup/Taxa/Details", new { id })!);
     }
 
-    private void ReloadGenusName()
+    private async Task ReloadGenusNameAsync(int taxonId)
     {
-        GenusName = _db.Genera
-            .Where(g => g.GenusId == Taxon.GenusId)
-            .Select(g => g.Name)
-            .Single();
+        GenusName = await _db.Taxa
+            .Where(t => t.TaxonId == taxonId)
+            .Join(
+                _db.Genera,
+                t => t.GenusId,
+                g => g.GenusId,
+                (t, g) => g.Name
+            )
+            .SingleOrDefaultAsync()
+            ?? "(unknown genus)";
     }
 }

@@ -1,6 +1,9 @@
+DROP PROCEDURE IF EXISTS spSetGenusActiveState;
+
 DELIMITER //
-CREATE OR REPLACE PROCEDURE `spSetLocationActiveState`(
-    IN pLocationId INT,
+
+CREATE PROCEDURE `spSetGenusActiveState`(
+    IN pGenusId INT,
     IN pIsActive TINYINT
 )
 BEGIN
@@ -8,9 +11,9 @@ BEGIN
     DECLARE vCurrentState TINYINT;
     DECLARE vExists INT;
 
-    IF pLocationId IS NULL THEN
+    IF pGenusId IS NULL THEN
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'LocationId is required.';
+            SET MESSAGE_TEXT = 'GenusId is required.';
     END IF;
 
     IF pIsActive NOT IN (0,1) THEN
@@ -19,31 +22,28 @@ BEGIN
     END IF;
 
     SELECT COUNT(*) INTO vExists
-    FROM location
-    WHERE locationId = pLocationId;
+    FROM genus
+    WHERE genusId = pGenusId;
 
     IF vExists = 0 THEN
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Location not found.';
+            SET MESSAGE_TEXT = 'Genus not found.';
     END IF;
 
     SELECT isActive
     INTO vCurrentState
-    FROM location
-    WHERE locationId = pLocationId;
+    FROM genus
+    WHERE genusId = pGenusId;
 
     IF vCurrentState = pIsActive THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'No change required.';
     END IF;
 
-    
-
-    UPDATE location
+    UPDATE genus
     SET isActive = pIsActive
-    WHERE locationId = pLocationId;
+    WHERE genusId = pGenusId;
 
-END
-//
+END //
+
 DELIMITER ;
-

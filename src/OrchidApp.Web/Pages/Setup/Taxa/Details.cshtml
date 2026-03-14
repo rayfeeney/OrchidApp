@@ -74,7 +74,7 @@ Species / hybrid details
 
         <form method="post" class="d-grid">
 
-            <input type="hidden" name="taxonId" value="@Model.Taxon.TaxonId" />
+            <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
 
         @{
             var isSystemManaged = Model.Taxon.IsSystemManaged;

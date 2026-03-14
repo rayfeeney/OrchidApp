@@ -20,11 +20,12 @@ public class IndexModel : PageModel
 
     public IReadOnlyList<Location> Locations { get; private set; } = [];
 
-    public void OnGet()
+    public async Task OnGetAsync(CancellationToken ct)
     {
-        Locations = _db.Locations
-                        .AsNoTracking()
-                        .OrderBy(l => l.LocationName)
-                        .ToList();
+        Locations = await _db.Locations
+            .AsNoTracking()
+            .OrderBy(l => l.LocationName)
+            .ThenBy(l => l.LocationId)
+            .ToListAsync(ct);
     }
 }

@@ -1,5 +1,8 @@
+DROP PROCEDURE IF EXISTS spSetLocationActiveState;
+
 DELIMITER //
-CREATE OR REPLACE PROCEDURE `spSetLocationActiveState`(
+
+CREATE PROCEDURE `spSetLocationActiveState`(
     IN pLocationId INT,
     IN pIsActive TINYINT
 )
@@ -37,13 +40,12 @@ BEGIN
             SET MESSAGE_TEXT = 'No change required.';
     END IF;
 
-    
+    -- future invariant hook point here
 
     UPDATE location
     SET isActive = pIsActive
     WHERE locationId = pLocationId;
 
-END
-//
-DELIMITER ;
+END //
 
+DELIMITER ;

@@ -20,31 +20,36 @@ public class DetailsModel : PageModel
 
     public TaxonIdentity? Taxon { get; private set; }
 
-    public IActionResult OnGet(int id)
+    public async Task<IActionResult> OnGetAsync(int id)
     {
-        Taxon = _db.TaxonIdentities
-                   .SingleOrDefault(t => t.TaxonId == id);
+        Taxon = await _db.TaxonIdentities
+            .AsNoTracking()
+            .SingleOrDefaultAsync(t => t.TaxonId == id);
 
         if (Taxon == null)
-        {
             return NotFound();
-        }
 
         return Page();
     }
 
-    public async Task<IActionResult> OnPostToggleActiveAsync(int taxonId)
+    public async Task<IActionResult> OnPostToggleActiveAsync(int id)
     {
         var taxon = await _db.Taxa
-            .Where(t => t.TaxonId == taxonId)
-            .Select(t => new { t.IsActive })
-            .FirstAsync();
+            .Where(t => t.TaxonId == id)
+            .Select(t => new { t.IsActive, t.IsSystemManaged })
+            .SingleOrDefaultAsync();
+
+        if (taxon == null)
+            return NotFound();
+
+        if (taxon.IsSystemManaged)
+            return BadRequest("System-managed taxa cannot be manually activated or deactivated.");
 
         await _db.Database.ExecuteSqlRawAsync(
             "CALL spSetTaxonActiveState({0},{1})",
-            taxonId,
+            id,
             !taxon.IsActive);
 
-        return RedirectToPage(new { id = taxonId });
+        return RedirectToPage(new { id, ReturnUrl });
     }
 }

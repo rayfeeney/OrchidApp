@@ -22,7 +22,8 @@
     @if (Model.Taxon.IsSystemManaged)
     {
         <div class="alert alert-warning">
-            This is a system required record and cannot be renamed.
+            This is a system-managed genus record.
+            Its name cannot be changed, but notes may be edited.
         </div>
     }
     @if (!Model.Taxon.IsSystemManaged && !string.IsNullOrWhiteSpace(Model.Taxon.SpeciesName))

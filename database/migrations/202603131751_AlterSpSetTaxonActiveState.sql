@@ -1,5 +1,10 @@
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+DROP PROCEDURE IF EXISTS spSetTaxonActiveState;
+
 DELIMITER //
-CREATE OR REPLACE PROCEDURE `spSetTaxonActiveState`(
+
+CREATE PROCEDURE spSetTaxonActiveState(
     IN pTaxonId INT,
     IN pIsActive BOOLEAN
 )
@@ -31,7 +36,6 @@ proc: BEGIN
     SET isActive = pIsActive
     WHERE taxonId = pTaxonId;
 
-END
-//
-DELIMITER ;
+END //
 
+DELIMITER ;

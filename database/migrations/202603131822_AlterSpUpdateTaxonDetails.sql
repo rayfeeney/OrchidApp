@@ -1,5 +1,10 @@
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+DROP PROCEDURE IF EXISTS spUpdateTaxonDetails;
+
 DELIMITER //
-CREATE OR REPLACE PROCEDURE `spUpdateTaxonDetails`(
+
+CREATE PROCEDURE spUpdateTaxonDetails(
     IN p_taxonId INT,
     IN p_speciesName VARCHAR(100),
     IN p_hybridName VARCHAR(150),
@@ -39,7 +44,7 @@ BEGIN
 
     ELSE
 
-        
+        /* enforce shape immutability */
 
         IF v_existingSpecies IS NOT NULL AND p_hybridName IS NOT NULL THEN
             SIGNAL SQLSTATE '45000'
@@ -61,7 +66,7 @@ BEGIN
             SET MESSAGE_TEXT = 'Taxon cannot have both species and hybrid names';
         END IF;
 
-        
+        /* uniqueness enforcement */
 
         IF p_speciesName IS NOT NULL AND EXISTS (
             SELECT 1
@@ -96,7 +101,6 @@ BEGIN
 
     COMMIT;
 
-END
-//
-DELIMITER ;
+END //
 
+DELIMITER ;

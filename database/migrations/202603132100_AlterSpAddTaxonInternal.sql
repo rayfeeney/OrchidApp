@@ -1,5 +1,8 @@
+DROP PROCEDURE IF EXISTS spAddTaxonInternal;
+
 DELIMITER //
-CREATE OR REPLACE PROCEDURE `spAddTaxonInternal`(
+
+CREATE PROCEDURE spAddTaxonInternal(
     IN  pGenusId            INT,
     IN  pSpeciesName        VARCHAR(100),
     IN  pHybridName         VARCHAR(150),
@@ -9,21 +12,31 @@ CREATE OR REPLACE PROCEDURE `spAddTaxonInternal`(
     OUT pTaxonId            INT
 )
 BEGIN
-    DECLARE vGenusExists INT;
-    DECLARE vGenusIsActive INT;
-
     DECLARE vSpeciesName VARCHAR(100);
     DECLARE vHybridName  VARCHAR(150);
     DECLARE vGrowthNotes TEXT;
     DECLARE vTaxonNotes  TEXT;
+    DECLARE vGenusExists INT;
+    DECLARE vGenusIsActive INT;
+    DECLARE v_errno INT;
 
-    
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO;
+
+        IF v_errno = 1062 THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'Taxon already exists for this genus';
+        ELSE
+            RESIGNAL;
+        END IF;
+    END;
+
     SET vSpeciesName = NULLIF(TRIM(pSpeciesName), '');
     SET vHybridName  = NULLIF(TRIM(pHybridName), '');
     SET vGrowthNotes = NULLIF(TRIM(pGrowthNotes), '');
     SET vTaxonNotes  = NULLIF(TRIM(pTaxonNotes), '');
 
-    
     SELECT COUNT(*), MAX(isActive)
     INTO vGenusExists, vGenusIsActive
     FROM genus
@@ -31,12 +44,24 @@ BEGIN
 
     IF vGenusExists = 0 THEN
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Invalid genusId: genus does not exist';
+            SET MESSAGE_TEXT = 'Genus does not exist';
     END IF;
 
-    IF vGenusIsActive = 0 THEN
+    IF pIsSystemManaged = 0 AND vGenusIsActive = 0 THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Cannot create taxon for inactive genus';
+    END IF;
+
+    IF pIsSystemManaged = 0 THEN
+        IF vSpeciesName IS NULL AND vHybridName IS NULL THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'Species or hybrid must be provided';
+        END IF;
+
+        IF vSpeciesName IS NOT NULL AND vHybridName IS NOT NULL THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'Must be either species or hybrid';
+        END IF;
     END IF;
 
     INSERT INTO taxon (
@@ -58,7 +83,6 @@ BEGIN
 
     SET pTaxonId = LAST_INSERT_ID();
 
-END
-//
-DELIMITER ;
+END //
 
+DELIMITER ;

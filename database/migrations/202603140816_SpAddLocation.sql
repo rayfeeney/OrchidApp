@@ -1,5 +1,8 @@
+DROP PROCEDURE IF EXISTS spAddLocation;
+
 DELIMITER //
-CREATE OR REPLACE PROCEDURE `spAddLocation`(
+
+CREATE PROCEDURE `spAddLocation`(
     IN pLocationName VARCHAR(100),
     IN pLocationTypeCode VARCHAR(30),
     IN pLocationNotes TEXT,
@@ -51,7 +54,6 @@ BEGIN
 
     SELECT LAST_INSERT_ID() AS locationId;
 
-END
-//
-DELIMITER ;
+END //
 
+DELIMITER ;
