@@ -1,14 +1,23 @@
 @page "{growthMediumId:int}"
 @model OrchidApp.Web.Pages.Setup.GrowthMedia.DetailsModel
 
-<h1 class="page-title fw-bold">Growth medium</h1>
+@{
+    var isInactive = !Model.GrowthMedium!.IsActive;
+}
+
+<h1 class="page-title fw-bold d-flex align-items-center gap-2 @(isInactive ? "text-muted" : "")">
+    @Model.GrowthMedium.Name
+
+    @if (isInactive)
+    {
+        <span class="badge bg-secondary">
+            Inactive
+        </span>
+    }
+</h1>
 
 <h2 class="h5 fw-bold mb-3">
-    @Model.GrowthMedium!.Name
-    @if (!Model.GrowthMedium.IsActive)
-    {
-        <span class="badge bg-secondary ms-2">Inactive</span>
-    }
+    Growth medium details
 </h2>
  
 <div class="card mt-3">

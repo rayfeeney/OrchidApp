@@ -35,13 +35,16 @@ else
     <div class="d-grid gap-2">
     @foreach (var medium in Model.GrowthMedia)
     {
+        var isInactive = !medium.IsActive;
+
         <a asp-page="/Setup/GrowthMedia/Details"
-           asp-route-growthMediumId="@medium.GrowthMediumId"
-           asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-           class="btn btn-lg text-start btn-outline-primary">
+        asp-route-growthMediumId="@medium.GrowthMediumId"
+        asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+        class="btn btn-lg text-start @(isInactive ? "btn-outline-secondary text-muted" : "btn-outline-primary")">
+
             @medium.Name
 
-        @if (!medium.IsActive)
+            @if (isInactive)
             {
                 <span class="badge bg-secondary ms-2">
                     Inactive

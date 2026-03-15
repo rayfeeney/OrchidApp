@@ -21,6 +21,8 @@ public class EditModel : PageModel
 
     [BindProperty(SupportsGet = true)]
     public string? ReturnUrl { get; set; }
+    public bool IsActive { get; private set; }
+    public bool IsInactive => !IsActive;
 
     [BindProperty]
     public InputModel Input { get; set; } = new();
@@ -55,6 +57,8 @@ public class EditModel : PageModel
 
         if (location == null)
             return NotFound();
+
+        IsActive = location.IsActive;
 
         Input = new InputModel
         {
