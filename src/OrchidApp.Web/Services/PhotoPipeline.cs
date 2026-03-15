@@ -23,11 +23,15 @@ public sealed class PhotoPipeline
 
         using var managedStream = new MemoryStream();
         await uploadStream.CopyToAsync(managedStream, ct);
-        managedStream.Position = 0;
+managedStream.Position = 0;
 
-        using var codec = SKCodec.Create(managedStream);
-        if (codec == null)
-            throw new InvalidOperationException("Invalid image format.");
+Console.WriteLine($"UPLOAD SIZE: {managedStream.Length}");
+
+using var codec = SKCodec.Create(managedStream);
+Console.WriteLine(codec == null ? "SKCodec: NULL" : "SKCodec: OK");
+
+if (codec == null)
+    throw new InvalidOperationException("Invalid image format.");
 
         var info = codec.Info;
 

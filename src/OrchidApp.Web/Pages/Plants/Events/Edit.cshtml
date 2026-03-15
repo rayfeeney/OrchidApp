@@ -12,12 +12,25 @@
     };
 }
 
-<h1 class="page-title fw-bold">@ViewData["Title"]</h1>
+<h1 class="page-title fw-bold @(Model.IsInactive ? "text-muted" : "")">
+    @ViewData["Title"]
+
+    @if (Model.IsInactive)
+    {
+        <span class="badge bg-secondary ms-2">Inactive</span>
+    }
+</h1>
 
 @if (Model.PlantDisplayName != null)
 {
-    <h2 class="h5 fw-bold mb-3">
+    <h2 class="h5 fw-bold mb-3 @(Model.IsInactive ? "text-muted" : "")">
         @Model.PlantDisplayName
+
+        @if (Model.IsInactive)
+        {
+            <span class="badge bg-secondary ms-2">Inactive</span>
+        }
+
         @if (!string.IsNullOrWhiteSpace(Model.PlantTag))
         {
             <span class="fw-normal text-muted">

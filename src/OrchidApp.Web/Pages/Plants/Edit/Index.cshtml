@@ -5,13 +5,14 @@
 
 @if (!string.IsNullOrEmpty(Model.SelectedDisplayName))
 {
-    <h2 class="h5 fw-bold mb-3">
-        @Model.SelectedDisplayName
-    </h2>
+<h2 class="h5 fw-bold mb-3 @(Model.IsInactive ? "text-muted" : "")">
+    @Model.SelectedDisplayName
 
-    <p class="text-muted small mb-3">
-        Change genus or species / hybrid first. Then update plant details and save.
-    </p>
+    @if (Model.IsInactive)
+    {
+        <span class="badge bg-secondary ms-2">Inactive</span>
+    }
+</h2>
 }
 
 <div asp-validation-summary="All" class="text-danger mb-3"></div>
