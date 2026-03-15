@@ -1,7 +1,14 @@
 @page "{id:int}"
 @model OrchidApp.Web.Pages.Setup.Taxa.Actions.EditModel
 
-<h1 class="page-title fw-bold">Edit species / hybrid</h1>
+<h1 class="page-title fw-bold @(Model.IsInactive ? "text-muted" : "")">
+    Edit species / hybrid
+
+    @if (Model.IsInactive)
+    {
+        <span class="badge bg-secondary ms-2">Inactive</span>
+    }
+</h1>
 
 <h2 class="h5 fw-bold mb-3">
     @Model.GenusName
@@ -69,6 +76,6 @@
     </div>
 
     <partial name="_FormActions"
-             model="@((Model.ReturnUrl ?? Url.Page("/Setup/Taxa/Details", new { id = Model.Taxon.TaxonId }), "Save species / hybrid"))" />
+         model="@((Model.ReturnUrl ?? Url.Page("/Setup/Taxa/Details", new { id = Model.Taxon.TaxonId }), "Save species / hybrid"))" />
 
 </form>

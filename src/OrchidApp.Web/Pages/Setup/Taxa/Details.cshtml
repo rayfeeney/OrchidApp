@@ -1,10 +1,14 @@
 @page "{id:int}"
 @model OrchidApp.Web.Pages.Setup.Taxa.DetailsModel
 
-<h1 class="page-title fw-bold d-flex align-items-center gap-2">
+@{
+    var isInactive = !Model.Taxon!.GenusIsActive || !Model.Taxon.TaxonIsActive;
+}
+
+<h1 class="page-title fw-bold d-flex align-items-center gap-2 @(isInactive ? "text-muted" : "")">
     @Model.Taxon!.DisplayName
 
-    @if (!Model.Taxon.TaxonIsActive)
+    @if (isInactive)
     {
         <span class="badge bg-secondary">
             Inactive
@@ -76,35 +80,45 @@ Species / hybrid details
 
             <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
 
-        @{
-            var isSystemManaged = Model.Taxon.IsSystemManaged;
-            var isActive = Model.Taxon.TaxonIsActive;
+            @{
+                var isSystemManaged = Model.Taxon.IsSystemManaged;
+                var genusInactive = !Model.Taxon.GenusIsActive;
+                var isActive = Model.Taxon.TaxonIsActive && Model.Taxon.GenusIsActive;
 
-            var buttonClass = isActive ? "btn-outline-danger" : "btn-outline-success";
-            var buttonText = isActive ? "Deactivate species / hybrid" : "Reactivate species / hybrid";
-            var confirmMessage = isActive
-                ? "Are you sure? This should only be done if the species / hybrid is no longer valid."
-                : "Are you sure? This will reactivate the species / hybrid.";
-        }
+                var buttonClass = isActive ? "btn-outline-danger" : "btn-outline-success";
+                var buttonText = isActive ? "Deactivate species / hybrid" : "Reactivate species / hybrid";
+                var confirmMessage = isActive
+                    ? "Are you sure? This should only be done if the species / hybrid is no longer valid."
+                    : "Are you sure? This will reactivate the species / hybrid.";
+            }
 
-        @if (isSystemManaged)
-        {
-            <button type="button"
-                    class="btn btn-lg btn-outline-secondary"
-                    disabled
-                    title="This record is automatically created for the genus and must remain active.">
-                Genus placeholder — always active
-            </button>
-        }
-        else
-        {
-            <button type="submit"
-                    asp-page-handler="ToggleActive"
-                    class="btn btn-lg @buttonClass"
-                    onclick="return confirm('@confirmMessage');">
-                @buttonText
-            </button>
-        }
+            @if (isSystemManaged)
+            {
+                <button type="button"
+                        class="btn btn-lg btn-outline-secondary"
+                        disabled
+                        title="This record is automatically created for the genus and must remain active.">
+                    Genus placeholder — managed automatically
+                </button>
+            }
+            else if (genusInactive)
+            {
+                <button type="button"
+                        class="btn btn-lg btn-outline-secondary"
+                        disabled
+                        title="This species / hybrid cannot be activated or deactivated because its genus is inactive.">
+                    Genus inactive — status locked
+                </button>
+            }
+            else
+            {
+                <button type="submit"
+                        asp-page-handler="ToggleActive"
+                        class="btn btn-lg @buttonClass"
+                        onclick="return confirm('@confirmMessage');">
+                    @buttonText
+                </button>
+            }
 
 </form>
 

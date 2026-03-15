@@ -34,9 +34,14 @@ public class DetailsModel : PageModel
 
     public async Task<IActionResult> OnPostToggleActiveAsync(int id)
     {
-        var taxon = await _db.Taxa
+        var taxon = await _db.TaxonIdentities
             .Where(t => t.TaxonId == id)
-            .Select(t => new { t.IsActive, t.IsSystemManaged })
+            .Select(t => new
+            {
+                t.TaxonIsActive,
+                t.IsSystemManaged,
+                t.GenusIsActive
+            })
             .SingleOrDefaultAsync();
 
         if (taxon == null)
@@ -45,10 +50,13 @@ public class DetailsModel : PageModel
         if (taxon.IsSystemManaged)
             return BadRequest("System-managed taxa cannot be manually activated or deactivated.");
 
+        if (!taxon.GenusIsActive)
+            return BadRequest("This species / hybrid cannot be changed because its genus is inactive.");
+
         await _db.Database.ExecuteSqlRawAsync(
             "CALL spSetTaxonActiveState({0},{1})",
             id,
-            !taxon.IsActive);
+            !taxon.TaxonIsActive);
 
         return RedirectToPage(new { id, ReturnUrl });
     }
