@@ -1,7 +1,18 @@
 @page "{growthMediumId:int}"
 @model OrchidApp.Web.Pages.Setup.GrowthMedia.Actions.EditModel
 
-<h1 class="page-title fw-bold">Edit growth medium</h1>
+@{
+    var isInactive = !Model.IsActive;
+}
+
+<h1 class="page-title fw-bold d-flex align-items-center gap-2 @(isInactive ? "text-muted" : "")">
+    Edit growth medium
+
+    @if (isInactive)
+    {
+        <span class="badge bg-secondary">Inactive</span>
+    }
+</h1>
 
 <h2 class="h5 fw-bold mb-3">
     Update the name or description of this growing medium.

@@ -17,6 +17,7 @@ public class EditModel : PageModel
 
     [FromRoute]
     public int GrowthMediumId { get; set; }
+    public bool IsActive { get; private set; }
 
     [BindProperty]
     public GrowthMedium Input { get; set; } = new();
@@ -28,12 +29,20 @@ public class EditModel : PageModel
     {
         var entity = await _db.GrowthMedia
             .AsNoTracking()
-            .SingleOrDefaultAsync(g => g.GrowthMediumId == GrowthMediumId);
+            .Where(g => g.GrowthMediumId == GrowthMediumId)
+            .Select(g => new
+            {
+                Entity = g,
+                g.IsActive
+            })
+            .SingleOrDefaultAsync();
 
         if (entity == null)
             return NotFound();
 
-        Input = entity;
+        Input = entity.Entity;
+        IsActive = entity.IsActive;
+
         return Page();
     }
 
