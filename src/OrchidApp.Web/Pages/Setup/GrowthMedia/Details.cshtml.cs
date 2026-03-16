@@ -40,16 +40,20 @@ public class DetailsModel : PageModel
         var current = await _db.GrowthMedia
             .AsNoTracking()
             .Where(g => g.GrowthMediumId == GrowthMediumId)
-            .Select(g => g.IsActive)
+            .Select(g => new
+            {
+                Exists = true,
+                g.IsActive
+            })
             .SingleOrDefaultAsync();
 
-        if (current == default)
+        if (current == null)
             return NotFound();
 
         await _db.Database.ExecuteSqlRawAsync(
             "CALL spSetGrowthMediumActiveState({0},{1})",
             GrowthMediumId,
-            current ? 0 : 1
+            current.IsActive ? 0 : 1
         );
 
         return RedirectToPage(new { growthMediumId = GrowthMediumId, ReturnUrl });
