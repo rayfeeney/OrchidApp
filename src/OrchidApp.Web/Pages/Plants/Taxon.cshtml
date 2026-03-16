@@ -5,8 +5,14 @@
     ViewData["Title"] = Model.DisplayName;
 }
 
-<h1 class="page-title fw-bold">
+<h1 class="page-title fw-bold @(Model.IsInactive ? "text-muted" : "")">
     @Model.DisplayName
+
+    @if (Model.IsInactive)
+    {
+        <span class="badge bg-secondary ms-2">Inactive</span>
+    }
+
     <span class="fw-normal fs-6 text-muted">
         (@Model.Plants.Count plant@(Model.Plants.Count == 1 ? "" : "s"))
     </span>
@@ -36,9 +42,8 @@ else
             <div class="plant-card-wrapper">
 
                 <div class="plant-card">
-                    <div class="plant-main">
+                    <div class="plant-main @(Model.IsInactive ? "text-muted" : "")">
 
-                        <!-- Thumbnail → Photos -->
                         <a class="plant-thumb-link"
                            asp-page="/Plants/Photos/Index"
                            asp-route-plantId="@plant.PlantId"
@@ -60,7 +65,6 @@ else
 
                         </a>
 
-                        <!-- Main area → Details -->
                         <a class="plant-text-link"
                            asp-page="/Plants/Details"
                            asp-route-plantId="@plant.PlantId"
@@ -93,7 +97,6 @@ else
                     </div>
                 </div>
 
-                <!-- Edit -->
                 <a class="plant-edit"
                    asp-page="/Plants/Edit/Index"
                    asp-route-plantId="@plant.PlantId"

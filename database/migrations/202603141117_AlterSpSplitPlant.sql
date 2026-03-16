@@ -1,5 +1,8 @@
+DROP PROCEDURE IF EXISTS spSplitPlant;
+
 DELIMITER //
-CREATE OR REPLACE PROCEDURE `spSplitPlant`(
+
+CREATE PROCEDURE spSplitPlant(
     IN pParentPlantId INT,
     IN pSplitDateTime DATETIME,
     IN pChildPlantTagsCsv TEXT,
@@ -222,7 +225,6 @@ BEGIN
 
     COMMIT;
 
-END
-//
-DELIMITER ;
+END //
 
+DELIMITER ;

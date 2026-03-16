@@ -19,6 +19,8 @@ public class DetailsModel : PageModel
     }
 
     public Genus? Genus { get; private set; }
+    [FromRoute]
+    public int Id { get; set; }
 
     public async Task<IActionResult> OnGetAsync(int id)
     {
@@ -30,5 +32,25 @@ public class DetailsModel : PageModel
             return NotFound();
 
         return Page();
+    }
+
+    public async Task<IActionResult> OnPostToggleActiveAsync()
+    {
+        var current = await _db.Genera
+            .AsNoTracking()
+            .Where(g => g.GenusId == Id)
+            .Select(g => (bool?)g.IsActive)
+            .SingleOrDefaultAsync();
+
+        if (current == null)
+            return NotFound();
+
+        await _db.Database.ExecuteSqlRawAsync(
+            "CALL spSetGenusActiveState({0},{1})",
+            Id,
+            current.Value ? 0 : 1
+        );
+
+        return RedirectToPage(new { Id, ReturnUrl });
     }
 }

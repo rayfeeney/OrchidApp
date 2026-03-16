@@ -19,6 +19,7 @@ public class IndexModel : PageModel
     public async Task OnGetAsync()
     {
         GrowthMedia = await _db.GrowthMedia
+            .AsNoTracking()
             .OrderBy(g => g.Name)
             .ToListAsync();
     }

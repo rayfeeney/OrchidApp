@@ -38,14 +38,23 @@ public class DetailsModel : PageModel
     public async Task<IActionResult> OnPostToggleActiveAsync()
     {
         var current = await _db.GrowthMedia
-            .SingleOrDefaultAsync(g => g.GrowthMediumId == GrowthMediumId);
+            .AsNoTracking()
+            .Where(g => g.GrowthMediumId == GrowthMediumId)
+            .Select(g => new
+            {
+                Exists = true,
+                g.IsActive
+            })
+            .SingleOrDefaultAsync();
 
         if (current == null)
             return NotFound();
 
-        current.IsActive = !current.IsActive;
-
-        await _db.SaveChangesAsync();
+        await _db.Database.ExecuteSqlRawAsync(
+            "CALL spSetGrowthMediumActiveState({0},{1})",
+            GrowthMediumId,
+            current.IsActive ? 0 : 1
+        );
 
         return RedirectToPage(new { growthMediumId = GrowthMediumId, ReturnUrl });
     }

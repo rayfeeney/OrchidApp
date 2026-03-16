@@ -43,6 +43,9 @@ public class IndexModel : PageModel
     public string PlantDisplayName { get; private set; } = string.Empty;
     public string PlantTag { get; private set; } = string.Empty;
     public string? LocationName { get; private set; }
+    public bool GenusIsActive { get; private set; }
+    public bool TaxonIsActive { get; private set; }
+    public bool IsInactive => !GenusIsActive || !TaxonIsActive;
 
     [BindProperty]
     [Display(Name = "Photos")]
@@ -124,7 +127,8 @@ public class IndexModel : PageModel
             {
                 DisplayName = p.DisplayName!,
                 PlantTag = p.PlantTag!,
-                p.LocationName
+                p.LocationName,
+                p.TaxonId          // ✅ added
             })
             .FirstOrDefaultAsync(ct);
 
@@ -134,6 +138,19 @@ public class IndexModel : PageModel
         PlantDisplayName = plant.DisplayName;
         PlantTag = plant.PlantTag;
         LocationName = plant.LocationName;
+
+        // ✅ taxonomy state (NEW)
+        var taxon = await _context.TaxonIdentities
+            .Where(t => t.TaxonId == plant.TaxonId)
+            .Select(t => new
+            {
+                t.GenusIsActive,
+                t.TaxonIsActive
+            })
+            .SingleAsync(ct);
+
+        GenusIsActive = taxon.GenusIsActive;
+        TaxonIsActive = taxon.TaxonIsActive;
 
         Photos = await _context.PlantPhotos
             .Where(p => p.PlantId == plantId && p.IsActive)

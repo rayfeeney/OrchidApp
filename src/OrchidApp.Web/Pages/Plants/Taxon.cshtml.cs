@@ -23,18 +23,35 @@ public class TaxonModel : PageModel
 
     public string DisplayName { get; private set; } = string.Empty;
 
+    public bool GenusIsActive { get; private set; }
+    public bool TaxonIsActive { get; private set; }
+
+    public bool IsInactive => !GenusIsActive || !TaxonIsActive;
+
     public List<PlantActiveCurrentLocation> Plants { get; private set; } = new();
 
     public async Task OnGetAsync(int taxonId)
     {
         TaxonId = taxonId;
 
+        var taxon = await _db.TaxonIdentities
+            .Where(t => t.TaxonId == taxonId)
+            .Select(t => new
+            {
+                t.DisplayName,
+                t.TaxonIsActive,
+                t.GenusIsActive
+            })
+            .SingleAsync();
+
+        DisplayName = taxon.DisplayName;
+        GenusIsActive = taxon.GenusIsActive;
+        TaxonIsActive = taxon.TaxonIsActive;
+
         Plants = await _db.PlantActiveCurrentLocations
             .Where(p => p.TaxonId == taxonId)
             .OrderBy(p => p.LocationName)
             .ThenBy(p => p.PlantTag)
             .ToListAsync();
-
-        DisplayName = Plants.FirstOrDefault()?.DisplayName ?? string.Empty;
     }
 }

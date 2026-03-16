@@ -3,8 +3,13 @@
 
 <h1 class="page-title fw-bold">Split plant</h1>
 
-<h2 class="h5 fw-bold mb-3">
+<h2 class="h5 fw-bold mb-3 @(Model.IsInactive ? "text-muted" : "")">
     <span>@Model.Plant?.DisplayName</span>
+
+    @if (Model.IsInactive)
+    {
+        <span class="badge bg-secondary ms-2">Inactive</span>
+    }
     @if (!string.IsNullOrWhiteSpace(Model.Plant?.PlantTag))
     {
         <span class="fw-normal text-muted">
@@ -26,6 +31,14 @@
 
 <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
+@if (Model.IsInactive)
+{
+    <div class="alert alert-secondary">
+        This plant cannot be split because its taxonomy is inactive.
+    </div>
+}
+else
+{
 <form method="post">
 
     <div class="mb-3">
@@ -109,3 +122,4 @@
     </div>
 
 </form>
+}

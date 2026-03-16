@@ -34,14 +34,16 @@ else
     <div class="d-grid gap-2">
     @foreach (var location in Model.Locations)
     {
+        var isInactive = !location.IsActive;
+
         <a asp-page="/Setup/Locations/Details"
-            asp-route-locationId="@location.LocationId"
-            asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-            class="btn btn-lg text-start @(location.IsActive ? "btn-outline-primary" : "btn-outline-secondary text-muted")">
+        asp-route-locationId="@location.LocationId"
+        asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+        class="btn btn-lg text-start @(isInactive ? "btn-outline-secondary text-muted" : "btn-outline-primary")">
 
             @location.DisplayName
 
-            @if (!location.IsActive)
+            @if (isInactive)
             {
                 <span class="badge bg-secondary ms-2">
                     Inactive

@@ -1,7 +1,11 @@
 @page "{id:int}"
 @model OrchidApp.Web.Pages.Setup.Genera.DetailsModel
 
-<h1 class="page-title fw-bold d-flex align-items-center gap-2">
+@{
+    var isInactive = !Model.Genus!.IsActive;
+}
+
+<h1 class="page-title fw-bold d-flex align-items-center gap-2 @(isInactive ? "text-muted" : "")">
     @Model.Genus!.Name
 
     @if (!Model.Genus.IsActive)
@@ -43,6 +47,18 @@ Genus details
         Edit genus
     </a>
 
+    <form method="post"
+          asp-route-id="@Model.Genus!.GenusId"
+          class="d-grid">
+        <button type="submit"
+                asp-page-handler="ToggleActive"
+                class="btn btn-lg @(Model.Genus.IsActive ? "btn-outline-danger" : "btn-outline-success")"
+                onclick="return confirm('Are you sure you want to @(Model.Genus.IsActive ? "deactivate" : "reactivate") this genus?');">
+
+            @(Model.Genus.IsActive ? "Deactivate genus" : "Reactivate genus")
+
+        </button>
+    </form>
 </div>
 
 <partial name="_BackFullWidth"

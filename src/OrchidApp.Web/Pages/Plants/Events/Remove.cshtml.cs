@@ -85,12 +85,40 @@ public class RemoveModel : PageModel
 
     [FromQuery]
     public string EventType { get; set; } = string.Empty;
+    public bool GenusIsActive { get; private set; }
+    public bool TaxonIsActive { get; private set; }
+    public bool IsInactive => !GenusIsActive || !TaxonIsActive;
 
+    public string? PlantDisplayName { get; private set; }
+    public string? PlantTag { get; private set; }
 
     public PlantLifecycleEvent? Event { get; private set; }
 
     public IActionResult OnGet()
     {
+        // Load plant context + taxonomy state FIRST
+        var plant = _db.PlantActiveSummaries
+            .FirstOrDefault(p => p.PlantId == PlantId);
+
+        if (plant != null)
+        {
+            PlantDisplayName = plant.DisplayName;
+            PlantTag = plant.PlantTag;
+
+            var taxon = _db.TaxonIdentities
+                .Where(t => t.TaxonId == plant.TaxonId)
+                .Select(t => new
+                {
+                    t.GenusIsActive,
+                    t.TaxonIsActive
+                })
+                .Single();
+
+            GenusIsActive = taxon.GenusIsActive;
+            TaxonIsActive = taxon.TaxonIsActive;
+        }
+
+        // THEN load lifecycle event
         Event = EventType switch
         {
             "Observation" =>
@@ -117,12 +145,11 @@ public class RemoveModel : PageModel
         };
 
         if (Event == null)
-        {
             return NotFound();
-        }
 
         return Page();
     }
+
     public async Task<IActionResult> OnPostAsync()
     {
         switch (EventType)

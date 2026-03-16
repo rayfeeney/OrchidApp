@@ -88,6 +88,10 @@ public class AddModel : PageModel
     [FromRoute]
     public int PlantId { get; set; }
 
+    public bool GenusIsActive { get; private set; }
+    public bool TaxonIsActive { get; private set; }
+    public bool IsInactive => !GenusIsActive || !TaxonIsActive;
+
     [FromRoute]
     public string EventType { get; set; } = "Observation";
 
@@ -185,13 +189,27 @@ public class AddModel : PageModel
         }
         
         var plant = _db.PlantActiveSummaries
-                       .FirstOrDefault(p => p.PlantId == PlantId);
+            .FirstOrDefault(p => p.PlantId == PlantId);
 
-        if (plant != null)
-        {
-            PlantDisplayName = plant.DisplayName;
-            PlantTag = plant.PlantTag;
-        }
+        if (plant == null)
+            return NotFound();
+
+        // ✔ Heading data
+        PlantDisplayName = plant.DisplayName;
+        PlantTag = plant.PlantTag;
+
+        // ✔ Inactive state
+        var taxon = _db.TaxonIdentities
+            .Where(t => t.TaxonId == plant.TaxonId)
+            .Select(t => new
+            {
+                t.GenusIsActive,
+                t.TaxonIsActive
+            })
+            .Single();
+
+        GenusIsActive = taxon.GenusIsActive;
+        TaxonIsActive = taxon.TaxonIsActive;
 
         LoadLookups();
         return Page();

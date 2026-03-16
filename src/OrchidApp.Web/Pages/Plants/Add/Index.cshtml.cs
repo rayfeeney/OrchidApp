@@ -23,7 +23,7 @@ public class IndexModel : PageModel
     public async Task OnGetAsync()
     {
         Taxa = await _db.TaxonIdentities
-            .Where(t => t.IsActive)
+            .Where(t => t.TaxonIsActive && t.GenusIsActive)
             .OrderBy(t => t.GenusName)
             .ThenBy(t => t.SpeciesName)
             .ThenBy(t => t.HybridName)

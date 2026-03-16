@@ -22,23 +22,23 @@ public class IndexModel : PageModel
     public void OnGet()
     {
         Taxa =
-            (from p in _db.PlantActiveSummaries
-             join t in _db.Taxa on p.TaxonId equals t.TaxonId
-             join g in _db.Genera on t.GenusId equals g.GenusId
-             group p by new
-             {
-                 p.TaxonId,
-                 p.DisplayName,
-                 GenusName = g.Name
-             }
-             into grp
-             select new TaxonPlantCount
-             {
-                 TaxonId = grp.Key.TaxonId,
-                 DisplayName = grp.Key.DisplayName,
-                 GenusName = grp.Key.GenusName,
-                 PlantCount = grp.Count()
-             })
+            _db.PlantActiveSummaries
+            .GroupBy(p => new
+            {
+                p.TaxonId,
+                p.GenusName,
+                p.GenusIsActive,
+                p.TaxonIsActive
+            })
+            .Select(grp => new TaxonPlantCount
+            {
+                TaxonId = grp.Key.TaxonId,
+                DisplayName = grp.First().DisplayName,
+                GenusName = grp.Key.GenusName,
+                GenusIsActive = grp.Key.GenusIsActive,
+                TaxonIsActive = grp.Key.TaxonIsActive,
+                PlantCount = grp.Count()
+            })
             .OrderBy(x => x.GenusName)
             .ThenBy(x => x.DisplayName)
             .ToList();
@@ -49,6 +49,9 @@ public class IndexModel : PageModel
         public int TaxonId { get; set; }
         public string DisplayName { get; set; } = string.Empty;
         public string GenusName { get; set; } = string.Empty;
+        public bool GenusIsActive { get; set; }
+        public bool TaxonIsActive { get; set; }
         public int PlantCount { get; set; }
     }
+
 }

@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using OrchidApp.Web.Data;
 using OrchidApp.Web.Models;
+using OrchidApp.Web.Infrastructure;
+using System;
 
 namespace OrchidApp.Web.Pages.Setup.GrowthMedia.Actions;
 
@@ -17,6 +19,7 @@ public class EditModel : PageModel
 
     [FromRoute]
     public int GrowthMediumId { get; set; }
+    public bool IsActive { get; private set; }
 
     [BindProperty]
     public GrowthMedium Input { get; set; } = new();
@@ -28,12 +31,20 @@ public class EditModel : PageModel
     {
         var entity = await _db.GrowthMedia
             .AsNoTracking()
-            .SingleOrDefaultAsync(g => g.GrowthMediumId == GrowthMediumId);
+            .Where(g => g.GrowthMediumId == GrowthMediumId)
+            .Select(g => new
+            {
+                Entity = g,
+                g.IsActive
+            })
+            .SingleOrDefaultAsync();
 
         if (entity == null)
             return NotFound();
 
-        Input = entity;
+        Input = entity.Entity;
+        IsActive = entity.IsActive;
+
         return Page();
     }
 
@@ -42,28 +53,31 @@ public class EditModel : PageModel
         if (!ModelState.IsValid)
             return Page();
 
-        var entity = await _db.GrowthMedia
-            .SingleOrDefaultAsync(g => g.GrowthMediumId == GrowthMediumId);
-
-        if (entity == null)
-            return NotFound();
-
-        entity.Name = Input.Name.Trim();
-        entity.Description = string.IsNullOrWhiteSpace(Input.Description)
-            ? null
-            : Input.Description.Trim();
-
         try
         {
-            await _db.SaveChangesAsync();
+            object descriptionParam =
+                string.IsNullOrWhiteSpace(Input.Description)
+                    ? DBNull.Value
+                    : Input.Description.Trim();
+
+            await _db.Database.ExecuteSqlRawAsync(
+                "CALL spUpdateGrowthMediumDetails({0},{1},{2})",
+                new object[]
+                {
+                    GrowthMediumId,
+                    Input.Name.Trim(),
+                    descriptionParam
+                });
         }
-        catch (DbUpdateException)
+        catch (Exception ex)
         {
-            ModelState.AddModelError(
-                nameof(Input.Name),
-                "A growth medium with this name already exists."
-            );
-            return Page();
+            if (DatabaseErrorTranslator.TryTranslate(ex, out var message))
+            {
+                ModelState.AddModelError(nameof(Input.Name), message);
+                return Page();
+            }
+
+            throw;
         }
 
         if (!string.IsNullOrWhiteSpace(ReturnUrl))

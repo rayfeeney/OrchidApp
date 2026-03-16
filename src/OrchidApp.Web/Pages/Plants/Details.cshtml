@@ -5,8 +5,13 @@
     ViewData["Title"] = Model.PlantRequired.DisplayName;
 }
 
-<h1 class="page-title fw-bold">
+<h1 class="page-title fw-bold @(Model.IsInactive ? "text-muted" : "")">
     @Model.PlantRequired.DisplayName
+
+    @if (Model.IsInactive)
+    {
+        <span class="badge bg-secondary ms-2">Inactive</span>
+    }
 </h1>
 
 <h2 class="h5 fw-bold mb-3">
@@ -127,12 +132,22 @@ Record observations, moves, repotting and flowering events.
             Splitting ends this plant and creates new plants.
         </p>
 
-        <a asp-page="/Plants/Events/Split"
-           asp-route-plantId="@Model.PlantRequired.PlantId"
-           asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-           class="btn btn-outline-secondary btn-lg w-100">
-            Split plant
-        </a>
+        @if (Model.IsInactive)
+        {
+            <button class="btn btn-outline-secondary btn-lg w-100" disabled>
+                Cannot split — taxonomy inactive
+            </button>
+        }
+        else
+        {
+            <a asp-page="/Plants/Events/Split"
+               asp-route-plantId="@Model.PlantRequired.PlantId"
+               asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+               class="btn btn-outline-secondary btn-lg w-100">
+                Split plant
+            </a>
+        }
+
     </div>
 }
 

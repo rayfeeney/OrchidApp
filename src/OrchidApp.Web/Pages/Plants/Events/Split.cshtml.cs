@@ -23,7 +23,9 @@ public class SplitModel : PageModel
 
     [FromRoute]
     public int PlantId { get; set; }
-
+    public bool GenusIsActive { get; private set; }
+    public bool TaxonIsActive { get; private set; }
+    public bool IsInactive => !GenusIsActive || !TaxonIsActive;
     public PlantCurrentLocation? Plant { get; private set; }
 
     [BindProperty]
@@ -71,6 +73,21 @@ public class SplitModel : PageModel
         if (Plant.PlantEndDate != null)
             return BadRequest("Cannot split an ended plant.");
 
+        var taxon = _db.TaxonIdentities
+            .Where(t => t.TaxonId == Plant.TaxonId)
+            .Select(t => new
+            {
+                t.GenusIsActive,
+                t.TaxonIsActive
+            })
+            .Single();
+
+        GenusIsActive = taxon.GenusIsActive;
+        TaxonIsActive = taxon.TaxonIsActive;
+
+        if (IsInactive)
+            return BadRequest("Cannot split plant because taxonomy is inactive.");
+
         if (ChildCount < 2)
             ChildCount = 2;
 
@@ -103,6 +120,26 @@ public class SplitModel : PageModel
     {
         var parentPlant = await _db.Plants
             .FirstOrDefaultAsync(p => p.PlantId == PlantId);
+
+        if (parentPlant == null)
+            return NotFound();
+
+        var taxon = await _db.TaxonIdentities
+            .Where(t => t.TaxonId == parentPlant.TaxonId)
+            .Select(t => new
+            {
+                t.GenusIsActive,
+                t.TaxonIsActive
+            })
+            .SingleAsync();
+
+        if (!taxon.GenusIsActive || !taxon.TaxonIsActive)
+        {
+            ModelState.AddModelError(string.Empty,
+                "Cannot split plant because taxonomy is inactive.");
+            EnsureChildListLength();
+            return Page();
+        }
 
         if (parentPlant == null)
             return NotFound();

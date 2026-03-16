@@ -1,9 +1,20 @@
 ﻿@page "{locationId:int}"
 @model OrchidApp.Web.Pages.Setup.Locations.Actions.EditModel
 
-<h1 class="page-title fw-bold">Edit location</h1>
+@{
+    var isInactive = Model.IsInactive;
+}
 
-<h2 class="h5 fw-bold mb-3">
+<h1 class="page-title fw-bold @(isInactive ? "text-muted" : "")">
+    Edit location
+
+    @if (isInactive)
+    {
+        <span class="badge bg-secondary ms-2">Inactive</span>
+    }
+</h1>
+
+<h2 class="h5 fw-bold mb-3 @(isInactive ? "text-muted" : "")">
     @Model.Input.LocationName
 </h2>
 

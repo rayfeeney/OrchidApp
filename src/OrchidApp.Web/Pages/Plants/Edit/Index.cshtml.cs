@@ -39,6 +39,10 @@ public class IndexModel : PageModel
     public SelectList GenusOptions { get; private set; } = default!;
     public SelectList TaxonOptions { get; private set; } = default!;
 
+    public bool GenusIsActive { get; private set; }
+    public bool TaxonIsActive { get; private set; }
+    public bool IsInactive => !GenusIsActive || !TaxonIsActive;
+
     // =========================
     // Editable Fields
     // =========================
@@ -103,13 +107,11 @@ public class IndexModel : PageModel
         else if (genusId.HasValue)
         {
             effectiveTaxonId = await _db.TaxonIdentities
-                .AsNoTracking()
                 .Where(t =>
                     t.GenusId == genusId.Value &&
-                    t.IsActive &&
                     t.IsSystemManaged)
                 .Select(t => t.TaxonId)
-                .SingleAsync();
+                .FirstAsync();
         }
 
         TaxonId = effectiveTaxonId;
@@ -120,6 +122,9 @@ public class IndexModel : PageModel
 
         GenusId = selected.GenusId;
         SelectedDisplayName = selected.DisplayName;
+
+        GenusIsActive = selected.GenusIsActive;
+        TaxonIsActive = selected.TaxonIsActive;
 
         await LoadGenusOptionsAsync();
         await LoadTaxonOptionsAsync();
@@ -192,34 +197,50 @@ public class IndexModel : PageModel
     {
         var genera = await _db.Genera
             .AsNoTracking()
-            .Where(g => g.IsActive)
+            .Where(g => g.IsActive || g.GenusId == GenusId)
             .OrderBy(g => g.Name)
-            .Select(g => new { g.GenusId, g.Name })
+            .Select(g => new
+            {
+                g.GenusId,
+                g.Name,
+                g.IsActive
+            })
             .ToListAsync();
 
-        GenusOptions = new SelectList(genera, "GenusId", "Name", GenusId);
+        GenusOptions = new SelectList(
+            genera.Select(g => new
+            {
+                g.GenusId,
+                Name = g.IsActive ? g.Name : g.Name + " (inactive)"
+            }),
+            "GenusId",
+            "Name",
+            GenusId
+        );
     }
 
     private async Task LoadTaxonOptionsAsync()
     {
         var taxa = await _db.TaxonIdentities
             .AsNoTracking()
-            .Where(t => t.GenusId == GenusId && t.IsActive)
+            .Where(t =>
+                t.GenusId == GenusId &&
+                (t.TaxonIsActive || t.TaxonId == TaxonId))
             .OrderByDescending(t => t.IsSystemManaged)
             .ThenBy(t => t.DisplayName)
             .ToListAsync();
 
-        SelectedDisplayName = taxa
-            .First(t => t.TaxonId == TaxonId)
-            .DisplayName;
+        var selected = taxa.FirstOrDefault(t => t.TaxonId == TaxonId);
+
+        SelectedDisplayName = selected?.DisplayName ?? "Unknown";
 
         TaxonOptions = new SelectList(
             taxa.Select(t => new
             {
                 t.TaxonId,
-                Name = t.IsSystemManaged
-                    ? "sp."
-                    : t.SpeciesName ?? t.HybridName
+                Name = t.TaxonIsActive
+                    ? (t.IsSystemManaged ? "sp." : t.DisplayName)
+                    : (t.IsSystemManaged ? "sp. (inactive)" : t.DisplayName + " (inactive)")
             }),
             "TaxonId",
             "Name",

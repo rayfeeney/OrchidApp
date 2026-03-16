@@ -23,6 +23,10 @@ public class EditModel : PageModel
 
     public string GenusName { get; private set; } = string.Empty;
 
+    public bool GenusIsActive { get; private set; }
+    public bool TaxonIsActive { get; private set; }
+    public bool IsInactive => !GenusIsActive || !TaxonIsActive;
+
     public async Task<IActionResult> OnGetAsync(int id)
     {
         var result = await _db.Taxa
@@ -45,7 +49,9 @@ public class EditModel : PageModel
                         GrowthNotes = t.GrowthNotes,
                         TaxonNotes = t.TaxonNotes
                     },
-                    GenusName = g.Name
+                    GenusName = g.Name,
+                    GenusIsActive = g.IsActive,
+                    TaxonIsActive = t.IsActive
                 }
             )
             .SingleOrDefaultAsync();
@@ -55,8 +61,11 @@ public class EditModel : PageModel
 
         Taxon = result.Taxon;
         GenusName = result.GenusName;
-
+        GenusIsActive = result.GenusIsActive;
+        TaxonIsActive = result.TaxonIsActive;
+    
         return Page();
+        
     }
 
     public async Task<IActionResult> OnPostAsync(int id)

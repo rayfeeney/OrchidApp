@@ -123,7 +123,9 @@ public class EditModel : PageModel
 
     public string? PlantDisplayName { get; private set; }
     public string? PlantTag { get; private set; }
-
+    public bool GenusIsActive { get; private set; }
+    public bool TaxonIsActive { get; private set; }
+    public bool IsInactive => !GenusIsActive || !TaxonIsActive;
     public List<GrowthMedium> GrowthMedia { get; private set; } = new();
 
     public async Task<IActionResult> OnGetAsync()
@@ -134,6 +136,18 @@ public class EditModel : PageModel
         {
             PlantDisplayName = plant.DisplayName;
             PlantTag = plant.PlantTag;
+
+            var taxon = _db.TaxonIdentities
+                .Where(t => t.TaxonId == plant.TaxonId)
+                .Select(t => new
+                {
+                    t.GenusIsActive,
+                    t.TaxonIsActive
+                })
+                .Single();
+
+            GenusIsActive = taxon.GenusIsActive;
+            TaxonIsActive = taxon.TaxonIsActive;
         }
 
         // Identify lifecycle event

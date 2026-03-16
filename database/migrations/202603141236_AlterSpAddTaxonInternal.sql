@@ -1,5 +1,8 @@
+DROP PROCEDURE IF EXISTS spAddTaxonInternal;
+
 DELIMITER //
-CREATE OR REPLACE PROCEDURE `spAddTaxonInternal`(
+
+CREATE PROCEDURE spAddTaxonInternal(
     IN  pGenusId            INT,
     IN  pSpeciesName        VARCHAR(100),
     IN  pHybridName         VARCHAR(150),
@@ -55,7 +58,6 @@ BEGIN
 
     SET pTaxonId = LAST_INSERT_ID();
 
-END
-//
-DELIMITER ;
+END //
 
+DELIMITER ;

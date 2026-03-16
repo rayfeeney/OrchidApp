@@ -100,6 +100,21 @@ private readonly OrchidDbContext _db;
             return Page();
         }
 
+        // Guard: genus must still be active
+        var genusIsActive = await _db.Genera
+            .Where(g => g.GenusId == GenusId)
+            .Select(g => g.IsActive)
+            .SingleOrDefaultAsync();
+
+        if (!genusIsActive)
+        {
+            ModelState.AddModelError(string.Empty,
+                "Cannot add species / hybrid because the genus is inactive.");
+
+            await OnGetAsync();
+            return Page();
+        }
+
         try
         {
             var result = await _sp.QuerySingleAsync<AddTaxonResult>(
