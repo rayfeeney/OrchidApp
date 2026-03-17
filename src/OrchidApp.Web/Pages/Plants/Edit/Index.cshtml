@@ -15,6 +15,16 @@
 </h2>
 }
 
+<div class="alert alert-info mt-3">
+    <strong>Changing plant taxonomy is a multi-step process.</strong>
+    <ul class="mb-0">
+        <li>To change genus: select a genus, then choose <strong>Change genus</strong>.</li>
+        <li>This will reset the species / hybrid selection to <strong>sp.</strong></li>
+        <li>You must then select the correct species / hybrid and choose <strong>Change species / hybrid</strong>.</li>
+        <li>Finally, select <strong>Save changes</strong> to confirm all updates.</li>
+    </ul>
+</div>
+
 <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
 <!-- ========================= -->
@@ -26,7 +36,8 @@
     <div class="mb-3">
         <label asp-for="GenusId" class="fw-bold"></label>
         <small class="text-muted d-block fw-normal">
-            Changing genus will reset the species / hybrid list to match that genus. Select the Change genus button to update.
+            Selecting a new genus resets the species / hybrid to <strong>sp.</strong>.
+            After changing genus, you must choose the correct species / hybrid.
         </small>
 
         <div class="input-group">
@@ -54,7 +65,9 @@
     <div class="mb-3">
         <label asp-for="TaxonId" class="fw-bold"></label>
         <small class="text-muted d-block fw-normal">
-            Select the correct species / hybrid for this plant. Select the Change species / hybrid button to update.
+            Select the correct species / hybrid for this plant,
+            then choose <strong>Change species / hybrid</strong>.
+            Changes are not final until you select <strong>Save changes</strong>.
         </small>
 
         <div class="input-group">
@@ -153,6 +166,10 @@
                   rows="5"></textarea>
         <span asp-validation-for="PlantNotes" class="text-danger"></span>
     </div>
+
+    <p class="text-muted">
+        All taxonomy changes are only final after selecting <strong>Save changes</strong>.
+    </p>
 
     <div class="d-flex justify-content-between align-items-stretch mt-4">
         <a asp-page="/Plants/Details"
