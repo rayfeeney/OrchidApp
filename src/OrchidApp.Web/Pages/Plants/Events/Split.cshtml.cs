@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using OrchidApp.Web.Data;
 using OrchidApp.Web.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations;
 using OrchidApp.Web.Infrastructure;
 
@@ -11,9 +10,6 @@ namespace OrchidApp.Web.Pages.Plants.Events;
 
 public class SplitModel : PageModel
 {
-    [BindProperty(SupportsGet = true)]
-    public string? ReturnUrl { get; set; }
-
     private readonly OrchidDbContext _db;
 
     public SplitModel(OrchidDbContext db)
@@ -21,12 +17,30 @@ public class SplitModel : PageModel
         _db = db;
     }
 
+    // =============================
+    // ROUTING / NAVIGATION
+    // =============================
+
     [FromRoute]
     public int PlantId { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
+
+    // =============================
+    // PAGE STATE
+    // =============================
+
+    public PlantCurrentLocation? Plant { get; private set; }
+
     public bool GenusIsActive { get; private set; }
     public bool TaxonIsActive { get; private set; }
+
     public bool IsInactive => !GenusIsActive || !TaxonIsActive;
-    public PlantCurrentLocation? Plant { get; private set; }
+
+    // =============================
+    // FORM STATE
+    // =============================
 
     [BindProperty]
     public int ChildCount { get; set; } = 2;
@@ -36,8 +50,8 @@ public class SplitModel : PageModel
 
     [BindProperty]
     public DateTime SplitDateTime { get; set; }
-            = DateTime.Now.AddSeconds(-DateTime.Now.Second)
-                        .AddMilliseconds(-DateTime.Now.Millisecond);
+        = DateTime.Now.AddSeconds(-DateTime.Now.Second)
+                      .AddMilliseconds(-DateTime.Now.Millisecond);
 
     [BindProperty]
     public string? SplitReasonNotes { get; set; }
@@ -47,85 +61,25 @@ public class SplitModel : PageModel
         [Required]
         [Display(Name = "Plant tag")]
         public string? PlantTag { get; set; }
+
         [Display(Name = "Plant name")]
         public string? PlantName { get; set; }
     }
 
-    private void EnsureChildListLength()
+    // =============================
+    // PAGE STATE LOADER
+    // =============================
+
+    private async Task LoadPageStateAsync()
     {
-        if (Children == null)
-            Children = new List<ChildInput>();
-
-        while (Children.Count < ChildCount)
-        {
-            Children.Add(new ChildInput());
-        }
-    }
-
-    public IActionResult OnGet()
-    {
-        Plant = _db.PlantCurrentLocations
-                .FirstOrDefault(p => p.PlantId == PlantId);
-
-        if (Plant == null)
-            return NotFound();
-
-        if (Plant.PlantEndDate != null)
-            return BadRequest("Cannot split an ended plant.");
-
-        var taxon = _db.TaxonIdentities
-            .Where(t => t.TaxonId == Plant.TaxonId)
-            .Select(t => new
-            {
-                t.GenusIsActive,
-                t.TaxonIsActive
-            })
-            .Single();
-
-        GenusIsActive = taxon.GenusIsActive;
-        TaxonIsActive = taxon.TaxonIsActive;
-
-        if (IsInactive)
-            return BadRequest("Cannot split plant because taxonomy is inactive.");
-
-        if (ChildCount < 2)
-            ChildCount = 2;
-
-        Children = Enumerable.Range(0, ChildCount)
-                            .Select(_ => new ChildInput())
-                            .ToList();
-
-        return Page();
-    }
-
-    public IActionResult OnPostAddChild()
-    {
-        if (ChildCount < 2)
-            ChildCount = 2;
-
-        ChildCount++;
-
-        if (Children == null)
-            Children = new List<ChildInput>();
-
-        while (Children.Count < ChildCount)
-        {
-            Children.Add(new ChildInput());
-        }
-
-        return Page();
-    }
-
-    public async Task<IActionResult> OnPostSplit()
-    {
-        var parentPlant = await _db.Plants
+        Plant = await _db.PlantCurrentLocations
             .FirstOrDefaultAsync(p => p.PlantId == PlantId);
 
-        if (parentPlant == null)
-            return NotFound();
+        if (Plant == null)
+            throw new InvalidOperationException("Plant not found.");
 
         var taxon = await _db.TaxonIdentities
-            .Where(t => t.TaxonId == parentPlant.TaxonId)
+            .Where(t => t.TaxonId == Plant.TaxonId)
             .Select(t => new
             {
                 t.GenusIsActive,
@@ -133,16 +87,79 @@ public class SplitModel : PageModel
             })
             .SingleAsync();
 
-        if (!taxon.GenusIsActive || !taxon.TaxonIsActive)
-        {
-            ModelState.AddModelError(string.Empty,
-                "Cannot split plant because taxonomy is inactive.");
-            EnsureChildListLength();
-            return Page();
-        }
+        GenusIsActive = taxon.GenusIsActive;
+        TaxonIsActive = taxon.TaxonIsActive;
+    }
+
+    private void EnsureChildListLength()
+    {
+        if (Children == null)
+            Children = new();
+
+        while (Children.Count < ChildCount)
+            Children.Add(new ChildInput());
+    }
+
+    // =============================
+    // GET
+    // =============================
+
+    public async Task<IActionResult> OnGetAsync()
+    {
+        await LoadPageStateAsync();
+
+        if (Plant!.PlantEndDate != null)
+            return BadRequest("Cannot split an ended plant.");
+
+        if (ChildCount < 2)
+            ChildCount = 2;
+
+        Children = Enumerable.Range(0, ChildCount)
+            .Select(_ => new ChildInput())
+            .ToList();
+
+        return Page();
+    }
+
+    // =============================
+    // ADD CHILD
+    // =============================
+
+    public async Task<IActionResult> OnPostAddChildAsync()
+    {
+        await LoadPageStateAsync();
+
+        if (ChildCount < 2)
+            ChildCount = 2;
+
+        ChildCount++;
+
+        EnsureChildListLength();
+
+        return Page();
+    }
+
+    // =============================
+    // SPLIT
+    // =============================
+
+    public async Task<IActionResult> OnPostSplitAsync()
+    {
+        var parentPlant = await _db.Plants
+            .FirstOrDefaultAsync(p => p.PlantId == PlantId);
 
         if (parentPlant == null)
             return NotFound();
+
+        await LoadPageStateAsync();
+
+        if (IsInactive)
+        {
+            ModelState.AddModelError(string.Empty,
+                "This plant cannot be split because its taxonomy is inactive.");
+            EnsureChildListLength();
+            return Page();
+        }
 
         if (parentPlant.EndDate != null)
         {
@@ -175,13 +192,7 @@ public class SplitModel : PageModel
             .Select(c => c.PlantTag!.Trim())
             .ToList();
 
-        var duplicateTags = tags
-            .GroupBy(t => t)
-            .Where(g => g.Count() > 1)
-            .Select(g => g.Key)
-            .ToList();
-
-        if (duplicateTags.Any())
+        if (tags.GroupBy(t => t).Any(g => g.Count() > 1))
         {
             ModelState.AddModelError(string.Empty,
                 "Duplicate plant tags are not allowed.");
@@ -227,9 +238,9 @@ public class SplitModel : PageModel
                 PlantId,
                 SplitDateTime,
                 csv,
-                (object)null!,
-                (object?)SplitReasonNotes ?? (object)null!,
-                (object)null!
+                (object?)null!,
+                (object?)SplitReasonNotes ?? (object?)null!,
+                (object?)null!
             );
 
             return RedirectToPage("/Plants/Details", new { plantId = PlantId });
@@ -241,5 +252,4 @@ public class SplitModel : PageModel
             return Page();
         }
     }
-
 }
