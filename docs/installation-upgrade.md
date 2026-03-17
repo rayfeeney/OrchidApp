@@ -172,7 +172,7 @@ Never manually copy files.
 
 If the working tree is clean, proceed.
 
-If not, resolve the issues before proceeding.
+If not, resolve the issues before  proceeding.
 
 ### 4.2.2 Stop the service
 
