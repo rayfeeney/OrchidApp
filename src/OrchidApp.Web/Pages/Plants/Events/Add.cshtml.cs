@@ -5,63 +5,12 @@ using OrchidApp.Web.Models;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using System.Data;
-using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using OrchidApp.Web.Services;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Hosting;
-using System.IO;
 using OrchidApp.Web.Infrastructure;
 
-
 namespace OrchidApp.Web.Pages.Plants.Events;
-
-/*
-    ADD LIFECYCLE EVENTS — DESIGN NOTES
-
-    Lifecycle events are stored in separate tables according
-    to their semantic behaviour.
-
-    Tables involved:
-    - plantevent              → Observations
-    - repotting               → Repotting events
-    - flowering               → Flowering events
-    - plantlocationhistory    → Location changes
-    - vplantlifecyclehistory  → Read-only UNION for display
-
-    ATOMIC EVENTS
-    Tables:
-    - plantevent
-    - repotting
-    - flowering
-
-    Characteristics:
-    - Represent discrete facts in time
-    - Adding them does not affect other records
-    - Created directly via EF Core
-    - Validation is local to the row
-
-    STRUCTURAL EVENTS
-    Table:
-    - plantlocationhistory
-
-    Characteristics:
-    - Participates in an exclusive, continuous timeline
-    - Adding a location change must:
-        - Close the previous location (if any)
-        - Prevent overlaps and backdating
-        - Enforce invariants
-
-    Therefore:
-    - LocationChange creation is handled exclusively
-      via stored procedures
-    - The UI collects input only
-    - All validation and stitching happens in SQL
-
-    This PageModel intentionally branches by EventType.
-    This is not duplication — it is semantic separation.
-*/
 
 public class AddModel : PageModel
 {
@@ -70,18 +19,15 @@ public class AddModel : PageModel
 
     private readonly OrchidDbContext _db;
     private readonly ObservationTypeResolver _resolver;
-    private readonly IWebHostEnvironment _env;
     private readonly PhotoPipeline _photoPipeline;
 
     public AddModel(
         OrchidDbContext db,
         ObservationTypeResolver resolver,
-        IWebHostEnvironment env,
         PhotoPipeline photoPipeline)
     {
         _db = db;
         _resolver = resolver;
-        _env = env;
         _photoPipeline = photoPipeline;
     }
 
@@ -98,7 +44,6 @@ public class AddModel : PageModel
     public string? PlantDisplayName { get; private set; }
     public string? PlantTag { get; private set; }
 
-    // Two common properties for all event types
     [BindProperty]
     [DataType(DataType.Date)]
     public DateTime EventDate { get; set; } = DateTime.Today;
@@ -106,19 +51,14 @@ public class AddModel : PageModel
     [BindProperty]
     public string? EventDetails { get; set; }
 
-    // Observation-specific properties
-    [BindProperty]
-    public int ObservationTypeId { get; set; }
     [BindProperty]
     public List<IFormFile>? UploadedFiles { get; set; }
+
     public bool ShowPhotoSection { get; set; }
 
-
-    // LocationChange specific properties
     [BindProperty]
     public int LocationId { get; set; }
 
-    // Flowering specific
     [BindProperty]
     [DataType(DataType.Date)]
     public DateTime StartDate { get; set; } = DateTime.Today;
@@ -127,89 +67,59 @@ public class AddModel : PageModel
     [DataType(DataType.Date)]
     public DateTime? EndDate { get; set; }
 
-    [BindProperty]
-    public int? SpikeCount { get; set; }
+    [BindProperty] public int? SpikeCount { get; set; }
+    [BindProperty] public int? FlowerCount { get; set; }
+    [BindProperty] public string? PlantLocationNotes { get; set; }
 
-    [BindProperty]
-    public int? FlowerCount { get; set; }
+    [BindProperty] public int? OldGrowthMediumId { get; set; }
+    [BindProperty] public int? NewGrowthMediumId { get; set; }
+    [BindProperty] public string? OldMediumNotes { get; set; }
+    [BindProperty] public string? NewMediumNotes { get; set; }
+    [BindProperty] public string? PotSize { get; set; }
+    [BindProperty] public string? RepotReasonNotes { get; set; }
+    [BindProperty] public string? RepottingNotes { get; set; }
 
-    [BindProperty]
-    public string? MoveReasonCode { get; set; }
-
-    [BindProperty]
-    public string? PlantLocationNotes { get; set; }
-
-    // Repotting-specific fields
-    // Repotting-specific fields
-    [BindProperty]
-    public int? OldGrowthMediumId { get; set; }
-
-    [BindProperty]
-    public int? NewGrowthMediumId { get; set; }
-
-    [BindProperty]
-    public string? OldMediumNotes { get; set; }
-
-    [BindProperty]
-    public string? NewMediumNotes { get; set; }
-
-    [BindProperty]
-    public string? PotSize { get; set; }
-
-    [BindProperty]
-    public string? RepotReasonNotes { get; set; }
-
-    [BindProperty]
-    public string? RepottingNotes { get; set; }
-
-    // For populating dropdowns
     public List<Location> Locations { get; private set; } = new();
     public List<GrowthMedium> GrowthMedia { get; private set; } = new();
-    private void LoadLookups()
-    {
-        Locations = _db.Location
-                    .Where(l => l.IsActive)
-                    .OrderBy(l => l.LocationName)
-                    .ToList();
-        GrowthMedia = _db.GrowthMedia
-                             .Where(g => g.IsActive)
-                             .OrderBy(g => g.Name)
-                             .ToList();
-    }
 
-    public IActionResult OnGet()
+    private bool LoadPlantContext()
     {
-        if (EventType is not (
-            "Observation" or
-            "LocationChange" or
-            "Flowering" or
-            "Repotting"))
-        {
-            return NotFound();
-        }
-        
         var plant = _db.PlantActiveSummaries
             .FirstOrDefault(p => p.PlantId == PlantId);
 
         if (plant == null)
-            return NotFound();
+            return false;
 
-        // ✔ Heading data
         PlantDisplayName = plant.DisplayName;
         PlantTag = plant.PlantTag;
 
-        // ✔ Inactive state
         var taxon = _db.TaxonIdentities
             .Where(t => t.TaxonId == plant.TaxonId)
-            .Select(t => new
-            {
-                t.GenusIsActive,
-                t.TaxonIsActive
-            })
+            .Select(t => new { t.GenusIsActive, t.TaxonIsActive })
             .Single();
 
         GenusIsActive = taxon.GenusIsActive;
         TaxonIsActive = taxon.TaxonIsActive;
+
+        return true;
+    }
+
+    private void LoadLookups()
+    {
+        Locations = _db.Location.Where(l => l.IsActive)
+            .OrderBy(l => l.LocationName).ToList();
+
+        GrowthMedia = _db.GrowthMedia.Where(g => g.IsActive)
+            .OrderBy(g => g.Name).ToList();
+    }
+
+    public IActionResult OnGet()
+    {
+        if (EventType is not ("Observation" or "LocationChange" or "Flowering" or "Repotting"))
+            return NotFound();
+
+        if (!LoadPlantContext())
+            return NotFound();
 
         LoadLookups();
         return Page();
@@ -217,9 +127,7 @@ public class AddModel : PageModel
 
     public async Task<IActionResult> OnPostAsync(string? quickAction)
     {
-        // Quick actions only apply to Observation events
-        if (!string.IsNullOrWhiteSpace(quickAction)
-            && EventType == "Observation")
+        if (!string.IsNullOrWhiteSpace(quickAction) && EventType == "Observation")
         {
             EventDate = DateTime.Today;
             ModelState.Remove(nameof(EventDate));
@@ -229,43 +137,35 @@ public class AddModel : PageModel
                 case "photo":
                     EventDetails = "Photo added";
                     ShowPhotoSection = true;
-                    ModelState.Remove(nameof(EventDetails));
                     break;
-
                 case "feedGrowth":
                     EventDetails = "Fed with growth food";
-                    ShowPhotoSection = false;
-                    ModelState.Remove(nameof(EventDetails));
                     break;
-
                 case "feedBloom":
                     EventDetails = "Fed with bloom food";
-                    ShowPhotoSection = false;
-                    ModelState.Remove(nameof(EventDetails));
                     break;
             }
 
+            if (!LoadPlantContext()) return NotFound();
             LoadLookups();
             return Page();
         }
 
         if (!ModelState.IsValid)
-        
         {
+            if (!LoadPlantContext()) return NotFound();
             LoadLookups();
             return Page();
         }
 
-        // Dispatch by EventType: each case owns its own persistence semantics
         switch (EventType)
         {
             case "Observation":
 
                 var hasPhotos = UploadedFiles != null && UploadedFiles.Any();
                 if (hasPhotos && string.IsNullOrWhiteSpace(EventDetails))
-                {
                     EventDetails = "Photo added";
-                }
+
                 var typeCode = hasPhotos ? "OBS_PHOTO" : "OBS_NOTE";
                 var observationTypeId = await _resolver.GetIdAsync(typeCode);
 
@@ -279,19 +179,18 @@ public class AddModel : PageModel
                 };
 
                 _db.PlantEvent.Add(observation);
-                await _db.SaveChangesAsync();   // <-- SAVE FIRST
+                await _db.SaveChangesAsync();
 
-                if (UploadedFiles != null && UploadedFiles.Any())
+                if (hasPhotos)
                 {
                     var uploadsRoot = "/opt/orchidapp/uploads";
 
                     var heroExists = _db.PlantPhotos
                         .Any(p => p.PlantId == PlantId && p.IsHero && p.IsActive);
 
-                    foreach (var file in UploadedFiles)
+                    foreach (var file in UploadedFiles!)
                     {
-                        if (file.Length <= 0)
-                            continue;
+                        if (file.Length <= 0) continue;
 
                         string relativePath;
 
@@ -306,26 +205,15 @@ public class AddModel : PageModel
                         catch (InvalidOperationException ex)
                         {
                             ModelState.AddModelError(string.Empty, ex.Message);
+
+                            if (!LoadPlantContext())
+                                return NotFound();
+
                             LoadLookups();
                             return Page();
                         }
 
-                        var photo = new PlantPhoto
-                        {
-                            PlantEventId = observation.PlantEventId,
-                            PlantId = PlantId,
-                            FileName = file.FileName,
-                            FilePath = relativePath,
-                            MimeType = "image/jpeg", // we now always save as JPEG
-                            IsHero = !heroExists,
-                            IsActive = true,
-                            CreatedDateTime = DateTime.Now
-                        };
-
-                        _db.PlantPhotos.Add(photo);
-
-                        if (!heroExists)
-                            heroExists = true;
+                        heroExists = true;
                     }
 
                     await _db.SaveChangesAsync();
@@ -333,26 +221,29 @@ public class AddModel : PageModel
 
                 break;
 
-
             case "LocationChange":
                 try
                 {
-                    var parameters = new object?[]
+                    var parameters = new object[]
                     {
                         PlantId,
                         LocationId,
                         EventDate.Date,
-                        string.IsNullOrWhiteSpace(EventDetails) ? null : EventDetails,
-                        string.IsNullOrWhiteSpace(PlantLocationNotes) ? null : PlantLocationNotes
+                        string.IsNullOrWhiteSpace(EventDetails) ? DBNull.Value : EventDetails,
+                        string.IsNullOrWhiteSpace(PlantLocationNotes) ? DBNull.Value : PlantLocationNotes
                     };
 
                     await _db.Database.ExecuteSqlRawAsync(
-                        @"CALL spMovePlantToLocation({0}, {1}, {2}, {3}, {4})",
-                        parameters!);
+                        @"CALL spMovePlantToLocation({0},{1},{2},{3},{4})",
+                        parameters);
                 }
                 catch (Exception ex) when (DatabaseErrorTranslator.TryTranslate(ex, out var msg))
                 {
                     ModelState.AddModelError(string.Empty, msg);
+
+                    if (!LoadPlantContext())
+                        return NotFound();
+
                     LoadLookups();
                     return Page();
                 }
@@ -362,57 +253,46 @@ public class AddModel : PageModel
 
                 if (EndDate.HasValue && EndDate < StartDate)
                 {
-                    ModelState.AddModelError(
-                        string.Empty,
-                        "End date cannot be before start date."
-                    );
+                    ModelState.AddModelError("", "End date cannot be before start date.");
+                    if (!LoadPlantContext()) return NotFound();
                     LoadLookups();
                     return Page();
                 }
 
-                var flowering = new Flowering
+                _db.Flowering.Add(new Flowering
                 {
                     PlantId = PlantId,
                     StartDate = StartDate.Date,
                     EndDate = EndDate?.Date,
                     SpikeCount = SpikeCount,
                     FlowerCount = FlowerCount,
-                    FloweringNotes = string.IsNullOrWhiteSpace(EventDetails)
-                                        ? null
-                                        : EventDetails,
+                    FloweringNotes = EventDetails,
                     IsActive = true
-                };
+                });
 
-                _db.Flowering.Add(flowering);
                 await _db.SaveChangesAsync();
-
                 break;
 
             case "Repotting":
 
-                var repotting = new Repotting
+                _db.Repotting.Add(new Repotting
                 {
                     PlantId = PlantId,
                     RepotDate = EventDate.Date,
                     OldGrowthMediumId = OldGrowthMediumId,
-                    OldMediumNotes = string.IsNullOrWhiteSpace(OldMediumNotes) ? null : OldMediumNotes,
                     NewGrowthMediumId = NewGrowthMediumId,
-                    NewMediumNotes = string.IsNullOrWhiteSpace(NewMediumNotes) ? null : NewMediumNotes,
-                    PotSize = string.IsNullOrWhiteSpace(PotSize) ? null : PotSize,
-                    RepotReasonNotes = string.IsNullOrWhiteSpace(RepotReasonNotes) ? null : RepotReasonNotes,
-                    RepottingNotes = string.IsNullOrWhiteSpace(RepottingNotes) ? null : RepottingNotes,
+                    OldMediumNotes = OldMediumNotes,
+                    NewMediumNotes = NewMediumNotes,
+                    PotSize = PotSize,
+                    RepotReasonNotes = RepotReasonNotes,
+                    RepottingNotes = RepottingNotes,
                     IsActive = true
-                };
+                });
 
-                _db.Repotting.Add(repotting);
                 await _db.SaveChangesAsync();
                 break;
-
-            default:
-                return NotFound();
         }
 
         return RedirectToPage("/Plants/Details", new { plantId = PlantId });
     }
-
 }
