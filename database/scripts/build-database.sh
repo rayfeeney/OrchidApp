@@ -59,7 +59,7 @@ apply_required_dir () {
   while IFS= read -r f; do
     echo "  → $f"
     mariadb \
-      --default-character-set=utf8mb4
+      --default-character-set=utf8mb4 \
       -h "$MARIADB_HOST" \
       -P "$MARIADB_PORT" \
       -u "$MARIADB_USER" \
@@ -91,7 +91,7 @@ apply_optional_dir () {
   while IFS= read -r f; do
     echo "  → $f"
     mariadb \
-      --default-character-set=utf8mb4
+      --default-character-set=utf8mb4 \
       -h "$MARIADB_HOST" \
       -P "$MARIADB_PORT" \
       -u "$MARIADB_USER" \
