@@ -1,5 +1,6 @@
 DELIMITER //
-CREATE OR REPLACE PROCEDURE `spGeneratePlantTag`()
+CREATE OR REPLACE FUNCTION `fnGeneratePlantTag`() RETURNS char(8) CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci
+    READS SQL DATA
 BEGIN
     DECLARE vEntropy CHAR(64);
     DECLARE vPrefix VARCHAR(2);
@@ -66,12 +67,10 @@ BEGIN
             FROM plant
             WHERE plantTag = vCandidate
         ) THEN
-            LEAVE generation_loop;
+            RETURN vCandidate;
         END IF;
 
     END LOOP;
-
-    SELECT vCandidate AS plantTag;
 
 END
 //
