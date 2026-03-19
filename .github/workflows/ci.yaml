@@ -1,0 +1,206 @@
+name: OrchidApp CI
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+# ===============================
+# 1️ DATABASE SNAPSHOT VALIDATION
+# ===============================
+  database-build-snapshot:
+    name: Database snapshot build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install MariaDB client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mariadb-client
+
+      - name: Install PowerShell
+        run: |
+          if ! command -v pwsh >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y powershell
+          fi
+
+      - name: Start MariaDB
+        run: |
+          docker run -d \
+            --name orchid-mariadb \
+            -e MARIADB_ROOT_PASSWORD=root \
+            -p 3306:3306 \
+            mariadb:10.11
+
+      - name: Wait for MariaDB
+        run: |
+          for i in {1..60}; do
+            if mariadb -h 127.0.0.1 -uroot -proot -e "SELECT 1;" >/dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs orchid-mariadb
+          exit 1
+
+      - name: Create database
+        run: |
+          mariadb -h 127.0.0.1 -uroot -proot < database/CreateOrchidsDB.sql
+
+      - name: Ensure script executable
+        run: chmod +x database/scripts/build-database.sh
+
+      - name: Build database snapshot
+        env:
+          MARIADB_HOST: 127.0.0.1
+          MARIADB_PORT: 3306
+          MARIADB_USER: root
+          MARIADB_PASSWORD: root
+          MARIADB_DATABASE: orchids
+        run: ./database/scripts/build-database.sh
+
+      - name: Export schema
+        env:
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_PORT: 3306
+          MYSQL_USER: root
+          MYSQL_PASSWORD: root
+        run: pwsh database/scripts/Export-MySqlSchema.ps1
+
+      - name: Detect schema drift
+        run: |
+          if ! git diff --quiet database/schema database/checksums; then
+            git diff database/schema database/checksums
+            exit 1
+          fi
+
+      - name: Cleanup
+        if: always()
+        run: docker rm -f orchid-mariadb || true
+
+
+# ===============================
+# 2️ BUILD + PUBLISH APPLICATION
+# ===============================
+  app-build-and-publish:
+    name: Build and publish
+    runs-on: ubuntu-latest
+    needs: database-build-snapshot
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore OrchidApp.sln
+
+      - name: Build
+        run: dotnet build OrchidApp.sln --configuration Release --no-restore
+
+      - name: Publish linux-arm64
+        run: |
+          dotnet publish src/OrchidApp.Web/OrchidApp.Web.csproj \
+            --configuration Release \
+            --runtime linux-arm64 \
+            --self-contained false \
+            -o publish
+
+      - name: Verify publish
+        run: test -f publish/OrchidApp.Web.dll
+
+      - name: Verify Skia native
+        run: |
+          if [ ! -f publish/runtimes/linux-arm64/native/libSkiaSharp.so ]; then
+            echo "Skia native library missing"
+            find publish -type f
+            exit 1
+          fi
+
+      - name: Upload artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: orchidapp-linux-arm64
+          path: publish
+
+
+# ===============================
+# 3️ RUNTIME SMOKE TEST
+# ===============================
+  app-smoke-start:
+    name: Runtime smoke test
+    runs-on: ubuntu-latest
+    needs: app-build-and-publish
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download artefact
+        uses: actions/download-artifact@v4
+        with:
+          name: orchidapp-linux-arm64
+          path: publish
+
+      - name: Install MariaDB client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mariadb-client
+
+      - name: Start MariaDB
+        run: |
+          docker run -d \
+            --name orchid-mariadb \
+            -e MARIADB_ROOT_PASSWORD=root \
+            -p 3306:3306 \
+            mariadb:10.11
+
+      - name: Wait for MariaDB
+        run: |
+          for i in {1..60}; do
+            if mariadb -h 127.0.0.1 -uroot -proot -e "SELECT 1;" >/dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs orchid-mariadb
+          exit 1
+
+      - name: Create database
+        run: |
+          mariadb -h 127.0.0.1 -uroot -proot < database/CreateOrchidsDB.sql
+
+      - name: Ensure build script executable
+        run: chmod +x database/scripts/build-database.sh
+
+      - name: Build database snapshot
+        env:
+          MARIADB_HOST: 127.0.0.1
+          MARIADB_PORT: 3306
+          MARIADB_USER: root
+          MARIADB_PASSWORD: root
+          MARIADB_DATABASE: orchids
+        run: ./database/scripts/build-database.sh
+
+      - name: Start app
+        env:
+          ASPNETCORE_ENVIRONMENT: Production
+          ASPNETCORE_URLS: http://127.0.0.1:5050
+          ConnectionStrings__OrchidDb: Server=127.0.0.1;Port=3306;Database=orchids;User=root;Password=root;
+        run: |
+          cd publish
+          dotnet OrchidApp.Web.dll > app.log 2>&1 &
+          sleep 15
+
+      - name: Verify HTTP response
+        run: |
+          curl -f http://127.0.0.1:5050 || (cat publish/app.log && exit 1)
+
+      - name: Cleanup
+        if: always()
+        run: docker rm -f orchid-mariadb || true
