@@ -1,11 +1,18 @@
+DROP PROCEDURE IF EXISTS spGeneratePlantTag;
+DROP FUNCTION IF EXISTS fnGeneratePlantTag;
+
 DELIMITER //
-CREATE OR REPLACE PROCEDURE `__migrate_generate_planttag`(OUT pPlantTag CHAR(8))
+
+CREATE FUNCTION fnGeneratePlantTag()
+RETURNS CHAR(8)
+NOT DETERMINISTIC
+READS SQL DATA
 BEGIN
     DECLARE vEntropy CHAR(64);
-    DECLARE vPrefix CHAR(2);
+    DECLARE vPrefix VARCHAR(2);
     DECLARE vDigit INT;
     DECLARE vBlock INT;
-    DECLARE vChecksum TINYINT;
+    DECLARE vChecksum INT;
     DECLARE vCandidate CHAR(8);
     DECLARE vPrefixCount INT;
     DECLARE vOffset INT;
@@ -21,6 +28,7 @@ BEGIN
     END IF;
 
     generation_loop: LOOP
+
         SET vAttempts = vAttempts + 1;
 
         IF vAttempts > 1000 THEN
@@ -32,17 +40,25 @@ BEGIN
 
         SET vOffset = CONV(SUBSTRING(vEntropy, 1, 8), 16, 10) MOD vPrefixCount;
 
-        SELECT prefix
-          INTO vPrefix
-          FROM PhoneticPrefix
-         WHERE isActive = 1
-         ORDER BY prefixId
-         LIMIT vOffset, 1;
+        SELECT prefix INTO vPrefix
+        FROM PhoneticPrefix
+        WHERE isActive = 1
+        ORDER BY prefix
+        LIMIT vOffset, 1;
 
         SET vDigit = CONV(SUBSTRING(vEntropy, 9, 2), 16, 10) MOD 10;
         SET vBlock = CONV(SUBSTRING(vEntropy, 11, 8), 16, 10) MOD 1000;
 
-        SET vChecksum = fnPlantTagChecksum(CONCAT(vPrefix, vDigit, '-', LPAD(vBlock, 3, '0')));
+        SET vChecksum = (
+            (
+                ASCII(SUBSTRING(vPrefix,1,1)) +
+                ASCII(SUBSTRING(vPrefix,2,1)) +
+                vDigit +
+                FLOOR(vBlock / 100) +
+                FLOOR((vBlock % 100) / 10) +
+                (vBlock % 10)
+            ) MOD 10
+        );
 
         SET vCandidate = CONCAT(
             vPrefix,
@@ -57,11 +73,11 @@ BEGIN
             FROM plant
             WHERE plantTag = vCandidate
         ) THEN
-            SET pPlantTag = vCandidate;
-            LEAVE generation_loop;
+            RETURN vCandidate;
         END IF;
-    END LOOP;
-END
-//
-DELIMITER ;
 
+    END LOOP;
+
+END //
+
+DELIMITER ;
