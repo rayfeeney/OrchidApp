@@ -157,7 +157,24 @@ Upgrades must always follow this sequence.
 
 If SQL objects are included in the upgrade, these must be applied first. 
 
-This is yet to be documented.
+### 4.1.1 Confirm tree is clean
+
+    cd /opt/orchidapp
+    git status
+
+If the working tree is clean, proceed.
+
+If not, resolve the issues before  proceeding.
+
+### 4.1.2 Pull Latest Code
+    
+    git pull
+
+### 4.2.3 Apply the updated SQL objects
+
+To apply the new and updated objects,
+
+    ./database/scripts/apply-migrations.sh
 
 ## 4.2 Web app upgrade 
 
