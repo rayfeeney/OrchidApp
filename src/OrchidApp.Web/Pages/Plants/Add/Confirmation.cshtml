@@ -1,0 +1,53 @@
+@page "{plantId:int}"
+@model OrchidApp.Web.Pages.Plants.Add.ConfirmationModel
+
+<h1 class="page-title fw-bold">Plant added</h1>
+
+<h2 class="h5 fw-bold mb-3">
+    @Model.Plant!.DisplayName
+</h2>
+
+<div class="card mt-3">
+    <div class="card-body text-center">
+
+        <div class="text-muted mb-1">
+            Plant permanent ID
+        </div>
+
+        <div class="fs-1 fw-bold" style="font-family: monospace;">
+            @Model.Plant!.PlantTag
+        </div>
+
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-body">
+        <dl class="row mb-0">
+
+            <dt class="col-sm-3 fw-bold">Acquired on</dt>
+            <dd class="col-sm-9">
+                @(Model.Plant!.AcquisitionDate?.ToString("yyyy-MM-dd") ?? "—")
+            </dd>
+
+            <dt class="col-sm-3 fw-bold">Source</dt>
+            <dd class="col-sm-9">
+                @(Model.Plant!.AcquisitionSource ?? "—")
+            </dd>
+
+            <dt class="col-sm-3 fw-bold">Name</dt>
+            <dd class="col-sm-9">
+                @(Model.Plant!.PlantName ?? "—")
+            </dd>
+
+        </dl>
+    </div>
+</div>
+
+<div class="mt-3">
+    <a asp-page="/Plants/Details"
+       asp-route-plantId="@Model.Plant!.PlantId"
+       class="btn btn-primary">
+        Continue
+    </a>
+</div>
