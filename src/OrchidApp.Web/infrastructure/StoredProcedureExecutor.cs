@@ -19,13 +19,32 @@ public class StoredProcedureExecutor : IStoredProcedureExecutor
         params StoredProcedureParameter[] parameters
     ) where T : new()
     {
+        var results = await QueryListAsync<T>(procedureName, parameters);
+
+        if (results.Count == 0)
+            throw new InvalidOperationException(
+                $"Stored procedure returned no rows: {procedureName}"
+            );
+
+        if (results.Count > 1)
+            throw new InvalidOperationException(
+                $"Stored procedure returned more than one row: {procedureName}"
+            );
+
+        return results[0];
+    }
+
+    public async Task<List<T>> QueryListAsync<T>(
+        string procedureName,
+        params StoredProcedureParameter[] parameters
+    ) where T : new()
+    {
         await using var conn = _db.Database.GetDbConnection();
 
         if (conn.State != ConnectionState.Open)
             await conn.OpenAsync();
 
         await using var cmd = conn.CreateCommand();
-
         cmd.CommandText = BuildCallSql(procedureName, parameters);
         cmd.CommandType = CommandType.Text;
 
@@ -40,22 +59,30 @@ public class StoredProcedureExecutor : IStoredProcedureExecutor
 
             object? rawValue = p.Value;
 
-            if (rawValue is string s && string.IsNullOrWhiteSpace(s))
-                rawValue = null;
+            if (rawValue is string s)
+            {
+                if (string.IsNullOrWhiteSpace(s) ||
+                    s.Equals("null", StringComparison.OrdinalIgnoreCase))
+                {
+                    rawValue = null;
+                }
+            }
 
-            dbp.Value = rawValue ?? DBNull.Value;
+dbp.Value = rawValue ?? DBNull.Value;
 
             cmd.Parameters.Add(dbp);
         }
 
         await using var reader = await cmd.ExecuteReaderAsync();
 
-        if (!await reader.ReadAsync())
-            throw new InvalidOperationException(
-                $"Stored procedure returned no rows: {procedureName}"
-            );
+        var results = new List<T>();
 
-        return Map<T>(reader);
+        while (await reader.ReadAsync())
+        {
+            results.Add(Map<T>(reader));
+        }
+
+        return results;
     }
 
     private static string BuildCallSql(string name, StoredProcedureParameter[] parameters)
@@ -64,7 +91,6 @@ public class StoredProcedureExecutor : IStoredProcedureExecutor
             return $"CALL {name}()";
 
         var placeholders = string.Join(",", parameters.Select(p => p.Name));
-
         return $"CALL {name}({placeholders})";
     }
 
@@ -87,12 +113,8 @@ public class StoredProcedureExecutor : IStoredProcedureExecutor
                 continue;
 
             var value = reader.GetValue(i);
-
-            var targetType = Nullable.GetUnderlyingType(prop.PropertyType)
-                             ?? prop.PropertyType;
-
+            var targetType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
             value = Convert.ChangeType(value, targetType);
-
             prop.SetValue(obj, value);
         }
 

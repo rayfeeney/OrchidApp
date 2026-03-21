@@ -6,4 +6,9 @@ public interface IStoredProcedureExecutor
         string procedureName,
         params StoredProcedureParameter[] parameters
     ) where T : new();
+
+    Task<List<T>> QueryListAsync<T>(
+        string procedureName,
+        params StoredProcedureParameter[] parameters
+    ) where T : new();
 }

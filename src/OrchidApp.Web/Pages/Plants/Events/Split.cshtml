@@ -26,7 +26,7 @@
 </p>
 
 <p class="text-muted small mb-3">
-    This action cannot be undone.
+    New plants will be given permanent IDs automatically.
 </p>
 
 <div asp-validation-summary="All" class="text-danger mb-3"></div>
@@ -41,33 +41,38 @@ else
 {
 <form method="post">
 
-    <div class="mb-3">
-        <label asp-for="SplitDateTime" class="fw-bold">
-            Split date and time
-        </label>
-        <input asp-for="SplitDateTime"
-               type="datetime-local"
-               class="form-control" />
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="SplitReasonNotes" class="fw-bold">
-            Reason for split (optional)
-        </label>
-        <textarea asp-for="SplitReasonNotes"
-                  class="form-control"
-                  rows="3"></textarea>
-    </div>
-
     <input type="hidden" asp-for="PlantId" />
     <input type="hidden" asp-for="ChildCount" />
 
-    <h2 class="h5 fw-bold mt-4 mb-3">
-    New plants
-    </h2>
+    <div class="mb-3">
+        <label asp-for="SplitDateTime" class="fw-bold">Split date and time</label>
+        <input asp-for="SplitDateTime" type="datetime-local" class="form-control" />
+        <span asp-validation-for="SplitDateTime" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="SplitReasonNotes" class="fw-bold">Reason for split</label>
+        <small class="text-muted d-block fw-normal">
+            Optional. Use this to record why the plant was divided.
+        </small>
+        <textarea asp-for="SplitReasonNotes" class="form-control" rows="3"></textarea>
+        <span asp-validation-for="SplitReasonNotes" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="SplitNotes" class="fw-bold">Split notes</label>
+        <small class="text-muted d-block fw-normal">
+            Optional. Any additional notes about the outcome of the split.
+        </small>
+        <textarea asp-for="SplitNotes" class="form-control" rows="3"></textarea>
+        <span asp-validation-for="SplitNotes" class="text-danger"></span>
+    </div>
+
+    <h2 class="h5 fw-bold mt-4 mb-3">New plants</h2>
 
     <p class="text-muted small mb-3">
-    Enter the details for each new plant created by this split.
+        Two new plants are shown by default. Add more if needed.
+        Plant permanent IDs will be created automatically.
     </p>
 
     @for (int i = 0; i < Model.ChildCount; i++)
@@ -78,29 +83,14 @@ else
             </div>
 
             <div class="card-body">
-
-                <div class="mb-3">
-                    <label asp-for="Children[i].PlantTag" class="fw-bold"></label>
-                    <small class="text-muted d-block fw-normal">
-                        Required. Must be unique within your collection.
-                    </small>
-                    <input asp-for="Children[i].PlantTag"
-                        class="form-control" />
-                    <span asp-validation-for="Children[i].PlantTag"
-                        class="text-danger"></span>
-                </div>
-
                 <div class="mb-3">
                     <label asp-for="Children[i].PlantName" class="fw-bold"></label>
                     <small class="text-muted d-block fw-normal">
                         Optional. A personal name to help you recognise this plant.
                     </small>
-                    <input asp-for="Children[i].PlantName"
-                        class="form-control" />
-                    <span asp-validation-for="Children[i].PlantName"
-                        class="text-danger"></span>
+                    <input asp-for="Children[i].PlantName" class="form-control" />
+                    <span asp-validation-for="Children[i].PlantName" class="text-danger"></span>
                 </div>
-
             </div>
         </div>
     }

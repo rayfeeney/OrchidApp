@@ -12,15 +12,13 @@ namespace OrchidApp.Web.Pages.Plants.Events;
 public class SplitModel : PageModel
 {
     private readonly OrchidDbContext _db;
+    private readonly IStoredProcedureExecutor _sp;
 
-    public SplitModel(OrchidDbContext db)
+    public SplitModel(OrchidDbContext db, IStoredProcedureExecutor sp)
     {
         _db = db;
+        _sp = sp;
     }
-
-    // =============================
-    // ROUTING
-    // =============================
 
     [FromRoute]
     public int PlantId { get; set; }
@@ -28,20 +26,12 @@ public class SplitModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string? ReturnUrl { get; set; }
 
-    // =============================
-    // PAGE STATE
-    // =============================
-
     public PlantCurrentLocation? Plant { get; private set; }
 
     public bool GenusIsActive { get; private set; }
     public bool TaxonIsActive { get; private set; }
 
     public bool IsInactive => !GenusIsActive || !TaxonIsActive;
-
-    // =============================
-    // FORM STATE
-    // =============================
 
     [BindProperty]
     public int ChildCount { get; set; } = 2;
@@ -57,15 +47,14 @@ public class SplitModel : PageModel
     [BindProperty]
     public string? SplitReasonNotes { get; set; }
 
+    [BindProperty]
+    public string? SplitNotes { get; set; }
+
     public class ChildInput
     {
         [Display(Name = "Plant name")]
         public string? PlantName { get; set; }
     }
-
-    // =============================
-    // LOAD PAGE STATE
-    // =============================
 
     private async Task LoadPageStateAsync()
     {
@@ -97,10 +86,6 @@ public class SplitModel : PageModel
             Children.Add(new ChildInput());
     }
 
-    // =============================
-    // GET
-    // =============================
-
     public async Task<IActionResult> OnGetAsync()
     {
         await LoadPageStateAsync();
@@ -118,10 +103,6 @@ public class SplitModel : PageModel
         return Page();
     }
 
-    // =============================
-    // ADD CHILD
-    // =============================
-
     public async Task<IActionResult> OnPostAddChildAsync()
     {
         await LoadPageStateAsync();
@@ -130,15 +111,10 @@ public class SplitModel : PageModel
             ChildCount = 2;
 
         ChildCount++;
-
         EnsureChildListLength();
 
         return Page();
     }
-
-    // =============================
-    // SPLIT
-    // =============================
 
     public async Task<IActionResult> OnPostSplitAsync()
     {
@@ -174,7 +150,7 @@ public class SplitModel : PageModel
             return Page();
         }
 
-        if (SplitDateTime < parentPlant.AcquisitionDate)
+        if (parentPlant.AcquisitionDate.HasValue && SplitDateTime < parentPlant.AcquisitionDate.Value)
         {
             ModelState.AddModelError(nameof(SplitDateTime),
                 "Split date and time cannot be before this plant’s lifecycle began.");
@@ -185,14 +161,30 @@ public class SplitModel : PageModel
         if (ChildCount < 2)
             ChildCount = 2;
 
-        var filledChildren = Children.ToList();
+        EnsureChildListLength();
 
-        var json = JsonSerializer.Serialize(
-            filledChildren.Select(c => new
+        foreach (var c in Children)
+        {
+            if (c.PlantName != null)
             {
-                plantName = string.IsNullOrWhiteSpace(c.PlantName)
-                    ? null
-                    : c.PlantName.Trim()
+                var name = c.PlantName.Trim();
+
+                if (string.IsNullOrWhiteSpace(name) ||
+                    name.Equals("null", StringComparison.OrdinalIgnoreCase))
+                {
+                    c.PlantName = null;
+                }
+                else
+                {
+                    c.PlantName = name;
+                }
+            }
+        }
+
+        var childrenJson = JsonSerializer.Serialize(
+            Children.Select(c => new
+            {
+                plantName = c.PlantName
             })
         );
 
@@ -200,24 +192,45 @@ public class SplitModel : PageModel
             ? null
             : SplitReasonNotes.Trim();
 
+        SplitNotes = string.IsNullOrWhiteSpace(SplitNotes)
+            ? null
+            : SplitNotes.Trim();
+
         try
         {
-            await _db.Database.ExecuteSqlRawAsync(
-                "CALL spSplitPlant({0},{1},{2},{3},{4});",
-                PlantId,
-                SplitDateTime,
-                json,
-                DBNull.Value,
-                (object?)SplitReasonNotes ?? DBNull.Value
+            var createdChildren = await _sp.QueryListAsync<SplitChildResult>(
+                "spSplitPlant",
+                new StoredProcedureParameter("pParentPlantId", PlantId),
+                new StoredProcedureParameter("pSplitDateTime", SplitDateTime),
+                new StoredProcedureParameter("pChildrenJson", childrenJson),
+                new StoredProcedureParameter("pSplitReasonNotes", SplitReasonNotes),
+                new StoredProcedureParameter("pSplitNotes", SplitNotes)
             );
 
-            return RedirectToPage("/Plants/Details", new { plantId = PlantId });
+            if (createdChildren.Count == 0)
+                throw new InvalidOperationException("Split returned no child plants.");
+
+            TempData["SplitChildIdsJson"] = JsonSerializer.Serialize(
+                createdChildren.Select(c => c.ChildPlantId).ToList());
+
+            TempData["SplitChildTagsJson"] = JsonSerializer.Serialize(
+                createdChildren.Select(c => c.ChildPlantTag).ToList());
+
+            return RedirectToPage(
+                "/Plants/Events/SplitConfirmation",
+                new { plantId = PlantId }
+            );
         }
-        catch (Exception ex) when (DatabaseErrorTranslator.TryTranslate(ex, out var msg))
+        catch (Exception ex)
         {
-            ModelState.AddModelError(string.Empty, msg);
-            EnsureChildListLength();
-            return Page();
+            if (DatabaseErrorTranslator.TryTranslate(ex, out var msg))
+            {
+                ModelState.AddModelError(string.Empty, msg);
+                EnsureChildListLength();
+                return Page();
+            }
+
+            throw;
         }
     }
 }
