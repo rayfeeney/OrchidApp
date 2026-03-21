@@ -20,21 +20,12 @@
 }
 
 <p class="text-muted small mb-3">
-This plant will be recorded under this species / hybrid. You can edit these details later if needed.
+This plant will be recorded under this species / hybrid. A permanent Plant Tag (ID) will be created automatically after saving.
 </p>
 
 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
 <form method="post">
-
-    <div class="mb-3">
-        <label asp-for="Input.PlantTag" class="fw-bold"></label>
-        <small class="text-muted d-block fw-normal">
-            Every plant needs a unique tag. It can contain any characters.
-        </small>
-        <input asp-for="Input.PlantTag" class="form-control" />
-        <span asp-validation-for="Input.PlantTag" class="text-danger"></span>
-    </div>
 
     <div class="mb-3">
         <label asp-for="Input.PlantName" class="fw-bold"></label>
@@ -48,7 +39,7 @@ This plant will be recorded under this species / hybrid. You can edit these deta
     <div class="mb-3">
         <label asp-for="Input.AcquisitionDate" class="fw-bold"></label>
         <small class="text-muted d-block fw-normal">
-            Optional. The date you obtained the plant.
+            Optional. The date you obtained the plant. Leave blank if unknown.
         </small>
         <input asp-for="Input.AcquisitionDate" class="form-control" />
         <span asp-validation-for="Input.AcquisitionDate" class="text-danger"></span>
@@ -73,7 +64,7 @@ This plant will be recorded under this species / hybrid. You can edit these deta
                   rows="4"></textarea>
         <span asp-validation-for="Input.PlantNotes" class="text-danger"></span>
     </div>
-
+<input type="hidden" asp-for="TaxonId" />
     <partial name="_FormActions"
              model="@(Model.ReturnUrl ?? Url.Page("/Plants/Add/Index"), "Add plant")" />
 

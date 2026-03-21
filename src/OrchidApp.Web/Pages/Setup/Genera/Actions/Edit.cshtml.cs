@@ -47,39 +47,35 @@ public class EditModel : PageModel
         return Page();
     }
 
-    public async Task<IActionResult> OnPostAsync(int id)
+    public async Task<IActionResult> OnPostAsync()
     {
         if (!ModelState.IsValid)
-        {
-            await ReloadInactiveStateAsync(id);
             return Page();
-        }
 
         try
         {
-            var result = await _sp.QuerySingleAsync<UpdateGenusResult>(
-                "CALL spUpdateGenus(@p0, @p1, @p2);",
-                id,
-                Genus.Name,
-                Genus.Notes
+            await _sp.QuerySingleAsync<object>(
+                "spUpdateGenus",
+                new StoredProcedureParameter("pGenusId", Genus.GenusId),
+                new StoredProcedureParameter("pGenusName", Genus.Name),
+                new StoredProcedureParameter("pGenusNotes", Genus.Notes)
             );
-
-            if (!string.IsNullOrWhiteSpace(ReturnUrl))
-                return LocalRedirect(ReturnUrl);
-
-            return RedirectToPage("/Setup/Genera/Details", new { id = result.GenusId });
         }
         catch (Exception ex)
         {
             if (DatabaseErrorTranslator.TryTranslate(ex, out var message))
             {
                 ModelState.AddModelError(string.Empty, message);
-                await ReloadInactiveStateAsync(id);
                 return Page();
             }
 
             throw;
         }
+
+        if (!string.IsNullOrWhiteSpace(ReturnUrl))
+            return LocalRedirect(ReturnUrl);
+
+        return RedirectToPage("/Setup/Genera/Details", new { id = Genus.GenusId });
     }
 
     private async Task ReloadInactiveStateAsync(int id)

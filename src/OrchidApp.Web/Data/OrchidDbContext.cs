@@ -29,7 +29,7 @@ public class OrchidDbContext : DbContext
     public DbSet<PlantPhoto> PlantPhotos { get; set; }
     public DbSet<ObservationType> ObservationTypes { get; set; }
     public DbSet<GrowthMediumIdResult> GrowthMediumIdResults { get; set; }
-
+    
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -315,5 +315,6 @@ public class OrchidDbContext : DbContext
         });
         
         modelBuilder.Entity<LocationChangeEditRow>().HasNoKey();
+        modelBuilder.Entity<AddPlantResult>().HasNoKey();
     }
 }

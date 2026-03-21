@@ -1,7 +1,6 @@
 CREATE TABLE IF NOT EXISTS `plant` (
   `plantId` int NOT NULL AUTO_INCREMENT COMMENT 'Internal identifier for individual plant',
   `taxonId` int NOT NULL COMMENT 'Linked taxonomic identification (taxon); always populated (if unidentified at taxon, the taxon all null record is linked)',
-  `plantTag` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Physical label on the pot',
   `plantName` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Optional informal name',
   `acquisitionDate` datetime DEFAULT NULL COMMENT 'Date plant was acquired or created by split',
   `acquisitionSource` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Where the plant was obtained from',
@@ -12,6 +11,7 @@ CREATE TABLE IF NOT EXISTS `plant` (
   `plantNotes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'General grower notes for this plant',
   `createdDateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Record creation timestamp (local time)',
   `updatedDateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last update timestamp (local time)',
+  `plantTag` char(8) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'System-generated permanent accession identity',
   PRIMARY KEY (`plantId`),
   UNIQUE KEY `uqPlantPlantTag` (`plantTag`),
   KEY `ixPlantIsActive` (`isActive`),

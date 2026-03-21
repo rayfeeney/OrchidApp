@@ -1,5 +1,8 @@
+DROP PROCEDURE IF EXISTS spSplitPlant;
+
 DELIMITER //
-CREATE OR REPLACE PROCEDURE `spSplitPlant`(
+
+CREATE PROCEDURE spSplitPlant(
     IN pParentPlantId INT,
     IN pSplitDateTime DATETIME,
     IN pChildrenJson JSON,
@@ -22,9 +25,9 @@ BEGIN
     DECLARE vChildTag CHAR(8);
     DECLARE vChildPlantId INT;
 
-    
-    
-    
+    -- =============================
+    -- VALIDATION
+    -- =============================
 
     IF pParentPlantId IS NULL THEN
         SIGNAL SQLSTATE '45000'
@@ -89,9 +92,9 @@ BEGIN
             SET MESSAGE_TEXT = 'Plant has already been split';
     END IF;
 
-    
-    
-    
+    -- =============================
+    -- CREATE SPLIT RECORD
+    -- =============================
 
     INSERT INTO plantsplit (
         parentPlantId,
@@ -111,9 +114,9 @@ BEGIN
     SET vSplitId = LAST_INSERT_ID();
     SET vChildCount = JSON_LENGTH(pChildrenJson);
 
-    
-    
-    
+    -- =============================
+    -- CREATE CHILD PLANTS
+    -- =============================
 
     CREATE TEMPORARY TABLE tmpChildren (
         childPlantId INT,
@@ -166,9 +169,9 @@ BEGIN
 
     END WHILE;
 
-    
-    
-    
+    -- =============================
+    -- END PARENT LIFECYCLE
+    -- =============================
 
     UPDATE plantlocationhistory
     SET endDateTime = pSplitDateTime
@@ -186,9 +189,9 @@ BEGIN
         )
     WHERE plantId = pParentPlantId;
 
-    
-    
-    
+    -- =============================
+    -- RETURN CHILDREN
+    -- =============================
 
     SELECT childPlantId, childPlantTag
     FROM tmpChildren;
@@ -197,7 +200,6 @@ BEGIN
 
     COMMIT;
 
-END
-//
-DELIMITER ;
+END //
 
+DELIMITER ;

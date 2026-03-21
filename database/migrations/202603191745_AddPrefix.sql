@@ -1,0 +1,17 @@
+INSERT INTO PhoneticPrefix (prefix) VALUES
+('BA'),('BE'),('BU'),
+('CA'),('CE'),('CU'),
+('DA'),('DE'),('DU'),
+('FA'),('FE'),('FU'),
+('GA'),('GE'),('GU'),
+('HA'),('HE'),('HU'),
+('KA'),('KE'),('KU'),
+('LA'),('LE'),('LU'),
+('MA'),('ME'),('MU'),
+('NA'),('NE'),('NU'),
+('PA'),('PE'),('PU'),
+('RA'),('RE'),('RU'),
+('TA'),('TE'),('TU'),
+('VA'),('VE'),('VU'),
+('WA'),('WE'),('WU'),
+('YA'),('YE'),('YU');

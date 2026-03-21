@@ -1,9 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.ComponentModel.DataAnnotations;
-using OrchidApp.Web.Data;
-using OrchidApp.Web.Models;
 using OrchidApp.Web.Infrastructure;
+using OrchidApp.Web.Models;
 
 namespace OrchidApp.Web.Pages.Setup.Genera.Actions;
 
@@ -38,9 +37,9 @@ public class AddModel : PageModel
             return Page();
 
         var result = await _sp.QuerySingleAsync<AddGenusResult>(
-            "CALL spAddGenus(@p0, @p1);",
-            GenusName,
-            GenusNotes
+            "spAddGenus",
+            new StoredProcedureParameter("pGenusName", GenusName),
+            new StoredProcedureParameter("pGenusNotes", GenusNotes)
         );
 
         if (!string.IsNullOrWhiteSpace(ReturnUrl))

@@ -118,12 +118,12 @@ private readonly OrchidDbContext _db;
         try
         {
             var result = await _sp.QuerySingleAsync<AddTaxonResult>(
-                "CALL spAddTaxon(@p0,@p1,@p2,@p3,@p4);",
-                GenusId!.Value,
-                SpeciesName,
-                HybridName,
-                GrowthNotes,
-                TaxonNotes
+                "spAddTaxon",
+                new StoredProcedureParameter("pGenusId", GenusId!.Value),
+                new StoredProcedureParameter("pSpeciesName", SpeciesName),
+                new StoredProcedureParameter("pHybridName", HybridName),
+                new StoredProcedureParameter("pGrowthNotes", GrowthNotes),
+                new StoredProcedureParameter("pTaxonNotes", TaxonNotes)
             );
 
             return RedirectToPage(
@@ -131,11 +131,16 @@ private readonly OrchidDbContext _db;
                 new { id = result.TaxonId }
             );
         }
-        catch (DbException ex)
+        catch (Exception ex)
         {
-            ModelState.AddModelError(string.Empty, ex.Message);
-            await OnGetAsync();
-            return Page();
+            if (DatabaseErrorTranslator.TryTranslate(ex, out var message))
+            {
+                ModelState.AddModelError(string.Empty, message);
+                await OnGetAsync();
+                return Page();
+            }
+
+            throw;
         }
 
     }

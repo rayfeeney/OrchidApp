@@ -1,0 +1,36 @@
+@page "{plantId:int}"
+@model OrchidApp.Web.Pages.Plants.Events.SplitConfirmationModel
+
+<h1 class="page-title fw-bold">Plant split completed</h1>
+
+<h2 class="h5 fw-bold mb-3">
+    @(string.IsNullOrWhiteSpace(Model.ParentPlant?.DisplayName)
+    ? "-"
+    : Model.ParentPlant?.DisplayName)
+</h2>
+
+<div class="card mt-3">
+    <div class="card-body">
+        <p class="mb-3">
+            The split has created the following new plants.
+        </p>
+
+        @for (int i = 0; i < Model.Children.Count; i++)
+        {
+            <div class="mb-3">
+                <div class="text-muted mb-1">
+                    New plant @(@i + 1) permanent ID
+                </div>
+                <div class="fs-3 fw-bold" style="font-family: monospace;">
+                    @Model.Children[i].ChildPlantTag
+                </div>
+            </div>
+        }
+
+        <form method="post" asp-page-handler="Continue" class="mt-4">
+            <button type="submit" class="btn btn-primary">
+                Continue to first new plant
+            </button>
+        </form>
+    </div>
+</div>

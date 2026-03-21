@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using OrchidApp.Web.Data;
 using OrchidApp.Web.Models;
+using OrchidApp.Web.Infrastructure;
 using System.ComponentModel.DataAnnotations;
 
 namespace OrchidApp.Web.Pages.Plants.Add;
@@ -15,9 +16,14 @@ public class CreateModel : PageModel
 
     private readonly OrchidDbContext _db;
 
-    public CreateModel(OrchidDbContext db)
+    private readonly IStoredProcedureExecutor _spExecutor;
+
+    public CreateModel(
+        OrchidDbContext db,
+        IStoredProcedureExecutor spExecutor)
     {
         _db = db;
+        _spExecutor = spExecutor;
     }
 
     [FromRoute]
@@ -29,11 +35,6 @@ public class CreateModel : PageModel
 
     public class InputModel
     {
-        [Required(ErrorMessage = "Plant tag is required.")]
-        [StringLength(50)]
-        [Display(Name = "Plant tag")]
-        public string? PlantTag { get; set; }
-
         [StringLength(100)]
         [Display(Name = "Plant name")]
         public string? PlantName { get; set; }
@@ -59,9 +60,7 @@ public class CreateModel : PageModel
             .SingleOrDefaultAsync();
 
         if (Taxon == null)
-        {
             return NotFound();
-        }
 
         return Page();
     }
@@ -75,46 +74,40 @@ public class CreateModel : PageModel
             .SingleOrDefaultAsync();
 
         if (Taxon == null)
-        {
             return NotFound();
-        }
 
         if (!ModelState.IsValid)
-        {
             return Page();
-        }
 
-        var plant = new Plant
-        {
-            TaxonId = TaxonId,
-            PlantTag = string.IsNullOrWhiteSpace(Input.PlantTag)
-                            ? null
-                            : Input.PlantTag.Trim(),
-            PlantName = Input.PlantName,
-            AcquisitionDate = Input.AcquisitionDate,
-            AcquisitionSource = Input.AcquisitionSource,
-            PlantNotes = Input.PlantNotes,
-            IsActive = true
-        };
-
-        _db.Plants.Add(plant);
+        int plantId;
 
         try
         {
-            await _db.SaveChangesAsync();
-        }
-        catch (DbUpdateException)
-        {
-            ModelState.AddModelError(
-                nameof(Input.PlantTag),
-                "This plant tag is already in use."
+            var result = await _spExecutor.QuerySingleAsync<AddPlantResult>(
+                "spAddPlant",
+                new StoredProcedureParameter("pTaxonId", TaxonId),
+                new StoredProcedureParameter("pDate", Input.AcquisitionDate),
+                new StoredProcedureParameter("pSource", Input.AcquisitionSource),
+                new StoredProcedureParameter("pName", Input.PlantName),
+                new StoredProcedureParameter("pNotes", Input.PlantNotes)
             );
-            return Page();
+
+            plantId = result.PlantId;
+        }
+        catch (Exception ex)
+        {
+            if (DatabaseErrorTranslator.TryTranslate(ex, out var message))
+            {
+                ModelState.AddModelError(string.Empty, message);
+                return Page();
+            }
+
+            throw;
         }
 
         return RedirectToPage(
-            "/Plants/Details",
-            new { plantId = plant.PlantId }
+            "/Plants/Add/Confirmation",
+            new { plantId }
         );
     }
 }
