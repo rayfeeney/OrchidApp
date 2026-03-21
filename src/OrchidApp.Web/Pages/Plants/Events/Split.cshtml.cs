@@ -5,6 +5,7 @@ using OrchidApp.Web.Models;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using OrchidApp.Web.Infrastructure;
+using System.Text.Json;
 
 namespace OrchidApp.Web.Pages.Plants.Events;
 
@@ -18,7 +19,7 @@ public class SplitModel : PageModel
     }
 
     // =============================
-    // ROUTING / NAVIGATION
+    // ROUTING
     // =============================
 
     [FromRoute]
@@ -58,16 +59,12 @@ public class SplitModel : PageModel
 
     public class ChildInput
     {
-        [Required]
-        [Display(Name = "Plant tag")]
-        public string? PlantTag { get; set; }
-
         [Display(Name = "Plant name")]
         public string? PlantName { get; set; }
     }
 
     // =============================
-    // PAGE STATE LOADER
+    // LOAD PAGE STATE
     // =============================
 
     private async Task LoadPageStateAsync()
@@ -169,50 +166,6 @@ public class SplitModel : PageModel
             return Page();
         }
 
-        SplitReasonNotes = string.IsNullOrWhiteSpace(SplitReasonNotes)
-            ? null
-            : SplitReasonNotes.Trim();
-
-        if (ChildCount < 2)
-            ChildCount = 2;
-
-        var filledChildren = Children
-            .Where(c => !string.IsNullOrWhiteSpace(c.PlantTag))
-            .ToList();
-
-        if (filledChildren.Count < 2)
-        {
-            ModelState.AddModelError(string.Empty,
-                "You must provide at least two child plant tags.");
-            EnsureChildListLength();
-            return Page();
-        }
-
-        var tags = filledChildren
-            .Select(c => c.PlantTag!.Trim())
-            .ToList();
-
-        if (tags.GroupBy(t => t).Any(g => g.Count() > 1))
-        {
-            ModelState.AddModelError(string.Empty,
-                "Duplicate plant tags are not allowed.");
-            EnsureChildListLength();
-            return Page();
-        }
-
-        var existingTags = await _db.Plants
-            .Where(p => p.PlantTag != null && tags.Contains(p.PlantTag))
-            .Select(p => p.PlantTag!)
-            .ToListAsync();
-
-        if (existingTags.Any())
-        {
-            ModelState.AddModelError(string.Empty,
-                $"The following plant tags already exist: {string.Join(", ", existingTags)}");
-            EnsureChildListLength();
-            return Page();
-        }
-
         if (SplitDateTime > DateTime.Now)
         {
             ModelState.AddModelError(nameof(SplitDateTime),
@@ -229,18 +182,33 @@ public class SplitModel : PageModel
             return Page();
         }
 
-        var csv = string.Join(",", tags);
+        if (ChildCount < 2)
+            ChildCount = 2;
+
+        var filledChildren = Children.ToList();
+
+        var json = JsonSerializer.Serialize(
+            filledChildren.Select(c => new
+            {
+                plantName = string.IsNullOrWhiteSpace(c.PlantName)
+                    ? null
+                    : c.PlantName.Trim()
+            })
+        );
+
+        SplitReasonNotes = string.IsNullOrWhiteSpace(SplitReasonNotes)
+            ? null
+            : SplitReasonNotes.Trim();
 
         try
         {
             await _db.Database.ExecuteSqlRawAsync(
-                "CALL spSplitPlant({0},{1},{2},{3},{4},{5});",
+                "CALL spSplitPlant({0},{1},{2},{3},{4});",
                 PlantId,
                 SplitDateTime,
-                csv,
-                (object?)null!,
-                (object?)SplitReasonNotes ?? (object?)null!,
-                (object?)null!
+                json,
+                DBNull.Value,
+                (object?)SplitReasonNotes ?? DBNull.Value
             );
 
             return RedirectToPage("/Plants/Details", new { plantId = PlantId });

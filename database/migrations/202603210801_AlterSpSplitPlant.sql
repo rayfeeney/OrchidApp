@@ -1,5 +1,8 @@
+DROP PROCEDURE IF EXISTS spSplitPlant;
+
 DELIMITER //
-CREATE OR REPLACE PROCEDURE `spSplitPlant`(
+
+CREATE PROCEDURE spSplitPlant(
     IN pParentPlantId INT,
     IN pSplitDateTime DATETIME,
     IN pChildrenJson JSON,
@@ -13,13 +16,23 @@ BEGIN
     DECLARE vParentEnd DATETIME;
     DECLARE vTaxonIsActive TINYINT;
     DECLARE vGenusIsActive TINYINT;
+
     DECLARE vSplitId INT;
     DECLARE vChildCount INT;
-    DECLARE vChildPlantId INT;
-    DECLARE vChildPlantTag CHAR(8);
-    DECLARE vPlantName VARCHAR(100);
+    DECLARE vIdx INT DEFAULT 0;
 
-    DECLARE i INT DEFAULT 0;
+    DECLARE vChildName VARCHAR(100);
+    DECLARE vChildTag CHAR(8);
+    DECLARE vChildPlantId INT;
+
+    -- =============================
+    -- VALIDATION
+    -- =============================
+
+    IF pParentPlantId IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Parent plant id is required';
+    END IF;
 
     IF pSplitDateTime IS NULL THEN
         SIGNAL SQLSTATE '45000'
@@ -28,7 +41,7 @@ BEGIN
 
     IF JSON_LENGTH(pChildrenJson) < 2 THEN
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'A split must create at least two child plants';
+            SET MESSAGE_TEXT = 'Split must create at least two child plants';
     END IF;
 
     START TRANSACTION;
@@ -48,16 +61,11 @@ BEGIN
         vTaxonIsActive,
         vGenusIsActive
     FROM plant p
-    JOIN taxon t ON t.taxonId = p.taxonId
-    JOIN genus g ON g.genusId = t.genusId
+    JOIN taxon t ON p.taxonId = t.taxonId
+    JOIN genus g ON t.genusId = g.genusId
     WHERE p.plantId = pParentPlantId
       AND p.isActive = 1
     FOR UPDATE;
-
-    IF vParentPlantTag IS NULL THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Parent plant not found or inactive';
-    END IF;
 
     IF vParentEnd IS NOT NULL THEN
         SIGNAL SQLSTATE '45000'
@@ -66,7 +74,7 @@ BEGIN
 
     IF vTaxonIsActive = 0 OR vGenusIsActive = 0 THEN
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Plant must be classified under an active genus and species / hybrid before splitting';
+            SET MESSAGE_TEXT = 'Plant must be classified under an active genus and species / hybrid';
     END IF;
 
     IF pSplitDateTime < vParentStart THEN
@@ -75,7 +83,8 @@ BEGIN
     END IF;
 
     IF EXISTS (
-        SELECT 1 FROM plantsplit
+        SELECT 1
+        FROM plantsplit
         WHERE parentPlantId = pParentPlantId
           AND isActive = 1
     ) THEN
@@ -83,7 +92,11 @@ BEGIN
             SET MESSAGE_TEXT = 'Plant has already been split';
     END IF;
 
-    INSERT INTO plantsplit(
+    -- =============================
+    -- CREATE SPLIT RECORD
+    -- =============================
+
+    INSERT INTO plantsplit (
         parentPlantId,
         splitDateTime,
         splitReasonNotes,
@@ -99,25 +112,47 @@ BEGIN
     );
 
     SET vSplitId = LAST_INSERT_ID();
-
     SET vChildCount = JSON_LENGTH(pChildrenJson);
 
-    WHILE i < vChildCount DO
+    -- =============================
+    -- CREATE CHILD PLANTS
+    -- =============================
 
-        SET vPlantName =
-            JSON_UNQUOTE(JSON_EXTRACT(pChildrenJson, CONCAT('$[', i, '].plantName')));
+    CREATE TEMPORARY TABLE tmpChildren (
+        childPlantId INT,
+        childPlantTag CHAR(8)
+    );
 
-        CALL spAddPlant(
+    WHILE vIdx < vChildCount DO
+
+        SET vChildName = JSON_UNQUOTE(
+            JSON_EXTRACT(pChildrenJson, CONCAT('$[', vIdx, '].plantName'))
+        );
+
+        SET vChildName = NULLIF(TRIM(vChildName), '');
+
+        SET vChildTag = fnGeneratePlantTag();
+
+        INSERT INTO plant (
+            taxonId,
+            plantTag,
+            plantName,
+            acquisitionDate,
+            acquisitionSource,
+            isActive
+        )
+        VALUES (
             vTaxonId,
+            vChildTag,
+            vChildName,
             pSplitDateTime,
-            CONCAT('From split of ', vParentPlantTag),
-            vPlantName,
-            NULL
+            CONCAT('Split from ', vParentPlantTag),
+            1
         );
 
         SET vChildPlantId = LAST_INSERT_ID();
 
-        INSERT INTO plantsplitchild(
+        INSERT INTO plantsplitchild (
             plantSplitId,
             childPlantId,
             isActive
@@ -128,9 +163,15 @@ BEGIN
             1
         );
 
-        SET i = i + 1;
+        INSERT INTO tmpChildren VALUES (vChildPlantId, vChildTag);
+
+        SET vIdx = vIdx + 1;
 
     END WHILE;
+
+    -- =============================
+    -- END PARENT LIFECYCLE
+    -- =============================
 
     UPDATE plantlocationhistory
     SET endDateTime = pSplitDateTime
@@ -140,17 +181,25 @@ BEGIN
 
     UPDATE plant
     SET endDate = pSplitDateTime,
-        endReasonCode = 'Split',
         endNotes = CONCAT(
-            'Split into ', vChildCount,
+            'Split into ',
+            vChildCount,
             ' plants on ',
             DATE_FORMAT(pSplitDateTime, '%Y-%m-%d %H:%i:%s')
         )
     WHERE plantId = pParentPlantId;
 
+    -- =============================
+    -- RETURN CHILDREN
+    -- =============================
+
+    SELECT childPlantId, childPlantTag
+    FROM tmpChildren;
+
+    DROP TEMPORARY TABLE tmpChildren;
+
     COMMIT;
 
-END
-//
-DELIMITER ;
+END //
 
+DELIMITER ;
