@@ -201,7 +201,9 @@ If not, resolve the issues before  proceeding.
 
 ### 4.2.4 Publish
 
-    dotnet publish src/OrchidApp.Web/OrchidApp.Web.csproj -c Release -o /opt/orchidapp/publish
+    cd /opt/orchidapp/src/OrchidApp.Web
+
+    dotnet publish -c Release -o /opt/orchidapp/publish
 
 ### 4.2.5 Restart Service
 
