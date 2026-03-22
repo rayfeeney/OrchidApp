@@ -67,7 +67,8 @@ public class AddModel : PageModel
 
     [BindProperty]
     public int? LocationId { get; set; }
-
+    [BindProperty]
+    public string? QuickObservationTypeCode { get; set; }
     [BindProperty]
     [DataType(DataType.Date)]
     public DateTime StartDate { get; set; } = DateTime.Today;
@@ -168,19 +169,23 @@ public class AddModel : PageModel
                 case "photo":
                     EventDetails = "Photo added";
                     ShowPhotoSection = true;
+                    QuickObservationTypeCode = "OBS_PHOTO";
                     break;
 
                 case "feedGrowth":
                     EventDetails = "Fed with growth food";
+                    QuickObservationTypeCode = "OBS_FEED_GROWTH";
                     break;
 
                 case "feedBloom":
                     EventDetails = "Fed with bloom food";
+                    QuickObservationTypeCode = "OBS_FEED_BLOOM";
                     break;
             }
 
             ModelState.Remove(nameof(EventDetails));
             ModelState.Remove(nameof(ShowPhotoSection));
+            ModelState.Remove(nameof(QuickObservationTypeCode));
 
             LoadLookups();
             return Page();
@@ -209,10 +214,12 @@ public class AddModel : PageModel
                         "Please choose at least one photo.");
                 }
 
-                if (!hasPhotos && string.IsNullOrWhiteSpace(EventDetails))
+                if (string.IsNullOrWhiteSpace(QuickObservationTypeCode)
+                    && !hasPhotos
+                    && string.IsNullOrWhiteSpace(EventDetails))
                 {
                     ModelState.AddModelError(nameof(EventDetails),
-                        "Please enter some notes or add a photo.");
+                        "Please enter some notes or choose an observation type.");
                 }
 
                 if (!ModelState.IsValid)
@@ -221,7 +228,17 @@ public class AddModel : PageModel
                     return Page();
                 }
 
-                var typeCode = hasPhotos ? "OBS_PHOTO" : "OBS_NOTE";
+                string typeCode;
+
+                if (!string.IsNullOrWhiteSpace(QuickObservationTypeCode))
+                {
+                    typeCode = QuickObservationTypeCode;
+                }
+                else
+                {
+                    typeCode = hasPhotos ? "OBS_PHOTO" : "OBS_NOTE";
+                }
+
                 var observationTypeId = await _resolver.GetIdAsync(typeCode);
 
                 var uploadsRoot = "/opt/orchidapp/uploads";
@@ -369,6 +386,24 @@ public class AddModel : PageModel
                 break;
 
             case "Flowering":
+                if (StartDate.Date > DateTime.Today)
+                {
+                    ModelState.AddModelError(nameof(StartDate),
+                        "Start date cannot be in the future.");
+
+                    LoadLookups();
+                    return Page();
+                }
+
+                if (EndDate.HasValue && EndDate.Value.Date > DateTime.Today)
+                {
+                    ModelState.AddModelError(nameof(EndDate),
+                        "End date cannot be in the future.");
+
+                    LoadLookups();
+                    return Page();
+                }
+
                 if (EndDate.HasValue && EndDate < StartDate)
                 {
                     ModelState.AddModelError(string.Empty,
@@ -392,6 +427,16 @@ public class AddModel : PageModel
                 break;
 
             case "Repotting":
+
+                if (EventDate.Date > DateTime.Today)
+                {
+                    ModelState.AddModelError(nameof(EventDate),
+                        "Repotting date cannot be in the future.");
+
+                    LoadLookups();
+                    return Page();
+                }
+
                 _db.Repotting.Add(new Repotting
                 {
                     PlantId = PlantId,

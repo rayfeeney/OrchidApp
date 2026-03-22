@@ -74,6 +74,8 @@
 
 <form method="post" enctype="multipart/form-data">
 
+    <input type="hidden" asp-for="QuickObservationTypeCode" />
+    
     @* Observation *@
     @if (Model.EventType == "Observation")
     {
