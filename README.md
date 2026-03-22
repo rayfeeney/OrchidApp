@@ -164,6 +164,77 @@ Heavy photo loading is isolated to dedicated pages.
 
 ------------------------------------------------------------------------
 
+## Canonical Photo Ingestion Pipeline
+
+All uploaded images are normalised into a single canonical representation.
+
+This behaviour is a system invariant and must not be modified casually.
+
+### Canonical Image Specification
+
+- Maximum dimension (longest side): **3072 px**
+- Output format: **JPEG**
+- JPEG quality: **90**
+- Metadata: **Stripped**
+- Colour profile: **Preserved**
+- Alpha channel: **Flattened to white**
+- Animated images: **Rejected**
+- Multi-frame images: **Rejected**
+- Original uploads: **Not stored**
+
+Only the processed canonical image is persisted.
+
+### Processing Architecture
+
+Image ingestion uses a hybrid pipeline:
+
+- **Magick.NET (ImageMagick)** for robust decoding and canonicalisation
+- **libvips (NetVips)** for resizing and final encoding
+
+This design is intentional:
+
+- ImageMagick provides broad format support (HEIC, HEIF, iPhone edge cases)
+- libvips provides low-memory, high-performance processing suitable for Raspberry Pi deployment
+
+### Error Handling Contract
+
+The ingestion pipeline must:
+
+- Fail fast on invalid media
+- Never create partial or zero-byte files
+- Never leak temporary files
+- Never expose internal processing errors to users
+
+User-visible failure message:
+
+> "The photo could not be processed."
+
+Detailed errors are logged for diagnostics only.
+
+### Operational Model
+
+OrchidApp assumes:
+
+- Local filesystem storage
+- No object storage
+- No CDN
+- No derivative thumbnail sets
+- No background media processing queues
+
+Images form part of the canonical dataset and are included in nightly encrypted backups.
+
+### Dependency Model
+
+Photo ingestion depends on:
+
+- Magick.NET (Apache 2.0)
+- ImageMagick native runtime
+- NetVips / libvips (LGPL-2.1 dynamic use)
+
+These dependencies are architectural and must be treated as such.
+
+------------------------------------------------------------------------
+
 # Write Strategy
 
 -   Atomic entities (e.g. `plantevent`) may be written via EF Core
@@ -283,3 +354,9 @@ If it fails locally, it will fail in CI.
 > Enforcement lives in automation.
 
 Everything else follows from that.
+
+------------------------------------------------------------------------
+
+# Third Party Licences
+
+See THIRD_PARTY_NOTICES.md
