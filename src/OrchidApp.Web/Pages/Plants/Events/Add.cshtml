@@ -117,11 +117,12 @@
         @if (Model.ShowPhotoSection)
         {
             <div class="mb-3">
-                <label class="fw-bold">Photos</label>
-                <input type="file"
-                       name="UploadedFiles"
-                       multiple
-                       class="form-control" />
+                <label asp-for="UploadedFiles" class="fw-bold">Photos</label>
+                <input asp-for="UploadedFiles"
+                    type="file"
+                    multiple
+                    class="form-control" />
+                <span asp-validation-for="UploadedFiles" class="text-danger"></span>
             </div>
         }
 
@@ -151,6 +152,7 @@
                     <option value="@loc.LocationId">@loc.LocationName</option>
                 }
             </select>
+            <span asp-validation-for="LocationId" class="text-danger"></span>
         </div>
 
         <div class="mb-3">
