@@ -17,15 +17,18 @@ public class IndexModel : PageModel
     private readonly OrchidDbContext _context;
     private readonly ObservationTypeResolver _resolver;
     private readonly PhotoPipeline _photoPipeline;
+    private readonly ILogger<IndexModel> _logger;
 
     public IndexModel(
         OrchidDbContext context,
         ObservationTypeResolver resolver,
-        PhotoPipeline photoPipeline)
+        PhotoPipeline photoPipeline,
+        ILogger<IndexModel> logger)
     {
         _context = context;
         _resolver = resolver;
         _photoPipeline = photoPipeline;
+        _logger = logger;
     }
 
     public int PlantId { get; private set; }
@@ -99,19 +102,22 @@ public class IndexModel : PageModel
 
         try
         {
-            await AddPhotoObservationAsync(plantId, UploadFiles, combinedNotes, ct);
+            await AddPhotoObservationAsync(
+                PlantId,
+                UploadFiles,
+                combinedNotes,
+                ct);
         }
-        catch (InvalidOperationException ex)
+        catch (InvalidOperationException)
         {
-            // PhotoPipeline validation errors (too large, bad format, etc)
-            ModelState.AddModelError(string.Empty, ex.Message);
+            ModelState.AddModelError(string.Empty,
+                "The photo could not be processed. Please try another image.");
 
-            var ok = await LoadAsync(plantId, focusPhotoId: FocusPhotoId, ct);
-            if (!ok)
-                return NotFound();
-
-            return Page();
-        }
+            var ok = await LoadAsync(plantId, FocusPhotoId, ct);
+                if (!ok)
+                    return NotFound();
+                            return Page();
+                        }
 
         if (!string.IsNullOrWhiteSpace(returnUrl))
             return LocalRedirect(returnUrl);
@@ -216,19 +222,32 @@ public class IndexModel : PageModel
             if (file == null || file.Length <= 0)
                 continue;
 
-            var relativePath = await _photoPipeline.ProcessAndSaveAsync(
-                file.OpenReadStream(),
-                plantId,
-                uploadsRoot,
-                ct);
+            PhotoSaveResult result;
+
+            try
+            {
+                result = await _photoPipeline.ProcessAndSaveAsync(
+                    file.OpenReadStream(),
+                    plantId,
+                    uploadsRoot,
+                    ct);
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning(ex,
+                    "Photo ingestion failed for plant {PlantId}", plantId);
+
+                throw new InvalidOperationException(
+                    "The photo could not be processed. Please try another image.");
+            }
 
             var photo = new PlantPhoto
             {
                 PlantEventId = observation.PlantEventId,
                 PlantId = plantId,
                 FileName = file.FileName,
-                FilePath = relativePath,
-                MimeType = "image/jpeg", // pipeline always saves as JPEG
+                FilePath = result.RelativePath,
+                MimeType = result.MimeType,
                 IsHero = !heroExists,
                 IsActive = true,
                 CreatedDateTime = DateTime.Now

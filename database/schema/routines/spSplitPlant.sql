@@ -126,7 +126,13 @@ BEGIN
             JSON_EXTRACT(pChildrenJson, CONCAT('$[', vIdx, '].plantName'))
         );
 
-        SET vChildName = NULLIF(TRIM(vChildName), '');
+        IF vChildName IS NOT NULL THEN
+            SET vChildName = TRIM(vChildName);
+
+            IF vChildName = '' OR LOWER(vChildName) = 'null' THEN
+                SET vChildName = NULL;
+            END IF;
+        END IF;
 
         SET vChildTag = fnGeneratePlantTag();
 

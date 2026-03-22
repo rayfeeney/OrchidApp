@@ -153,6 +153,120 @@ application controls selection behaviour only within those constraints.
 
 ------------------------------------------------------------------------
 
+# 5A. Canonical Photo Ingestion Architecture
+
+Image ingestion is treated as a data-integrity concern, not a UI feature.
+
+Photos form part of the permanent canonical dataset and must be normalised
+at the point of entry to ensure long-term consistency, storage predictability
+and operational reliability.
+
+## Architectural Principles
+
+The ingestion pipeline is designed to:
+
+- Accept heterogeneous user-generated media (iPhone, Android, camera, legacy formats)
+- Normalise all images into a single canonical representation
+- Minimise memory usage during processing
+- Prevent storage bloat and derivative sprawl
+- Ensure deterministic rendering behaviour across platforms
+- Guarantee operational simplicity on low-resource hardware (e.g. Raspberry Pi)
+
+This is achieved through a hybrid processing architecture.
+
+## Hybrid Processing Model
+
+Photo ingestion deliberately uses two distinct imaging engines:
+
+### ImageMagick (Magick.NET)
+
+Responsible for:
+
+- Robust decoding of modern mobile formats (HEIC/HEIF)
+- Multi-frame detection and rejection
+- Orientation normalisation
+- Colour profile handling
+- Alpha flattening
+- Canonical JPEG generation
+
+ImageMagick is used as the ingestion boundary because it prioritises
+format correctness and compatibility.
+
+### libvips (NetVips)
+
+Responsible for:
+
+- High-performance resizing
+- Low-memory streaming transforms
+- Final canonical encoding
+
+libvips is used for transformation efficiency, not format interpretation.
+
+This separation avoids coupling performance concerns with format safety.
+
+## Canonicalisation Strategy
+
+Images are normalised into a deterministic canonical representation:
+
+- Single frame
+- Bounded resolution
+- Controlled compression characteristics
+- No metadata variability
+- Explicit colour behaviour
+
+Canonicalisation occurs before persistence.
+
+Original uploads are not retained.
+
+This prevents:
+
+- Silent storage growth
+- Format drift over time
+- Operational complexity during backup/restore
+- Rendering inconsistencies across devices
+
+## Failure Behaviour
+
+Photo ingestion must fail in a controlled manner:
+
+- Invalid media must be rejected early
+- Temporary artefacts must always be cleaned up
+- No partial filesystem writes may occur
+- User-visible messaging must remain non-technical
+- Diagnostic detail must be logged for operators only
+
+Media ingestion is considered a validation boundary.
+
+## Operational Constraints
+
+The architecture assumes:
+
+- Local filesystem persistence
+- Inclusion of images in encrypted backup regime
+- No CDN or external media processing
+- No asynchronous media pipelines
+- No derivative thumbnail sets
+
+This model prioritises system determinism and operational simplicity.
+
+## Dependency Model
+
+Photo ingestion introduces architectural dependencies:
+
+- ImageMagick runtime via Magick.NET (Apache 2.0)
+- libvips runtime via NetVips (LGPL-2.1 dynamic linkage)
+
+These dependencies are explicitly accepted due to:
+
+- Cross-platform reliability requirements
+- Raspberry Pi resource constraints
+- Long-term maintenance considerations
+
+They must be treated as part of the system architecture, not
+implementation detail.
+
+------------------------------------------------------------------------
+
 # 6. Write Strategy --- Responsibility Separation
 
 ## Atomic Entities

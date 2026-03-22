@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using OrchidApp.Web.Services;
 using Microsoft.AspNetCore.Http;
 using OrchidApp.Web.Infrastructure;
+using Microsoft.Extensions.Logging;
 
 namespace OrchidApp.Web.Pages.Plants.Events;
 
@@ -20,15 +21,21 @@ public class AddModel : PageModel
     private readonly OrchidDbContext _db;
     private readonly ObservationTypeResolver _resolver;
     private readonly PhotoPipeline _photoPipeline;
+    private readonly IStoredProcedureExecutor _sp;
+    private readonly ILogger<AddModel> _logger;
 
     public AddModel(
         OrchidDbContext db,
         ObservationTypeResolver resolver,
-        PhotoPipeline photoPipeline)
+        PhotoPipeline photoPipeline,
+        IStoredProcedureExecutor sp,
+        ILogger<AddModel> logger)
     {
         _db = db;
         _resolver = resolver;
         _photoPipeline = photoPipeline;
+        _sp = sp;
+        _logger = logger;
     }
 
     [FromRoute]
@@ -190,13 +197,14 @@ public class AddModel : PageModel
 
                     foreach (var file in UploadedFiles!)
                     {
-                        if (file.Length <= 0) continue;
+                        if (file == null || file.Length <= 0)
+                            continue;
 
-                        string relativePath;
+                        PhotoSaveResult result;
 
                         try
                         {
-                            relativePath = await _photoPipeline.ProcessAndSaveAsync(
+                            result = await _photoPipeline.ProcessAndSaveAsync(
                                 file.OpenReadStream(),
                                 PlantId,
                                 uploadsRoot,
@@ -204,7 +212,11 @@ public class AddModel : PageModel
                         }
                         catch (InvalidOperationException ex)
                         {
-                            ModelState.AddModelError(string.Empty, ex.Message);
+                            _logger.LogWarning(ex,
+                                "Photo ingestion failed for plant {PlantId}", PlantId);
+
+                            ModelState.AddModelError(string.Empty,
+                                "The photo could not be processed. Please try another image.");
 
                             if (!LoadPlantContext())
                                 return NotFound();
@@ -213,7 +225,22 @@ public class AddModel : PageModel
                             return Page();
                         }
 
-                        heroExists = true;
+                        var photo = new PlantPhoto
+                        {
+                            PlantEventId = observation.PlantEventId,
+                            PlantId = PlantId,
+                            FileName = file.FileName,
+                            FilePath = result.RelativePath,
+                            MimeType = result.MimeType,
+                            IsHero = !heroExists,
+                            IsActive = true,
+                            CreatedDateTime = DateTime.Now
+                        };
+
+                        _db.PlantPhotos.Add(photo);
+
+                        if (!heroExists)
+                            heroExists = true;
                     }
 
                     await _db.SaveChangesAsync();
@@ -224,18 +251,14 @@ public class AddModel : PageModel
             case "LocationChange":
                 try
                 {
-                    var parameters = new object[]
-                    {
-                        PlantId,
-                        LocationId,
-                        EventDate.Date,
-                        string.IsNullOrWhiteSpace(EventDetails) ? DBNull.Value : EventDetails,
-                        string.IsNullOrWhiteSpace(PlantLocationNotes) ? DBNull.Value : PlantLocationNotes
-                    };
-
-                    await _db.Database.ExecuteSqlRawAsync(
-                        @"CALL spMovePlantToLocation({0},{1},{2},{3},{4})",
-                        parameters);
+                    await _sp.QueryListAsync<object>(
+                        "spMovePlantToLocation",
+                        new StoredProcedureParameter("pPlantId", PlantId),
+                        new StoredProcedureParameter("pLocationId", LocationId),
+                        new StoredProcedureParameter("pStartDate", EventDate.Date),
+                        new StoredProcedureParameter("pMoveReasonNotes", EventDetails),
+                        new StoredProcedureParameter("pPlantLocationNotes", PlantLocationNotes)
+                    );
                 }
                 catch (Exception ex) when (DatabaseErrorTranslator.TryTranslate(ex, out var msg))
                 {

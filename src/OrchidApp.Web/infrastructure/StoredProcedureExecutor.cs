@@ -39,7 +39,7 @@ public class StoredProcedureExecutor : IStoredProcedureExecutor
         params StoredProcedureParameter[] parameters
     ) where T : new()
     {
-        await using var conn = _db.Database.GetDbConnection();
+        var conn = _db.Database.GetDbConnection();
 
         if (conn.State != ConnectionState.Open)
             await conn.OpenAsync();
