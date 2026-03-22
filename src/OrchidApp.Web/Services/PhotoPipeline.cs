@@ -184,7 +184,12 @@ public sealed class PhotoPipeline
         {
             canonicalTempFile = await CreateCanonicalTempJpegAsync(buffered, ct);
 
-            using var original = Image.NewFromFile(canonicalTempFile);
+if (true)
+    throw new Exception("TEST STOP BEFORE VIPS LOAD");
+
+            #pragma warning disable CS0162
+using var original = Image.NewFromFile(canonicalTempFile);
+#pragma warning restore CS0162
 
             _logger.LogInformation(
                 "Canonical image loaded. Width={Width}, Height={Height}",
