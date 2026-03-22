@@ -176,33 +176,13 @@ This is achieved through a hybrid processing architecture.
 
 ## Hybrid Processing Model
 
-Photo ingestion deliberately uses two distinct imaging engines:
-
-### ImageMagick (Magick.NET)
-
-Responsible for:
-
-- Robust decoding of modern mobile formats (HEIC/HEIF)
-- Multi-frame detection and rejection
-- Orientation normalisation
-- Colour profile handling
-- Alpha flattening
-- Canonical JPEG generation
-
-ImageMagick is used as the ingestion boundary because it prioritises
-format correctness and compatibility.
+Photo ingestion deliberately uses imaging engine:
 
 ### libvips (NetVips)
-
-Responsible for:
 
 - High-performance resizing
 - Low-memory streaming transforms
 - Final canonical encoding
-
-libvips is used for transformation efficiency, not format interpretation.
-
-This separation avoids coupling performance concerns with format safety.
 
 ## Canonicalisation Strategy
 
@@ -253,7 +233,6 @@ This model prioritises system determinism and operational simplicity.
 
 Photo ingestion introduces architectural dependencies:
 
-- ImageMagick runtime via Magick.NET (Apache 2.0)
 - libvips runtime via NetVips (LGPL-2.1 dynamic linkage)
 
 These dependencies are explicitly accepted due to:
