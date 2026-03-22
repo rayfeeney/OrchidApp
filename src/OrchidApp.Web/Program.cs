@@ -27,6 +27,9 @@ builder.Services.AddDbContext<OrchidDbContext>(options =>
 
 builder.Services.AddSingleton<PhotoPipeline>();
 
+builder.Services.Configure<MediaIngestionOptions>(
+    builder.Configuration.GetSection("MediaIngestion"));
+    
 builder.Services.AddScoped<ObservationTypeResolver>();
 
 builder.Services.AddScoped<IStoredProcedureExecutor, StoredProcedureExecutor>();

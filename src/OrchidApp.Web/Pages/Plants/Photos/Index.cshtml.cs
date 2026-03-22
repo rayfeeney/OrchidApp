@@ -216,7 +216,7 @@ public class IndexModel : PageModel
             if (file == null || file.Length <= 0)
                 continue;
 
-            var relativePath = await _photoPipeline.ProcessAndSaveAsync(
+            var result = await _photoPipeline.ProcessAndSaveAsync(
                 file.OpenReadStream(),
                 plantId,
                 uploadsRoot,
@@ -227,8 +227,8 @@ public class IndexModel : PageModel
                 PlantEventId = observation.PlantEventId,
                 PlantId = plantId,
                 FileName = file.FileName,
-                FilePath = relativePath,
-                MimeType = "image/jpeg", // pipeline always saves as JPEG
+                FilePath = result.RelativePath,
+                MimeType = result.MimeType,
                 IsHero = !heroExists,
                 IsActive = true,
                 CreatedDateTime = DateTime.Now

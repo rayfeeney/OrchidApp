@@ -1,116 +1,216 @@
-using SkiaSharp;
+using ImageMagick;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using NetVips;
 
 namespace OrchidApp.Web.Services;
 
 public sealed class PhotoPipeline
 {
-    private const int MaxUploadBytes = 10 * 1024 * 1024; // 10MB
-    private const int MaxMegapixels = 40; // safety guard
-    private const int MaxDimension = 2000; // max width or height
-    private const int JpegQuality = 85;
+    private const long MaxUploadBytes = 10 * 1024 * 1024;
+    private const int MaxMegapixels = 40;
 
-    public async Task<string> ProcessAndSaveAsync(
+    private readonly MediaIngestionOptions _options;
+    private readonly ILogger<PhotoPipeline> _logger;
+
+    public PhotoPipeline(
+        IOptions<MediaIngestionOptions> options,
+        ILogger<PhotoPipeline> logger)
+    {
+        _options = options.Value;
+        _logger = logger;
+    }
+
+    public async Task<PhotoSaveResult> ProcessAndSaveAsync(
         Stream uploadStream,
         int plantId,
         string uploadsRootPath,
         CancellationToken ct = default)
     {
-        if (uploadStream.Length == 0)
+        _logger.LogInformation("Photo ingestion started for plant {PlantId}", plantId);
+
+        await using var buffered = new MemoryStream();
+        await CopyWithLimitAsync(uploadStream, buffered, MaxUploadBytes, ct);
+        buffered.Position = 0;
+
+        if (buffered.Length == 0)
             throw new InvalidOperationException("Empty file.");
 
-        if (uploadStream.Length > MaxUploadBytes)
-            throw new InvalidOperationException("File exceeds maximum size.");
+        _logger.LogInformation("Upload size {Bytes} bytes", buffered.Length);
 
-        using var managedStream = new MemoryStream();
-        await uploadStream.CopyToAsync(managedStream, ct);
-managedStream.Position = 0;
+        string? canonicalTempFile = null;
 
-Console.WriteLine($"UPLOAD SIZE: {managedStream.Length}");
+        try
+        {
+            canonicalTempFile = await CreateCanonicalTempJpegAsync(buffered, ct);
 
-using var codec = SKCodec.Create(managedStream);
-Console.WriteLine(codec == null ? "SKCodec: NULL" : "SKCodec: OK");
+            using var original = Image.NewFromFile(canonicalTempFile);
 
-if (codec == null)
-    throw new InvalidOperationException("Invalid image format.");
+            _logger.LogInformation(
+                "Canonical image loaded. Width={Width}, Height={Height}",
+                original.Width,
+                original.Height);
 
-        var info = codec.Info;
+            if ((long)original.Width * original.Height > MaxMegapixels * 1_000_000L)
+                throw new InvalidOperationException("Image dimensions too large.");
 
-        if ((long)info.Width * info.Height > MaxMegapixels * 1_000_000)
+            using var resized = ResizeIfNeeded(original, _options.MaxImageDimension);
+
+            var plantFolder = Path.Combine(uploadsRootPath, "plants", plantId.ToString());
+            Directory.CreateDirectory(plantFolder);
+
+            var fileName = $"{Guid.NewGuid():N}.jpg";
+            var finalPath = Path.Combine(plantFolder, fileName);
+            var tempOutputPath = finalPath + ".tmp";
+
+            SaveProcessedJpeg(resized, tempOutputPath);
+
+            File.Move(tempOutputPath, finalPath, overwrite: true);
+
+            _logger.LogInformation(
+                "Photo saved. PlantId={PlantId}, Width={Width}, Height={Height}, Path={Path}",
+                plantId,
+                resized.Width,
+                resized.Height,
+                finalPath);
+
+            return new PhotoSaveResult
+            {
+                RelativePath = Path.Combine("uploads", "plants", plantId.ToString(), fileName)
+                    .Replace("\\", "/"),
+                MimeType = "image/jpeg",
+                Width = resized.Width,
+                Height = resized.Height
+            };
+        }
+        catch (InvalidOperationException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Photo ingestion failed for plant {PlantId}", plantId);
+            throw new InvalidOperationException("The photo could not be processed.");
+        }
+        finally
+        {
+            CleanupTemp(canonicalTempFile);
+        }
+    }
+
+    private async Task<string> CreateCanonicalTempJpegAsync(Stream stream, CancellationToken ct)
+    {
+        stream.Position = 0;
+
+        using var copy = new MemoryStream();
+        await stream.CopyToAsync(copy, ct);
+        var bytes = copy.ToArray();
+
+        using var collection = new MagickImageCollection(bytes);
+
+        if (collection.Count == 0)
+            throw new InvalidOperationException("Invalid image format.");
+
+        if (collection.Count > 1)
+            throw new InvalidOperationException("Animated or multi-frame images are not supported.");
+
+        using var image = (MagickImage)collection[0];
+
+        _logger.LogInformation(
+            "Magick decoded image. Format={Format}, Width={Width}, Height={Height}",
+            image.Format,
+            image.Width,
+            image.Height);
+
+        var colourProfile = image.GetColorProfile();
+
+        image.AutoOrient();
+
+        if (image.Width <= 0 || image.Height <= 0)
+            throw new InvalidOperationException("Invalid image dimensions.");
+
+        if ((long)image.Width * image.Height > MaxMegapixels * 1_000_000L)
             throw new InvalidOperationException("Image dimensions too large.");
 
-        using var bitmap = SKBitmap.Decode(codec);
-        if (bitmap == null)
-            throw new InvalidOperationException("Unable to decode image.");
+        image.BackgroundColor = MagickColors.White;
+        image.Alpha(AlphaOption.Remove);
 
-        using var oriented = ApplyOrientation(bitmap, codec.EncodedOrigin);
-        using var resized = ResizeIfNeeded(oriented);
+        image.Strip();
 
-        using var image = SKImage.FromBitmap(resized);
-        using var data = image.Encode(SKEncodedImageFormat.Jpeg, JpegQuality);
+        if (colourProfile != null)
+            image.SetProfile(colourProfile);
 
-        var plantFolder = Path.Combine(uploadsRootPath, "plants", plantId.ToString());
-        Directory.CreateDirectory(plantFolder);
+        image.Format = MagickFormat.Jpeg;
+        image.Quality = ClampQualityMagick(_options.JpegQuality);
 
-        var fileName = $"{Guid.NewGuid():N}.jpg";
-        var fullPath = Path.Combine(plantFolder, fileName);
+        var tempPath = Path.ChangeExtension(Path.GetTempFileName(), ".jpg");
+        await image.WriteAsync(tempPath, MagickFormat.Jpeg, ct);
 
-        await using (var fileStream = File.Create(fullPath))
-        {
-            data.SaveTo(fileStream);
-        }
-
-        return Path.Combine("uploads", "plants", plantId.ToString(), fileName)
-            .Replace("\\", "/");
+        return tempPath;
     }
 
-    private static SKBitmap ApplyOrientation(SKBitmap source, SKEncodedOrigin origin)
+    private static Image ResizeIfNeeded(Image source, int maxDimension)
     {
-        switch (origin)
-        {
-            case SKEncodedOrigin.RightTop:
-                return Rotate(source, 90);
-            case SKEncodedOrigin.LeftBottom:
-                return Rotate(source, 270);
-            case SKEncodedOrigin.BottomRight:
-                return Rotate(source, 180);
-            default:
-                return source.Copy();
-        }
-    }
+        var longest = Math.Max(source.Width, source.Height);
 
-    private static SKBitmap Rotate(SKBitmap source, float degrees)
-    {
-        var radians = degrees * (float)Math.PI / 180f;
-
-        var rotated = new SKBitmap(source.Height, source.Width);
-        using var canvas = new SKCanvas(rotated);
-
-        canvas.Clear(SKColors.Transparent);
-        canvas.Translate(rotated.Width / 2f, rotated.Height / 2f);
-        canvas.RotateDegrees(degrees);
-        canvas.Translate(-source.Width / 2f, -source.Height / 2f);
-        canvas.DrawBitmap(source, 0, 0);
-
-        return rotated;
-    }
-
-    private static SKBitmap ResizeIfNeeded(SKBitmap source)
-    {
-        var maxSide = Math.Max(source.Width, source.Height);
-
-        if (maxSide <= MaxDimension)
+        if (longest <= maxDimension)
             return source.Copy();
 
-        var scale = (float)MaxDimension / maxSide;
-        var newWidth = (int)(source.Width * scale);
-        var newHeight = (int)(source.Height * scale);
+        var scale = (double)maxDimension / longest;
+        return source.Resize(scale, kernel: Enums.Kernel.Lanczos3);
+    }
 
-        var resized = new SKBitmap(newWidth, newHeight);
+    private void SaveProcessedJpeg(Image image, string path)
+    {
+        image.Jpegsave(
+            path,
+            q: ClampQualityVips(_options.JpegQuality),
+            optimizeCoding: true,
+            interlace: false);
+    }
 
-        var sampling = new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear);
+    private static void CleanupTemp(string? path)
+    {
+        if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
+            File.Delete(path);
+    }
 
-        source.ScalePixels(resized, sampling);
+    private static uint ClampQualityMagick(int quality)
+    {
+        if (quality < 1) return 1;
+        if (quality > 100) return 100;
+        return (uint)quality;
+    }
 
-        return resized;
+    private static int ClampQualityVips(int quality)
+    {
+        if (quality < 1) return 1;
+        if (quality > 100) return 100;
+        return quality;
+    }
+
+    private static async Task CopyWithLimitAsync(
+        Stream src,
+        Stream dest,
+        long maxBytes,
+        CancellationToken ct)
+    {
+        var buffer = new byte[81920];
+        long total = 0;
+
+        while (true)
+        {
+            var read = await src.ReadAsync(buffer.AsMemory(0, buffer.Length), ct);
+            if (read == 0)
+                break;
+
+            total += read;
+            if (total > maxBytes)
+                throw new InvalidOperationException("File exceeds maximum size.");
+
+            await dest.WriteAsync(buffer.AsMemory(0, read), ct);
+        }
+
+        dest.Position = 0;
     }
 }
