@@ -188,12 +188,10 @@ Only the processed canonical image is persisted.
 
 Image ingestion uses a hybrid pipeline:
 
-- **Magick.NET (ImageMagick)** for robust decoding and canonicalisation
 - **libvips (NetVips)** for resizing and final encoding
 
 This design is intentional:
 
-- ImageMagick provides broad format support (HEIC, HEIF, iPhone edge cases)
 - libvips provides low-memory, high-performance processing suitable for Raspberry Pi deployment
 
 ### Error Handling Contract
@@ -227,8 +225,6 @@ Images form part of the canonical dataset and are included in nightly encrypted 
 
 Photo ingestion depends on:
 
-- Magick.NET (Apache 2.0)
-- ImageMagick native runtime
 - NetVips / libvips (LGPL-2.1 dynamic use)
 
 These dependencies are architectural and must be treated as such.
