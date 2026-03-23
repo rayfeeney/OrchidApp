@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS `flowering` (
   `updatedDateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last update timestamp (local time)',
   PRIMARY KEY (`floweringId`),
   KEY `ixFloweringPlantStartDate` (`plantId`,`startDate`),
+  KEY `ixFlowerStatusLookup` (`plantId`,`isActive`,`startDate` DESC),
   CONSTRAINT `chkFloweringIsActive` CHECK ((`isActive` in (0,1)))
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Flowering history per plant. Current flowering = endDate IS NULL.';
 
