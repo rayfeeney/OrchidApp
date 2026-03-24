@@ -21,8 +21,7 @@ public class DetailsModel : PageModel
     [FromRoute]
     public int PlantId { get; set; }
 
-    // Nullable backing property (truthful)
-    public PlantCurrentLocation? Plant { get; private set; }
+    public PlantStatus? Status { get; private set; }
     public List<PlantLifecycleEvent> LifecycleEvents { get; private set; } = [];
     public string? HeroImagePath { get; private set; }
     public bool GenusIsActive { get; private set; }
@@ -30,36 +29,24 @@ public class DetailsModel : PageModel
 
     public bool IsInactive => !GenusIsActive || !TaxonIsActive;
 
-    // Non-nullable wrapper for Razor (invariant)
-    public PlantCurrentLocation PlantRequired
-        => Plant ?? throw new InvalidOperationException("Plant must be loaded before rendering the page.");
+    public PlantStatus StatusRequired
+        => Status ?? throw new InvalidOperationException("Plant status must be loaded before rendering the page.");
 
     public IActionResult OnGet()
     {
-        Plant = _db.PlantCurrentLocations
-                .FirstOrDefault(p => p.PlantId == PlantId);
+        Status = _db.PlantStatuses
+            .FirstOrDefault(p => p.PlantId == PlantId);
 
-        if (Plant == null)
+        if (Status == null)
             return NotFound();
 
-        var taxon = _db.TaxonIdentities
-            .Where(t => t.TaxonId == Plant.TaxonId)
-            .Select(t => new
-            {
-                t.GenusIsActive,
-                t.TaxonIsActive
-            })
-            .Single();
+        GenusIsActive = StatusRequired.GenusIsActive;
+        TaxonIsActive = StatusRequired.TaxonIsActive;
 
-        GenusIsActive = taxon.GenusIsActive;
-        TaxonIsActive = taxon.TaxonIsActive;
-
-        var heroPhoto = _db.PlantPhotos
+        HeroImagePath = _db.PlantPhotos
             .Where(p => p.PlantId == PlantId && p.IsHero && p.IsActive)
             .Select(p => p.FilePath)
             .FirstOrDefault();
-
-        HeroImagePath = heroPhoto;
 
         LifecycleEvents = _db.PlantLifecycleHistory
             .Where(e => e.PlantId == PlantId)
@@ -69,5 +56,4 @@ public class DetailsModel : PageModel
 
         return Page();
     }
-
 }

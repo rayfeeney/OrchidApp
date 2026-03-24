@@ -14,6 +14,7 @@ public class OrchidDbContext : DbContext
     public DbSet<PlantActiveSummary> PlantActiveSummaries =>                Set<PlantActiveSummary>();
     public DbSet<PlantCurrentLocation> PlantCurrentLocations =>             Set<PlantCurrentLocation>();
     public DbSet<PlantLifecycleEvent> PlantLifecycleHistory =>              Set<PlantLifecycleEvent>();
+    public DbSet<PlantStatus> PlantStatuses =>                              Set<PlantStatus>();
     public DbSet<PlantActiveCurrentLocation> PlantActiveCurrentLocations=>  Set<PlantActiveCurrentLocation>();
     public DbSet<LocationChangeEditRow> LocationChangeEditRows =>           Set<LocationChangeEditRow>();
    
@@ -314,7 +315,14 @@ public class OrchidDbContext : DbContext
             entity.Property(e => e.SourceId)                .HasColumnName("sourceId");
         });
         
+        modelBuilder.Entity<PlantStatus>(entity =>
+        {
+            entity.HasNoKey();
+            entity.ToView("vPlantStatus");
+        });
+        
         modelBuilder.Entity<LocationChangeEditRow>().HasNoKey();
         modelBuilder.Entity<AddPlantResult>().HasNoKey();
+
     }
 }
