@@ -19,7 +19,7 @@ public class PlantStatus
     public DateTime? LastRepotDate { get; set; }
     public string? CurrentGrowthMediumName { get; set; }
 
-    public DateTime? LastFeedDate { get; set; }
+    public DateTime? LastFeedDateTime { get; set; }
     public string? LastFeedTypeDisplayName { get; set; }
 
     public bool TaxonIsActive { get; set; }

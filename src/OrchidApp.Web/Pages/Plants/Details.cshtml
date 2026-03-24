@@ -34,19 +34,71 @@
                             : Model.StatusRequired.PlantTag)
                     </dd>
 
-                    <dt class="col-sm-3 fw-bold">Plant name</dt>
-                    <dd class="col-sm-9">
-                        @(string.IsNullOrWhiteSpace(Model.StatusRequired.DisplayName)
-                            ? "—"
-                            : Model.StatusRequired.DisplayName)
-                    </dd>
-
                     <dt class="col-sm-3 fw-bold">Location</dt>
                     <dd class="col-sm-9">
                         @(string.IsNullOrWhiteSpace(Model.StatusRequired.LocationName)
                             ? "—"
                             : Model.StatusRequired.LocationName)
                     </dd>
+
+                    @if (Model.StatusRequired.LastRepotDate != null)
+                    {
+                        <dt class="col-sm-3 fw-bold">Repotting</dt>
+                        <dd class="col-sm-9">
+                            @if (!string.IsNullOrWhiteSpace(Model.StatusRequired.CurrentGrowthMediumName))
+                            {
+                                @($"Repotted {Model.StatusRequired.LastRepotDate:dd/MM/yyyy} into {Model.StatusRequired.CurrentGrowthMediumName}")
+                            }
+                            else
+                            {
+                                @($"Repotted {Model.StatusRequired.LastRepotDate:dd/MM/yyyy}")
+                            }
+                        </dd>
+                    }
+
+                    @if (Model.StatusRequired.AcquisitionDate != null 
+                        || !string.IsNullOrWhiteSpace(Model.StatusRequired.AcquisitionSource))
+                    {
+                        <dt class="col-sm-3 fw-bold">Acquisition</dt>
+                        <dd class="col-sm-9">
+                            @if (Model.StatusRequired.AcquisitionDate != null 
+                                && !string.IsNullOrWhiteSpace(Model.StatusRequired.AcquisitionSource))
+                            {
+                                @($"Acquired {Model.StatusRequired.AcquisitionDate:dd/MM/yyyy} from {Model.StatusRequired.AcquisitionSource}")
+                            }
+                            else if (Model.StatusRequired.AcquisitionDate != null)
+                            {
+                                @($"Acquired {Model.StatusRequired.AcquisitionDate:dd/MM/yyyy}")
+                            }
+                            else
+                            {
+                                @($"Source: {Model.StatusRequired.AcquisitionSource}")
+                            }
+                        </dd>
+                    }
+
+                    @if (Model.StatusRequired.LastFeedDateTime != null)
+                    {
+                        <dt class="col-sm-3 fw-bold">Feeding</dt>
+                        <dd class="col-sm-9">
+                            @if (!string.IsNullOrWhiteSpace(Model.StatusRequired.LastFeedTypeDisplayName))
+                            {
+                                @($"Fed {Model.StatusRequired.LastFeedDateTime:dd/MM/yyyy} ({Model.StatusRequired.LastFeedTypeDisplayName})")
+                            }
+                            else
+                            {
+                                @($"Fed {Model.StatusRequired.LastFeedDateTime:dd/MM/yyyy}")
+                            }
+                        </dd>
+                    }
+
+                    @if (Model.StatusRequired.LastFloweringDate != null)
+                    {
+                        <dt class="col-sm-3 fw-bold">Flowering</dt>
+                        <dd class="col-sm-9">
+                            @($"Last flowered {Model.StatusRequired.LastFloweringDate:dd/MM/yyyy}")
+                        </dd>
+                    }
 
                 </dl>
             </div>
@@ -79,7 +131,7 @@
 <h2 class="h5 fw-bold mb-3 mt-4">History</h2>
 
 <p class="text-muted small mb-3">
-    Record observations, moves, repotting and flowering events.
+    Record observations (including photos), moves, repotting and flowering events.
 </p>
 
 <div class="d-grid gap-2 d-sm-flex mb-3">
