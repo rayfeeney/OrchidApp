@@ -2,11 +2,11 @@
 @model OrchidApp.Web.Pages.Plants.DetailsModel
 
 @{
-    ViewData["Title"] = Model.PlantRequired.DisplayName;
+    ViewData["Title"] = Model.StatusRequired.DisplayName;
 }
 
 <h1 class="page-title fw-bold @(Model.IsInactive ? "text-muted" : "")">
-    @Model.PlantRequired.DisplayName
+    @Model.StatusRequired.DisplayName
 
     @if (Model.IsInactive)
     {
@@ -15,7 +15,7 @@
 </h1>
 
 <h2 class="h5 fw-bold mb-3">
-Plant details
+    Plant details
 </h2>
 
 <div class="row mt-3">
@@ -27,31 +27,25 @@ Plant details
             <div class="card-body">
                 <dl class="row mb-0">
 
-                    <dt class="col-sm-3 fw-bold">
-                        @Html.DisplayNameFor(m => m.PlantRequired.PlantTag)
-                    </dt>
+                    <dt class="col-sm-3 fw-bold">Plant tag</dt>
                     <dd class="col-sm-9">
-                        @(string.IsNullOrWhiteSpace(Model.PlantRequired.PlantTag)
+                        @(string.IsNullOrWhiteSpace(Model.StatusRequired.PlantTag)
                             ? "—"
-                            : Model.PlantRequired.PlantTag)
+                            : Model.StatusRequired.PlantTag)
                     </dd>
 
-                    <dt class="col-sm-3 fw-bold">
-                        @Html.DisplayNameFor(m => m.PlantRequired.PlantName)
-                    </dt>
+                    <dt class="col-sm-3 fw-bold">Plant name</dt>
                     <dd class="col-sm-9">
-                        @(string.IsNullOrWhiteSpace(Model.PlantRequired.PlantName)
+                        @(string.IsNullOrWhiteSpace(Model.StatusRequired.DisplayName)
                             ? "—"
-                            : Model.PlantRequired.PlantName)
+                            : Model.StatusRequired.DisplayName)
                     </dd>
 
-                    <dt class="col-sm-3 fw-bold">
-                        @Html.DisplayNameFor(m => m.PlantRequired.LocationName)
-                    </dt>
+                    <dt class="col-sm-3 fw-bold">Location</dt>
                     <dd class="col-sm-9">
-                        @(string.IsNullOrWhiteSpace(Model.PlantRequired.LocationName)
+                        @(string.IsNullOrWhiteSpace(Model.StatusRequired.LocationName)
                             ? "—"
-                            : Model.PlantRequired.LocationName)
+                            : Model.StatusRequired.LocationName)
                     </dd>
 
                 </dl>
@@ -65,7 +59,7 @@ Plant details
     {
         <div class="col-12 col-md-4 mt-3 mt-md-0 text-md-end">
             <a asp-page="/Plants/Photos/Index"
-               asp-route-plantId="@Model.PlantRequired.PlantId"
+               asp-route-plantId="@Model.StatusRequired.PlantId"
                asp-route-returnUrl="@(Request.Path + Request.QueryString)"
                class="d-block w-100">
 
@@ -73,11 +67,11 @@ Plant details
                      class="img-fluid rounded shadow-sm w-100"
                      style="max-height:250px; object-fit:cover;" />
             </a>
-        </div>
 
-        <p class="text-muted small mt-2 mb-0 text-md-end">
-            Tap image to view photos
-        </p>
+            <p class="text-muted small mt-2 mb-0">
+                Tap image to view photos
+            </p>
+        </div>
     }
 
 </div>
@@ -85,13 +79,13 @@ Plant details
 <h2 class="h5 fw-bold mb-3 mt-4">History</h2>
 
 <p class="text-muted small mb-3">
-Record observations, moves, repotting and flowering events.
+    Record observations, moves, repotting and flowering events.
 </p>
 
 <div class="d-grid gap-2 d-sm-flex mb-3">
     <a asp-page="/Plants/Events/Add"
        asp-route-eventType="Observation"
-       asp-route-plantId="@Model.PlantRequired.PlantId"
+       asp-route-plantId="@Model.StatusRequired.PlantId"
        asp-route-returnUrl="@(Request.Path + Request.QueryString)"
        class="btn btn-primary">
         Add observation
@@ -99,7 +93,7 @@ Record observations, moves, repotting and flowering events.
 
     <a asp-page="/Plants/Events/Add"
        asp-route-eventType="LocationChange"
-       asp-route-plantId="@Model.PlantRequired.PlantId"
+       asp-route-plantId="@Model.StatusRequired.PlantId"
        asp-route-returnUrl="@(Request.Path + Request.QueryString)"
        class="btn btn-primary">
         Move plant
@@ -107,7 +101,7 @@ Record observations, moves, repotting and flowering events.
 
     <a asp-page="/Plants/Events/Add"
        asp-route-eventType="Flowering"
-       asp-route-plantId="@Model.PlantRequired.PlantId"
+       asp-route-plantId="@Model.StatusRequired.PlantId"
        asp-route-returnUrl="@(Request.Path + Request.QueryString)"
        class="btn btn-primary">
         Add flowering
@@ -115,41 +109,29 @@ Record observations, moves, repotting and flowering events.
 
     <a asp-page="/Plants/Events/Add"
        asp-route-eventType="Repotting"
-       asp-route-plantId="@Model.PlantRequired.PlantId"
+       asp-route-plantId="@Model.StatusRequired.PlantId"
        asp-route-returnUrl="@(Request.Path + Request.QueryString)"
        class="btn btn-primary">
         Add repotting
     </a>
 </div>
 
-@if (Model.PlantRequired.PlantEndDate == null)
-{
-    <hr class="my-4" />
+<hr class="my-4" />
 
-    <div class="mb-4">
+<div class="mb-4">
 
-        <p class="text-muted small mb-2">
-            Splitting ends this plant and creates new plants.
-        </p>
+    <p class="text-muted small mb-2">
+        Splitting ends this plant and creates new plants.
+    </p>
 
-        @if (Model.IsInactive)
-        {
-            <button class="btn btn-outline-secondary btn-lg w-100" disabled>
-                Cannot split — taxonomy inactive
-            </button>
-        }
-        else
-        {
-            <a asp-page="/Plants/Events/Split"
-               asp-route-plantId="@Model.PlantRequired.PlantId"
-               asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-               class="btn btn-outline-secondary btn-lg w-100">
-                Split plant
-            </a>
-        }
+    <a asp-page="/Plants/Events/Split"
+       asp-route-plantId="@Model.StatusRequired.PlantId"
+       asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+       class="btn btn-outline-secondary btn-lg w-100">
+        Split plant
+    </a>
 
-    </div>
-}
+</div>
 
 @if (!Model.LifecycleEvents.Any())
 {
@@ -226,20 +208,20 @@ else
 
                 <div class="d-flex gap-2 mt-3">
                     <a asp-page="/Plants/Events/Edit"
-                    asp-route-plantId="@Model.PlantRequired.PlantId"
-                    asp-route-sourceId="@ev.SourceId"
-                    asp-route-eventType="@ev.EventType"
-                    asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-                    class="btn btn-sm btn-outline-secondary">
+                       asp-route-plantId="@Model.StatusRequired.PlantId"
+                       asp-route-sourceId="@ev.SourceId"
+                       asp-route-eventType="@ev.EventType"
+                       asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+                       class="btn btn-sm btn-outline-secondary">
                         Edit event
                     </a>
 
                     <a asp-page="/Plants/Events/Remove"
-                    asp-route-plantId="@Model.PlantRequired.PlantId"
-                    asp-route-sourceId="@ev.SourceId"
-                    asp-route-eventType="@ev.EventType"
-                    asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-                    class="btn btn-sm btn-outline-danger">
+                       asp-route-plantId="@Model.StatusRequired.PlantId"
+                       asp-route-sourceId="@ev.SourceId"
+                       asp-route-eventType="@ev.EventType"
+                       asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+                       class="btn btn-sm btn-outline-danger">
                         Remove event
                     </a>
                 </div>
