@@ -55,9 +55,9 @@ public class IndexModel : PageModel
     [Display(Name = "Plant name")]
     public string? PlantName { get; set; }
 
-    [BindProperty, Required]
+    [BindProperty]
     [Display(Name = "Acquired on")]
-    public DateTime AcquisitionDate { get; set; }
+    public DateTime? AcquisitionDate { get; set; }
 
     [BindProperty, StringLength(150)]
     [Display(Name = "Acquired from")]
@@ -91,7 +91,7 @@ public class IndexModel : PageModel
         // Always load plant fields from DB
         PlantTag = plant.PlantTag;
         PlantName = plant.PlantName;
-        AcquisitionDate = plant.AcquisitionDate ?? DateTime.Now;
+        AcquisitionDate = plant.AcquisitionDate;
         AcquisitionSource = plant.AcquisitionSource;
         EndDate = plant.EndDate;
         EndNotes = plant.EndNotes;
