@@ -1,0 +1,2 @@
+ALTER TABLE repotting
+MODIFY repotDate DATETIME NOT NULL;

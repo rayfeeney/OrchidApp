@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace OrchidApp.Web.Models;
 
@@ -8,6 +9,7 @@ public class Repotting
 
     public int PlantId { get; set; }
 
+    [DataType(DataType.Date)]
     public DateTime RepotDate { get; set; }
 
     // Codes intentionally present but unused for now

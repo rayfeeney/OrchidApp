@@ -1,8 +1,8 @@
 CREATE TABLE IF NOT EXISTS `flowering` (
   `floweringId` int NOT NULL AUTO_INCREMENT COMMENT 'Internal identifier for flowering record',
   `plantId` int NOT NULL COMMENT 'Plant that flowered',
-  `startDate` date NOT NULL COMMENT 'Date flowering started',
-  `endDate` date DEFAULT NULL COMMENT 'Date flowering ended (NULL = currently flowering)',
+  `startDate` datetime NOT NULL,
+  `endDate` datetime DEFAULT NULL,
   `spikeCount` int DEFAULT NULL COMMENT 'Number of flower spikes',
   `flowerCount` int DEFAULT NULL COMMENT 'Approximate number of flowers',
   `floweringNotes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Grower notes about flowering quality',
