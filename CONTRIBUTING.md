@@ -105,7 +105,7 @@ If uncertain, default to stored procedures.
 Stored procedures must be invoked using the execution contract defined
 in:
 
-    docs/architecture.md
+    docs/architecture/architecture.md
 
 This defines the permitted EF Core invocation patterns, asynchronous
 execution requirements and error-handling boundaries for database

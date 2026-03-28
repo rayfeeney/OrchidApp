@@ -240,7 +240,7 @@ These dependencies are architectural and must be treated as such.
 Stored procedure invocation must follow the project execution contract
 defined in:
 
-    docs/architecture.md
+    docs/architecture/architecture.md
 
 This defines the permitted EF Core invocation patterns, asynchronous
 execution requirements and error-handling boundaries for database
@@ -345,8 +345,8 @@ If it fails locally, it will fail in CI.
 
 # Architectural Principle
 
-> Invariants live in the database.\
-> Behaviour lives in the application.\
+> Invariants live in the database.
+> Behaviour lives in the application.
 > Enforcement lives in automation.
 
 Everything else follows from that.
