@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS `repotting` (
   `repottingId` int NOT NULL AUTO_INCREMENT COMMENT 'Internal identifier for repotting event',
   `plantId` int NOT NULL COMMENT 'Plant that was repotted',
-  `repotDate` date NOT NULL COMMENT 'Date of repotting',
+  `repotDate` datetime NOT NULL,
   `oldMediumNotes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Notes on previous medium condition',
   `newMediumNotes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Notes on new medium',
   `potSize` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Pot size used',
