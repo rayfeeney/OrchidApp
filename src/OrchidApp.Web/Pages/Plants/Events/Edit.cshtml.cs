@@ -281,27 +281,27 @@ public class EditModel : PageModel
                 await _db.SaveChangesAsync();
                 break;
 
-case "LocationChange":
-    try
-    {
-        var parameters = new object?[]
-        {
-            SourceId,
-            EventDate,
-            string.IsNullOrWhiteSpace(EventDetails) ? null : EventDetails,
-            string.IsNullOrWhiteSpace(PlantLocationNotes) ? null : PlantLocationNotes
-        };
+            case "LocationChange":
+                try
+                {
+                    var parameters = new object?[]
+                    {
+                        SourceId,
+                        EventDate,
+                        string.IsNullOrWhiteSpace(EventDetails) ? null : EventDetails,
+                        string.IsNullOrWhiteSpace(PlantLocationNotes) ? null : PlantLocationNotes
+                    };
 
-        await _db.Database.ExecuteSqlRawAsync(
-            @"CALL spEditPlantLocation({0}, {1}, {2}, {3})",
-            parameters!);
-    }
-    catch (Exception ex) when (DatabaseErrorTranslator.TryTranslate(ex, out var msg))
-    {
-        ModelState.AddModelError(string.Empty, msg);
-        return Page();
-    }
-    break;
+                    await _db.Database.ExecuteSqlRawAsync(
+                        @"CALL spEditPlantLocation({0}, {1}, {2}, {3})",
+                        parameters!);
+                }
+                catch (Exception ex) when (DatabaseErrorTranslator.TryTranslate(ex, out var msg))
+                {
+                    ModelState.AddModelError(string.Empty, msg);
+                    return Page();
+                }
+                break;
 
             case "Flowering":
 
@@ -323,8 +323,22 @@ case "LocationChange":
                 if (flowering == null)
                     return NotFound();
 
-                flowering.StartDate   = EventDate.Date;
-                flowering.EndDate     = EndDate?.Date;
+                flowering.StartDate   = new DateTime(
+												EventDate.Year,
+												EventDate.Month,
+												EventDate.Day,
+												DateTime.Now.Hour,
+												DateTime.Now.Minute,
+												DateTime.Now.Second);
+                flowering.EndDate     = EndDate.HasValue
+												? new DateTime(
+													EndDate.Value.Year,
+													EndDate.Value.Month,
+													EndDate.Value.Day,
+													DateTime.Now.Hour,
+													DateTime.Now.Minute,
+													DateTime.Now.Second)
+												: null;
                 flowering.SpikeCount  = SpikeCount;
                 flowering.FlowerCount = FlowerCount;
                 flowering.FloweringNotes =
@@ -346,7 +360,13 @@ case "LocationChange":
                     return NotFound();
                 }
 
-                repotting.RepotDate = EventDate.Date;
+                repotting.RepotDate = new DateTime(
+												EventDate.Year,
+												EventDate.Month,
+												EventDate.Day,
+												DateTime.Now.Hour,
+												DateTime.Now.Minute,
+												DateTime.Now.Second);
                 repotting.OldGrowthMediumId = OldGrowthMediumId;
                 repotting.NewGrowthMediumId = NewGrowthMediumId;
                 repotting.OldMediumNotes = string.IsNullOrWhiteSpace(OldMediumNotes) ? null : OldMediumNotes;
