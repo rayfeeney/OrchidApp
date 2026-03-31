@@ -128,6 +128,40 @@ public class EditModel : PageModel
     public bool IsInactive => !GenusIsActive || !TaxonIsActive;
     public List<GrowthMedium> GrowthMedia { get; private set; } = new();
 
+    private IActionResult ReloadPage()
+    {
+        var plant = _db.PlantActiveSummaries.FirstOrDefault(p => p.PlantId == PlantId);
+        if (plant != null)
+        {
+            PlantDisplayName = plant.DisplayName;
+            PlantTag = plant.PlantTag;
+
+            var taxon = _db.TaxonIdentities
+                .Where(t => t.TaxonId == plant.TaxonId)
+                .Select(t => new
+                {
+                    t.GenusIsActive,
+                    t.TaxonIsActive
+                })
+                .Single();
+
+            GenusIsActive = taxon.GenusIsActive;
+            TaxonIsActive = taxon.TaxonIsActive;
+        }
+
+        if (EventType == "Repotting")
+        {
+            GrowthMedia = _db.GrowthMedia
+                .Where(g => g.IsActive
+                    || g.GrowthMediumId == OldGrowthMediumId
+                    || g.GrowthMediumId == NewGrowthMediumId)
+                .OrderBy(g => g.Name)
+                .ToList();
+        }
+
+        return Page();
+    }
+
     public async Task<IActionResult> OnGetAsync()
     {
         // Plant context
@@ -251,21 +285,13 @@ public class EditModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
-        
-        if (!ModelState.IsValid)
-        {
-            if (EventType == "Repotting")
-            {
-                GrowthMedia = _db.GrowthMedia
-                    .Where(g => g.IsActive
-                        || g.GrowthMediumId == OldGrowthMediumId
-                        || g.GrowthMediumId == NewGrowthMediumId)
-                    .OrderBy(g => g.Name)
-                    .ToList();
-            }
+        var plant = await _db.Plants
+            .AsNoTracking()
+            .Where(p => p.PlantId == PlantId)
+            .Select(p => new { p.AcquisitionDate, p.EndDate })
+            .SingleAsync();
 
-            return Page();
-        }
+        var eventDate = EventDate.Date;
 
         switch (EventType)
         {
@@ -276,7 +302,33 @@ public class EditModel : PageModel
                 if (observation == null)
                     return NotFound();
 
-                observation.EventDateTime = EventDate.Date.Add(DateTime.Now.TimeOfDay);
+                // future
+                if (eventDate > DateTime.Today)
+                {
+                    ModelState.AddModelError(nameof(EventDate),
+                        "Observation date cannot be in the future.");
+                }
+
+                // before acquisition
+                if (plant.AcquisitionDate.HasValue &&
+                    eventDate < plant.AcquisitionDate.Value.Date)
+                {
+                    ModelState.AddModelError(nameof(EventDate),
+                        "Observation date cannot be before the plant was acquired.");
+                }
+
+                // after end
+                if (plant.EndDate.HasValue &&
+                    eventDate > plant.EndDate.Value.Date)
+                {
+                    ModelState.AddModelError(nameof(EventDate),
+                        "Observation date cannot be after the plant has ended.");
+                }
+
+                if (!ModelState.IsValid)
+                    return ReloadPage();
+
+                observation.EventDateTime = EventDate.Date.Add(observation.EventDateTime.TimeOfDay);
                 observation.EventDetails = EventDetails;
                 await _db.SaveChangesAsync();
                 break;
@@ -303,16 +355,58 @@ public class EditModel : PageModel
                 }
                 break;
 
-            case "Flowering":
-
-                if (EndDate.HasValue && EndDate < EventDate)
+                // future
+                if (eventDate > DateTime.Today)
                 {
-                    ModelState.AddModelError(
-                        string.Empty,
-                        "End date cannot be before start date."
-                    );
-                    return Page();
+                    ModelState.AddModelError(nameof(EventDate),
+                        "Move date cannot be in the future.");
                 }
+
+                // before acquisition
+                if (plant.AcquisitionDate.HasValue &&
+                    eventDate < plant.AcquisitionDate.Value.Date)
+                {
+                    ModelState.AddModelError(nameof(EventDate),
+                        "Move date cannot be before the plant was acquired.");
+                }
+
+                // after end
+                if (plant.EndDate.HasValue &&
+                    eventDate > plant.EndDate.Value.Date)
+                {
+                    ModelState.AddModelError(nameof(EventDate),
+                        "Move date cannot be after the plant has ended.");
+                }
+
+                if (!ModelState.IsValid)
+                    return ReloadPage();
+
+                // =========================
+                // Call stored procedure
+                // =========================
+
+                try
+                {
+                    var parameters = new object?[]
+                    {
+                        SourceId,
+                        eventDate,
+                        string.IsNullOrWhiteSpace(EventDetails) ? null : EventDetails,
+                        string.IsNullOrWhiteSpace(PlantLocationNotes) ? null : PlantLocationNotes
+                    };
+
+                    await _db.Database.ExecuteSqlRawAsync(
+                        @"CALL spEditPlantLocation({0}, {1}, {2}, {3})",
+                        parameters!);
+                }
+                catch (Exception ex) when (DatabaseErrorTranslator.TryTranslate(ex, out var msg))
+                {
+                    ModelState.AddModelError(string.Empty, msg);
+                    return ReloadPage();
+                }
+                break;
+
+            case "Flowering":
 
                 var flowering = _db.Flowering
                     .FirstOrDefault(f =>

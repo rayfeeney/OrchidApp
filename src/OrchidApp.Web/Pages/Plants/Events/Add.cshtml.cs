@@ -201,6 +201,10 @@ public class AddModel : PageModel
         {
             case "Observation":
             {
+                // =========================
+                // Basic input validation
+                // =========================
+
                 var uploadedFiles = UploadedFiles?
                     .Where(f => f != null && f.Length > 0)
                     .ToList() ?? new List<IFormFile>();
@@ -222,11 +226,54 @@ public class AddModel : PageModel
                         "Please enter some notes or choose an observation type.");
                 }
 
+                // =========================
+                // Date validation (Observation rules)
+                // =========================
+
+                var plant = await _db.Plants
+                    .AsNoTracking()
+                    .Where(p => p.PlantId == PlantId)
+                    .Select(p => new { p.AcquisitionDate, p.EndDate })
+                    .SingleAsync();
+
+                var eventDate = EventDate.Date;
+
+                // Rule 1 — cannot be in the future
+                if (eventDate > DateTime.Today)
+                {
+                    ModelState.AddModelError(nameof(EventDate),
+                        "Observation date cannot be in the future.");
+                }
+
+                // Rule 2 — cannot be before acquisition
+                if (plant.AcquisitionDate.HasValue &&
+                    eventDate < plant.AcquisitionDate.Value.Date)
+                {
+                    ModelState.AddModelError(nameof(EventDate),
+                        "Observation date cannot be before the plant was acquired.");
+                }
+
+                // Rule 3 — cannot be after end
+                if (plant.EndDate.HasValue &&
+                    eventDate > plant.EndDate.Value.Date)
+                {
+                    ModelState.AddModelError(nameof(EventDate),
+                        "Observation date cannot be after the plant has ended.");
+                }
+
+                // =========================
+                // Stop if invalid
+                // =========================
+
                 if (!ModelState.IsValid)
                 {
                     LoadLookups();
                     return Page();
                 }
+
+                // =========================
+                // Continue with save
+                // =========================
 
                 string typeCode;
 
@@ -305,7 +352,7 @@ public class AddModel : PageModel
                                 MimeType = result.MimeType,
                                 IsHero = !heroExists,
                                 IsActive = true,
-                                CreatedDateTime = DateTime.Now
+                                CreatedDateTime = now
                             };
 
                             _db.PlantPhotos.Add(photo);
@@ -356,23 +403,80 @@ public class AddModel : PageModel
             }
 
             case "LocationChange":
+            {
+                // =========================
+                // Basic validation
+                // =========================
+
+                if (!LocationId.HasValue)
+                {
+                    ModelState.AddModelError(nameof(LocationId),
+                        "Please select a location.");
+
+                    LoadLookups();
+                    return Page();
+                }
+
+                // =========================
+                // Load plant lifecycle
+                // =========================
+
+                var plant = await _db.Plants
+                    .AsNoTracking()
+                    .Where(p => p.PlantId == PlantId)
+                    .Select(p => new { p.AcquisitionDate, p.EndDate })
+                    .SingleAsync();
+
+                var eventDate = EventDate.Date;
+
+                // =========================
+                // Date validation
+                // =========================
+
+                // Rule 1 — not in future
+                if (eventDate > DateTime.Today)
+                {
+                    ModelState.AddModelError(nameof(EventDate),
+                        "Move date cannot be in the future.");
+                }
+
+                // Rule 2 — not before acquisition
+                if (plant.AcquisitionDate.HasValue &&
+                    eventDate < plant.AcquisitionDate.Value.Date)
+                {
+                    ModelState.AddModelError(nameof(EventDate),
+                        "Move date cannot be before the plant was acquired.");
+                }
+
+                // Rule 3 — not after plant end
+                if (plant.EndDate.HasValue &&
+                    eventDate > plant.EndDate.Value.Date)
+                {
+                    ModelState.AddModelError(nameof(EventDate),
+                        "Move date cannot be after the plant has ended.");
+                }
+
+                // =========================
+                // Stop if invalid
+                // =========================
+
+                if (!ModelState.IsValid)
+                {
+                    LoadLookups();
+                    return Page();
+                }
+
+                // =========================
+                // Call stored procedure
+                // =========================
+
                 try
                 {
-
-                    if (!LocationId.HasValue)
-                    {
-                        ModelState.AddModelError(nameof(LocationId),
-                            "Please select a location.");
-
-                        LoadLookups();
-                        return Page();
-                    }
-
                     await _sp.QueryListAsync<object>(
                         "spMovePlantToLocation",
                         new StoredProcedureParameter("pPlantId", PlantId),
                         new StoredProcedureParameter("pLocationId", LocationId.Value),
-                        new StoredProcedureParameter("pStartDate", EventDate.Date),
+                        new StoredProcedureParameter("pStartDate", eventDate),
                         new StoredProcedureParameter("pMoveReasonNotes", EventDetails),
                         new StoredProcedureParameter("pPlantLocationNotes", PlantLocationNotes)
                     );
@@ -383,34 +487,94 @@ public class AddModel : PageModel
                     LoadLookups();
                     return Page();
                 }
+
                 break;
+            }
 
             case "Flowering":
-                if (StartDate.Date > DateTime.Today)
+            {
+                // =========================
+                // Load plant lifecycle
+                // =========================
+
+                var plant = await _db.Plants
+                    .AsNoTracking()
+                    .Where(p => p.PlantId == PlantId)
+                    .Select(p => new { p.AcquisitionDate, p.EndDate })
+                    .SingleAsync();
+
+                var startDate = StartDate.Date;
+                var endDate = EndDate?.Date;
+
+                // =========================
+                // StartDate validation
+                // =========================
+
+                // Rule 1 — not in future
+                if (startDate > DateTime.Today)
                 {
                     ModelState.AddModelError(nameof(StartDate),
                         "Start date cannot be in the future.");
-
-                    LoadLookups();
-                    return Page();
                 }
 
-                if (EndDate.HasValue && EndDate.Value.Date > DateTime.Today)
+                // Rule 2 — not before acquisition
+                if (plant.AcquisitionDate.HasValue &&
+                    startDate < plant.AcquisitionDate.Value.Date)
                 {
-                    ModelState.AddModelError(nameof(EndDate),
-                        "End date cannot be in the future.");
-
-                    LoadLookups();
-                    return Page();
+                    ModelState.AddModelError(nameof(StartDate),
+                        "Start date cannot be before the plant was acquired.");
                 }
 
-                if (EndDate.HasValue && EndDate < StartDate)
+                // Rule 3 — not after plant end
+                if (plant.EndDate.HasValue &&
+                    startDate > plant.EndDate.Value.Date)
                 {
-                    ModelState.AddModelError(string.Empty,
-                        "End date cannot be before start date.");
+                    ModelState.AddModelError(nameof(StartDate),
+                        "Start date cannot be after the plant has ended.");
+                }
+
+                // =========================
+                // EndDate validation (if provided)
+                // =========================
+
+                if (endDate.HasValue)
+                {
+                    // Rule 4 — not before start
+                    if (endDate.Value < startDate)
+                    {
+                        ModelState.AddModelError(nameof(EndDate),
+                            "End date cannot be before start date.");
+                    }
+
+                    // Rule 5 — not in future
+                    if (endDate.Value > DateTime.Today)
+                    {
+                        ModelState.AddModelError(nameof(EndDate),
+                            "End date cannot be in the future.");
+                    }
+
+                    // Rule 6 — not after plant end
+                    if (plant.EndDate.HasValue &&
+                        endDate.Value > plant.EndDate.Value.Date)
+                    {
+                        ModelState.AddModelError(nameof(EndDate),
+                            "End date cannot be after the plant has ended.");
+                    }
+                }
+
+                // =========================
+                // Stop if invalid
+                // =========================
+
+                if (!ModelState.IsValid)
+                {
                     LoadLookups();
                     return Page();
                 }
+
+                // =========================
+                // Save (unchanged logic)
+                // =========================
 
                 _db.Flowering.Add(new Flowering
                 {
@@ -438,29 +602,67 @@ public class AddModel : PageModel
                 });
 
                 await _db.SaveChangesAsync();
+
                 break;
+            }
 
             case "Repotting":
+            {
+                // =========================
+                // Date validation (Repotting rules)
+                // =========================
 
-                if (EventDate.Date > DateTime.Today)
+                var plant = await _db.Plants
+                    .AsNoTracking()
+                    .Where(p => p.PlantId == PlantId)
+                    .Select(p => new { p.AcquisitionDate, p.EndDate })
+                    .SingleAsync();
+
+                var eventDate = EventDate.Date;
+
+                // Rule 1 — cannot be in the future
+                if (eventDate > DateTime.Today)
                 {
                     ModelState.AddModelError(nameof(EventDate),
                         "Repotting date cannot be in the future.");
+                }
 
+                // Rule 2 — cannot be before acquisition
+                if (plant.AcquisitionDate.HasValue &&
+                    eventDate < plant.AcquisitionDate.Value.Date)
+                {
+                    ModelState.AddModelError(nameof(EventDate),
+                        "Repotting date cannot be before the plant was acquired.");
+                }
+
+                // Rule 3 — cannot be after end
+                if (plant.EndDate.HasValue &&
+                    eventDate > plant.EndDate.Value.Date)
+                {
+                    ModelState.AddModelError(nameof(EventDate),
+                        "Repotting date cannot be after the plant has ended.");
+                }
+
+                if (!ModelState.IsValid)
+                {
                     LoadLookups();
                     return Page();
                 }
+
+                // =========================
+                // Save
+                // =========================
 
                 _db.Repotting.Add(new Repotting
                 {
                     PlantId = PlantId,
                     RepotDate = new DateTime(
-                                EventDate.Year,
-                                EventDate.Month,
-                                EventDate.Day,
-                                now.Hour,
-                                now.Minute,
-                                now.Second),
+                        EventDate.Year,
+                        EventDate.Month,
+                        EventDate.Day,
+                        now.Hour,
+                        now.Minute,
+                        now.Second),
                     OldGrowthMediumId = OldGrowthMediumId,
                     NewGrowthMediumId = NewGrowthMediumId,
                     OldMediumNotes = OldMediumNotes,
@@ -472,7 +674,9 @@ public class AddModel : PageModel
                 });
 
                 await _db.SaveChangesAsync();
+
                 break;
+            }
         }
 
         return RedirectToPage("/Plants/Details", new { plantId = PlantId });
