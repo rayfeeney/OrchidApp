@@ -37,6 +37,11 @@ BEGIN
             SET MESSAGE_TEXT = 'Plant must be classified under an active genus and species / hybrid';
     END IF;
 
+    IF pAcquisitionDate IS NOT NULL AND DATE(pAcquisitionDate) > CURRENT_DATE THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Acquisition date cannot be in the future.';
+    END IF;
+
     SET vPlantTag = fnGeneratePlantTag();
 
     SET pPlantName = NULLIF(TRIM(pPlantName), '');
@@ -59,7 +64,10 @@ BEGIN
         pTaxonId,
         vPlantTag,
         pPlantName,
-        pAcquisitionDate,
+        CASE
+            WHEN pAcquisitionDate IS NULL THEN NULL
+            ELSE TIMESTAMP(DATE(pAcquisitionDate), TIME(NOW()))
+        END,
         pAcquisitionSource,
         pPlantNotes,
         1,
