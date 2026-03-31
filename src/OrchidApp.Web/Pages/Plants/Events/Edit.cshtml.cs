@@ -334,26 +334,10 @@ public class EditModel : PageModel
                 break;
 
             case "LocationChange":
-                try
-                {
-                    var parameters = new object?[]
-                    {
-                        SourceId,
-                        EventDate,
-                        string.IsNullOrWhiteSpace(EventDetails) ? null : EventDetails,
-                        string.IsNullOrWhiteSpace(PlantLocationNotes) ? null : PlantLocationNotes
-                    };
 
-                    await _db.Database.ExecuteSqlRawAsync(
-                        @"CALL spEditPlantLocation({0}, {1}, {2}, {3})",
-                        parameters!);
-                }
-                catch (Exception ex) when (DatabaseErrorTranslator.TryTranslate(ex, out var msg))
-                {
-                    ModelState.AddModelError(string.Empty, msg);
-                    return Page();
-                }
-                break;
+                // =========================
+                // Lifecycle validation (same as Add)
+                // =========================
 
                 // future
                 if (eventDate > DateTime.Today)
@@ -404,6 +388,7 @@ public class EditModel : PageModel
                     ModelState.AddModelError(string.Empty, msg);
                     return ReloadPage();
                 }
+
                 break;
 
             case "Flowering":

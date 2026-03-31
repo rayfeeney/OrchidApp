@@ -36,6 +36,11 @@ BEGIN
             SET MESSAGE_TEXT = 'SplitDateTime is required';
     END IF;
 
+    IF DATE(pSplitDateTime) > CURRENT_DATE THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Split date cannot be in the future';
+    END IF;
+
     IF JSON_LENGTH(pChildrenJson) < 2 THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Split must create at least two child plants';
@@ -76,7 +81,7 @@ BEGIN
 
     IF pSplitDateTime < vParentStart THEN
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'SplitDateTime cannot be before plant lifecycle start';
+            SET MESSAGE_TEXT = 'Split datetime cannot be before plant lifecycle start';
     END IF;
 
     IF EXISTS (
@@ -113,7 +118,7 @@ BEGIN
 
     
     
-    
+    DROP TEMPORARY TABLE IF EXISTS tmpChildren;    
 
     CREATE TEMPORARY TABLE tmpChildren (
         childPlantId INT,
@@ -175,12 +180,21 @@ BEGIN
     
     
     
+    IF vParentEnd IS NULL THEN    
 
-    UPDATE plantlocationhistory
-    SET endDateTime = pSplitDateTime
-    WHERE plantId = pParentPlantId
-      AND endDateTime IS NULL
-      AND isActive = 1;
+        UPDATE plantlocationhistory
+        SET endDateTime = pSplitDateTime
+        WHERE plantId = pParentPlantId
+        AND endDateTime IS NULL
+        AND isActive = 1;
+
+        UPDATE flowering
+        SET endDate = pSplitDateTime
+        WHERE plantId = pParentPlantId
+        AND endDate IS NULL
+        AND isActive = 1;
+
+    END IF;
 
     UPDATE plant
     SET endDate = pSplitDateTime,
@@ -192,9 +206,6 @@ BEGIN
         )
     WHERE plantId = pParentPlantId;
 
-    
-    
-    
 
     SELECT childPlantId, childPlantTag
     FROM tmpChildren;
