@@ -133,7 +133,7 @@
     <div class="mb-3">
         <label asp-for="EndDate" class="fw-bold"></label>
         <small class="text-muted d-block fw-normal">
-            Usually left blank. Set only when ending a plant’s lifecycle (for example after a split).
+            Usually left blank. Set only when ending a plant’s lifecycle (for example if it dies or is given away).
         </small>
         <input asp-for="EndDate" type="date" class="form-control" />
         <span asp-validation-for="EndDate" class="text-danger"></span>
@@ -142,7 +142,7 @@
     <div class="mb-3">
         <label asp-for="EndNotes" class="fw-bold"></label>
         <small class="text-muted d-block fw-normal">
-            Optional. Why the plant ended (for example split, lost, given away).
+            Optional. Why the plant ended (for example lost, given away).
         </small>
         <textarea asp-for="EndNotes"
                   class="form-control"

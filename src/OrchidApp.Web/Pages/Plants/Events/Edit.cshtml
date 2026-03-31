@@ -82,6 +82,7 @@
                    type="date"
                    class="form-control"
                    asp-format="{0:yyyy-MM-dd}" />
+            <span asp-validation-for="EventDate" class="text-danger"></span>
         </div>
 
         <div class="mb-3">
@@ -97,9 +98,10 @@
         <div class="mb-3">
             <label asp-for="EventDate" class="fw-bold">Moved on</label>
             <input asp-for="EventDate"
-                   type="datetime-local"
+                   type="date"
                    class="form-control"
-                   asp-format="{0:yyyy-MM-ddTHH:mm}" />
+                   asp-format="{0:yyyy-MM-dd}" />
+            <span asp-validation-for="EventDate" class="text-danger"></span>
         </div>
 
         @* Future: MoveReasonCode *@
@@ -133,6 +135,7 @@
                    type="date"
                    class="form-control"
                    asp-format="{0:yyyy-MM-dd}" />
+            <span asp-validation-for="EventDate" class="text-danger"></span>
         </div>
 
         <div class="mb-3">
@@ -141,6 +144,7 @@
                    type="date"
                    class="form-control"
                    asp-format="{0:yyyy-MM-dd}" />
+            <span asp-validation-for="EndDate" class="text-danger"></span>
         </div>
 
         <div class="mb-3">
@@ -173,6 +177,7 @@
             <input asp-for="EventDate"
                    type="date"
                    class="form-control" />
+            <span asp-validation-for="EventDate" class="text-danger"></span>
         </div>
 
         <div class="mb-3">

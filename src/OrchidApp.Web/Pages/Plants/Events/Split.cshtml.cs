@@ -25,6 +25,8 @@ public class SplitModel : PageModel
 
     [BindProperty(SupportsGet = true)]
     public string? ReturnUrl { get; set; }
+    public DateTime? AcquisitionDate { get; private set; }
+    public DateTime? EndDate { get; private set; }
 
     public PlantCurrentLocation? Plant { get; private set; }
 
@@ -58,6 +60,19 @@ public class SplitModel : PageModel
 
     private async Task LoadPageStateAsync()
     {
+        var lifecycle = await _db.Plants
+            .AsNoTracking()
+            .Where(p => p.PlantId == PlantId)
+            .Select(p => new
+            {
+                p.AcquisitionDate,
+                p.EndDate
+            })
+            .SingleAsync();
+
+        AcquisitionDate = lifecycle.AcquisitionDate;
+        EndDate = lifecycle.EndDate;
+        
         Plant = await _db.PlantCurrentLocations
             .FirstOrDefaultAsync(p => p.PlantId == PlantId);
 
@@ -90,7 +105,7 @@ public class SplitModel : PageModel
     {
         await LoadPageStateAsync();
 
-        if (Plant!.PlantEndDate != null)
+        if (EndDate != null)
             return BadRequest("Cannot split an ended plant.");
 
         if (ChildCount < 2)
@@ -113,17 +128,12 @@ public class SplitModel : PageModel
         ChildCount++;
         EnsureChildListLength();
 
+        ModelState.Clear();
         return Page();
     }
 
     public async Task<IActionResult> OnPostSplitAsync()
     {
-        var parentPlant = await _db.Plants
-            .FirstOrDefaultAsync(p => p.PlantId == PlantId);
-
-        if (parentPlant == null)
-            return NotFound();
-
         await LoadPageStateAsync();
 
         if (IsInactive)
@@ -134,7 +144,7 @@ public class SplitModel : PageModel
             return Page();
         }
 
-        if (parentPlant.EndDate != null)
+        if (EndDate != null)
         {
             ModelState.AddModelError(string.Empty,
                 "This plant can no longer be split.");
@@ -142,18 +152,25 @@ public class SplitModel : PageModel
             return Page();
         }
 
-        if (SplitDateTime > DateTime.Now)
+        var splitDate = SplitDateTime.Date;
+        // Reconstruct datetime with system time
+        var splitDateTime = splitDate.Add(SplitDateTime.TimeOfDay);
+
+        // future
+        if (splitDate > DateTime.Today)
         {
             ModelState.AddModelError(nameof(SplitDateTime),
-                "Split date and time cannot be in the future.");
+                "Split date cannot be in the future.");
             EnsureChildListLength();
             return Page();
         }
 
-        if (parentPlant.AcquisitionDate.HasValue && SplitDateTime < parentPlant.AcquisitionDate.Value)
+        // before acquisition
+        if (AcquisitionDate.HasValue &&
+            splitDate < AcquisitionDate.Value.Date)
         {
             ModelState.AddModelError(nameof(SplitDateTime),
-                "Split date and time cannot be before this plant’s lifecycle began.");
+                "Split date cannot be before this plant’s lifecycle began.");
             EnsureChildListLength();
             return Page();
         }
@@ -201,7 +218,7 @@ public class SplitModel : PageModel
             var createdChildren = await _sp.QueryListAsync<SplitChildResult>(
                 "spSplitPlant",
                 new StoredProcedureParameter("pParentPlantId", PlantId),
-                new StoredProcedureParameter("pSplitDateTime", SplitDateTime),
+                new StoredProcedureParameter("pSplitDateTime", splitDateTime),
                 new StoredProcedureParameter("pChildrenJson", childrenJson),
                 new StoredProcedureParameter("pSplitReasonNotes", SplitReasonNotes),
                 new StoredProcedureParameter("pSplitNotes", SplitNotes)

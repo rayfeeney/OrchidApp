@@ -19,7 +19,7 @@
 </h2>
 
 <p class="text-muted">
-    This split will end this plant’s lifecycle at the date and time you choose
+    This split will end this plant’s lifecycle on the date and you choose
     and create new independent plants.
     The original plant will remain in your records and its full history
     will still be available to view.
@@ -34,7 +34,7 @@
 @if (Model.IsInactive)
 {
     <div class="alert alert-secondary">
-        This plant cannot be split because its taxonomy is inactive.
+        This plant cannot be split because its taxonomy (Genus / Species / Hybrid) is inactive.
     </div>
 }
 else
@@ -45,8 +45,8 @@ else
     <input type="hidden" asp-for="ChildCount" />
 
     <div class="mb-3">
-        <label asp-for="SplitDateTime" class="fw-bold">Split date and time</label>
-        <input asp-for="SplitDateTime" type="datetime-local" class="form-control" />
+        <label asp-for="SplitDateTime" class="fw-bold">Split date</label>
+        <input asp-for="SplitDateTime" type="date" class="form-control" />
         <span asp-validation-for="SplitDateTime" class="text-danger"></span>
     </div>
 
@@ -103,12 +103,17 @@ else
         </button>
     </div>
 
+    <div class="alert alert-warning">
+        This will permanently end this plant and create new plants.
+        This action cannot be undone.
+    </div>
+
     <div class="mt-4">
         <partial name="_FormActionsDangerHandler"
-                 model="@(Model.ReturnUrl
-                         ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }),
-                         "Split",
-                         "Confirm split")" />
+                model="@(Model.ReturnUrl
+                        ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }),
+                        "Split",
+                        "Confirm split (ends this plant)")" />
     </div>
 
 </form>

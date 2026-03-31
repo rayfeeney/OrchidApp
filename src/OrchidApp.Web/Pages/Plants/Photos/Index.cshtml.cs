@@ -199,11 +199,12 @@ public class IndexModel : PageModel
     {
         // Always a photo observation from this page
         var observationTypeId = await _resolver.GetIdAsync("OBS_PHOTO");
+        var now = DateTime.Now;
 
         var observation = new PlantEvent
         {
             PlantId = plantId,
-            EventDateTime = DateTime.Now,
+            EventDateTime = now,
             ObservationTypeId = observationTypeId,
             EventDetails = notes,
             IsActive = true
@@ -250,7 +251,7 @@ public class IndexModel : PageModel
                 MimeType = result.MimeType,
                 IsHero = !heroExists,
                 IsActive = true,
-                CreatedDateTime = DateTime.Now
+                CreatedDateTime = now
             };
 
             _context.PlantPhotos.Add(photo);
