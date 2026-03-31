@@ -334,9 +334,26 @@ public class EditModel : PageModel
                 break;
 
             case "LocationChange":
-                // =========================
-                // Lifecycle validation (same as Add)
-                // =========================
+                try
+                {
+                    var parameters = new object?[]
+                    {
+                        SourceId,
+                        EventDate,
+                        string.IsNullOrWhiteSpace(EventDetails) ? null : EventDetails,
+                        string.IsNullOrWhiteSpace(PlantLocationNotes) ? null : PlantLocationNotes
+                    };
+
+                    await _db.Database.ExecuteSqlRawAsync(
+                        @"CALL spEditPlantLocation({0}, {1}, {2}, {3})",
+                        parameters!);
+                }
+                catch (Exception ex) when (DatabaseErrorTranslator.TryTranslate(ex, out var msg))
+                {
+                    ModelState.AddModelError(string.Empty, msg);
+                    return Page();
+                }
+                break;
 
                 // future
                 if (eventDate > DateTime.Today)
@@ -400,71 +417,22 @@ public class EditModel : PageModel
                 if (flowering == null)
                     return NotFound();
 
-                var startDate = EventDate.Date;
-                var endDate = EndDate?.Date;
-
-                // =========================
-                // Start date validation
-                // =========================
-
-                if (startDate > DateTime.Today)
-                {
-                    ModelState.AddModelError(nameof(EventDate),
-                        "Start date cannot be in the future.");
-                }
-
-                if (plant.AcquisitionDate.HasValue &&
-                    startDate < plant.AcquisitionDate.Value.Date)
-                {
-                    ModelState.AddModelError(nameof(EventDate),
-                        "Start date cannot be before the plant was acquired.");
-                }
-
-                if (plant.EndDate.HasValue &&
-                    startDate > plant.EndDate.Value.Date)
-                {
-                    ModelState.AddModelError(nameof(EventDate),
-                        "Start date cannot be after the plant has ended.");
-                }
-
-                // =========================
-                // End date validation
-                // =========================
-
-                if (endDate.HasValue)
-                {
-                    if (endDate.Value < startDate)
-                    {
-                        ModelState.AddModelError(nameof(EndDate),
-                            "End date cannot be before start date.");
-                    }
-
-                    if (endDate.Value > DateTime.Today)
-                    {
-                        ModelState.AddModelError(nameof(EndDate),
-                            "End date cannot be in the future.");
-                    }
-
-                    if (plant.EndDate.HasValue &&
-                        endDate.Value > plant.EndDate.Value.Date)
-                    {
-                        ModelState.AddModelError(nameof(EndDate),
-                            "End date cannot be after the plant has ended.");
-                    }
-                }
-
-                // =========================
-                // Stop if invalid
-                // =========================
-
-                if (!ModelState.IsValid)
-                    return ReloadPage();
-
-                flowering.StartDate = startDate.Add(flowering.StartDate.TimeOfDay);
-                flowering.EndDate = EndDate.HasValue
-                                            ? EndDate.Value.Date.Add(
-                                                flowering.EndDate?.TimeOfDay ?? DateTime.Now.TimeOfDay)
-                                            : null;
+                flowering.StartDate   = new DateTime(
+												EventDate.Year,
+												EventDate.Month,
+												EventDate.Day,
+												DateTime.Now.Hour,
+												DateTime.Now.Minute,
+												DateTime.Now.Second);
+                flowering.EndDate     = EndDate.HasValue
+												? new DateTime(
+													EndDate.Value.Year,
+													EndDate.Value.Month,
+													EndDate.Value.Day,
+													DateTime.Now.Hour,
+													DateTime.Now.Minute,
+													DateTime.Now.Second)
+												: null;
                 flowering.SpikeCount  = SpikeCount;
                 flowering.FlowerCount = FlowerCount;
                 flowering.FloweringNotes =
@@ -486,41 +454,13 @@ public class EditModel : PageModel
                     return NotFound();
                 }
 
-                // =========================
-                // Date validation (same as Add)
-                // =========================
-
-                // future
-                if (eventDate > DateTime.Today)
-                {
-                    ModelState.AddModelError(nameof(EventDate),
-                        "Repotting date cannot be in the future.");
-                }
-
-                // before acquisition
-                if (plant.AcquisitionDate.HasValue &&
-                    eventDate < plant.AcquisitionDate.Value.Date)
-                {
-                    ModelState.AddModelError(nameof(EventDate),
-                        "Repotting date cannot be before the plant was acquired.");
-                }
-
-                // after end
-                if (plant.EndDate.HasValue &&
-                    eventDate > plant.EndDate.Value.Date)
-                {
-                    ModelState.AddModelError(nameof(EventDate),
-                        "Repotting date cannot be after the plant has ended.");
-                }
-
-                if (!ModelState.IsValid)
-                    return ReloadPage();
-
-                // =========================
-                // Save
-                // =========================
-
-                repotting.RepotDate = EventDate.Date.Add(repotting.RepotDate.TimeOfDay);
+                repotting.RepotDate = new DateTime(
+												EventDate.Year,
+												EventDate.Month,
+												EventDate.Day,
+												DateTime.Now.Hour,
+												DateTime.Now.Minute,
+												DateTime.Now.Second);
                 repotting.OldGrowthMediumId = OldGrowthMediumId;
                 repotting.NewGrowthMediumId = NewGrowthMediumId;
                 repotting.OldMediumNotes = string.IsNullOrWhiteSpace(OldMediumNotes) ? null : OldMediumNotes;

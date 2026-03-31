@@ -580,21 +580,21 @@ public class AddModel : PageModel
                 {
                     PlantId = PlantId,
                     StartDate = new DateTime(
-                        StartDate.Year,
-                        StartDate.Month,
-                        StartDate.Day,
-                        now.Hour,
-                        now.Minute,
-                        now.Second),
+									StartDate.Year,
+									StartDate.Month,
+									StartDate.Day,
+									now.Hour,
+									now.Minute,
+									now.Second),
                     EndDate = EndDate.HasValue
-                        ? new DateTime(
-                            EndDate.Value.Year,
-                            EndDate.Value.Month,
-                            EndDate.Value.Day,
-                            now.Hour,
-                            now.Minute,
-                            now.Second)
-                        : null,
+									? new DateTime(
+										EndDate.Value.Year,
+										EndDate.Value.Month,
+										EndDate.Value.Day,
+										now.Hour,
+										now.Minute,
+										now.Second)
+									: null,
                     SpikeCount = SpikeCount,
                     FlowerCount = FlowerCount,
                     FloweringNotes = EventDetails,
