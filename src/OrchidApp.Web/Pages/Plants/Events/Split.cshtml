@@ -84,6 +84,19 @@ else
 
             <div class="card-body">
                 <div class="mb-3">
+                    <label asp-for="Children[i].MediumId" class="fw-bold"></label>
+                    <small class="text-muted d-block fw-normal">
+                        Optional. The starting growth medium for this plant.
+                    </small>
+                    <select asp-for="Children[i].MediumId"
+                            asp-items="Model.GrowthMedia"
+                            class="form-select">
+                        <option value="">—</option>
+                    </select>
+                    <span asp-validation-for="Children[i].MediumId" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
                     <label asp-for="Children[i].PlantName" class="fw-bold"></label>
                     <small class="text-muted d-block fw-normal">
                         Optional. A personal name to help you recognise this plant.

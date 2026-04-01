@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using OrchidApp.Web.Infrastructure;
 using System.Text.Json;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace OrchidApp.Web.Pages.Plants.Events;
 
@@ -40,6 +41,7 @@ public class SplitModel : PageModel
 
     [BindProperty]
     public List<ChildInput> Children { get; set; } = new();
+    public List<SelectListItem> GrowthMedia { get; set; } = new();
 
     [BindProperty]
     public DateTime SplitDateTime { get; set; }
@@ -56,6 +58,9 @@ public class SplitModel : PageModel
     {
         [Display(Name = "Plant name")]
         public string? PlantName { get; set; }
+
+        [Display(Name = "Growth medium")]
+        public int? MediumId { get; set; }
     }
 
     private async Task LoadPageStateAsync()
@@ -90,6 +95,17 @@ public class SplitModel : PageModel
 
         GenusIsActive = taxon.GenusIsActive;
         TaxonIsActive = taxon.TaxonIsActive;
+
+        GrowthMedia = await _db.GrowthMedia
+            .AsNoTracking()
+            .Where(m => m.IsActive)
+            .OrderBy(m => m.Name)
+            .Select(m => new SelectListItem
+            {
+                Value = m.GrowthMediumId.ToString(),
+                Text = m.Name
+            })
+            .ToListAsync();
     }
 
     private void EnsureChildListLength()
@@ -201,7 +217,8 @@ public class SplitModel : PageModel
         var childrenJson = JsonSerializer.Serialize(
             Children.Select(c => new
             {
-                plantName = c.PlantName
+                plantName = c.PlantName,
+                mediumId = c.MediumId
             })
         );
 

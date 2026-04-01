@@ -1,5 +1,8 @@
+DROP PROCEDURE IF EXISTS spSplitPlant;
+
 DELIMITER //
-CREATE OR REPLACE PROCEDURE `spSplitPlant`(
+
+CREATE  PROCEDURE  `spSplitPlant`(
     IN pParentPlantId INT,
     IN pSplitDateTime DATETIME,
     IN pChildrenJson JSON,
@@ -208,7 +211,7 @@ BEGIN
 
     
     
-    
+    -- Only close lifecycle rows if transitioning from active → ended
     IF vParentEnd IS NULL THEN    
 
         UPDATE plantlocationhistory
@@ -243,7 +246,6 @@ BEGIN
 
     COMMIT;
 
-END
-//
-DELIMITER ;
+END //
 
+DELIMITER ;
