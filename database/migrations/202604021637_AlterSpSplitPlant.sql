@@ -182,7 +182,7 @@ BEGIN
 
             INSERT INTO repotting (
                 plantId,
-                repottingDate,
+                repotDate,
                 newGrowthMediumId,
                 notes,
                 isActive

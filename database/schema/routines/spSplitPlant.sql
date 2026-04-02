@@ -179,8 +179,8 @@ BEGIN
 
             INSERT INTO repotting (
                 plantId,
-                repottingDateTime,
-                growthMediumId,
+                repottingDate,
+                newGrowthMediumId,
                 notes,
                 isActive
             )
