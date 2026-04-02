@@ -1,5 +1,8 @@
+DROP PROCEDURE IF EXISTS spSplitPlant;
+
 DELIMITER //
-CREATE OR REPLACE PROCEDURE `spSplitPlant`(
+
+CREATE  PROCEDURE  `spSplitPlant`(
     IN pParentPlantId INT,
     IN pSplitDateTime DATETIME,
     IN pChildrenJson JSON,
@@ -19,6 +22,7 @@ BEGIN
     DECLARE vIdx INT DEFAULT 0;
 
     DECLARE vChildName VARCHAR(100);
+    DECLARE vMediumIdText VARCHAR(20);
     DECLARE vMediumId INT;
     DECLARE vChildTag CHAR(8);
     DECLARE vChildPlantId INT;
@@ -140,17 +144,17 @@ BEGIN
             END IF;
         END IF;
 
-        SET vMediumId = JSON_UNQUOTE(
+        SET vMediumIdText = JSON_UNQUOTE(
             JSON_EXTRACT(
                 pChildrenJson,
                 CONCAT('$[', vIdx, '].mediumId')
             )
         );
 
-        IF vMediumId IS NOT NULL AND vMediumId <> 'null' THEN
-            SET vMediumId = CAST(vMediumId AS UNSIGNED);
-        ELSE
+        IF vMediumIdText IS NULL OR vMediumIdText = 'null' THEN
             SET vMediumId = NULL;
+        ELSE
+            SET vMediumId = CAST(vMediumIdText AS UNSIGNED);
         END IF;
 
         SET vChildTag = fnGeneratePlantTag();
@@ -212,7 +216,7 @@ BEGIN
 
     
     
-    
+    -- Only close lifecycle rows if transitioning from active → ended
     IF vParentEnd IS NULL THEN    
 
         UPDATE plantlocationhistory
@@ -247,7 +251,6 @@ BEGIN
 
     COMMIT;
 
-END
-//
-DELIMITER ;
+END //
 
+DELIMITER ;
