@@ -181,7 +181,7 @@ BEGIN
                 plantId,
                 repotDate,
                 newGrowthMediumId,
-                notes,
+                repotReasonNotes,
                 isActive
             )
             VALUES (
