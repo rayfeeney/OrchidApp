@@ -16,6 +16,8 @@ CREATE TABLE IF NOT EXISTS `repotting` (
   PRIMARY KEY (`repottingId`),
   KEY `ixRepottingPlantRepotDate` (`plantId`,`repotDate`),
   KEY `ixRepotStatusLookup` (`plantId`,`isActive`,`repotDate` DESC,`newGrowthMediumId`),
+  KEY `fk_repotting_old_growthmedium` (`oldGrowthMediumId`),
+  KEY `fk_repotting_new_growthmedium` (`newGrowthMediumId`),
   CONSTRAINT `chkRepottingIsActive` CHECK ((`isActive` in (0,1)))
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Repotting history per plant.';
 
