@@ -439,13 +439,7 @@ public class EditModel : PageModel
                     return NotFound();
                 }
 
-                repotting.RepotDate = new DateTime(
-												EventDate.Year,
-												EventDate.Month,
-												EventDate.Day,
-												DateTime.Now.Hour,
-												DateTime.Now.Minute,
-												DateTime.Now.Second);
+                repotting.RepotDate = EventDate.Date.Add(repotting.RepotDate.TimeOfDay);
                 repotting.OldGrowthMediumId = OldGrowthMediumId;
                 repotting.NewGrowthMediumId = NewGrowthMediumId;
                 repotting.OldMediumNotes = string.IsNullOrWhiteSpace(OldMediumNotes) ? null : OldMediumNotes;
