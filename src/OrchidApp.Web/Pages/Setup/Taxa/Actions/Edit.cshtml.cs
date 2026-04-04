@@ -127,8 +127,9 @@ if (Photo != null && Photo.Length > 0)
     }
 
     var fileName = Path.GetFileName(resultPhoto.RelativePath);
+    var thumbFileName = Path.GetFileName(resultPhoto.ThumbnailRelativePath);
 
-    // 🔽 deactivate existing photos
+    // deactivate existing photos
     var existingPhotos = await _db.TaxonPhotos
         .Where(p => p.TaxonId == id && p.IsActive)
         .ToListAsync();
@@ -139,12 +140,12 @@ if (Photo != null && Photo.Length > 0)
         photo.IsPrimary = false;
     }
 
-    // 🔽 insert new photo
+    // insert new photo
     var newPhoto = new TaxonPhoto
     {
         TaxonId = id,
         FileName = fileName,
-        ThumbnailFileName = fileName,
+        ThumbnailFileName = thumbFileName,
         MimeType = resultPhoto.MimeType,
         IsPrimary = true,
         IsActive = true,
