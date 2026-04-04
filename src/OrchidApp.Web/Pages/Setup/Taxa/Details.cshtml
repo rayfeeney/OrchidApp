@@ -82,6 +82,33 @@ Species / hybrid details
                 </div>
             }
 
+            @if (!string.IsNullOrWhiteSpace(Model.Taxon.HybridName))
+            {
+                <dt class="col-sm-3 fw-bold">
+                    @Html.DisplayNameFor(m => m.Taxon!.HybridName)
+                </dt>
+                <dd class="col-sm-9">@Model.Taxon.HybridName</dd>
+            }
+
+            <dt class="col-sm-3 fw-bold">
+                @Html.DisplayNameFor(m => m.Taxon!.GrowthNotes)
+            </dt>
+            <dd class="col-sm-9">
+                @(string.IsNullOrWhiteSpace(Model.Taxon.GrowthNotes) ? "—" : Model.Taxon.GrowthNotes)
+            </dd>
+
+    <!-- RIGHT: Image -->
+    <div class="col-12 col-md-4">
+
+            @if (!string.IsNullOrWhiteSpace(Model.PhotoFileName))
+            {
+                <div class="text-center mt-3 mb-3">
+                    <img src="~/uploads/taxa/@Model.Taxon.TaxonId/@Model.PhotoFileName"
+                        class="img-fluid rounded shadow-sm w-100"
+                        style="max-height:250px; object-fit:cover;" />
+                </div>
+            }
+
     </div>
 </div>
 
