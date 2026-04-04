@@ -6,6 +6,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Data.Common;
 using OrchidApp.Web.Infrastructure;
 using OrchidApp.Web.Models;
+using OrchidApp.Web.Services;
 
 namespace OrchidApp.Web.Pages.Setup.Taxa.Actions;
 
@@ -16,11 +17,16 @@ public class AddModel : PageModel
 
 private readonly OrchidDbContext _db;
     private readonly IStoredProcedureExecutor _sp;
+    private readonly PhotoPipeline _photoPipeline;
 
-    public AddModel(OrchidDbContext db, IStoredProcedureExecutor sp)
+    public AddModel(
+        OrchidDbContext db,
+        IStoredProcedureExecutor sp,
+        PhotoPipeline photoPipeline)
     {
         _db = db;
         _sp = sp;
+        _photoPipeline = photoPipeline;
     }
 
     public List<GenusLookup> Genera { get; private set; } = [];
@@ -45,6 +51,9 @@ private readonly OrchidDbContext _db;
     [BindProperty]
     [Display(Name = "Notes")]
     public string? TaxonNotes { get; set; }
+
+    [BindProperty]
+    public IFormFile? Photo { get; set; }
 
     public async Task OnGetAsync()
     {
@@ -125,6 +134,52 @@ private readonly OrchidDbContext _db;
                 new StoredProcedureParameter("pGrowthNotes", GrowthNotes),
                 new StoredProcedureParameter("pTaxonNotes", TaxonNotes)
             );
+
+            // NEW: process photo if provided
+            if (Photo != null && Photo.Length > 0)
+            {
+                var uploadsRoot = "/opt/orchidapp/uploads";
+
+                PhotoSaveResult resultPhoto;
+
+                try
+                {
+                    resultPhoto = await _photoPipeline.ProcessAndSaveAsync(
+                        Photo.OpenReadStream(),
+                        new PhotoStorageTarget
+                        {
+                            EntityType = "taxa",
+                            EntityId = result.TaxonId.ToString()
+                        },
+                        uploadsRoot,
+                        HttpContext.RequestAborted);
+                }
+                catch (InvalidOperationException)
+                {
+                    ModelState.AddModelError(string.Empty,
+                        "The image could not be processed. Please try another file.");
+
+                    await OnGetAsync();
+                    return Page();
+                }
+
+                var fileName = Path.GetFileName(resultPhoto.RelativePath);
+
+                var taxonPhoto = new TaxonPhoto
+                {
+                    TaxonId = result.TaxonId,
+                    FileName = fileName,
+                    ThumbnailFileName = fileName, // placeholder (no thumbnail pipeline yet)
+                    MimeType = resultPhoto.MimeType,
+                    IsPrimary = true,
+                    IsActive = true,
+                    CreatedDateTime = DateTime.Now,
+                    UpdatedDateTime = DateTime.Now
+                };
+
+                _db.TaxonPhotos.Add(taxonPhoto);
+                await _db.SaveChangesAsync();
+            }
 
             return RedirectToPage(
                 "/Setup/Taxa/Details",
