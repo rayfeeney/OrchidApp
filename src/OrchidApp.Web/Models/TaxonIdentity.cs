@@ -30,4 +30,6 @@ public class TaxonIdentity
     public string? GrowthNotes { get; set; }
 
     public bool IsSystemManaged { get; set; }
+
+    public string? ThumbnailFileName { get; set; }
 }
