@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace OrchidApp.Web.Models;
 
@@ -31,5 +32,6 @@ public class TaxonIdentity
 
     public bool IsSystemManaged { get; set; }
 
+    [NotMapped]
     public string? ThumbnailFileName { get; set; }
 }
