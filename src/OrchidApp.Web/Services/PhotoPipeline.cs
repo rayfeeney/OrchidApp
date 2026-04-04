@@ -60,8 +60,8 @@ public sealed class PhotoPipeline
                 ? original.Flatten(background: new[] { 255.0, 255.0, 255.0 })
                 : original.Copy();
 
-            using var resized = ResizeIfNeeded(flattened, _options.MaxImageDimension);
-            using var thumbnail = ResizeIfNeeded(resized.Copy(), 300);
+            using var resized = ResizeIfNeeded(flattened, _options.MaxImageDimension).Copy();
+            using var thumbnail = ResizeIfNeeded(resized, 300);
 
             var entityFolder = Path.Combine(
                 uploadsRootPath,
