@@ -10,6 +10,7 @@ public class DetailsModel : PageModel
 {
     [BindProperty(SupportsGet = true)]
     public string? ReturnUrl { get; set; }
+    public string? PhotoFileName { get; private set; }
 
     private readonly OrchidDbContext _db;
 
@@ -28,6 +29,11 @@ public class DetailsModel : PageModel
 
         if (Taxon == null)
             return NotFound();
+
+        PhotoFileName = await _db.TaxonPhotos
+            .Where(p => p.TaxonId == id && p.IsActive && p.IsPrimary)
+            .Select(p => p.FileName)
+            .FirstOrDefaultAsync();
 
         return Page();
     }
