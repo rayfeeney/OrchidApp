@@ -203,7 +203,7 @@ If not, resolve the issues before  proceeding.
 
     cd /opt/orchidapp/src/OrchidApp.Web
 
-    dotnet publish -c Release -o /opt/orchidapp/publish
+    dotnet publish src/OrchidApp.Web/OrchidApp.Web.csproj -c Release -o /opt/orchidapp/publish
 
 ### 4.2.5 Restart Service
 

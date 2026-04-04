@@ -61,6 +61,7 @@ public sealed class PhotoPipeline
                 : original.Copy();
 
             using var resized = ResizeIfNeeded(flattened, _options.MaxImageDimension);
+            using var thumbnail = ResizeIfNeeded(resized, 300);
 
             var entityFolder = Path.Combine(
                 uploadsRootPath,
@@ -76,6 +77,14 @@ public sealed class PhotoPipeline
             SaveProcessedJpeg(resized, tempOutputPath);
 
             File.Move(tempOutputPath, finalPath, overwrite: true);
+
+            // Create thumbnail file
+            var thumbFileName = $"{Guid.NewGuid():N}_thumb.jpg";
+            var thumbPath = Path.Combine(entityFolder, thumbFileName);
+            var tempThumbPath = thumbPath + ".tmp";
+
+            SaveProcessedJpeg(thumbnail, tempThumbPath);
+            File.Move(tempThumbPath, thumbPath, overwrite: true);
 
             _logger.LogInformation(
                 "Photo saved. EntityType={EntityType}, EntityId={EntityId}, Width={Width}, Height={Height}, Path={Path}",
@@ -93,6 +102,14 @@ public sealed class PhotoPipeline
                     target.EntityId,
                     fileName
                 ).Replace("\\", "/"),
+
+                ThumbnailRelativePath = Path.Combine(
+                    "uploads",
+                    target.EntityType,
+                    target.EntityId,
+                    thumbFileName
+                ).Replace("\\", "/"),
+
                 MimeType = "image/jpeg",
                 Width = resized.Width,
                 Height = resized.Height
