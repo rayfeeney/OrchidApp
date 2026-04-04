@@ -20,22 +20,66 @@
 Species / hybrid details
 </h2>
 
-<div class="card mt-3">
-    <div class="card-body">
+<div class="row mt-3">
 
-        <dl class="row mb-0">
+    <!-- LEFT: Details -->
+    <div class="col-12 col-md-8">
 
-            <dt class="col-sm-3 fw-bold">
-                @Html.DisplayNameFor(m => m.Taxon!.GenusName)
-            </dt>
-            <dd class="col-sm-9">@Model.Taxon.GenusName</dd>
+        <div class="card">
+            <div class="card-body">
+                <dl class="row mb-0">
 
-            @if (!string.IsNullOrWhiteSpace(Model.Taxon.SpeciesName))
+                    <dt class="col-sm-3 fw-bold">
+                        @Html.DisplayNameFor(m => m.Taxon!.GenusName)
+                    </dt>
+                    <dd class="col-sm-9">@Model.Taxon.GenusName</dd>
+
+                    @if (!string.IsNullOrWhiteSpace(Model.Taxon.SpeciesName))
+                    {
+                        <dt class="col-sm-3 fw-bold">
+                            @Html.DisplayNameFor(m => m.Taxon!.SpeciesName)
+                        </dt>
+                        <dd class="col-sm-9">@Model.Taxon.SpeciesName</dd>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(Model.Taxon.HybridName))
+                    {
+                        <dt class="col-sm-3 fw-bold">
+                            @Html.DisplayNameFor(m => m.Taxon!.HybridName)
+                        </dt>
+                        <dd class="col-sm-9">@Model.Taxon.HybridName</dd>
+                    }
+
+                    <dt class="col-sm-3 fw-bold">
+                        @Html.DisplayNameFor(m => m.Taxon!.GrowthNotes)
+                    </dt>
+                    <dd class="col-sm-9">
+                        @(string.IsNullOrWhiteSpace(Model.Taxon.GrowthNotes) ? "—" : Model.Taxon.GrowthNotes)
+                    </dd>
+
+                    <dt class="col-sm-3 fw-bold">
+                        @Html.DisplayNameFor(m => m.Taxon!.TaxonNotes)
+                    </dt>
+                    <dd class="col-sm-9">
+                        @(string.IsNullOrWhiteSpace(Model.Taxon.TaxonNotes) ? "—" : Model.Taxon.TaxonNotes)
+                    </dd>
+
+                </dl>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- RIGHT: Image -->
+    <div class="col-12 col-md-4">
+
+            @if (!string.IsNullOrWhiteSpace(Model.PhotoFileName))
             {
-                <dt class="col-sm-3 fw-bold">
-                    @Html.DisplayNameFor(m => m.Taxon!.SpeciesName)
-                </dt>
-                <dd class="col-sm-9">@Model.Taxon.SpeciesName</dd>
+                <div class="text-center mt-3 mb-3">
+                    <img src="~/uploads/taxa/@Model.Taxon.TaxonId/@Model.PhotoFileName"
+                        class="img-fluid rounded shadow-sm w-100"
+                        style="max-height:250px; object-fit:cover;" />
+                </div>
             }
 
             @if (!string.IsNullOrWhiteSpace(Model.Taxon.HybridName))
