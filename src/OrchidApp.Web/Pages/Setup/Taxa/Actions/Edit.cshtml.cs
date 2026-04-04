@@ -3,16 +3,18 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using OrchidApp.Web.Data;
 using OrchidApp.Web.Models;
+using OrchidApp.Web.Services;
 
 namespace OrchidApp.Web.Pages.Setup.Taxa.Actions;
 
 public class EditModel : PageModel
 {
     private readonly OrchidDbContext _db;
-
-    public EditModel(OrchidDbContext db)
+private readonly PhotoPipeline _photoPipeline;
+    public EditModel(OrchidDbContext db,PhotoPipeline photoPipeline)
     {
         _db = db;
+        _photoPipeline = photoPipeline;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -20,6 +22,8 @@ public class EditModel : PageModel
 
     [BindProperty]
     public TaxonEditDto Taxon { get; set; } = new();
+    [BindProperty]
+    public IFormFile? Photo { get; set; }
 
     public string GenusName { get; private set; } = string.Empty;
 
@@ -94,6 +98,64 @@ public class EditModel : PageModel
             await ReloadGenusNameAsync(id);
             return Page();
         }
+
+if (Photo != null && Photo.Length > 0)
+{
+    var uploadsRoot = "/opt/orchidapp/uploads";
+
+    PhotoSaveResult resultPhoto;
+
+    try
+    {
+        resultPhoto = await _photoPipeline.ProcessAndSaveAsync(
+            Photo.OpenReadStream(),
+            new PhotoStorageTarget
+            {
+                EntityType = "taxa",
+                EntityId = id.ToString()
+            },
+            uploadsRoot,
+            HttpContext.RequestAborted);
+    }
+    catch (InvalidOperationException)
+    {
+        ModelState.AddModelError(string.Empty,
+            "The image could not be processed. Please try another file.");
+
+        await OnGetAsync(id);
+        return Page();
+    }
+
+    var fileName = Path.GetFileName(resultPhoto.RelativePath);
+
+    // 🔽 deactivate existing photos
+    var existingPhotos = await _db.TaxonPhotos
+        .Where(p => p.TaxonId == id && p.IsActive)
+        .ToListAsync();
+
+    foreach (var photo in existingPhotos)
+    {
+        photo.IsActive = false;
+        photo.IsPrimary = false;
+    }
+
+    // 🔽 insert new photo
+    var newPhoto = new TaxonPhoto
+    {
+        TaxonId = id,
+        FileName = fileName,
+        ThumbnailFileName = fileName,
+        MimeType = resultPhoto.MimeType,
+        IsPrimary = true,
+        IsActive = true,
+        CreatedDateTime = DateTime.Now,
+        UpdatedDateTime = DateTime.Now
+    };
+
+    _db.TaxonPhotos.Add(newPhoto);
+
+    await _db.SaveChangesAsync();
+}
 
         return Redirect(ReturnUrl ?? Url.Page("/Setup/Taxa/Details", new { id })!);
     }
