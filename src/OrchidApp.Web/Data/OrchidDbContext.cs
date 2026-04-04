@@ -30,6 +30,7 @@ public class OrchidDbContext : DbContext
     public DbSet<PlantPhoto> PlantPhotos { get; set; }
     public DbSet<ObservationType> ObservationTypes { get; set; }
     public DbSet<GrowthMediumIdResult> GrowthMediumIdResults { get; set; }
+    public DbSet<TaxonPhoto> TaxonPhotos { get; set; }
     
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

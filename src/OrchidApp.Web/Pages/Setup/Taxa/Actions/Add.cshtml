@@ -12,8 +12,7 @@ A plant belongs to one genus and is identified by either a species or a register
 Enter one name only.
 </p>
  
-<form method="post" class="mt-4">
-
+<form method="post" class="mt-4" enctype="multipart/form-data">
     <div asp-validation-summary="ModelOnly"
          class="alert alert-danger">
     </div>
@@ -49,6 +48,20 @@ Enter one name only.
         </small>
         <input class="form-control" asp-for="HybridName" />
         <span asp-validation-for="HybridName" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="fw-bold">
+            Representative image
+            <small class="text-muted d-block fw-normal">
+                Optional. Helps with visual identification.
+            </small>
+        </label>
+
+        <input type="file"
+            name="Photo"
+            class="form-control"
+            accept="image/*" />
     </div>
 
     <div class="mb-3">
