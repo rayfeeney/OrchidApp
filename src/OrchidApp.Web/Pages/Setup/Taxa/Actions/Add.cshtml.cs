@@ -164,12 +164,13 @@ private readonly OrchidDbContext _db;
                 }
 
                 var fileName = Path.GetFileName(resultPhoto.RelativePath);
+                var thumbFileName = Path.GetFileName(resultPhoto.ThumbnailRelativePath);
 
                 var taxonPhoto = new TaxonPhoto
                 {
                     TaxonId = result.TaxonId,
                     FileName = fileName,
-                    ThumbnailFileName = fileName, // placeholder (no thumbnail pipeline yet)
+                    ThumbnailFileName = thumbFileName, 
                     MimeType = resultPhoto.MimeType,
                     IsPrimary = true,
                     IsActive = true,
