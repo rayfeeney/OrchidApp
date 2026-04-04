@@ -55,7 +55,39 @@ else
                asp-route-returnUrl="@(Request.Path + Request.QueryString)"
                class="btn btn-lg text-start @(taxon.IsSystemManaged ? "btn-outline-secondary" : "btn-outline-primary") @(isInactive ? "text-muted" : "")">
 
-                @taxon.DisplayName
+                <div class="d-flex align-items-center gap-3">
+
+        @if (!string.IsNullOrWhiteSpace(taxon.ThumbnailFileName))
+        {
+            <img src="~/uploads/taxa/@taxon.TaxonId/@taxon.ThumbnailFileName"
+                style="width:64px; height:64px; object-fit:cover;"
+                class="rounded border flex-shrink-0" />
+        }
+        else
+        {
+            <div style="width:64px; height:64px;"
+                class="bg-light border rounded d-flex align-items-center justify-content-center flex-shrink-0">
+                —
+            </div>
+        }
+
+        <div>
+            <span>@taxon.DisplayName</span>
+
+        @if (isInactive)
+        {
+            <span class="badge bg-secondary ms-2">Inactive</span>
+        }
+
+        @if (taxon.IsSystemManaged)
+        {
+            <span class="text-muted small ms-2">
+                (genus placeholder)
+            </span>
+        }
+    </div>
+
+</div>
 
                 @if (isInactive)
                 {
