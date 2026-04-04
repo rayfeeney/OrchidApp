@@ -92,8 +92,25 @@ public sealed class PhotoPipeline
             var thumbPath = Path.Combine(entityFolder, thumbFileName);
             var tempThumbPath = thumbPath + ".tmp";
 
-            SaveProcessedJpeg(thumbnail, tempThumbPath);
-            File.Move(tempThumbPath, thumbPath, overwrite: true);
+            try
+            {
+                SaveProcessedJpeg(thumbnail, tempThumbPath);
+                File.Move(tempThumbPath, thumbPath, overwrite: true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "Thumbnail generation failed for {EntityType} {EntityId}",
+                    target.EntityType,
+                    target.EntityId);
+
+                // Clean up temp file if it exists
+                if (File.Exists(tempThumbPath))
+                    File.Delete(tempThumbPath);
+
+                // Fallback: use main image as thumbnail
+                thumbFileName = fileName;
+            }
 
             _logger.LogInformation(
                 "Photo saved. EntityType={EntityType}, EntityId={EntityId}, Width={Width}, Height={Height}, Path={Path}",
