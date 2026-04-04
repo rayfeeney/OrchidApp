@@ -22,11 +22,30 @@ public class IndexModel : PageModel
 
     public async Task OnGetAsync()
     {
-        Taxa = await _db.TaxonIdentities
-            .Where(t => t.TaxonIsActive && t.GenusIsActive)
-            .OrderBy(t => t.GenusName)
-            .ThenBy(t => t.SpeciesName)
-            .ThenBy(t => t.HybridName)
-            .ToListAsync();
+        Taxa = await (
+            from t in _db.TaxonIdentities.AsNoTracking()
+
+            join p in _db.TaxonPhotos
+                .Where(p => p.IsActive && p.IsPrimary)
+                on t.TaxonId equals p.TaxonId into photoGroup
+
+            from p in photoGroup.DefaultIfEmpty()
+
+            orderby t.GenusName, t.DisplayName
+
+            select new TaxonIdentity
+            {
+                TaxonId = t.TaxonId,
+                DisplayName = t.DisplayName,
+                GenusName = t.GenusName,
+                SpeciesName = t.SpeciesName,
+                HybridName = t.HybridName,
+                GenusIsActive = t.GenusIsActive,
+                TaxonIsActive = t.TaxonIsActive,
+                IsSystemManaged = t.IsSystemManaged,
+
+                ThumbnailFileName = p != null ? p.ThumbnailFileName : null
+            }
+        ).ToListAsync();
     }
 }
