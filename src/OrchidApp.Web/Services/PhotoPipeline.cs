@@ -34,6 +34,7 @@ public sealed class PhotoPipeline
         await using var buffered = new MemoryStream();
         await CopyWithLimitAsync(uploadStream, buffered, MaxUploadBytes, ct);
         buffered.Position = 0;
+        var sourceBytes = buffered.ToArray();
 
         if (buffered.Length == 0)
             throw new InvalidOperationException("Empty file.");
@@ -61,7 +62,15 @@ public sealed class PhotoPipeline
                 : original.Copy();
 
             using var resized = ResizeIfNeeded(flattened, _options.MaxImageDimension).Copy();
-            using var thumbnail = ResizeIfNeeded(resized.Copy(), 300).Copy();
+            using var originalThumb = Image.NewFromBuffer(
+                sourceBytes,
+                access: Enums.Access.Sequential);
+
+            using var flattenedThumb = originalThumb.HasAlpha()
+                ? originalThumb.Flatten(background: new[] { 255.0, 255.0, 255.0 })
+                : originalThumb.Copy();
+
+            using var thumbnail = ResizeIfNeeded(flattenedThumb, 300);
 
             var entityFolder = Path.Combine(
                 uploadsRootPath,
