@@ -27,8 +27,26 @@ You’ll enter the plant’s details next.
             <a asp-page="/Plants/Add/Create"
                asp-route-taxonId="@taxon.TaxonId"
                asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-               class="btn btn-outline-primary btn-lg text-start">
-                @taxon.DisplayName
+               class="btn btn-outline-primary btn-lg text-start d-flex">
+               <div class="d-flex align-items-center gap-3">
+
+                    @if (!string.IsNullOrWhiteSpace(taxon.ThumbnailFileName))
+                    {
+                        <img src="~/uploads/taxa/@taxon.TaxonId/@taxon.ThumbnailFileName"
+                            style="width:64px; height:64px; object-fit:cover;"
+                            class="rounded border flex-shrink-0" />
+                    }
+                    else
+                    {
+                        <div style="width:64px; height:64px;"
+                            class="bg-light border rounded d-flex align-items-center justify-content-center flex-shrink-0">
+                            —
+                        </div>
+                    }
+
+                    <span>@taxon.DisplayName</span>
+
+                </div>
             </a>
         }
     </div>
