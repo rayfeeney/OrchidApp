@@ -229,7 +229,11 @@ public class IndexModel : PageModel
             {
                 result = await _photoPipeline.ProcessAndSaveAsync(
                     file.OpenReadStream(),
-                    plantId,
+                    new PhotoStorageTarget
+                    {
+                        EntityType = "plants",
+                        EntityId = plantId.ToString()
+                    },
                     uploadsRoot,
                     ct);
             }

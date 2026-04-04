@@ -328,7 +328,11 @@ public class AddModel : PageModel
 
                                 result = await _photoPipeline.ProcessAndSaveAsync(
                                     stream,
-                                    PlantId,
+                                    new PhotoStorageTarget
+                                    {
+                                        EntityType = "plants",
+                                        EntityId = PlantId.ToString()
+                                    },
                                     uploadsRoot,
                                     HttpContext.RequestAborted);
                             }
