@@ -104,6 +104,20 @@ public class OrchidDbContext : DbContext
         });
 
         // =========================
+        // Taxa Photo table mapping
+        // =========================
+        modelBuilder.Entity<TaxonPhoto>(entity =>
+        {
+            entity.ToTable("taxonphoto");
+
+            entity.Property(p => p.UpdatedDateTime)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .Metadata.SetAfterSaveBehavior(
+                    Microsoft.EntityFrameworkCore.Metadata.PropertySaveBehavior.Ignore);
+        });
+
+        // =========================
         // Location table mapping
         // =========================
         modelBuilder.Entity<Location>(entity =>
