@@ -22,11 +22,14 @@ public sealed class PhotoPipeline
 
     public async Task<PhotoSaveResult> ProcessAndSaveAsync(
         Stream uploadStream,
-        int plantId,
+        PhotoStorageTarget target,
         string uploadsRootPath,
         CancellationToken ct = default)
     {
-        _logger.LogInformation("Photo ingestion started for plant {PlantId}", plantId);
+        _logger.LogInformation(
+            "Photo ingestion started for {EntityType} {EntityId}",
+            target.EntityType,
+            target.EntityId);
 
         await using var buffered = new MemoryStream();
         await CopyWithLimitAsync(uploadStream, buffered, MaxUploadBytes, ct);
@@ -59,11 +62,15 @@ public sealed class PhotoPipeline
 
             using var resized = ResizeIfNeeded(flattened, _options.MaxImageDimension);
 
-            var plantFolder = Path.Combine(uploadsRootPath, "plants", plantId.ToString());
-            Directory.CreateDirectory(plantFolder);
+            var entityFolder = Path.Combine(
+                uploadsRootPath,
+                target.EntityType,
+                target.EntityId);
+
+            Directory.CreateDirectory(entityFolder);
 
             var fileName = $"{Guid.NewGuid():N}.jpg";
-            var finalPath = Path.Combine(plantFolder, fileName);
+            var finalPath = Path.Combine(entityFolder, fileName);
             var tempOutputPath = finalPath + ".tmp";
 
             SaveProcessedJpeg(resized, tempOutputPath);
@@ -71,16 +78,21 @@ public sealed class PhotoPipeline
             File.Move(tempOutputPath, finalPath, overwrite: true);
 
             _logger.LogInformation(
-                "Photo saved. PlantId={PlantId}, Width={Width}, Height={Height}, Path={Path}",
-                plantId,
+                "Photo saved. EntityType={EntityType}, EntityId={EntityId}, Width={Width}, Height={Height}, Path={Path}",
+                target.EntityType,
+                target.EntityId,
                 resized.Width,
                 resized.Height,
                 finalPath);
 
             return new PhotoSaveResult
             {
-                RelativePath = Path.Combine("uploads", "plants", plantId.ToString(), fileName)
-                    .Replace("\\", "/"),
+                RelativePath = Path.Combine(
+                    "uploads",
+                    target.EntityType,
+                    target.EntityId,
+                    fileName
+                ).Replace("\\", "/"),
                 MimeType = "image/jpeg",
                 Width = resized.Width,
                 Height = resized.Height
@@ -92,7 +104,11 @@ public sealed class PhotoPipeline
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Photo ingestion failed for plant {PlantId}", plantId);
+            _logger.LogWarning(
+                ex,
+                "Photo ingestion failed for {EntityType} {EntityId}",
+                target.EntityType,
+                target.EntityId);
             throw new InvalidOperationException("The photo could not be processed.");
         }
     }
