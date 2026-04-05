@@ -47,9 +47,9 @@ public class IndexModel : PageModel
     // Editable Fields
     // =========================
 
-    [BindProperty, StringLength(50)]
+    [StringLength(50)]
     [Display(Name = "Plant tag")]
-    public string? PlantTag { get; set; }
+    public string? PlantTag { get; private set; }
 
     [BindProperty, StringLength(100)]
     [Display(Name = "Plant name")]
@@ -258,7 +258,6 @@ public class IndexModel : PageModel
         {
             PlantId,
             TaxonId,
-            PlantTag,
             PlantName,
             AcquisitionDate,
             AcquisitionSource,
@@ -269,7 +268,7 @@ public class IndexModel : PageModel
 
         await _db.Database.ExecuteSqlRawAsync(
             @"CALL spUpdatePlantDetails(
-                {0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}
+                {0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}
             );",
             parameters!);
     }

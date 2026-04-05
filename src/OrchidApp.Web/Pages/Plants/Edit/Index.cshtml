@@ -95,12 +95,13 @@
     <input type="hidden" asp-for="TaxonId" />
 
     <div class="mb-3">
-        <label asp-for="PlantTag" class="fw-bold"></label>
+        <label class="fw-bold">Plant tag</label>
         <small class="text-muted d-block fw-normal">
-            Required. Must be unique within your collection.
+            System-generated identifier. Cannot be changed.
         </small>
-        <input asp-for="PlantTag" class="form-control" />
-        <span asp-validation-for="PlantTag" class="text-danger"></span>
+        <div class="form-control-plaintext fw-bold">
+            @(string.IsNullOrWhiteSpace(Model.PlantTag) ? "—" : Model.PlantTag)
+        </div>
     </div>
 
     <div class="mb-3">
