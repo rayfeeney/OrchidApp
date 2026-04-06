@@ -2,7 +2,6 @@ DELIMITER //
 CREATE OR REPLACE PROCEDURE `spUpdatePlantDetails`(
     IN pPlantId INT,
     IN pTaxonId INT,
-    IN pPlantTag VARCHAR(50),
     IN pPlantName VARCHAR(100),
     IN pAcquisitionDate DATETIME,
     IN pAcquisitionSource VARCHAR(150),
@@ -20,10 +19,6 @@ BEGIN
     DECLARE vFinalAcquisitionDate DATETIME;
     DECLARE vFinalEndDate DATETIME;
 
-    
-    
-    
-
     SELECT acquisitionDate, endDate
       INTO vExistingAcquisitionDate, vExistingEndDate
       FROM plant
@@ -34,10 +29,6 @@ BEGIN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Plant not found.';
     END IF;
-
-    
-    
-    
 
     SELECT EXISTS (
         SELECT 1 FROM plantsplitchild
@@ -64,11 +55,6 @@ BEGIN
             SET MESSAGE_TEXT = 'Cannot modify end date: plant has been split.';
         END IF;
     END IF;
-
-    
-    
-    
-
     
     IF pAcquisitionDate IS NOT NULL AND DATE(pAcquisitionDate) > CURRENT_DATE THEN
         SIGNAL SQLSTATE '45000'
@@ -88,10 +74,6 @@ BEGIN
         SET MESSAGE_TEXT = 'End date must be after acquisition date.';
     END IF;
 
-    
-    
-    
-
     SET vFinalAcquisitionDate =
         CASE
             WHEN pAcquisitionDate IS NULL THEN NULL
@@ -104,10 +86,6 @@ BEGIN
             ELSE
                 TIMESTAMP(DATE(pAcquisitionDate), TIME(vExistingAcquisitionDate))
         END;
-
-    
-    
-    
 
     SET vFinalEndDate =
         CASE
@@ -122,13 +100,8 @@ BEGIN
                 TIMESTAMP(DATE(pEndDate), TIME(vExistingEndDate))
         END;
 
-    
-    
-    
-
     UPDATE plant
        SET taxonId = pTaxonId,
-           plantTag = pPlantTag,
            plantName = pPlantName,
            acquisitionDate = vFinalAcquisitionDate,
            acquisitionSource = pAcquisitionSource,
@@ -136,11 +109,6 @@ BEGIN
            endNotes = pEndNotes,
            plantNotes = pPlantNotes
      WHERE plantId = pPlantId;
-
-    
-    
-    
-    
 
     IF vExistingEndDate IS NULL AND vFinalEndDate IS NOT NULL THEN
 
