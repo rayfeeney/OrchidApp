@@ -16,6 +16,7 @@ public class IndexModel : PageModel
 
     private readonly OrchidDbContext _context;
     private readonly ObservationTypeResolver _resolver;
+    private readonly StoragePathService _storagePathService;
     private readonly PhotoPipeline _photoPipeline;
     private readonly ILogger<IndexModel> _logger;
 
@@ -23,11 +24,13 @@ public class IndexModel : PageModel
         OrchidDbContext context,
         ObservationTypeResolver resolver,
         PhotoPipeline photoPipeline,
+        StoragePathService storagePathService,
         ILogger<IndexModel> logger)
     {
         _context = context;
         _resolver = resolver;
         _photoPipeline = photoPipeline;
+        _storagePathService = storagePathService;
         _logger = logger;
     }
 
@@ -134,7 +137,7 @@ public class IndexModel : PageModel
                 DisplayName = p.DisplayName!,
                 PlantTag = p.PlantTag!,
                 p.LocationName,
-                p.TaxonId          // ✅ added
+                p.TaxonId          // added
             })
             .FirstOrDefaultAsync(ct);
 
@@ -145,7 +148,7 @@ public class IndexModel : PageModel
         PlantTag = plant.PlantTag;
         LocationName = plant.LocationName;
 
-        // ✅ taxonomy state (NEW)
+        // taxonomy state (NEW)
         var taxon = await _context.TaxonIdentities
             .Where(t => t.TaxonId == plant.TaxonId)
             .Select(t => new
@@ -213,7 +216,7 @@ public class IndexModel : PageModel
         _context.PlantEvent.Add(observation);
         await _context.SaveChangesAsync(ct); // must save first to get PlantEventId
 
-        var uploadsRoot = "/opt/orchidapp/uploads";
+        var uploadsRoot = _storagePathService.GetUploadRoot();
 
         var heroExists = await _context.PlantPhotos
             .AnyAsync(p => p.PlantId == plantId && p.IsHero && p.IsActive, ct);
@@ -250,7 +253,8 @@ public class IndexModel : PageModel
             {
                 PlantEventId = observation.PlantEventId,
                 PlantId = plantId,
-                FileName = file.FileName,
+                FileName = Path.GetFileName(result.RelativePath),
+                ThumbnailFileName = Path.GetFileName(result.ThumbnailRelativePath),
                 FilePath = result.RelativePath,
                 MimeType = result.MimeType,
                 IsHero = !heroExists,

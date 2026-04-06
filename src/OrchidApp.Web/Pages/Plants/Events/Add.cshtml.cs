@@ -12,6 +12,7 @@ using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 
+
 namespace OrchidApp.Web.Pages.Plants.Events;
 
 public class AddModel : PageModel
@@ -22,6 +23,7 @@ public class AddModel : PageModel
     private readonly OrchidDbContext _db;
     private readonly ObservationTypeResolver _resolver;
     private readonly PhotoPipeline _photoPipeline;
+    private readonly StoragePathService _storagePathService;
     private readonly IStoredProcedureExecutor _sp;
     private readonly ILogger<AddModel> _logger;
 
@@ -29,12 +31,14 @@ public class AddModel : PageModel
         OrchidDbContext db,
         ObservationTypeResolver resolver,
         PhotoPipeline photoPipeline,
+        StoragePathService storagePathService,
         IStoredProcedureExecutor sp,
         ILogger<AddModel> logger)
     {
         _db = db;
         _resolver = resolver;
         _photoPipeline = photoPipeline;
+         _storagePathService = storagePathService;
         _sp = sp;
         _logger = logger;
     }
@@ -288,7 +292,7 @@ public class AddModel : PageModel
 
                 var observationTypeId = await _resolver.GetIdAsync(typeCode);
 
-                var uploadsRoot = "/opt/orchidapp/uploads";
+                var uploadsRoot = _storagePathService.GetUploadRoot();
                 var savedRelativePaths = new List<string>();
 
                 await using var tx = await _db.Database.BeginTransactionAsync();
@@ -324,10 +328,26 @@ public class AddModel : PageModel
 
                             try
                             {
-                                await using var stream = file.OpenReadStream();
+                                // This is the old way that PhotoPipeline worked and worked well on the Pi
+                                /* await using var stream = file.OpenReadStream();
 
                                 result = await _photoPipeline.ProcessAndSaveAsync(
                                     stream,
+                                    new PhotoStorageTarget
+                                    {
+                                        EntityType = "plants",
+                                        EntityId = PlantId.ToString()
+                                    },
+                                    uploadsRoot,
+                                    HttpContext.RequestAborted); */
+                                await using var inputStream = file.OpenReadStream();
+
+                                using var memoryStream = new MemoryStream();
+                                await inputStream.CopyToAsync(memoryStream, HttpContext.RequestAborted);
+                                memoryStream.Position = 0;
+
+                                result = await _photoPipeline.ProcessAndSaveAsync(
+                                    memoryStream,
                                     new PhotoStorageTarget
                                     {
                                         EntityType = "plants",
@@ -351,7 +371,8 @@ public class AddModel : PageModel
                             {
                                 PlantEventId = observation.PlantEventId,
                                 PlantId = PlantId,
-                                FileName = file.FileName,
+                                FileName = Path.GetFileName(result.RelativePath),
+                                ThumbnailFileName = Path.GetFileName(result.ThumbnailRelativePath),
                                 FilePath = result.RelativePath,
                                 MimeType = result.MimeType,
                                 IsHero = !heroExists,
