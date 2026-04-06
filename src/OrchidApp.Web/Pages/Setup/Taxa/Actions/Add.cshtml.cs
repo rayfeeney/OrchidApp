@@ -15,18 +15,21 @@ public class AddModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string? ReturnUrl { get; set; }
 
-private readonly OrchidDbContext _db;
+    private readonly OrchidDbContext _db;
     private readonly IStoredProcedureExecutor _sp;
     private readonly PhotoPipeline _photoPipeline;
+    private readonly StoragePathService _storagePathService;
 
     public AddModel(
         OrchidDbContext db,
         IStoredProcedureExecutor sp,
-        PhotoPipeline photoPipeline)
+        PhotoPipeline photoPipeline,
+        StoragePathService storagePathService)
     {
         _db = db;
         _sp = sp;
         _photoPipeline = photoPipeline;
+        _storagePathService = storagePathService;
     }
 
     public List<GenusLookup> Genera { get; private set; } = [];
@@ -138,7 +141,7 @@ private readonly OrchidDbContext _db;
             // NEW: process photo if provided
             if (Photo != null && Photo.Length > 0)
             {
-                var uploadsRoot = "/opt/orchidapp/uploads";
+                var uploadsRoot = _storagePathService.GetUploadRoot();
 
                 PhotoSaveResult resultPhoto;
 

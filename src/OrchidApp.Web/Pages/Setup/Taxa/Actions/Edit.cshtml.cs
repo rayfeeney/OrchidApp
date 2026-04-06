@@ -10,11 +10,14 @@ namespace OrchidApp.Web.Pages.Setup.Taxa.Actions;
 public class EditModel : PageModel
 {
     private readonly OrchidDbContext _db;
-private readonly PhotoPipeline _photoPipeline;
-    public EditModel(OrchidDbContext db,PhotoPipeline photoPipeline)
+    private readonly PhotoPipeline _photoPipeline;
+    private readonly StoragePathService _storagePathService;
+
+    public EditModel(OrchidDbContext db, PhotoPipeline photoPipeline, StoragePathService storagePathService)
     {
         _db = db;
         _photoPipeline = photoPipeline;
+        _storagePathService = storagePathService;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -101,7 +104,7 @@ private readonly PhotoPipeline _photoPipeline;
 
 if (Photo != null && Photo.Length > 0)
 {
-    var uploadsRoot = "/opt/orchidapp/uploads";
+    var uploadsRoot = _storagePathService.GetUploadRoot();
 
     PhotoSaveResult resultPhoto;
 

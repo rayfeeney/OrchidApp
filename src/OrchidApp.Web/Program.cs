@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.Extensions.FileProviders;
 using OrchidApp.Web.Infrastructure;
+using OrchidApp.Web.Configuration;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,10 +26,16 @@ builder.Services.AddDbContext<OrchidDbContext>(options =>
 
 });
 
+
 builder.Services.AddSingleton<PhotoPipeline>();
 
 builder.Services.Configure<MediaIngestionOptions>(
     builder.Configuration.GetSection("MediaIngestion"));
+
+builder.Services.Configure<StorageSettings>(
+    builder.Configuration.GetSection("Storage"));
+
+builder.Services.AddScoped<StoragePathService>();
     
 builder.Services.AddScoped<ObservationTypeResolver>();
 
@@ -48,18 +55,15 @@ app.UseHttpsRedirection();
 
 app.UseStaticFiles(); // always serve wwwroot (Dev + Prod)
 
-if (!app.Environment.IsDevelopment())
-{
-    var uploadsPath = "/opt/orchidapp/uploads";
+var uploadsPath = builder.Configuration["Storage:UploadRoot"];
 
-    if (Directory.Exists(uploadsPath))
+if (Directory.Exists(uploadsPath))
+{
+    app.UseStaticFiles(new StaticFileOptions
     {
-        app.UseStaticFiles(new StaticFileOptions
-        {
-            FileProvider = new PhysicalFileProvider(uploadsPath),
-            RequestPath = "/uploads"
-        });
-    }
+        FileProvider = new PhysicalFileProvider(uploadsPath),
+        RequestPath = "/uploads"
+    });
 }
 
 app.UseRouting();

@@ -11,6 +11,7 @@ namespace OrchidApp.Web.Models
         public int PlantId { get; set; }
 
         public string FileName { get; set; } = default!;
+        public string ThumbnailFileName { get; set; } = default!;
         public string FilePath { get; set; } = default!;
         public string MimeType { get; set; } = default!;
 
