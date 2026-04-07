@@ -23,20 +23,11 @@
 
 @if (Model.PlantDisplayName != null)
 {
-    <h2 class="h5 fw-bold mb-3 @(Model.IsInactive ? "text-muted" : "")">
+    <h2 class="h5 fw-bold mb-1 @(Model.IsInactive ? "text-muted" : "")">
         @Model.PlantDisplayName
-
-        @if (Model.IsInactive)
-        {
-            <span class="badge bg-secondary ms-2">Inactive</span>
-        }
-        @if (!string.IsNullOrWhiteSpace(Model.PlantTag))
-        {
-            <span class="fw-normal text-muted">
-                (Tag: @Model.PlantTag)
-            </span>
-        }
     </h2>
+
+    <div class="plant-tag mb-3">@Model.PlantTag</div>
 
     @if (Model.EventType == "Observation")
     {
@@ -44,6 +35,7 @@
             Record something you’ve noticed about this plant.
         </p>
     }
+
 
     @if (Model.EventType == "LocationChange")
     {

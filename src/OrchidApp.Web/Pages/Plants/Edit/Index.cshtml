@@ -99,9 +99,7 @@
         <small class="text-muted d-block fw-normal">
             System-generated identifier. Cannot be changed.
         </small>
-        <div class="form-control-plaintext fw-bold">
-            @(string.IsNullOrWhiteSpace(Model.PlantTag) ? "—" : Model.PlantTag)
-        </div>
+        <span class="plant-tag">@Model.PlantTag</span>
     </div>
 
     <div class="mb-3">

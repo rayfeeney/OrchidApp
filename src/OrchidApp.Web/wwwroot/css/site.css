@@ -56,8 +56,10 @@ html {
 }
 
 .plant-tag {
-  font-size: 1.3rem;
-  font-weight: 700;
+    font-family: "Consolas", monospace;
+    font-weight: 700;
+    font-size: 1.25rem;
+    letter-spacing: 0.08em;
 }
 
 .plant-name {
