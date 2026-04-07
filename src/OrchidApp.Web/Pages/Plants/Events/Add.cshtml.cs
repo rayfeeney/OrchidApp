@@ -329,7 +329,7 @@ public class AddModel : PageModel
                             try
                             {
                                 // This is the old way that PhotoPipeline worked and worked well on the Pi
-                                /* await using var stream = file.OpenReadStream();
+                                await using var stream = file.OpenReadStream();
 
                                 result = await _photoPipeline.ProcessAndSaveAsync(
                                     stream,
@@ -339,22 +339,7 @@ public class AddModel : PageModel
                                         EntityId = PlantId.ToString()
                                     },
                                     uploadsRoot,
-                                    HttpContext.RequestAborted); */
-                                await using var inputStream = file.OpenReadStream();
-
-                                using var memoryStream = new MemoryStream();
-                                await inputStream.CopyToAsync(memoryStream, HttpContext.RequestAborted);
-                                memoryStream.Position = 0;
-
-                                result = await _photoPipeline.ProcessAndSaveAsync(
-                                    memoryStream,
-                                    new PhotoStorageTarget
-                                    {
-                                        EntityType = "plants",
-                                        EntityId = PlantId.ToString()
-                                    },
-                                    uploadsRoot,
-                                    HttpContext.RequestAborted);
+                                    HttpContext.RequestAborted); 
                             }
                             catch (InvalidOperationException ex)
                             {

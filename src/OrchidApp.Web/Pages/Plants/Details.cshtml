@@ -30,11 +30,7 @@
 <dt class="col-sm-3 fw-bold">Plant tag</dt>
 <dd class="col-sm-9 d-flex justify-content-between align-items-center">
 
-    <span>
-        @(string.IsNullOrWhiteSpace(Model.StatusRequired.PlantTag)
-            ? "—"
-            : Model.StatusRequired.PlantTag)
-    </span>
+    <span class="plant-tag">@Model.StatusRequired.PlantTag</span>
 
     <a asp-page="/Plants/Edit/Index"
        asp-route-plantId="@Model.StatusRequired.PlantId"
