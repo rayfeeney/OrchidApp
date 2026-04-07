@@ -10,11 +10,6 @@
     {
         <span class="badge bg-secondary ms-2">Inactive</span>
     }
-
-    @if (!string.IsNullOrWhiteSpace(Model.PlantTag))
-    {
-        <span class="fw-normal text-muted"> (@Model.PlantTag)</span>
-    }
 </h2>
 
 <div class="card mt-3 mb-3">
@@ -23,7 +18,7 @@
 
             <dt class="col-sm-3 fw-bold">Tag</dt>
             <dd class="col-sm-9">
-                @(string.IsNullOrWhiteSpace(Model.PlantTag) ? "—" : Model.PlantTag)
+                <span class="plant-tag">@Model.PlantTag</span>
             </dd>
 
             <dt class="col-sm-3 fw-bold">Location</dt>
