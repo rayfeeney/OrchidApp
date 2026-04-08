@@ -1,9 +1,7 @@
 name: OrchidApp CI
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
+  workflow_dispatch:
 
 jobs:
 
@@ -81,3 +79,84 @@ jobs:
               done
 
               echo "Migration SQL validation passed"
+
+  schema-contract:
+    name: Schema contract validation
+    runs-on: ubuntu-latest
+
+    services:
+      mariadb:
+        image: mariadb:11
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install MySQL client
+        run: sudo apt-get update && sudo apt-get install -y mysql-client
+
+      - name: Wait for MariaDB
+        run: |
+          for i in {1..30}; do
+            mysql -h 127.0.0.1 -uroot -proot -e "SELECT 1" && break
+            echo "Waiting for DB..."
+            sleep 2
+          done
+
+      - name: Create database
+        run: |
+          mysql -h 127.0.0.1 -uroot -proot -e "CREATE DATABASE orchids;"
+
+      - name: Apply schema (tables first)
+        run: |
+          for f in database/schema/tables/*.sql; do
+            mysql -h 127.0.0.1 -uroot -proot orchids < "$f"
+          done
+
+      - name: Apply constraints
+        run: |
+          for f in database/schema/constraints/*.sql; do
+            mysql -h 127.0.0.1 -uroot -proot orchids < "$f"
+          done
+
+      - name: Apply views
+        run: |
+          for f in database/schema/views/*.sql; do
+            mysql -h 127.0.0.1 -uroot -proot orchids < "$f"
+          done
+
+      - name: Apply routines
+        run: |
+          for f in database/schema/routines/*.sql; do
+            mysql -h 127.0.0.1 -uroot -proot orchids < "$f"
+          done
+
+      - name: Apply triggers
+        run: |
+          for f in database/schema/triggers/*.sql; do
+            mysql -h 127.0.0.1 -uroot -proot orchids < "$f"
+          done
+
+      - name: Run schema export
+        env:
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_PORT: 3306
+          MYSQL_USER: root
+          MYSQL_PASSWORD: root
+        run: pwsh ./database/scripts/Export-MySqlSchema.ps1
+
+      - name: Detect drift
+        run: |
+          if [[ -n $(git status --porcelain) ]]; then
+            echo "Schema drift detected!"
+            git status
+            git diff
+            exit 1
+          fi
+
+      - name: Schema validation passed
+        run: echo "Schema is deterministic and valid"

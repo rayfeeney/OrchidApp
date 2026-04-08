@@ -15,8 +15,8 @@ foreach ($cmd in @("mysql", "mysqldump")) {
 $MySqlHost = $env:MYSQL_HOST ?? "localhost"
 $MySqlPort = $env:MYSQL_PORT ?? 3306
 $Database = "orchids"
-$User = $env:MYSQL_USER
-$Password = $env:MYSQL_PASSWORD
+$User = $env:MYSQL_USER ?? "root"
+$Password = $env:MYSQL_PASSWORD ?? "root"
 $env:MYSQL_PWD = $Password
 
 if (-not $User -or -not $Password) {
@@ -112,6 +112,7 @@ function Export-Object {
     "--port=$MySqlPort"
     "--user=$User"
     "--skip-dump-date"
+    "--column-statistics=0"
   )
 
     if ($Type -ne "views") {
