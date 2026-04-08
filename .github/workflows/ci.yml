@@ -27,11 +27,12 @@ jobs:
         run: dotnet build --configuration Release --no-restore
 
       - name: Publish linux-arm64
-        run: dotnet publish src/OrchidApp.Web \
-              -c Release \
-              -r linux-arm64 \
-              --self-contained false \
-              -o publish
+        run: |
+          dotnet publish src/OrchidApp.Web \
+            -c Release \
+            -r linux-arm64 \
+            --self-contained false \
+            -o publish
 
   migration-sql-validation:
     name: Migration SQL validation
