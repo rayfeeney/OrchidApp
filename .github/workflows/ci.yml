@@ -1,0 +1,82 @@
+name: OrchidApp CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+jobs:
+
+  build:
+    name: Build (linux-arm64)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Publish linux-arm64
+        run: dotnet publish src/OrchidApp.Web \
+              -c Release \
+              -r linux-arm64 \
+              --self-contained false \
+              -o publish
+
+  migration-sql-validation:
+    name: Migration SQL validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate migration SQL files
+        run: |
+              echo "Validating migration SQL files..."
+
+              if [ ! -d "database/migrations" ]; then
+                echo "No migrations folder found — skipping"
+                exit 0
+              fi
+
+              files=$(find database/migrations -name "*.sql" | sort)
+
+              prev=""
+              for f in $files; do
+                name=$(basename "$f")
+
+                # Validate naming
+                if [[ ! $name =~ ^[0-9]{12}_.+\.sql$ ]]; then
+                  echo "Invalid migration file name: $name"
+                  exit 1
+                fi
+
+                ts=${name:0:12}
+
+                # Ordering check
+                if [[ -n "$prev" && "$ts" < "$prev" ]]; then
+                  echo "Out-of-order migration: $name"
+                  exit 1
+                fi
+
+                # Duplicate timestamp
+                if [[ "$ts" == "$prev" ]]; then
+                  echo "Duplicate timestamp detected: $name"
+                  exit 1
+                fi
+
+                prev=$ts
+              done
+
+              echo "Migration SQL validation passed"
