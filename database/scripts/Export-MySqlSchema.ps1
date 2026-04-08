@@ -112,6 +112,7 @@ function Export-Object {
     "--port=$MySqlPort"
     "--user=$User"
     "--skip-dump-date"
+    "--column-statistics=0"
   )
 
     if ($Type -ne "views") {
