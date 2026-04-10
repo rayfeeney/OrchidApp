@@ -39,15 +39,18 @@ else
     <div class="card-list">
         @foreach (var plant in Model.Plants)
         {
-            <div class="plant-card-wrapper">
+            
+            var isSelected = Model.SelectedPlantId == plant.PlantId;
+            
+            <div id="plant-@plant.PlantId" class="plant-card-wrapper">
 
-                <div class="plant-card">
+                <div class="plant-card @(isSelected ? "border border-primary shadow-sm" : "")">
                     <div class="plant-main @(Model.IsInactive ? "text-muted" : "")">
 
                         <a class="plant-thumb-link"
                            asp-page="/Plants/Photos/Index"
                            asp-route-plantId="@plant.PlantId"
-                           asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+                           asp-route-returnUrl="@(Request.Path + "?selectedPlantId=" + plant.PlantId + "#plant-" + plant.PlantId)"
                            title="Photos">
 
                             @if (!string.IsNullOrEmpty(plant.HeroFilePath))
@@ -68,7 +71,7 @@ else
                         <a class="plant-text-link"
                            asp-page="/Plants/Details"
                            asp-route-plantId="@plant.PlantId"
-                           asp-route-returnUrl="@(Request.Path + Request.QueryString)">
+                           asp-route-returnUrl="@(Request.Path + "?selectedPlantId=" + plant.PlantId + "#plant-" + plant.PlantId)">
 
                             <div class="plant-text">
                                 <div class="plant-tag">@plant.PlantTag</div>
@@ -100,7 +103,7 @@ else
                 <a class="plant-edit"
                    asp-page="/Plants/Edit/Index"
                    asp-route-plantId="@plant.PlantId"
-                   asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+                   asp-route-returnUrl="@(Request.Path + "?selectedPlantId=" + plant.PlantId + "#plant-" + plant.PlantId)"
                    title="Edit plant">
                     <i class="bi bi-pencil"></i>
                 </a>
