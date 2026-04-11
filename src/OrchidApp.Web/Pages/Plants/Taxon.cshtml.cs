@@ -10,6 +10,8 @@ public class TaxonModel : PageModel
 {
     [BindProperty(SupportsGet = true)]
     public string? ReturnUrl { get; set; }
+    [BindProperty(SupportsGet = true)]
+    public int? SelectedPlantId { get; set; }
 
     private readonly OrchidDbContext _db;
 

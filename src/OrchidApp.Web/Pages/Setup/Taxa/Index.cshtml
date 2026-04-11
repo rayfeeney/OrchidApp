@@ -50,10 +50,11 @@ else
         {
             var isInactive = !taxon.GenusIsActive || !taxon.TaxonIsActive;
 
-            <a asp-page="/Setup/Taxa/Details"
-               asp-route-id="@taxon.TaxonId"
-               asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-               class="btn btn-lg text-start d-flex @(taxon.IsSystemManaged ? "btn-outline-secondary" : "btn-outline-primary") @(isInactive ? "text-muted" : "")">
+            <div id="taxon-@taxon.TaxonId">
+                <a asp-page="/Setup/Taxa/Details"
+                    asp-route-id="@taxon.TaxonId"
+                    asp-route-returnUrl="@(Request.Path + "#taxon-" + taxon.TaxonId)"
+                    class="btn btn-lg text-start d-flex @(taxon.IsSystemManaged ? "btn-outline-secondary" : "btn-outline-primary") @(isInactive ? "text-muted" : "")">
 
                 <div class="d-flex align-items-center gap-3">
 
@@ -98,6 +99,7 @@ else
                 </div>
 
             </a>
+            </div>
         }
         </div>
     }
