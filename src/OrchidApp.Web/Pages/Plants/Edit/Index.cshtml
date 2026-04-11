@@ -1,29 +1,45 @@
 @page "{plantId:int}"
 @model OrchidApp.Web.Pages.Plants.Edit.IndexModel
 
+<div class="plant-page @(Model.IsEnded ? "plant-ended" : "")">
 <h1 class="page-title fw-bold">Edit plant</h1>
 
 @if (!string.IsNullOrEmpty(Model.SelectedDisplayName))
 {
-<h2 class="h5 fw-bold mb-3 @(Model.IsInactive ? "text-muted" : "")">
+<h2 class="h5 fw-bold mb-3 @((Model.IsInactive || Model.IsEnded) ? "text-muted" : "")">
     @Model.SelectedDisplayName
 
     @if (Model.IsInactive)
     {
         <span class="badge bg-secondary ms-2">Inactive</span>
     }
+
+    @if (Model.IsEnded)
+    {
+        <span class="badge bg-dark ms-2">Ended - Read-only</span>
+    }
 </h2>
 }
 
-<div class="alert alert-info mt-3">
-    <strong>Changing plant taxonomy is a multi-step process.</strong>
-    <ul class="mb-0">
-        <li>To change genus: select a genus, then choose <strong>Change genus</strong>.</li>
-        <li>This will reset the species / hybrid selection to <strong>sp.</strong></li>
-        <li>You must then select the correct species / hybrid and choose <strong>Change species / hybrid</strong>.</li>
-        <li>Finally, select <strong>Save changes</strong> to confirm all updates.</li>
-    </ul>
-</div>
+@if (Model.IsEnded)
+{
+    <div class="alert alert-secondary mt-3">
+        This plant has ended and cannot be edited.
+    </div>
+}
+
+@if (!Model.IsEnded)
+{
+    <div class="alert alert-info mt-3">
+        <strong>Changing plant taxonomy is a multi-step process.</strong>
+        <ul class="mb-0">
+            <li>To change genus: select a genus, then choose <strong>Change genus</strong>.</li>
+            <li>This will reset the species / hybrid selection to <strong>sp.</strong></li>
+            <li>You must then select the correct species / hybrid and choose <strong>Change species / hybrid</strong>.</li>
+            <li>Finally, select <strong>Save changes</strong> to confirm all updates.</li>
+        </ul>
+    </div>
+}
 
 <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
@@ -40,16 +56,38 @@
             After changing genus, you must choose the correct species / hybrid.
         </small>
 
-        <div class="input-group">
+            @if (Model.IsEnded)
+            {
+                <div class="form-control">
+                    @Model.GenusName
+                </div>
+            }
+            else
+            {
+                <div class="input-group">
+                    <select asp-for="GenusId"
+                            asp-items="Model.GenusOptions"
+                            class="form-select">
+                    </select>
+
+                    <button type="submit" class="btn btn-outline-secondary">
+                        Change genus
+                    </button>
+                </div>
+            }
+@*         <div class="input-group">
             <select asp-for="GenusId"
                     asp-items="Model.GenusOptions"
                     class="form-select">
             </select>
 
-            <button type="submit" class="btn btn-outline-secondary">
-                Change genus
-            </button>
-        </div>
+            @if (!Model.IsEnded)
+            {
+                <button type="submit" class="btn btn-outline-secondary">
+                    Change genus
+                </button>
+            }
+        </div> *@
 
         <span asp-validation-for="GenusId" class="text-danger"></span>
     </div>
@@ -70,16 +108,38 @@
             Changes are not final until you select <strong>Save changes</strong>.
         </small>
 
-        <div class="input-group">
+            @if (Model.IsEnded)
+            {
+                <div class="form-control">
+                    @Model.SelectedDisplayName
+                </div>
+            }
+            else
+            {
+                <div class="input-group">
+                    <select asp-for="TaxonId"
+                            asp-items="Model.TaxonOptions"
+                            class="form-select">
+                    </select>
+
+                    <button type="submit" class="btn btn-outline-secondary">
+                        Change species / hybrid
+                    </button>
+                </div>
+            }
+@*         <div class="input-group">
             <select asp-for="TaxonId"
                     asp-items="Model.TaxonOptions"
                     class="form-select">
             </select>
 
-            <button type="submit" class="btn btn-outline-secondary">
-                Change species / hybrid
-            </button>
-        </div>
+            @if (!Model.IsEnded)
+            {
+                <button type="submit" class="btn btn-outline-secondary">
+                    Change species / hybrid
+                </button>
+            }
+        </div> *@
 
         <span asp-validation-for="TaxonId" class="text-danger"></span>
     </div>
@@ -99,7 +159,9 @@
         <small class="text-muted d-block fw-normal">
             System-generated identifier. Cannot be changed.
         </small>
-        <span class="plant-tag">@Model.PlantTag</span>
+        <div class="form-control">
+            <span class="plant-tag">@Model.PlantTag</span>
+        </div>
     </div>
 
     <div class="mb-3">
@@ -107,7 +169,14 @@
         <small class="text-muted d-block fw-normal">
             Optional. A personal name to help you recognise this plant.
         </small>
-        <input asp-for="PlantName" class="form-control" />
+        @if (Model.IsEnded)
+        {
+            <input asp-for="PlantName" class="form-control" readonly />
+        }
+        else
+        {
+            <input asp-for="PlantName" class="form-control" />
+        }
         <span asp-validation-for="PlantName" class="text-danger"></span>
     </div>
 
@@ -116,7 +185,14 @@
         <small class="text-muted d-block fw-normal">
             Optional. When you obtained the plant.
         </small>
-        <input asp-for="AcquisitionDate" type="date" class="form-control" />
+        @if (Model.IsEnded)
+        {
+            <input asp-for="AcquisitionDate" type="date" class="form-control" readonly />
+        }
+        else
+        {
+            <input asp-for="AcquisitionDate" type="date" class="form-control" />
+        }
         <span asp-validation-for="AcquisitionDate" class="text-danger"></span>
     </div>
 
@@ -125,7 +201,14 @@
         <small class="text-muted d-block fw-normal">
             Optional. Where the plant came from (e.g. nursery, friend, swap).
         </small>
-        <input asp-for="AcquisitionSource" class="form-control" />
+        @if (Model.IsEnded)
+        {
+            <input asp-for="AcquisitionSource" class="form-control" readonly />
+        }
+        else
+        {
+            <input asp-for="AcquisitionSource" class="form-control" />
+        }
         <span asp-validation-for="AcquisitionSource" class="text-danger"></span>
     </div>
 
@@ -134,7 +217,15 @@
         <small class="text-muted d-block fw-normal">
             Usually left blank. Set only when ending a plant’s lifecycle (for example if it dies or is given away).
         </small>
-        <input asp-for="EndDate" type="date" class="form-control" />
+        @if (Model.IsEnded)
+        {
+            <input asp-for="EndDate" type="date" class="form-control" readonly />
+        }
+        else
+        {
+            <input asp-for="EndDate" type="date" class="form-control" />
+        }        
+        @* <input asp-for="EndDate" type="date" class="form-control" /> *@
         <span asp-validation-for="EndDate" class="text-danger"></span>
     </div>
 
@@ -143,9 +234,14 @@
         <small class="text-muted d-block fw-normal">
             Optional. Why the plant ended (for example lost, given away).
         </small>
-        <textarea asp-for="EndNotes"
-                  class="form-control"
-                  rows="4"></textarea>
+        @if (Model.IsEnded)
+        {
+            <input asp-for="EndNotes" class="form-control" readonly />
+        }
+        else
+        {
+            <input asp-for="EndNotes" class="form-control" />
+        }
         <span asp-validation-for="EndNotes" class="text-danger"></span>
     </div>
 
@@ -154,9 +250,14 @@
         <small class="text-muted d-block fw-normal">
             Optional. Any notes about this plant (care, habits, reminders).
         </small>
-        <textarea asp-for="PlantNotes"
-                  class="form-control"
-                  rows="5"></textarea>
+        @if (Model.IsEnded)
+        {
+            <input asp-for="PlantNotes" class="form-control" readonly />
+        }
+        else
+        {
+            <input asp-for="PlantNotes" class="form-control" />
+        }
         <span asp-validation-for="PlantNotes" class="text-danger"></span>
     </div>
 
@@ -171,10 +272,14 @@
             ← Back to plant
         </a>
 
-        <button type="submit"
-                class="btn btn-primary btn-lg">
-            Save changes
-        </button>
+        @if (!Model.IsEnded)
+        {
+            <button type="submit"
+                    class="btn btn-primary btn-lg">
+                Save changes
+            </button>
+        }
     </div>
 
 </form>
+</div>

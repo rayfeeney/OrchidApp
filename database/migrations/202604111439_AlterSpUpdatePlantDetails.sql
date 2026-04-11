@@ -1,5 +1,8 @@
+DROP PROCEDURE IF EXISTS spUpdatePlantDetails;
+
 DELIMITER //
-CREATE OR REPLACE PROCEDURE `spUpdatePlantDetails`(
+
+CREATE PROCEDURE `spUpdatePlantDetails`(
     IN pPlantId INT,
     IN pTaxonId INT,
     IN pPlantName VARCHAR(100),
@@ -126,7 +129,6 @@ BEGIN
 
     END IF;
 
-END
-//
-DELIMITER ;
+END //
 
+DELIMITER ;

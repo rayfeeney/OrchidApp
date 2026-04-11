@@ -203,3 +203,12 @@ body.env-dev {
   background: rgba(0,0,0,0.03);
   border-radius: 12px;
 }
+
+.plant-ended {
+    background-color: #e2e3e5;
+}
+
+.plant-ended .card {
+    background-color: #f1f3f5;  
+    border-color: #d6d8db;
+}

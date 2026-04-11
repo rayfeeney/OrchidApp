@@ -29,6 +29,7 @@ public class IndexModel : PageModel
     [BindProperty]
     [Display(Name = "Genus")]
     public int GenusId { get; set; }
+    public string? GenusName { get; private set; }
 
     [BindProperty, Required]
     [Display(Name = "Species / hybrid")]
@@ -42,6 +43,7 @@ public class IndexModel : PageModel
     public bool GenusIsActive { get; private set; }
     public bool TaxonIsActive { get; private set; }
     public bool IsInactive => !GenusIsActive || !TaxonIsActive;
+    public bool IsEnded => EndDate != null;
 
     // =========================
     // Editable Fields
@@ -75,20 +77,15 @@ public class IndexModel : PageModel
     [Display(Name = "Plant notes")]
     public string? PlantNotes { get; set; }
 
-    // =========================
-    // GET
-    // =========================
-
-    public async Task<IActionResult> OnGetAsync(int? genusId, int? taxonId)
+    private async Task LoadPlantAsync(int? genusId = null, int? taxonId = null)
     {
         var plant = await _db.Plants
             .AsNoTracking()
             .SingleOrDefaultAsync(p => p.PlantId == PlantId);
 
         if (plant is null)
-            return NotFound();
+            throw new InvalidOperationException("Plant not found");
 
-        // Always load plant fields from DB
         PlantTag = plant.PlantTag;
         PlantName = plant.PlantName;
         AcquisitionDate = plant.AcquisitionDate;
@@ -97,19 +94,14 @@ public class IndexModel : PageModel
         EndNotes = plant.EndNotes;
         PlantNotes = plant.PlantNotes;
 
-        // Determine effective selection
         int effectiveTaxonId = plant.TaxonId;
 
         if (taxonId.HasValue)
-        {
             effectiveTaxonId = taxonId.Value;
-        }
         else if (genusId.HasValue)
         {
             effectiveTaxonId = await _db.TaxonIdentities
-                .Where(t =>
-                    t.GenusId == genusId.Value &&
-                    t.IsSystemManaged)
+                .Where(t => t.GenusId == genusId.Value && t.IsSystemManaged)
                 .Select(t => t.TaxonId)
                 .FirstAsync();
         }
@@ -121,6 +113,7 @@ public class IndexModel : PageModel
             .SingleAsync(t => t.TaxonId == TaxonId);
 
         GenusId = selected.GenusId;
+        GenusName = selected.GenusName;
         SelectedDisplayName = selected.DisplayName;
 
         GenusIsActive = selected.GenusIsActive;
@@ -128,8 +121,23 @@ public class IndexModel : PageModel
 
         await LoadGenusOptionsAsync();
         await LoadTaxonOptionsAsync();
+    }
 
-        return Page();
+    // =========================
+    // GET
+    // =========================
+
+    public async Task<IActionResult> OnGetAsync(int? genusId, int? taxonId)
+    {
+        try
+        {
+            await LoadPlantAsync(genusId, taxonId);
+            return Page();
+        }
+        catch (InvalidOperationException)
+        {
+            return NotFound();
+        }
     }
 
     // =========================
@@ -138,10 +146,18 @@ public class IndexModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
+        var plant = await _db.Plants
+            .AsNoTracking()
+            .Where(p => p.PlantId == PlantId)
+            .Select(p => new { p.EndDate })
+            .SingleAsync();
+
+        if (plant.EndDate != null)
+            return BadRequest();
+
         if (!ModelState.IsValid)
         {
-            await LoadGenusOptionsAsync();
-            await LoadTaxonOptionsAsync();
+            await LoadPlantAsync(GenusId, TaxonId);
             return Page();
         }
 
@@ -152,8 +168,7 @@ public class IndexModel : PageModel
         catch (DbException ex)
         {
             ModelState.AddModelError(string.Empty, ex.GetBaseException().Message);
-            await LoadGenusOptionsAsync();
-            await LoadTaxonOptionsAsync();
+            await LoadPlantAsync(GenusId, TaxonId);
             return Page();
         }
 
@@ -167,8 +182,17 @@ public class IndexModel : PageModel
     // GENUS CHANGE
     // =========================
 
-    public IActionResult OnPostGenusChanged()
+    public async Task<IActionResult> OnPostGenusChanged()
     {
+        var plant = await _db.Plants
+            .AsNoTracking()
+            .Where(p => p.PlantId == PlantId)
+            .Select(p => new { p.EndDate })
+            .SingleAsync();
+
+        if (plant.EndDate != null)
+            return BadRequest();
+
         return RedirectToPage(new
         {
             plantId = PlantId,
@@ -180,8 +204,17 @@ public class IndexModel : PageModel
     // TAXON CHANGE
     // =========================
 
-    public IActionResult OnPostTaxonChanged()
+    public async Task<IActionResult> OnPostTaxonChanged()
     {
+        var plant = await _db.Plants
+            .AsNoTracking()
+            .Where(p => p.PlantId == PlantId)
+            .Select(p => new { p.EndDate })
+            .SingleAsync();
+
+        if (plant.EndDate != null)
+            return BadRequest();
+
         return RedirectToPage(new
         {
             plantId = PlantId,

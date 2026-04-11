@@ -11,6 +11,7 @@ public class PlantStatus
 
     public DateTime? AcquisitionDate { get; set; }
     public string? AcquisitionSource { get; set; }
+    public DateTime? EndDate { get;set; }
 
     public string? LocationName { get; set; }
 
@@ -24,4 +25,9 @@ public class PlantStatus
 
     public bool TaxonIsActive { get; set; }
     public bool GenusIsActive { get; set; }
+
+    public bool HasParent { get; set; }
+    public int? ParentPlantId { get; set; }
+    public string? ParentPlantTag { get; set; }
+    public bool HasChildren { get; set; }
 }
