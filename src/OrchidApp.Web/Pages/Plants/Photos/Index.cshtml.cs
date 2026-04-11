@@ -52,6 +52,7 @@ public class IndexModel : PageModel
     public bool GenusIsActive { get; private set; }
     public bool TaxonIsActive { get; private set; }
     public bool IsInactive => !GenusIsActive || !TaxonIsActive;
+    public bool IsEnded { get; private set; }
 
     [BindProperty]
     [Display(Name = "Photos")]
@@ -65,6 +66,13 @@ public class IndexModel : PageModel
     {
         PlantId = plantId;
 
+        var plantEndDate = await _context.Plants
+            .Where(p => p.PlantId == plantId)
+            .Select(p => p.EndDate)
+            .SingleAsync(ct);
+
+        IsEnded = plantEndDate != null;
+        
         var ok = await LoadAsync(plantId, FocusPhotoId, ct);
         if (!ok)
             return NotFound();
@@ -72,8 +80,19 @@ public class IndexModel : PageModel
         return Page();
     }
 
+    private async Task<bool> IsPlantEndedAsync(int plantId, CancellationToken ct)
+    {
+        return await _context.Plants
+            .Where(p => p.PlantId == plantId)
+            .Select(p => p.EndDate != null)
+            .SingleAsync(ct);
+    }
+
     public async Task<IActionResult> OnPostSetHeroAsync(int plantId, int photoId, CancellationToken ct)
     {
+        if (await IsPlantEndedAsync(plantId, ct))
+            return BadRequest();
+    
         await _context.Database.ExecuteSqlRawAsync(
             "CALL spSetHeroPhoto({0}, {1})",
             new object[] { plantId, photoId },
@@ -84,6 +103,9 @@ public class IndexModel : PageModel
 
     public async Task<IActionResult> OnPostUploadAsync(int plantId, string? returnUrl, CancellationToken ct)
     {
+        if (await IsPlantEndedAsync(plantId, ct))
+            return BadRequest();
+
         PlantId = plantId;
         ReturnUrl = returnUrl;
 

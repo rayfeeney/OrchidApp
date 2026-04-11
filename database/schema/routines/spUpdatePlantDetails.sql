@@ -41,7 +41,7 @@ BEGIN
     ) INTO vIsSplitParent;
 
     
-    IF (pAcquisitionDate <=> vExistingAcquisitionDate) = 0 THEN
+    IF (DATE(pAcquisitionDate) <=> DATE(vExistingAcquisitionDate)) = 0 THEN
         IF vIsSplitChild THEN
             SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Cannot modify acquisition date: plant was created via split.';
@@ -49,7 +49,7 @@ BEGIN
     END IF;
 
     
-    IF (pEndDate <=> vExistingEndDate) = 0 THEN
+    IF (DATE(pEndDate) <=> DATE(vExistingEndDate)) = 0 THEN
         IF vIsSplitParent THEN
             SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Cannot modify end date: plant has been split.';

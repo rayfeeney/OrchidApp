@@ -3,14 +3,25 @@
 
 <h1 class="page-title fw-bold">Photos</h1>
 
-<h2 class="h5 fw-bold mb-3 @(Model.IsInactive ? "text-muted" : "")">
+<h2 class="h5 fw-bold mb-3 @((Model.IsInactive || Model.IsEnded) ? "text-muted" : "")">
     @Model.PlantDisplayName
 
     @if (Model.IsInactive)
     {
         <span class="badge bg-secondary ms-2">Inactive</span>
     }
+    @if (Model.IsEnded)
+    {
+        <span class="badge bg-dark ms-2">Ended</span>
+    }
 </h2>
+
+@if (Model.IsEnded)
+{
+    <div class="alert alert-secondary mt-3">
+        This plant has ended. Photos can be viewed but not changed.
+    </div>
+}
 
 <div class="card mt-3 mb-3">
     <div class="card-body">
@@ -39,7 +50,7 @@
              class="img-fluid rounded shadow"
              style="max-height:60vh;" />
 
-        @if (!Model.FocusPhoto.IsHero)
+        @if (!Model.FocusPhoto.IsHero && !Model.IsEnded)
         {
             <form method="post"
                   asp-page-handler="SetHero"
@@ -127,63 +138,65 @@ else
     </div>
 }
 
-<div class="card mt-3 mb-3">
-    <div class="card-body">
+@if (!Model.IsEnded)
+{
+    <div class="card mt-3 mb-3">
+        <div class="card-body">
 
-        <h2 class="h5 fw-bold mb-3">Add photos</h2>
+            <h2 class="h5 fw-bold mb-3">Add photos</h2>
 
-        <div asp-validation-summary="ModelOnly"
-             class="text-danger mb-3"></div>
+            <div asp-validation-summary="ModelOnly"
+                class="text-danger mb-3"></div>
 
-        <form method="post"
-              enctype="multipart/form-data"
-              asp-page-handler="Upload">
+            <form method="post"
+                enctype="multipart/form-data"
+                asp-page-handler="Upload">
 
-            <input type="hidden" name="plantId" value="@Model.PlantId" />
-            <input type="hidden" name="returnUrl"
-                   value="@(Model.ReturnUrl ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }))" />
+                <input type="hidden" name="plantId" value="@Model.PlantId" />
+                <input type="hidden" name="returnUrl"
+                    value="@(Model.ReturnUrl ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }))" />
 
-            <div class="mb-3">
-                <label asp-for="UploadFiles" class="fw-bold">
-                    Photos
-                    <small class="text-muted d-block fw-normal">
-                        You can select more than one photo.
-                    </small>
-                </label>
+                <div class="mb-3">
+                    <label asp-for="UploadFiles" class="fw-bold">
+                        Photos
+                        <small class="text-muted d-block fw-normal">
+                            You can select more than one photo.
+                        </small>
+                    </label>
 
-                <input asp-for="UploadFiles"
-                       type="file"
-                       accept="image/*"
-                       multiple
-                       class="form-control" />
+                    <input asp-for="UploadFiles"
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        class="form-control" />
 
-                <span asp-validation-for="UploadFiles" class="text-danger"></span>
-            </div>
+                    <span asp-validation-for="UploadFiles" class="text-danger"></span>
+                </div>
 
-            <div class="mb-3">
-                <label asp-for="UploadNotes" class="fw-bold">
-                    Notes
-                    <small class="text-muted d-block fw-normal">
-                        Optional.
-                    </small>
-                </label>
+                <div class="mb-3">
+                    <label asp-for="UploadNotes" class="fw-bold">
+                        Notes
+                        <small class="text-muted d-block fw-normal">
+                            Optional.
+                        </small>
+                    </label>
 
-                <input asp-for="UploadNotes" class="form-control" />
+                    <input asp-for="UploadNotes" class="form-control" />
 
-                <span asp-validation-for="UploadNotes" class="text-danger"></span>
-            </div>
+                    <span asp-validation-for="UploadNotes" class="text-danger"></span>
+                </div>
 
-            <div class="d-grid">
-                <button type="submit" class="btn btn-primary btn-lg">
-                    Upload photos
-                </button>
-            </div>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        Upload photos
+                    </button>
+                </div>
 
-        </form>
+            </form>
 
+        </div>
     </div>
-</div>
-
+}
 
 
 
