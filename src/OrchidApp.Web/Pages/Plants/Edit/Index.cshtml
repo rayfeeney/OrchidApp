@@ -1,6 +1,7 @@
 @page "{plantId:int}"
 @model OrchidApp.Web.Pages.Plants.Edit.IndexModel
 
+<div class="plant-page @(Model.IsEnded ? "plant-ended" : "")">
 <h1 class="page-title fw-bold">Edit plant</h1>
 
 @if (!string.IsNullOrEmpty(Model.SelectedDisplayName))
@@ -27,15 +28,18 @@
     </div>
 }
 
-<div class="alert alert-info mt-3">
-    <strong>Changing plant taxonomy is a multi-step process.</strong>
-    <ul class="mb-0">
-        <li>To change genus: select a genus, then choose <strong>Change genus</strong>.</li>
-        <li>This will reset the species / hybrid selection to <strong>sp.</strong></li>
-        <li>You must then select the correct species / hybrid and choose <strong>Change species / hybrid</strong>.</li>
-        <li>Finally, select <strong>Save changes</strong> to confirm all updates.</li>
-    </ul>
-</div>
+@if (!Model.IsEnded)
+{
+    <div class="alert alert-info mt-3">
+        <strong>Changing plant taxonomy is a multi-step process.</strong>
+        <ul class="mb-0">
+            <li>To change genus: select a genus, then choose <strong>Change genus</strong>.</li>
+            <li>This will reset the species / hybrid selection to <strong>sp.</strong></li>
+            <li>You must then select the correct species / hybrid and choose <strong>Change species / hybrid</strong>.</li>
+            <li>Finally, select <strong>Save changes</strong> to confirm all updates.</li>
+        </ul>
+    </div>
+}
 
 <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
@@ -278,3 +282,4 @@
     </div>
 
 </form>
+</div>

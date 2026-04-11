@@ -11,6 +11,7 @@ public class PlantStatus
 
     public DateTime? AcquisitionDate { get; set; }
     public string? AcquisitionSource { get; set; }
+    public DateTime? EndDate { get;set; }
 
     public string? LocationName { get; set; }
 

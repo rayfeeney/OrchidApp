@@ -1,6 +1,6 @@
 @page "{plantId:int}"
 @model OrchidApp.Web.Pages.Plants.Photos.IndexModel
-
+<div class="plant-page @(Model.IsEnded ? "plant-ended" : "")">
 <h1 class="page-title fw-bold">Photos</h1>
 
 <h2 class="h5 fw-bold mb-3 @((Model.IsInactive || Model.IsEnded) ? "text-muted" : "")">
@@ -202,3 +202,4 @@ else
 
 <partial name="_BackFullWidth"
          model="@(Model.ReturnUrl ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }))" />
+</div>

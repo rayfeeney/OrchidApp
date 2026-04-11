@@ -334,6 +334,21 @@ public class OrchidDbContext : DbContext
         {
             entity.HasNoKey();
             entity.ToView("vPlantStatus");
+
+            entity.Property(e => e.PlantId)                 .HasColumnName("plantId");
+            entity.Property(e => e.PlantTag)                .HasColumnName("plantTag");
+            entity.Property(e => e.DisplayName)             .HasColumnName("displayName");
+            entity.Property(e => e.AcquisitionDate)         .HasColumnName("acquisitionDate");
+            entity.Property(e => e.AcquisitionSource)       .HasColumnName("acquisitionSource");
+            entity.Property(e => e.EndDate)                 .HasColumnName("endDate");
+            entity.Property(e => e.LocationName)            .HasColumnName("locationName");
+            entity.Property(e => e.LastFloweringDate)       .HasColumnName("lastFloweringDate");
+            entity.Property(e => e.LastRepotDate)           .HasColumnName("lastRepotDate");
+            entity.Property(e => e.CurrentGrowthMediumName) .HasColumnName("currentGrowthMediumName");
+            entity.Property(e => e.LastFeedDateTime)        .HasColumnName("lastFeedDateTime");
+            entity.Property(e => e.LastFeedTypeDisplayName) .HasColumnName("lastFeedTypeDisplayName");
+            entity.Property(e => e.GenusIsActive)           .HasColumnName("genusIsActive");
+            entity.Property(e => e.TaxonIsActive)           .HasColumnName("taxonIsActive"); 
         });
         
         modelBuilder.Entity<LocationChangeEditRow>().HasNoKey();

@@ -28,6 +28,7 @@ public class DetailsModel : PageModel
     public bool TaxonIsActive { get; private set; }
 
     public bool IsInactive => !GenusIsActive || !TaxonIsActive;
+    public bool IsEnded => StatusRequired.EndDate != null;
 
     public PlantStatus StatusRequired
         => Status ?? throw new InvalidOperationException("Plant status must be loaded before rendering the page.");
