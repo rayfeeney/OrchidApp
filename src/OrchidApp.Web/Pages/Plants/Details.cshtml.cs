@@ -30,8 +30,16 @@ public class DetailsModel : PageModel
     public bool IsInactive => !GenusIsActive || !TaxonIsActive;
     public bool IsEnded => StatusRequired.EndDate != null;
 
+    public List<PlantSplitChildren> ChildPlants { get; private set; } = [];
     public PlantStatus StatusRequired
         => Status ?? throw new InvalidOperationException("Plant status must be loaded before rendering the page.");
+
+    public class ChildPlantLink
+    {
+        public int ParentPlantId { get; set; }
+        public int ChildPlantId { get; set; }
+        public string ChildPlantTag { get; set; } = "";
+    }
 
     public IActionResult OnGet()
     {
@@ -53,6 +61,10 @@ public class DetailsModel : PageModel
             .Where(e => e.PlantId == PlantId)
             .OrderByDescending(e => e.EventDateTime)
             .ThenByDescending(e => e.SourceId)
+            .ToList();
+
+        ChildPlants = _db.PlantSplitChildren
+            .Where(c => c.ParentPlantId == PlantId)
             .ToList();
 
         return Page();

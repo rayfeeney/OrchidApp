@@ -149,8 +149,99 @@
 
 </div>
 
-<h2 class="h5 fw-bold mb-3 mt-4">History</h2>
+@if (Model.StatusRequired.HasParent || Model.StatusRequired.HasChildren)
+{
+    <div class="card mt-3">
+        <div class="card-body">
 
+            <h2 class="h5 fw-bold mb-3">Heritage</h2>
+
+            <div class="row g-3">
+
+                <!-- LEFT: Parent -->
+                <div class="col-12 col-md-6">
+
+                    @if (Model.StatusRequired.HasParent)
+                    {
+                        <a asp-page="/Plants/Details"
+                           asp-route-plantId="@Model.StatusRequired.ParentPlantId"
+                           class="btn btn-outline-secondary w-100 text-start py-2">
+
+                            <div class="d-flex justify-content-between align-items-center">
+
+                                <div class="fw-bold">
+                                    ↑ Parent
+                                </div>
+
+                                <div class="text-end">
+                                    <div class="plant-tag">
+                                        @Model.StatusRequired.ParentPlantTag
+                                    </div>
+
+                                    @if (Model.StatusRequired.AcquisitionDate != null)
+                                    {
+                                        <div class="text-muted small">
+                                            Ended @Model.StatusRequired.AcquisitionDate.Value.ToString("dd/MM/yyyy")
+                                        </div>
+                                    }
+                                </div>
+
+                            </div>
+
+                        </a>
+                    }
+
+                </div>
+
+                <!-- RIGHT: Children -->
+                <div class="col-12 col-md-6">
+
+                    @if (Model.StatusRequired.HasChildren)
+                    {
+                        <div class="d-grid gap-2">
+
+                            @foreach (var child in Model.ChildPlants)
+                            {
+                                <a asp-page="/Plants/Details"
+                                   asp-route-plantId="@child.ChildPlantId"
+                                   class="btn btn-outline-secondary w-100 text-start py-2">
+
+                                    <div class="d-flex justify-content-between align-items-center">
+
+                                        <div class="fw-bold">
+                                            ↓ Child
+                                        </div>
+
+                                        <div class="text-end">
+                                            <div class="plant-tag">
+                                                @child.PlantTag
+                                            </div>
+
+                                            @if (child.AcquisitionDate != null)
+                                            {
+                                                <div class="text-muted small">
+                                                    Created @child.AcquisitionDate.Value.ToString("dd/MM/yyyy")
+                                                </div>
+                                            }
+                                        </div>
+
+                                    </div>
+
+                                </a>
+                            }
+
+                        </div>
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+}
+
+<h2 class="h5 fw-bold mb-3 mt-4">History</h2>
 
 @if (!Model.IsEnded)
 {

@@ -17,7 +17,7 @@ public class OrchidDbContext : DbContext
     public DbSet<PlantStatus> PlantStatuses =>                              Set<PlantStatus>();
     public DbSet<PlantActiveCurrentLocation> PlantActiveCurrentLocations=>  Set<PlantActiveCurrentLocation>();
     public DbSet<LocationChangeEditRow> LocationChangeEditRows =>           Set<LocationChangeEditRow>();
-   
+    public DbSet<PlantSplitChildren> PlantSplitChildren =>                  Set<PlantSplitChildren>();
     public DbSet<Genus> Genera =>                                           Set<Genus>();
     public DbSet<Taxon> Taxa =>                                             Set<Taxon>();
     public DbSet<Plant> Plants =>                                           Set<Plant>();
@@ -348,9 +348,24 @@ public class OrchidDbContext : DbContext
             entity.Property(e => e.LastFeedDateTime)        .HasColumnName("lastFeedDateTime");
             entity.Property(e => e.LastFeedTypeDisplayName) .HasColumnName("lastFeedTypeDisplayName");
             entity.Property(e => e.GenusIsActive)           .HasColumnName("genusIsActive");
-            entity.Property(e => e.TaxonIsActive)           .HasColumnName("taxonIsActive"); 
+            entity.Property(e => e.TaxonIsActive)           .HasColumnName("taxonIsActive");
+            entity.Property(e => e.HasParent)               .HasColumnName("hasParent");
+            entity.Property(e => e.ParentPlantId)           .HasColumnName("parentPlantId");
+            entity.Property(e => e.ParentPlantTag)          .HasColumnName("parentPlantTag");
+            entity.Property(e => e.HasChildren)             .HasColumnName("hasChildren"); 
         });
-        
+
+        modelBuilder.Entity<PlantSplitChildren>(entity =>
+        {
+            entity.HasNoKey();
+            entity.ToView("vPlantSplitChildren");
+
+            entity.Property(e => e.ParentPlantId)           .HasColumnName("parentPlantId");
+            entity.Property(e => e.ChildPlantId)            .HasColumnName("childPlantId");
+            entity.Property(e => e.PlantTag)                .HasColumnName("plantTag");
+            entity.Property(e => e.AcquisitionDate)         .HasColumnName("acquisitionDate");
+        });
+
         modelBuilder.Entity<LocationChangeEditRow>().HasNoKey();
         modelBuilder.Entity<AddPlantResult>().HasNoKey();
 

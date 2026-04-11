@@ -25,4 +25,9 @@ public class PlantStatus
 
     public bool TaxonIsActive { get; set; }
     public bool GenusIsActive { get; set; }
+
+    public bool HasParent { get; set; }
+    public int? ParentPlantId { get; set; }
+    public string? ParentPlantTag { get; set; }
+    public bool HasChildren { get; set; }
 }
