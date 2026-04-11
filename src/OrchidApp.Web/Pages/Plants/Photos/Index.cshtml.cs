@@ -130,7 +130,7 @@ public class IndexModel : PageModel
 
     private async Task<bool> LoadAsync(int plantId, int? focusPhotoId, CancellationToken ct)
     {
-        var plant = await _context.PlantActiveCurrentLocations
+        var plant = await _context.PlantCurrentLocations
             .Where(p => p.PlantId == plantId)
             .Select(p => new
             {
