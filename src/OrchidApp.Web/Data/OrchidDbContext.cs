@@ -26,6 +26,7 @@ public class OrchidDbContext : DbContext
     public DbSet<Flowering> Flowering =>                                    Set<Flowering>();
     public DbSet<GrowthMedium> GrowthMedia =>                               Set<GrowthMedium>();
     public DbSet<Repotting> Repotting =>                                    Set<Repotting>();
+    public DbSet<PlantCurrentGrowthMedium> PlantCurrentGrowthMedium =>      Set<PlantCurrentGrowthMedium>();
     public DbSet<Location> Locations { get; set; } = null!;
     public DbSet<PlantPhoto> PlantPhotos { get; set; }
     public DbSet<ObservationType> ObservationTypes { get; set; }
@@ -364,6 +365,19 @@ public class OrchidDbContext : DbContext
             entity.Property(e => e.ChildPlantId)            .HasColumnName("childPlantId");
             entity.Property(e => e.PlantTag)                .HasColumnName("plantTag");
             entity.Property(e => e.AcquisitionDate)         .HasColumnName("acquisitionDate");
+        });
+
+        modelBuilder.Entity<PlantCurrentGrowthMedium>(entity =>
+        {
+            entity.HasNoKey();
+            entity.ToView("vplantcurrentgrowthmedium");
+
+            entity.Property(e => e.PlantId)                 .HasColumnName("plantId");
+            entity.Property(e => e.GrowthMediumId)          .HasColumnName("growthMediumId");
+            entity.Property(e => e.GrowthMediumName)        .HasColumnName("growthMediumName");
+            entity.Property(e => e.PotSize)                 .HasColumnName("potSize");
+            entity.Property(e => e.RepottingNotes)          .HasColumnName("repottingNotes");
+            entity.Property(e => e.RepotDate)               .HasColumnName("repotDate");
         });
 
         modelBuilder.Entity<LocationChangeEditRow>().HasNoKey();
