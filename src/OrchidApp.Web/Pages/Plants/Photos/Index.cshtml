@@ -1,5 +1,12 @@
 @page "{plantId:int}"
 @model OrchidApp.Web.Pages.Plants.Photos.IndexModel
+@{
+    if (Model.IsEnded)
+    {
+        ViewData["BodyClass"] = "plant-ended-bg";
+    }
+}
+
 <div class="plant-page @(Model.IsEnded ? "plant-ended" : "")">
 <h1 class="page-title fw-bold">Photos</h1>
 
