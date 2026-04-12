@@ -1,7 +1,15 @@
 @page "{plantId:int}"
 @model OrchidApp.Web.Pages.Plants.DetailsModel
 
+@{
+    if (Model.IsEnded)
+    {
+        ViewData["BodyClass"] = "plant-ended-bg";
+    }
+}
+
 <div class="plant-page @(Model.IsEnded ? "plant-ended" : "")">
+    
 @{
     ViewData["Title"] = Model.StatusRequired.DisplayName;
 }

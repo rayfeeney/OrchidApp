@@ -204,6 +204,9 @@ body.env-dev {
   border-radius: 12px;
 }
 
+body.plant-ended-bg {
+    background-color: #e2e3e5; 
+}
 .plant-page.plant-ended {
     background-color: #e2e3e5;
     padding: 1rem;
