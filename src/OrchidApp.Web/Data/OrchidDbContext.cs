@@ -358,7 +358,7 @@ public class OrchidDbContext : DbContext
         modelBuilder.Entity<PlantSplitChildren>(entity =>
         {
             entity.HasNoKey();
-            entity.ToView("vPlantSplitChildren");
+            entity.ToView("vplantsplitchildren");
 
             entity.Property(e => e.ParentPlantId)           .HasColumnName("parentPlantId");
             entity.Property(e => e.ChildPlantId)            .HasColumnName("childPlantId");
