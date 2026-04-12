@@ -13,7 +13,9 @@
       href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 </head>
 
-<body class="d-flex flex-column min-vh-100 @(Env.IsDevelopment() ? "env-dev" : "")">
+<body class="d-flex flex-column min-vh-100 
+             @(Env.IsDevelopment() ? "env-dev" : "") 
+             @(ViewData["BodyClass"] as string)">
 
     <header>
         <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom box-shadow">
