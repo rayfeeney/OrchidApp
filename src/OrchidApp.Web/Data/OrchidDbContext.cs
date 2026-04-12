@@ -333,7 +333,7 @@ public class OrchidDbContext : DbContext
         modelBuilder.Entity<PlantStatus>(entity =>
         {
             entity.HasNoKey();
-            entity.ToView("vPlantStatus");
+            entity.ToView("vplantstatus");
 
             entity.Property(e => e.PlantId)                 .HasColumnName("plantId");
             entity.Property(e => e.PlantTag)                .HasColumnName("plantTag");
