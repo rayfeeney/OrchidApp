@@ -658,6 +658,13 @@ public class AddModel : PageModel
                         "Repotting date cannot be after the plant has ended.");
                 }
 
+                // Rule 4 — growth medium must be selected
+                if (!NewGrowthMediumId.HasValue)
+                {
+                    ModelState.AddModelError(nameof(NewGrowthMediumId),
+                        "Please select a growth medium.");
+                }
+
                 if (!ModelState.IsValid)
                 {
                     LoadLookups();
