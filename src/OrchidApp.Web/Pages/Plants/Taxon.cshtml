@@ -85,7 +85,7 @@ else
                                     @if (plant.LocationStartDateTime.HasValue)
                                     {
                                         <text>
-                                            At this location since @plant.LocationStartDateTime.Value.ToString("dd/MM/yyyy")
+                                            @plant.LocationName since @plant.LocationStartDateTime.Value.ToString("dd/MM/yyyy")
                                         </text>
                                     }
                                     else
