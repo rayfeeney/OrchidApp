@@ -136,6 +136,11 @@ public class AddModel : PageModel
         if (!LoadPlantContext())
             return NotFound();
 
+        var currentMedium = _db.PlantCurrentGrowthMedium
+            .FirstOrDefault(x => x.PlantId == PlantId);
+
+        OldGrowthMediumId = currentMedium?.GrowthMediumId;        
+
         LoadLookups();
         return Page();
     }
