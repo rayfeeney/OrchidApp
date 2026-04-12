@@ -204,11 +204,9 @@ body.env-dev {
   border-radius: 12px;
 }
 
-.plant-ended {
+.plant-page.plant-ended {
     background-color: #e2e3e5;
+    padding: 1rem;
+    border-radius: 0.5rem;
 }
 
-.plant-ended .card {
-    background-color: #f1f3f5;  
-    border-color: #d6d8db;
-}
