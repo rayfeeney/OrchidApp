@@ -213,3 +213,105 @@ body.plant-ended-bg {
     border-radius: 0.5rem;
 }
 
+.lineage-container {
+    max-width: 520px;
+    margin: 0 auto;
+}
+
+.lineage-card-row {
+    display: flex;
+    justify-content: center;
+}
+
+.lineage-card {
+    width: 300px;
+    margin-bottom: 0;
+}
+
+.lineage-card .card-body {
+    padding: 0.9rem;
+}
+
+.lineage-connector-row {
+    position: relative;
+    width: 300px;          /* match the card width */
+    min-height: 64px;
+    margin: 0 auto;        /* centre the whole connector row */
+}
+
+.lineage-connector-date {
+    position: absolute;
+    right: 50%;            /* anchor to the line */
+    margin-right: 16px;    /* move left of the line */
+    top: 50%;
+    transform: translateY(-50%);
+    text-align: right;
+    font-size: 0.85rem;
+    color: #6c757d;
+    white-space: nowrap;
+}
+
+.lineage-connector-line-wrap {
+    display: none;
+}
+
+.lineage-connector-line {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: #d6d8db;
+    transform: translateX(-50%);
+}
+
+.lineage-card-past {
+    background-color: #e2e3e5;
+    border-color: #d6d8db;
+}
+
+.lineage-siblings {
+    position: absolute;
+    left: 50%;
+    margin-left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.4rem;
+
+    max-width: max-content;
+}
+
+/* Individual child */
+.lineage-sibling {
+    display: inline-block;
+    font-size: 0.85rem;
+    padding: 3px 8px;
+    background-color: #f1f3f5;
+    border-radius: 6px;
+    font-family: monospace;
+    opacity: 0.6;
+    white-space: nowrap;
+}
+
+.lineage-sibling.active {
+    background-color: #dee2e6;
+    font-weight: 600;
+    opacity: 1;
+    display: inline-block;
+    white-space: nowrap;
+}
+
+.lineage-card-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+
+.lineage-card-link:hover .lineage-card {
+    background: rgba(0,0,0,0.03);
+}

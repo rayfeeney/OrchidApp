@@ -32,7 +32,7 @@ public class OrchidDbContext : DbContext
     public DbSet<ObservationType> ObservationTypes { get; set; }
     public DbSet<GrowthMediumIdResult> GrowthMediumIdResults { get; set; }
     public DbSet<TaxonPhoto> TaxonPhotos { get; set; }
-    
+    public DbSet<LineageItem> LineageItems { get; set; } = default!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -380,8 +380,20 @@ public class OrchidDbContext : DbContext
             entity.Property(e => e.RepotDate)               .HasColumnName("repotDate");
         });
 
+        modelBuilder.Entity<LineageItem>(entity =>
+        {
+            entity.HasNoKey();
+            entity.ToView(null);
+
+            entity.Property(e => e.PlantId)                 .HasColumnName("plantId");
+            entity.Property(e => e.PlantTag)                .HasColumnName("plantTag");
+            entity.Property(e => e.AcquisitionDate)         .HasColumnName("acquisitionDate");
+            entity.Property(e => e.EndDate)                 .HasColumnName("endDate");
+            entity.Property(e => e.Level).                  HasColumnName("level");
+        });
+
         modelBuilder.Entity<LocationChangeEditRow>().HasNoKey();
         modelBuilder.Entity<AddPlantResult>().HasNoKey();
-
+        
     }
 }

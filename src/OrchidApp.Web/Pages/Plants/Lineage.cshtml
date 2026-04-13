@@ -1,0 +1,109 @@
+@page "{plantId:int}"
+@model OrchidApp.Web.Pages.Plants.LineageModel
+@using OrchidApp.Web.Models
+
+@{
+    ViewData["Title"] = Model.CurrentPlantRequired.DisplayName;
+}
+
+<h1 class="page-title fw-bold @((Model.IsInactive || Model.IsEnded) ? "text-muted" : "")">
+    @Model.CurrentPlantRequired.DisplayName
+
+    @if (Model.IsInactive)
+    {
+        <span class="badge bg-secondary ms-2">Inactive</span>
+    }
+    @if (Model.IsEnded)
+    {
+        <span class="badge bg-dark ms-2">Ended</span>
+    }
+</h1>
+
+<h2 class="h5 fw-bold mb-3">
+    Lineage
+</h2>
+
+<div class="lineage-container">
+    @for (int i = 0; i < Model.Lineage.Count; i++)
+    {
+        var item = Model.Lineage[i];
+        var isLast = i == Model.Lineage.Count - 1;
+
+        <div class="lineage-card-row">
+
+        <a asp-page="/Plants/Details"
+            asp-route-plantId="@item.PlantId"
+            asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+            class="lineage-card-link">
+
+                <div class="card lineage-card @(i > 0 ? "lineage-card-past" : "")">
+                    <div class="card-body text-center">
+                        <div class="plant-tag">@item.PlantTag</div>
+                    </div>
+                </div>
+
+            </a>
+
+        </div>
+
+        @if (!isLast)
+        {
+            var next = Model.Lineage[i + 1];
+
+            <div class="lineage-connector-row">
+
+                <!-- Date -->
+                <div class="lineage-connector-date">
+                    Split date: @(item.AcquisitionDate?.ToString("dd/MM/yyyy") ?? "not known")
+                </div>
+
+                <!-- Line -->
+                <div class="lineage-connector-line"></div>
+
+                <!-- Children -->
+                @if (item.Children.Any())
+                {
+                    <div class="lineage-siblings">
+                        @foreach (var child in item.Children)
+                        {
+                            var isActive = child.PlantId == next.PlantId;
+
+                            <span class="lineage-sibling @(isActive ? "active" : "")">
+                                @child.PlantTag
+                            </span>
+                        }
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="lineage-connector-row">
+                <div class="lineage-connector-date">
+                    @(item.AcquisitionDate.HasValue
+                        ? $"Acquired date: {item.AcquisitionDate:dd/MM/yyyy}"
+                        : "Acquisition date not known")
+                </div>
+
+                <div class="lineage-connector-line-wrap">
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@if (!string.IsNullOrEmpty(Model.ReturnUrl))
+{
+    <a href="@Model.ReturnUrl"
+       class="btn btn-outline-secondary btn-lg w-100 mb-3">
+        ← Back
+    </a>
+}
+else
+{
+    <a asp-page="/Plants/Details"
+       asp-route-plantId="@Model.PlantId"
+       class="btn btn-outline-secondary btn-lg w-100 mb-3">
+        ← Back
+    </a>
+}
