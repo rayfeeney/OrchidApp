@@ -147,8 +147,6 @@ public class OrchidDbContext : DbContext
             entity.Property(e => e.SpikeCount)              .HasColumnName("spikeCount");
             entity.Property(e => e.FlowerCount)             .HasColumnName("flowerCount");
             entity.Property(e => e.FloweringNotes)          .HasColumnName("floweringNotes");
-            entity.Property(e => e.CreatedDateTime)         .HasColumnName("createdDateTime");
-            entity.Property(e => e.UpdatedDateTime)         .HasColumnName("updatedDateTime");
             entity.Property(e => e.IsActive)                .HasColumnName("isActive");
         });
 
