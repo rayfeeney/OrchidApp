@@ -169,8 +169,11 @@ public class SplitModel : PageModel
         }
 
         var splitDate = SplitDateTime.Date;
-        // Reconstruct datetime with system time
-        var splitDateTime = splitDate.Add(SplitDateTime.TimeOfDay);
+        var now = DateTime.Now;
+
+        var splitDateTime = splitDate
+            .AddHours(now.Hour)
+            .AddMinutes(now.Minute);
 
         // future
         if (splitDate > DateTime.Today)
