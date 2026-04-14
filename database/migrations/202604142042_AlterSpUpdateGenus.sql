@@ -1,5 +1,8 @@
+DROP PROCEDURE IF EXISTS spUpdateGenus;
+
 DELIMITER //
-CREATE OR REPLACE PROCEDURE `spUpdateGenus`(
+
+CREATE PROCEDURE spUpdateGenus(
     IN pGenusId INT,
     IN pGenusName VARCHAR(100),
     IN pGenusNotes TEXT
@@ -63,7 +66,6 @@ BEGIN
     COMMIT;
 
     SELECT pGenusId AS GenusId;
-END
-//
-DELIMITER ;
+END //
 
+DELIMITER ;

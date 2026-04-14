@@ -236,7 +236,7 @@ BEGIN
             'Split into ',
             vChildCount,
             ' plants on ',
-            DATE_FORMAT(pSplitDateTime, '%Y-%m-%d %H:%i:%s')
+            DATE_FORMAT(pSplitDateTime, '%d/%m/%Y')
         )
     WHERE plantId = pParentPlantId;
 
