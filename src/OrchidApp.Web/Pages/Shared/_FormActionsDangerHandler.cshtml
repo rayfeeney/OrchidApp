@@ -1,4 +1,10 @@
-@model (string backUrl, string handler, string saveText)
+@model (string backUrl, string handler, string saveText, string? confirmationMessage)
+
+@{
+    var confirmAttr = string.IsNullOrEmpty(Model.confirmationMessage)
+        ? null
+        : $"return confirm('{Model.confirmationMessage.Replace("'", "\\'")}');";
+}
 
 <div class="d-flex justify-content-between align-items-stretch mt-4">
     <a href="@Model.backUrl"
@@ -8,7 +14,8 @@
 
     <button type="submit"
             asp-page-handler="@Model.handler"
-            class="btn btn-danger">
+            class="btn btn-danger"
+            onclick="@confirmAttr">
         @Model.saveText
     </button>
 </div>

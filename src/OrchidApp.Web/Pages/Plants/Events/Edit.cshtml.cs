@@ -392,7 +392,7 @@ public class EditModel : PageModel
                 break;
 
             case "Flowering":
-
+            {
                 var flowering = _db.Flowering
                     .FirstOrDefault(f =>
                         f.FloweringId == SourceId &&
@@ -402,23 +402,118 @@ public class EditModel : PageModel
                 if (flowering == null)
                     return NotFound();
 
-                flowering.StartDate   = new DateTime(
-												EventDate.Year,
-												EventDate.Month,
-												EventDate.Day,
-												DateTime.Now.Hour,
-												DateTime.Now.Minute,
-												DateTime.Now.Second);
-                flowering.EndDate     = EndDate.HasValue
-												? new DateTime(
-													EndDate.Value.Year,
-													EndDate.Value.Month,
-													EndDate.Value.Day,
-													DateTime.Now.Hour,
-													DateTime.Now.Minute,
-													DateTime.Now.Second)
-												: null;
-                flowering.SpikeCount  = SpikeCount;
+                var startDate = EventDate.Date;
+                var endDate = EndDate?.Date;
+
+                // =========================
+                // StartDate validation (same as Add)
+                // =========================
+
+                if (startDate > DateTime.Today)
+                {
+                    ModelState.AddModelError(nameof(EventDate),
+                        "Start date cannot be in the future.");
+                }
+
+                if (plant.AcquisitionDate.HasValue &&
+                    startDate < plant.AcquisitionDate.Value.Date)
+                {
+                    ModelState.AddModelError(nameof(EventDate),
+                        "Start date cannot be before the plant was acquired.");
+                }
+
+                if (plant.EndDate.HasValue &&
+                    startDate > plant.EndDate.Value.Date)
+                {
+                    ModelState.AddModelError(nameof(EventDate),
+                        "Start date cannot be after the plant has ended.");
+                }
+
+                // =========================
+                // EndDate validation (same as Add)
+                // =========================
+
+                if (endDate.HasValue)
+                {
+                    if (endDate.Value < startDate)
+                    {
+                        ModelState.AddModelError(nameof(EndDate),
+                            "End date cannot be before start date.");
+                    }
+
+                    if (endDate.Value > DateTime.Today)
+                    {
+                        ModelState.AddModelError(nameof(EndDate),
+                            "End date cannot be in the future.");
+                    }
+
+                    if (plant.EndDate.HasValue &&
+                        endDate.Value > plant.EndDate.Value.Date)
+                    {
+                        ModelState.AddModelError(nameof(EndDate),
+                            "End date cannot be after the plant has ended.");
+                    }
+                }
+
+                if (!ModelState.IsValid)
+                    return ReloadPage();
+
+                // =========================
+                // Overlap validation (Edit version)
+                // =========================
+
+                var newStart = startDate;
+                var newEnd = endDate ?? startDate;
+
+                var hasConflict = await _db.Flowering
+                    .AnyAsync(f =>
+                        f.PlantId == PlantId &&
+                        f.IsActive &&
+                        f.FloweringId != SourceId &&
+                        (
+                            // existing start <= new end
+                            f.StartDate <= newEnd &&
+
+                            // existing end >= new start (or open)
+                            (
+                                f.EndDate == null ||
+                                f.EndDate >= newStart
+                            )
+                        ));
+
+                if (hasConflict)
+                {
+                    ModelState.AddModelError(string.Empty,
+                        "This flowering overlaps an existing flowering period.");
+
+                    return ReloadPage();   // 🚨 hard stop
+                }
+
+                // =========================
+                // Apply changes
+                // =========================
+
+                var now = DateTime.Now;
+
+                flowering.StartDate = new DateTime(
+                    startDate.Year,
+                    startDate.Month,
+                    startDate.Day,
+                    now.Hour,
+                    now.Minute,
+                    now.Second);
+
+                flowering.EndDate = endDate.HasValue
+                    ? new DateTime(
+                        endDate.Value.Year,
+                        endDate.Value.Month,
+                        endDate.Value.Day,
+                        now.Hour,
+                        now.Minute,
+                        now.Second)
+                    : null;
+
+                flowering.SpikeCount = SpikeCount;
                 flowering.FlowerCount = FlowerCount;
                 flowering.FloweringNotes =
                     string.IsNullOrWhiteSpace(EventDetails)
@@ -428,6 +523,7 @@ public class EditModel : PageModel
                 await _db.SaveChangesAsync();
 
                 break;
+            }
 
             case "Repotting":
 

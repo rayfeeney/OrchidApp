@@ -126,16 +126,27 @@ else
     </div>
 
     <div class="alert alert-warning">
-        This will permanently end this plant and create new plants.
+        This will end plant <strong>@Model.Plant?.PlantTag</strong>
+        on <strong>@Model.SplitDateTime.ToString("dd/MM/yyyy")</strong>
+        and create <strong>@Model.ChildCount</strong> new plant(s).
         This action cannot be undone.
     </div>
 
     <div class="mt-4">
-        <partial name="_FormActionsDangerHandler"
-                model="@(Model.ReturnUrl
-                        ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }),
-                        "Split",
-                        "Confirm split (ends this plant)")" />
+        @{
+            var confirmMessage =
+                $"You are about to end plant {Model.Plant?.PlantTag} on {Model.SplitDateTime:dd/MM/yyyy} " +
+                $"and create {Model.ChildCount} new plant(s). This action cannot be undone.";
+        }
+
+        <div class="mt-4">
+            <partial name="_FormActionsDangerHandler"
+                    model="@(Model.ReturnUrl
+                            ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }),
+                            "Split",
+                            "Confirm split (ends this plant)",
+                            confirmMessage)" />
+        </div>
     </div>
 
 </form>
