@@ -578,6 +578,39 @@ public class AddModel : PageModel
                 }
 
                 // =========================
+                // Stop adding an overlapping flowering
+                // =========================
+                if (ModelState.IsValid)
+                {
+                    var hasConflict = await _db.Flowering
+                        .AnyAsync(f =>
+                            f.PlantId == PlantId &&
+                            f.IsActive &&
+                            (
+                                // Existing open flowering → always conflict
+                                f.EndDate == null ||
+
+                                // New open flowering (no EndDate provided)
+                                (!endDate.HasValue &&
+                                    f.EndDate != null &&
+                                    startDate >= f.StartDate.Date &&
+                                    startDate <= f.EndDate.Value.Date) ||
+
+                                // New closed flowering overlaps existing closed flowering
+                                (endDate.HasValue &&
+                                    f.EndDate != null &&
+                                    startDate <= f.EndDate.Value.Date &&
+                                    f.StartDate.Date <= endDate.Value)
+                            ));
+
+                    if (hasConflict)
+                    {
+                        ModelState.AddModelError(string.Empty,
+                            "This flowering overlaps an existing flowering period.");
+                    }
+                }
+
+                // =========================
                 // Stop if invalid
                 // =========================
 
