@@ -1,0 +1,2 @@
+ALTER TABLE plantphoto
+MODIFY filePath VARCHAR(500) NULL;
