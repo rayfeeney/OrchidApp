@@ -12,7 +12,10 @@ namespace OrchidApp.Web.Models
 
         public string FileName { get; set; } = default!;
         public string ThumbnailFileName { get; set; } = default!;
-        public string FilePath { get; set; } = default!;
+        // Legacy: no longer used for rendering.
+        // Kept temporarily for migration/backward compatibility.
+        // All image URLs must be built via PhotoUrlService using FileName.
+        // public string FilePath { get; set; } = default!;
         public string MimeType { get; set; } = default!;
 
         public bool IsHero { get; set; }

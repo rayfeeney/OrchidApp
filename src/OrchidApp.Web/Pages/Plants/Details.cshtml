@@ -144,7 +144,7 @@
                asp-route-returnUrl="@(Request.Path + Request.QueryString)"
                class="d-block w-100">
 
-                <img src="~/@Model.HeroFileName"
+                <img src="@Model.PhotoUrlService.GetPlantPhoto(Model.PlantId, Model.HeroFileName)"
                      class="img-fluid rounded shadow-sm w-100"
                      style="max-height:250px; object-fit:cover;" />
             </a>

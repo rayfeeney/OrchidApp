@@ -280,12 +280,6 @@ public class IndexModel : PageModel
                 PlantId = plantId,
                 FileName = result.FileName,
                 ThumbnailFileName = result.ThumbnailFileName,
-                FilePath = Path.Combine(
-                    "uploads",
-                    "plants",
-                    plantId.ToString(),
-                    result.FileName
-                ).Replace("\\", "/"),
                 MimeType = result.MimeType,
                 IsHero = !heroExists,
                 IsActive = true,

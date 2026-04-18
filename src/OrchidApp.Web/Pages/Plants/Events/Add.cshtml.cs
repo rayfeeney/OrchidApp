@@ -363,12 +363,6 @@ public class AddModel : PageModel
                                 PlantId = PlantId,
                                 FileName = result.FileName,
                                 ThumbnailFileName = result.ThumbnailFileName,
-                                FilePath = Path.Combine(
-                                    "uploads",
-                                    "plants",
-                                    PlantId.ToString(),
-                                    result.FileName
-                                ).Replace("\\", "/"),
                                 MimeType = result.MimeType,
                                 IsHero = !heroExists,
                                 IsActive = true,
