@@ -11,7 +11,7 @@ namespace OrchidApp.Web.Models
         public int PlantId { get; set; }
 
         public string FileName { get; set; } = default!;
-        public string ThumbnailFileName { get; set; } = default!;
+        public string? ThumbnailFileName { get; set; }
         // Legacy: no longer used for rendering.
         // Kept temporarily for migration/backward compatibility.
         // All image URLs must be built via PhotoUrlService using FileName.

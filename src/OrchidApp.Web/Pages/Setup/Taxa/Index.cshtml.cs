@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using OrchidApp.Web.Data;
 using OrchidApp.Web.Models;
 using Microsoft.AspNetCore.Mvc;
+using OrchidApp.Web.Services;
 
 namespace OrchidApp.Web.Pages.Setup.Taxa;
 
@@ -12,15 +13,17 @@ public class IndexModel : PageModel
     public string? ReturnUrl { get; set; }
 
     private readonly OrchidDbContext _db;
-
-    public IndexModel(OrchidDbContext db)
+    private readonly PhotoUrlService _photoUrlService;
+    public IndexModel(OrchidDbContext db, PhotoUrlService photoUrlService)
     {
         _db = db;
+        _photoUrlService = photoUrlService;
     }
 
     public IReadOnlyList<TaxonIdentity> Taxa { get; private set; }
         = new List<TaxonIdentity>();
-
+    public PhotoUrlService PhotoUrlService => _photoUrlService;
+    
     public async Task OnGetAsync()
     {
         Taxa = await (
