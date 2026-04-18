@@ -164,6 +164,40 @@ Heavy photo loading is isolated to dedicated pages.
 
 ------------------------------------------------------------------------
 
+## File Storage Configuration
+
+Uploaded photos are stored on the local filesystem. The storage root is environment-configured and must be explicitly provided.
+
+### Configuration
+
+    "StorageSettings": {
+        "UploadRoot": "/opt/orchidapp/uploads"
+    }
+
+### Behaviour
+
+-   All uploaded files are stored under the configured root
+-   The application organises files into structured folders:
+
+    plants/{plantId}
+    taxa/{taxonId}
+
+-   No file paths are hardcoded in the application
+
+### Requirements
+
+-   The configured directory must exist before application startup
+-   The application must have read/write permissions
+-   The application will fail to start or process uploads if the path is missing or invalid
+
+### Operational Notes
+
+-   The uploads directory is part of the canonical dataset
+-   It is included in nightly encrypted backups alongside the database
+-   Restores must include both database and uploads for consistency
+
+------------------------------------------------------------------------
+
 ## Canonical Photo Ingestion Pipeline
 
 All uploaded images are normalised into a single canonical representation.

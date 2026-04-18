@@ -36,6 +36,8 @@ builder.Services.Configure<StorageSettings>(
     builder.Configuration.GetSection("Storage"));
 
 builder.Services.AddScoped<StoragePathService>();
+
+builder.Services.AddScoped<PhotoUrlService>();
     
 builder.Services.AddScoped<ObservationTypeResolver>();
 

@@ -166,8 +166,8 @@ public class AddModel : PageModel
                     return Page();
                 }
 
-                var fileName = Path.GetFileName(resultPhoto.RelativePath);
-                var thumbFileName = Path.GetFileName(resultPhoto.ThumbnailRelativePath);
+                var fileName = resultPhoto.FileName;
+                var thumbFileName = resultPhoto.ThumbnailFileName;
 
                 var taxonPhoto = new TaxonPhoto
                 {

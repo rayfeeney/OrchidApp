@@ -129,8 +129,8 @@ if (Photo != null && Photo.Length > 0)
         return Page();
     }
 
-    var fileName = Path.GetFileName(resultPhoto.RelativePath);
-    var thumbFileName = Path.GetFileName(resultPhoto.ThumbnailRelativePath);
+    var fileName = resultPhoto.FileName;
+    var thumbFileName = resultPhoto.ThumbnailFileName;
 
     // deactivate existing photos
     var existingPhotos = await _db.TaxonPhotos

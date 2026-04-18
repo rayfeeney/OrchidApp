@@ -53,11 +53,11 @@ else
                            asp-route-returnUrl="@(Request.Path + "?selectedPlantId=" + plant.PlantId + "#plant-" + plant.PlantId)"
                            title="Photos">
 
-                            @if (!string.IsNullOrEmpty(plant.HeroFilePath))
+                            @if (!string.IsNullOrEmpty(plant.HeroFileName))
                             {
-                                <img src="/@plant.HeroFilePath"
-                                     class="plant-thumb"
-                                     alt="" />
+                                <img src="@Model.PhotoUrlService.GetPlantPhoto(plant.PlantId, plant.HeroFileName)"
+                                    class="plant-thumb"
+                                    alt="" />
                             }
                             else
                             {
