@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS `plantphoto` (
   `plantId` int NOT NULL COMMENT 'Plant this photo belongs to (denormalised for direct access)',
   `fileName` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Stored file name on disk',
   `thumbnailFileName` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `filePath` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Relative server path to the stored image file',
+  `legacyFilePath` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `mimeType` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'MIME content type of the stored file (e.g. image/jpeg)',
   `isHero` tinyint(1) NOT NULL DEFAULT '0' COMMENT '1 = this photo is the plant hero image; at most one active hero per plant',
   `createdDateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Record creation timestamp (local time)',

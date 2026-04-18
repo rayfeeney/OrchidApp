@@ -1,0 +1,28 @@
+@page
+@model OrchidApp.Web.Pages.Maintenance.BackfillPlantPhotoThumbnailsModel
+
+<h1 class="page-title fw-bold">Backfill plant photo thumbnails</h1>
+
+<h2 class="h5 fw-bold mb-3">
+One-off maintenance task
+</h2>
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+    <div class="alert alert-info">@Model.Message</div>
+}
+
+<form method="post">
+    <div class="mb-3">
+        <label asp-for="Key" class="fw-bold"></label>
+        <small class="text-muted d-block fw-normal">
+            Enter the maintenance key to run the thumbnail backfill.
+        </small>
+        <input asp-for="Key" class="form-control" />
+        <span asp-validation-for="Key" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-danger">
+        Run thumbnail backfill
+    </button>
+</form>

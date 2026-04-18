@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using OrchidApp.Web.Data;
 using OrchidApp.Web.Models;
 using System;
+using OrchidApp.Web.Services;
 
 namespace OrchidApp.Web.Pages.Plants;
 
@@ -13,9 +14,10 @@ public class DetailsModel : PageModel
 
     private readonly OrchidDbContext _db;
 
-    public DetailsModel(OrchidDbContext db)
+    public DetailsModel(OrchidDbContext db, PhotoUrlService photoUrlService)
     {
         _db = db;
+        _photoUrlService = photoUrlService;
     }
 
     [FromRoute]
@@ -23,16 +25,17 @@ public class DetailsModel : PageModel
 
     public PlantStatus? Status { get; private set; }
     public List<PlantLifecycleEvent> LifecycleEvents { get; private set; } = [];
-    public string? HeroImagePath { get; private set; }
+    public string? HeroFileName { get; private set; }
     public bool GenusIsActive { get; private set; }
     public bool TaxonIsActive { get; private set; }
-
+    public PhotoUrlService PhotoUrlService => _photoUrlService;
     public bool IsInactive => !GenusIsActive || !TaxonIsActive;
     public bool IsEnded => StatusRequired.EndDate != null;
 
     public List<PlantSplitChildren> ChildPlants { get; private set; } = [];
     public PlantStatus StatusRequired
         => Status ?? throw new InvalidOperationException("Plant status must be loaded before rendering the page.");
+    private readonly PhotoUrlService _photoUrlService;
 
     public class ChildPlantLink
     {
@@ -52,9 +55,9 @@ public class DetailsModel : PageModel
         GenusIsActive = StatusRequired.GenusIsActive;
         TaxonIsActive = StatusRequired.TaxonIsActive;
 
-        HeroImagePath = _db.PlantPhotos
+        HeroFileName = _db.PlantPhotos
             .Where(p => p.PlantId == PlantId && p.IsHero && p.IsActive)
-            .Select(p => p.FilePath)
+            .Select(p => p.FileName)
             .FirstOrDefault();
 
         LifecycleEvents = _db.PlantLifecycleHistory

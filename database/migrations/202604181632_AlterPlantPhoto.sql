@@ -1,0 +1,2 @@
+ALTER TABLE plantphoto
+MODIFY legacyFilePath VARCHAR(500) NULL;

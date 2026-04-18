@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using OrchidApp.Web.Data;
 using OrchidApp.Web.Models;
+using OrchidApp.Web.Services;
 
 namespace OrchidApp.Web.Pages.Plants;
 
@@ -14,10 +15,11 @@ public class TaxonModel : PageModel
     public int? SelectedPlantId { get; set; }
 
     private readonly OrchidDbContext _db;
-
-    public TaxonModel(OrchidDbContext db)
+    private readonly PhotoUrlService _photoUrlService;
+    public TaxonModel(OrchidDbContext db, PhotoUrlService photoUrlService)
     {
         _db = db;
+        _photoUrlService = photoUrlService;
     }
 
     [FromRoute]
@@ -27,7 +29,7 @@ public class TaxonModel : PageModel
 
     public bool GenusIsActive { get; private set; }
     public bool TaxonIsActive { get; private set; }
-
+    public PhotoUrlService PhotoUrlService => _photoUrlService;
     public bool IsInactive => !GenusIsActive || !TaxonIsActive;
 
     public List<PlantActiveCurrentLocation> Plants { get; private set; } = new();

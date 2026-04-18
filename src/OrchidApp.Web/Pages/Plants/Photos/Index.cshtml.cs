@@ -19,19 +19,22 @@ public class IndexModel : PageModel
     private readonly StoragePathService _storagePathService;
     private readonly PhotoPipeline _photoPipeline;
     private readonly ILogger<IndexModel> _logger;
+    private readonly PhotoUrlService _photoUrlService;
 
     public IndexModel(
         OrchidDbContext context,
         ObservationTypeResolver resolver,
         PhotoPipeline photoPipeline,
         StoragePathService storagePathService,
-        ILogger<IndexModel> logger)
+        ILogger<IndexModel> logger,
+        PhotoUrlService photoUrlService)
     {
         _context = context;
         _resolver = resolver;
         _photoPipeline = photoPipeline;
         _storagePathService = storagePathService;
         _logger = logger;
+        _photoUrlService = photoUrlService;
     }
 
     public int PlantId { get; private set; }
@@ -45,7 +48,7 @@ public class IndexModel : PageModel
 
     public int? PreviousPhotoId { get; private set; }
     public int? NextPhotoId { get; private set; }
-
+    public PhotoUrlService PhotoUrlService => _photoUrlService;
     public string PlantDisplayName { get; private set; } = string.Empty;
     public string PlantTag { get; private set; } = string.Empty;
     public string? LocationName { get; private set; }
@@ -189,7 +192,7 @@ public class IndexModel : PageModel
             .Select(p => new PhotoItem
             {
                 PlantPhotoId = p.PlantPhotoId,
-                FilePath = p.FilePath,
+                FileName = p.FileName,
                 IsHero = p.IsHero,
                 CreatedDateTime = p.CreatedDateTime
             })
@@ -275,9 +278,8 @@ public class IndexModel : PageModel
             {
                 PlantEventId = observation.PlantEventId,
                 PlantId = plantId,
-                FileName = Path.GetFileName(result.RelativePath),
-                ThumbnailFileName = Path.GetFileName(result.ThumbnailRelativePath),
-                FilePath = result.RelativePath,
+                FileName = result.FileName,
+                ThumbnailFileName = result.ThumbnailFileName,
                 MimeType = result.MimeType,
                 IsHero = !heroExists,
                 IsActive = true,
@@ -296,7 +298,7 @@ public class IndexModel : PageModel
     public sealed class PhotoItem
     {
         public int PlantPhotoId { get; set; }
-        public string FilePath { get; set; } = "";
+        public string FileName { get; set; } = "";
         public bool IsHero { get; set; }
         public DateTime CreatedDateTime { get; set; }
     }

@@ -62,7 +62,7 @@ else
 
     @if (!string.IsNullOrWhiteSpace(taxon.ThumbnailFileName))
     {
-        <img src="~/uploads/taxa/@taxon.TaxonId/@taxon.ThumbnailFileName"
+        <img src="@Model.PhotoUrlService.GetTaxonThumbnail(taxon.TaxonId, taxon.ThumbnailFileName)"
              style="width:64px; height:64px; object-fit:cover;"
              class="rounded border" />
 

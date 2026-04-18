@@ -355,15 +355,14 @@ public class AddModel : PageModel
                                     "The photo could not be processed. Please try another image.", ex);
                             }
 
-                            savedRelativePaths.Add(result.RelativePath);
+                            savedRelativePaths.Add(result.FileName); // temporary, we’ll clean this later
 
                             var photo = new PlantPhoto
                             {
                                 PlantEventId = observation.PlantEventId,
                                 PlantId = PlantId,
-                                FileName = Path.GetFileName(result.RelativePath),
-                                ThumbnailFileName = Path.GetFileName(result.ThumbnailRelativePath),
-                                FilePath = result.RelativePath,
+                                FileName = result.FileName,
+                                ThumbnailFileName = result.ThumbnailFileName,
                                 MimeType = result.MimeType,
                                 IsHero = !heroExists,
                                 IsActive = true,

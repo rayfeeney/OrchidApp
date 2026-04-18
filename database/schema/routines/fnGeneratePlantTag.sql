@@ -13,7 +13,7 @@ BEGIN
     DECLARE vAttempts INT DEFAULT 0;
 
     SELECT COUNT(*) INTO vPrefixCount
-    FROM PhoneticPrefix
+    FROM phoneticprefix
     WHERE isActive = 1;
 
     IF vPrefixCount = 0 THEN
@@ -35,7 +35,7 @@ BEGIN
         SET vOffset = CONV(SUBSTRING(vEntropy, 1, 8), 16, 10) MOD vPrefixCount;
 
         SELECT prefix INTO vPrefix
-        FROM PhoneticPrefix
+        FROM phoneticprefix
         WHERE isActive = 1
         ORDER BY prefix
         LIMIT vOffset, 1;

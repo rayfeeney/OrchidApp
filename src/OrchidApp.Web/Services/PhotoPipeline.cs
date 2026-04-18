@@ -122,20 +122,8 @@ public sealed class PhotoPipeline
 
             return new PhotoSaveResult
             {
-                RelativePath = Path.Combine(
-                    "uploads",
-                    target.EntityType,
-                    target.EntityId,
-                    fileName
-                ).Replace("\\", "/"),
-
-                ThumbnailRelativePath = Path.Combine(
-                    "uploads",
-                    target.EntityType,
-                    target.EntityId,
-                    thumbFileName
-                ).Replace("\\", "/"),
-
+                FileName = fileName,
+                ThumbnailFileName = thumbFileName,
                 MimeType = "image/jpeg",
                 Width = resized.Width,
                 Height = resized.Height
