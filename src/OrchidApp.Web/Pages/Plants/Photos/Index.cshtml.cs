@@ -193,6 +193,7 @@ public class IndexModel : PageModel
             {
                 PlantPhotoId = p.PlantPhotoId,
                 FileName = p.FileName,
+                ThumbnailFileName = p.ThumbnailFileName!,
                 IsHero = p.IsHero,
                 CreatedDateTime = p.CreatedDateTime
             })
@@ -299,6 +300,7 @@ public class IndexModel : PageModel
     {
         public int PlantPhotoId { get; set; }
         public string FileName { get; set; } = "";
+        public string ThumbnailFileName { get; set; } = "";
         public bool IsHero { get; set; }
         public DateTime CreatedDateTime { get; set; }
     }
