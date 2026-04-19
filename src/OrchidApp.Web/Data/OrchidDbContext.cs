@@ -289,6 +289,7 @@ public class OrchidDbContext : DbContext
             entity.Property(e => e.LocationStartDateTime)   .HasColumnName("locationStartDateTime");
             entity.Property(e => e.DisplayName)             .HasColumnName("displayName");
             entity.Property(e => e.HeroFileName)            .HasColumnName("heroFileName");
+            entity.Property(e => e.HeroThumbnailFileName)   .HasColumnName("heroThumbnailFileName");
         });
 
         // =========================

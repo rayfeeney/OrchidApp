@@ -55,7 +55,7 @@ else
 
                             @if (!string.IsNullOrEmpty(plant.HeroFileName))
                             {
-                                <img src="@Model.PhotoUrlService.GetPlantPhoto(plant.PlantId, plant.HeroFileName)"
+                                <img src="@Model.PhotoUrlService.GetPlantThumbnail(plant.PlantId, plant.HeroThumbnailFileName,plant.HeroFileName)"
                                     class="plant-thumb"
                                     alt="" />
                             }

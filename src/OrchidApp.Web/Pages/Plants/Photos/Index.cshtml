@@ -135,7 +135,7 @@ else
                    asp-route-focusPhotoId="@photo.PlantPhotoId"
                    class="flex-shrink-0">
 
-                    <img src="@Model.PhotoUrlService.GetPlantPhoto(Model.PlantId, photo.FileName)"
+                    <img src="@Model.PhotoUrlService.GetPlantThumbnail(Model.PlantId, photo.ThumbnailFileName, photo.FileName)"
                         class="rounded border @(photo.PlantPhotoId == Model.FocusPhoto?.PlantPhotoId ? "border-primary border-3" : "")"
                         style="height:80px; width:80px; object-fit:cover;" />
                 </a>

@@ -19,4 +19,5 @@ public class PlantActiveCurrentLocation
 
     public string DisplayName { get; set; } = string.Empty;
     public string? HeroFileName { get; set; }
+    public string? HeroThumbnailFileName { get; set; }
 }
