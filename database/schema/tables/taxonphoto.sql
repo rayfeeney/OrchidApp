@@ -1,14 +1,15 @@
 CREATE TABLE IF NOT EXISTS `taxonphoto` (
-  `taxonPhotoId` int NOT NULL AUTO_INCREMENT,
-  `taxonId` int NOT NULL,
-  `fileName` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `thumbnailFileName` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `mimeType` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `isPrimary` tinyint(1) NOT NULL DEFAULT '1',
-  `isActive` tinyint(1) NOT NULL DEFAULT '1',
-  `createdDateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updatedDateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `taxonPhotoId` int(11) NOT NULL AUTO_INCREMENT,
+  `taxonId` int(11) NOT NULL,
+  `fileName` varchar(255) NOT NULL,
+  `thumbnailFileName` varchar(255) NOT NULL,
+  `mimeType` varchar(100) NOT NULL,
+  `isPrimary` tinyint(1) NOT NULL DEFAULT 1,
+  `isActive` tinyint(1) NOT NULL DEFAULT 1,
+  `createdDateTime` datetime NOT NULL DEFAULT current_timestamp(),
+  `updatedDateTime` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`taxonPhotoId`),
   KEY `fk_taxonphoto_taxon` (`taxonId`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+) ENGINE=InnoDB  ;
 

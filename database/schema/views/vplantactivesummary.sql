@@ -1,2 +1,15 @@
-CREATE OR REPLACE VIEW `vplantactivesummary` AS select `p`.`plantId` AS `plantId`,`s`.`taxonId` AS `taxonId`,`p`.`plantTag` AS `plantTag`,`p`.`plantName` AS `plantName`,`p`.`acquisitionDate` AS `acquisitionDate`,`p`.`acquisitionSource` AS `acquisitionSource`,`g`.`genusName` AS `genusName`,`g`.`isActive` AS `genusIsActive`,`s`.`isActive` AS `taxonIsActive`,`s`.`speciesName` AS `speciesName`,`s`.`hybridName` AS `hybridName`,(case when (`s`.`isSystemManaged` = 1) then concat(`g`.`genusName`,' sp.') when (`s`.`speciesName` is not null) then concat(`g`.`genusName`,' ',`s`.`speciesName`) when (`s`.`hybridName` is not null) then concat(`g`.`genusName`,' ',`s`.`hybridName`) else `g`.`genusName` end) AS `displayName` from ((`plant` `p` join `taxon` `s` on((`s`.`taxonId` = `p`.`taxonId`))) join `genus` `g` on((`g`.`genusId` = `s`.`genusId`))) where ((`p`.`isActive` = 1) and (`p`.`endDate` is null));
+CREATE OR REPLACE VIEW `vplantactivesummary`
+AS SELECT `p`.`plantId`
+AS `plantId`,`s`.`taxonId`
+AS `taxonId`,`p`.`plantTag`
+AS `plantTag`,`p`.`plantName`
+AS `plantName`,`p`.`acquisitionDate`
+AS `acquisitionDate`,`p`.`acquisitionSource`
+AS `acquisitionSource`,`g`.`genusName`
+AS `genusName`,`g`.`isActive`
+AS `genusIsActive`,`s`.`isActive`
+AS `taxonIsActive`,`s`.`speciesName`
+AS `speciesName`,`s`.`hybridName`
+AS `hybridName`,case when `s`.`isSystemManaged` = 1 then concat(`g`.`genusName`,' sp.') when `s`.`speciesName` is not null then concat(`g`.`genusName`,' ',`s`.`speciesName`) when `s`.`hybridName` is not null then concat(`g`.`genusName`,' ',`s`.`hybridName`) else `g`.`genusName` end
+AS `displayName` FROM ((`plant` `p` join `taxon` `s` on(`s`.`taxonId` = `p`.`taxonId`)) join `genus` `g` on(`g`.`genusId` = `s`.`genusId`)) WHERE `p`.`isActive` = 1 and `p`.`endDate` is null
 

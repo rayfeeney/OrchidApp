@@ -13,7 +13,7 @@ BEGIN
 
     START TRANSACTION;
 
-        
+
 
         SELECT plantId, startDateTime, endDateTime
           INTO vPlantId, vStart, vEnd
@@ -29,7 +29,7 @@ BEGIN
 
         SET vIsCurrent = IF(vEnd IS NULL, 1, 0);
 
-        
+
 
         IF (
             SELECT COUNT(*)
@@ -50,7 +50,7 @@ BEGIN
           AND endDateTime = vStart
         LIMIT 1;
 
-        
+
 
         IF vIsCurrent = 0 AND (
             SELECT COUNT(*)
@@ -73,12 +73,12 @@ BEGIN
             LIMIT 1;
         END IF;
 
-        
+
 
         UPDATE plantlocationhistory
         SET isActive = 0
         WHERE plantLocationHistoryId = pPlantLocationHistoryId;
-        
+
         IF vIsCurrent = 1 THEN
             IF vPrevId IS NOT NULL THEN
                 UPDATE plantlocationhistory
@@ -93,7 +93,7 @@ BEGIN
             END IF;
         END IF;
 
-        
+
 
         IF (
             SELECT COUNT(*)

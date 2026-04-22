@@ -1,7 +1,7 @@
-ALTER TABLE `orchids`.`plantevent`
+ALTER TABLE `plantevent`
   ADD CONSTRAINT `fkPlantEventPlant`
   FOREIGN KEY (`plantId`)
-  REFERENCES `orchids`.`plant` (`plantId`)
+  REFERENCES `plant` (`plantId`)
   ON DELETE RESTRICT
   ON UPDATE RESTRICT;
 

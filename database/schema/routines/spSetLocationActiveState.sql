@@ -37,7 +37,7 @@ BEGIN
             SET MESSAGE_TEXT = 'No change required.';
     END IF;
 
-    
+
 
     UPDATE location
     SET isActive = pIsActive

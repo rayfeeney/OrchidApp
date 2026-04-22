@@ -1,16 +1,17 @@
 CREATE TABLE IF NOT EXISTS `plantevent` (
-  `plantEventId` int NOT NULL AUTO_INCREMENT COMMENT 'Internal identifier for plant event',
-  `plantId` int NOT NULL COMMENT 'Plant the event relates to',
+  `plantEventId` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Internal identifier for plant event',
+  `plantId` int(11) NOT NULL COMMENT 'Plant the event relates to',
   `eventDateTime` datetime NOT NULL COMMENT 'Date and time of event (local time)',
-  `eventDetails` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Free-text description of event',
-  `createdDateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Record creation timestamp (local time)',
-  `isActive` tinyint NOT NULL DEFAULT '1' COMMENT 'Indicates whether this record is valid for use; inactive records represent superseded or erroneous entries retained for audit purposes',
-  `updatedDateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last update timestamp (local time)',
-  `observationTypeId` int NOT NULL,
+  `eventDetails` text DEFAULT NULL COMMENT 'Free-text description of event',
+  `createdDateTime` datetime NOT NULL DEFAULT current_timestamp() COMMENT 'Record creation timestamp (local time)',
+  `isActive` tinyint(4) NOT NULL DEFAULT 1 COMMENT 'Indicates whether this record is valid for use; inactive records represent superseded or erroneous entries retained for audit purposes',
+  `updatedDateTime` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'Last update timestamp (local time)',
+  `observationTypeId` int(11) NOT NULL,
   PRIMARY KEY (`plantEventId`),
   KEY `ixPlantEventPlantDateTime` (`plantId`,`eventDateTime`),
   KEY `fk_plantevent_observationType` (`observationTypeId`),
   KEY `ixPlantEventStatusLookup` (`plantId`,`isActive`,`eventDateTime` DESC,`observationTypeId`),
-  CONSTRAINT `chkPlantEventIsActive` CHECK ((`isActive` in (0,1)))
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='General-purpose event log for plant care and observations.';
+  CONSTRAINT `chkPlantEventIsActive` CHECK (`isActive` in (0,1))
+
+) ENGINE=InnoDB   COMMENT='General-purpose event log for plant care and observations.';
 

@@ -8,7 +8,7 @@ BEGIN
     DECLARE vGenusNotes TEXT;
     DECLARE vGenusId INT;
     DECLARE vGenusOnlyTaxonId INT;
-    
+
     DECLARE v_errno INT;
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
@@ -37,8 +37,8 @@ BEGIN
     IF EXISTS (
         SELECT 1
         FROM genus
-        WHERE genusName COLLATE utf8mb4_unicode_ci =
-              vGenusName COLLATE utf8mb4_unicode_ci
+        WHERE genusName =
+              vGenusName
     ) THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Genus already exists';

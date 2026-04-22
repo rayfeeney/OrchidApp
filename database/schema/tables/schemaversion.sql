@@ -1,9 +1,10 @@
 CREATE TABLE IF NOT EXISTS `schemaversion` (
-  `versionId` int NOT NULL AUTO_INCREMENT,
-  `scriptName` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `checksum` char(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `appliedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `versionId` int(11) NOT NULL AUTO_INCREMENT,
+  `scriptName` varchar(255) NOT NULL,
+  `checksum` char(64) NOT NULL,
+  `appliedAt` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`versionId`),
   UNIQUE KEY `uq_scriptName` (`scriptName`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+) ENGINE=InnoDB  ;
 
