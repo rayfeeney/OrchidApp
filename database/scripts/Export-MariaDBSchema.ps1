@@ -22,20 +22,17 @@ if (-not (Test-Path $MariaDbDumpExe)) {
 $MariaDbHost = $env:MARIADB_HOST ?? $env:MYSQL_HOST ?? "localhost"
 $MariaDbPort = $env:MARIADB_PORT ?? $env:MYSQL_PORT ?? 3307
 $Database = "orchids"
-if ($env:MARIADB_USER -and $env:MARIADB_PASSWORD) {
-    $User = $env:MARIADB_USER
-    $Password = $env:MARIADB_PASSWORD
+$User = $env:MARIADB_USER
+$Password = $env:MARIADB_PASSWORD
+
+if (-not $User -or -not $Password) {
+    throw "MARIADB_USER and MARIADB_PASSWORD must be set"
 }
-elseif ($env:MYSQL_USER -and $env:MYSQL_PASSWORD) {
-    $User = $env:MYSQL_USER
-    $Password = $env:MYSQL_PASSWORD
-}
-else {
-    $User = "root"
-    $Password = "root"
-}
+
 $env:MYSQL_PWD = $Password
+
 Write-Host "Using DB user: $User"
+
 if (-not $User -or -not $Password) {
   throw "MARIADB_USER or MARIADB_PASSWORD environment variables not set"
 }
