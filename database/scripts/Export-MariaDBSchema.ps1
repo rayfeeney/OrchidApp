@@ -643,8 +643,6 @@ foreach ($dir in @("tables", "constraints", "views", "routines", "triggers")) {
 }
 
 Write-Host "MariaDB schema export completed successfully."
-Write-Host "Pausing for 10 seconds to allow review of output…"
-Start-Sleep -Seconds 10
 
 }
 finally {
