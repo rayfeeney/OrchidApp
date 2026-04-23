@@ -1,0 +1,3 @@
+CREATE TABLE IF NOT EXISTS TestOutOfOrder (
+    id INT PRIMARY KEY
+);
