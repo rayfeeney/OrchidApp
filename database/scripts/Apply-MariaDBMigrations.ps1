@@ -139,6 +139,9 @@ try {
 
     Write-Host "Schema export completed."
 
+# Reapply MYSQL_PWD because export script clears it
+$env:MYSQL_PWD = $Password
+
     # --- DETECT SCHEMA DRIFT -----------------------------------------------
 
     Write-Host "Checking for schema drift..."
