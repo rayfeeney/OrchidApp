@@ -1,0 +1,3 @@
+CREATE TABLE IF NOT EXISTS ShouldFail (
+    id INT PRIMARY KEY
+);
