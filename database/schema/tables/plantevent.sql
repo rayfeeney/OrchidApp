@@ -9,8 +9,8 @@ CREATE TABLE IF NOT EXISTS `plantevent` (
   `observationTypeId` int(11) NOT NULL,
   PRIMARY KEY (`plantEventId`),
   KEY `ixPlantEventPlantDateTime` (`plantId`,`eventDateTime`),
-  KEY `fk_plantevent_observationType` (`observationTypeId`),
   KEY `ixPlantEventStatusLookup` (`plantId`,`isActive`,`eventDateTime` DESC,`observationTypeId`),
+  KEY `idx_plantevent_observationTypeId` (`observationTypeId`),
   CONSTRAINT `chkPlantEventIsActive` CHECK (`isActive` in (0,1))
 
 ) ENGINE=InnoDB   COMMENT='General-purpose event log for plant care and observations.';
