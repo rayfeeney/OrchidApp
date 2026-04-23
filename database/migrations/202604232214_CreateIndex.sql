@@ -1,5 +1,3 @@
--- add a harmless comment
--- test change
 -- 1. Drop FK (must be first)
 ALTER TABLE plantevent
 DROP FOREIGN KEY fk_plantevent_observationtype;
