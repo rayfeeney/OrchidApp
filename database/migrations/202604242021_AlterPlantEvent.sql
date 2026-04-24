@@ -1,0 +1,2 @@
+ALTER TABLE plantevent
+DROP INDEX idx_plantevent_observationTypeId;
