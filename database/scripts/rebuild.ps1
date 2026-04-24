@@ -42,17 +42,19 @@ Write-Host "  Database: $($env:MARIADB_DATABASE)"
 # -------------------------------------------------------
 # Validate required environment variables
 # -------------------------------------------------------
-function Require-Env($name) {
-    if (-not (Get-Item "Env:$($name)" -ErrorAction SilentlyContinue)) {
-        Set-Item -Path "Env:$($name)" -Value $value
+function Assert-Env($name) {
+    $val = (Get-Item "Env:$name" -ErrorAction SilentlyContinue)?.Value
+
+    if (-not $val) {
+        throw "Required environment variable '$name' is not set"
     }
 }
 
-Require-Env "MARIADB_HOST"
-Require-Env "MARIADB_PORT"
-Require-Env "MARIADB_USER"
-Require-Env "MARIADB_PASSWORD"
-Require-Env "MARIADB_DATABASE"
+Assert-Env "MARIADB_HOST"
+Assert-Env "MARIADB_PORT"
+Assert-Env "MARIADB_USER"
+Assert-Env "MARIADB_PASSWORD"
+Assert-Env "MARIADB_DATABASE"
 
 # -------------------------------------------------------
 # MariaDB executable
@@ -76,7 +78,8 @@ function Invoke-MariaDb {
         --protocol=TCP `
         --host=$env:MARIADB_HOST `
         --port=$env:MARIADB_PORT `
-        --user=$env:MARIADB_USER
+        --user=$env:MARIADB_USER `
+        --database=$env:MARIADB_DATABASE
 
     if ($LASTEXITCODE -ne 0) {
         throw "MariaDB execution failed"
@@ -94,18 +97,16 @@ Write-Host "  Database: $($env:MARIADB_DATABASE)"
 # -------------------------------------------------------
 Write-Host "Recreating database..."
 
-$database = $env:MARIADB_DATABASE
-
 $recreateSql = @"
-DROP DATABASE IF EXISTS `$database`;
-CREATE DATABASE `$database`;
+DROP DATABASE IF EXISTS `$($env:MARIADB_DATABASE)`;
+CREATE DATABASE `$($env:MARIADB_DATABASE)`;
 "@
 
 Invoke-MariaDb -Sql $recreateSql
 
 Write-Host "Database recreated."
 
-function Apply-RequiredDir($dir) {
+function Invoke-RequiredDir($dir) {
 
     if (-not (Test-Path $dir)) {
         throw "Required schema directory missing: $dir"
@@ -128,7 +129,7 @@ function Apply-RequiredDir($dir) {
             --host=$env:MARIADB_HOST `
             --port=$env:MARIADB_PORT `
             --user=$env:MARIADB_USER `
-            $env:MARIADB_DATABASE
+            --database=$env:MARIADB_DATABASE
 
         if ($LASTEXITCODE -ne 0) {
             throw "Failed applying $($file.Name)"
@@ -136,7 +137,7 @@ function Apply-RequiredDir($dir) {
     }
 }
 
-function Apply-OptionalDir($dir) {
+function Invoke-MariaDbDirectoryIfExists($dir) {
 
     if (-not (Test-Path $dir)) {
         Write-Host "Optional directory missing: $dir"
@@ -156,27 +157,35 @@ function Apply-OptionalDir($dir) {
 
         Write-Host "  → $($file.Name)"
 
-        Get-Content $file.FullName -Raw | & $MariaDbExe `
-            --protocol=TCP `
-            --host=$env:MARIADB_HOST `
-            --port=$env:MARIADB_PORT `
-            --user=$env:MARIADB_USER `
-            $env:MARIADB_DATABASE
-
-        if ($LASTEXITCODE -ne 0) {
-            throw "Failed applying $($file.Name)"
-        }
+        Invoke-MariaDbFile $file.FullName
     }
 }
 
+function Invoke-MariaDbFile {
+    param (
+        [Parameter(Mandatory)]
+        [string]$FilePath
+    )
+
+    Get-Content $FilePath -Raw | & $MariaDbExe `
+        --protocol=TCP `
+        --host=$env:MARIADB_HOST `
+        --port=$env:MARIADB_PORT `
+        --user=$env:MARIADB_USER `
+        --database=$env:MARIADB_DATABASE
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed applying $FilePath"
+    }
+}
 # -------------------------------------------------------
 # Apply schema in dependency order
 # -------------------------------------------------------
-Apply-RequiredDir "database/schema/tables"
-Apply-RequiredDir "database/schema/views"
-Apply-RequiredDir "database/schema/routines"
-Apply-RequiredDir "database/schema/triggers"
-Apply-RequiredDir "database/schema/constraints"
-Apply-OptionalDir "database/schema/seeds"
+Invoke-RequiredDir "database/schema/tables"
+Invoke-RequiredDir "database/schema/constraints"
+Invoke-RequiredDir "database/schema/views"
+Invoke-RequiredDir "database/schema/routines"
+Invoke-RequiredDir "database/schema/triggers"
+Invoke-MariaDbDirectoryIfExists "database/schema/seeds"
 
 Write-Host "Database rebuild completed successfully."
