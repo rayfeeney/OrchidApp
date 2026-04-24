@@ -97,9 +97,11 @@ Write-Host "  Database: $($env:MARIADB_DATABASE)"
 # -------------------------------------------------------
 Write-Host "Recreating database..."
 
+$db = $env:MARIADB_DATABASE
+
 $recreateSql = @"
-DROP DATABASE IF EXISTS `$env:MARIADB_DATABASE`;
-CREATE DATABASE `$env:MARIADB_DATABASE`;
+DROP DATABASE IF EXISTS `$db`;
+CREATE DATABASE `$db`;
 "@
 
 Invoke-MariaDb -Sql $recreateSql
