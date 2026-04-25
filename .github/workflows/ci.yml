@@ -30,12 +30,12 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: Restore
-        run: dotnet restore src/OrchidApp.Web
+        run: dotnet restore src/OrchidApp.Web -r linux-arm64
 
       - name: Build
         run: |
           echo "Building OrchidApp..."
-          dotnet build src/OrchidApp.Web --configuration Release --no-restore
+          dotnet build src/OrchidApp.Web --configuration Release --no-restore -r linux-arm64
 
       - name: Publish linux-arm64
         run: |
