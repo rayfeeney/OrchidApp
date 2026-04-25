@@ -8,8 +8,14 @@ Set-Location $RepoRoot
 
 # --- TOOL PATHS (deterministic, no PATH dependency) --------------------------
 
-$MariaDbExe = "C:\Program Files\MariaDB 10.11\bin\mariadb.exe"
-$MariaDbDumpExe = "C:\Program Files\MariaDB 10.11\bin\mariadb-dump.exe"
+if ($IsWindows) {
+  $MariaDbExe = "C:\Program Files\MariaDB 10.11\bin\mariadb.exe"
+  $MariaDbDumpExe = "C:\Program Files\MariaDB 10.11\bin\mariadb-dump.exe"
+}
+else {
+  $MariaDbExe = "mariadb"
+  $MariaDbDumpExe = "mariadb-dump"
+}
 
 if (-not (Test-Path $MariaDbExe)) {
   throw "mariadb.exe not found at $MariaDbExe"
@@ -20,7 +26,7 @@ if (-not (Test-Path $MariaDbDumpExe)) {
 }
 
 $MariaDbHost = $env:MARIADB_HOST ?? $env:MYSQL_HOST ?? "localhost"
-$MariaDbPort = $env:MARIADB_PORT ?? $env:MYSQL_PORT ?? 3307
+$MariaDbPort = $env:MARIADB_PORT ?? $env:MYSQL_PORT ?? 3306
 $Database = "orchids"
 $User = $env:MARIADB_USER
 $Password = $env:MARIADB_PASSWORD
@@ -336,7 +342,7 @@ if ($Type -eq "tables") {
 
   if (-not (Test-Path $OutPath) -or $Checksums[$key] -ne $hash) {
     New-DirectoryForFile $OutPath
-    $sql | Out-File -Encoding utf8 $OutPath
+    $sql | Out-File -Encoding utf8NoBOM $OutPath
     $Checksums[$key] = $hash
     Write-Host "Updated $key"
   }
@@ -461,7 +467,7 @@ ALTER TABLE $tableQualified
 
   if (-not (Test-Path $OutPath) -or $Checksums[$key] -ne $hash) {
     New-DirectoryForFile $outPath
-    $sql | Out-File -Encoding utf8 $outPath
+    $sql | Out-File -Encoding utf8NoBOM $outPath
     $Checksums[$key] = $hash
     Write-Host "Updated $key"
   }
@@ -559,7 +565,7 @@ foreach ($row in $routines) {
 
   if (-not (Test-Path $OutPath) -or $Checksums[$key] -ne $hash) {
     New-DirectoryForFile $outPath
-    $definition | Out-File -Encoding utf8 $outPath
+    $definition | Out-File -Encoding utf8NoBOM $outPath
     $Checksums[$key] = $hash
     Write-Host "    Updated $relativePath"
   }
@@ -643,7 +649,7 @@ DELIMITER ;
 
   if (-not (Test-Path $OutPath) -or $Checksums[$key] -ne $hash) {
     New-DirectoryForFile $outPath
-    $definition | Out-File -Encoding utf8 $outPath
+    $definition | Out-File -Encoding utf8NoBOM $outPath
     $Checksums[$key] = $hash
     Write-Host "    Updated $key"
   }
@@ -659,7 +665,7 @@ $NewJson = ($Ordered | ConvertTo-Json -Depth 3).Trim()
 
 if (-not (Test-Path $ChecksumFile) -or (Get-Content $ChecksumFile -Raw).Trim() -ne $NewJson) {
   New-DirectoryForFile $ChecksumFile
-  $NewJson | Out-File $ChecksumFile -Encoding utf8
+  $NewJson | Out-File $ChecksumFile -Encoding utf8NoBOM
   Write-Host "Checksum file updated"
 }
 
