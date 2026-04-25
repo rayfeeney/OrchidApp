@@ -18,8 +18,9 @@ CREATE TABLE IF NOT EXISTS `taxon` (
   UNIQUE KEY `uxTaxon_GenusSpecies` (`genusSpeciesKey`),
   UNIQUE KEY `uxTaxon_GenusHybrid` (`genusHybridKey`),
   KEY `ixTaxonIsActive` (`isActive`),
+  CONSTRAINT `fkTaxonGenus` FOREIGN KEY (`genusId`) REFERENCES `genus` (`genusId`),
   CONSTRAINT `chkTaxon_Shape` CHECK (`speciesName` is null and `hybridName` is null or `speciesName` is not null and `hybridName` is null or `speciesName` is null and `hybridName` is not null),
   CONSTRAINT `chkTaxonIsActive` CHECK (`isActive` in (0,1))
 
-) ENGINE=InnoDB     COMMENT='Taxonomic information for orchid species and hybrids.';
+) ENGINE=InnoDB    COMMENT='Taxonomic information for orchid species and hybrids.';
 

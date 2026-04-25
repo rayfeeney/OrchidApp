@@ -325,10 +325,6 @@ if ($Type -eq "tables") {
         })
     }
 
-    # Remove FOREIGN KEY constraints completely
-    $sql = $sql -replace '(?ms),?\s*CONSTRAINT\s+`[^`]+`\s+FOREIGN\s+KEY\s*\([^\)]*\)\s+REFERENCES\s+`[^`]+`\s*\([^\)]*\)\s*(?:ON\s+DELETE\s+\w+\s*)?(?:ON\s+UPDATE\s+\w+\s*)?', ''
-    $sql = $sql -replace '(?ms),?\s*FOREIGN\s+KEY\s*\([^\)]*\)\s+REFERENCES\s+`[^`]+`\s*\([^\)]*\)\s*(?:ON\s+DELETE\s+\w+\s*)?(?:ON\s+UPDATE\s+\w+\s*)?', ''
-
     # Remove dump artefacts
     $sql = $sql -replace '(?m)^DROP TABLE IF EXISTS.*$', ''
     $sql = $sql -replace '(?m)^LOCK TABLES.*$', ''
@@ -350,7 +346,8 @@ if ($Type -eq "tables") {
     $sql = $sql -replace '(?m)^\s*(;\s*)+$', ''
 
     # Formatting
-    $sql = $sql -replace '\)\s*ENGINE=InnoDB\b', "`n) ENGINE=InnoDB "
+    $sql = $sql -replace '\)\s*ENGINE=InnoDB\b', "`n) ENGINE=InnoDB"
+    $sql = $sql -replace 'ENGINE=InnoDB\s*COMMENT=', 'ENGINE=InnoDB COMMENT='
     $sql = $sql -replace "(\r?\n){3,}", "`n`n"
 
     # Final tidy

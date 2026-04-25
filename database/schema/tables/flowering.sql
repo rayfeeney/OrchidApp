@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS `flowering` (
   PRIMARY KEY (`floweringId`),
   KEY `ixFloweringPlantStartDate` (`plantId`,`startDate`),
   KEY `ixFlowerStatusLookup` (`plantId`,`isActive`,`startDate` DESC),
+  CONSTRAINT `fkFloweringPlant` FOREIGN KEY (`plantId`) REFERENCES `plant` (`plantId`),
   CONSTRAINT `chkFloweringIsActive` CHECK (`isActive` in (0,1))
 
-) ENGINE=InnoDB     COMMENT='Flowering history per plant. Current flowering = endDate IS NULL.';
+) ENGINE=InnoDB    COMMENT='Flowering history per plant. Current flowering = endDate IS NULL.';
 

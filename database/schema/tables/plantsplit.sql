@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS `plantsplit` (
   `isActive` tinyint(1) NOT NULL DEFAULT 1 COMMENT '1 = active record; 0 = logically removed (soft delete)',
   PRIMARY KEY (`plantSplitId`),
   UNIQUE KEY `uxPlantSplit_parentPlantId` (`parentPlantId`),
+  CONSTRAINT `fkPlantSplitParent` FOREIGN KEY (`parentPlantId`) REFERENCES `plant` (`plantId`),
   CONSTRAINT `chkPlantSplitIsActive` CHECK (`isActive` in (0,1))
 
-) ENGINE=InnoDB    ;
+) ENGINE=InnoDB   ;
 

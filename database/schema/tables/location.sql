@@ -16,5 +16,5 @@ CREATE TABLE IF NOT EXISTS `location` (
   KEY `ixLocationActiveName` (`isActive`,`locationName`),
   CONSTRAINT `chkLocationIsActive` CHECK (`isActive` in (0,1))
 
-) ENGINE=InnoDB     COMMENT='Locations where plants may be kept over time.';
+) ENGINE=InnoDB    COMMENT='Locations where plants may be kept over time.';
 
