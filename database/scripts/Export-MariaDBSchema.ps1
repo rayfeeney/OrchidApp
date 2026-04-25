@@ -325,6 +325,10 @@ if ($Type -eq "tables") {
         })
     }
 
+    # Remove FOREIGN KEY constraints completely
+    $sql = $sql -replace '(?ms),?\s*CONSTRAINT\s+`[^`]+`\s+FOREIGN\s+KEY\s*\([^\)]*\)\s+REFERENCES\s+`[^`]+`\s*\([^\)]*\)\s*(?:ON\s+DELETE\s+\w+\s*)?(?:ON\s+UPDATE\s+\w+\s*)?', ''
+    $sql = $sql -replace '(?ms),?\s*FOREIGN\s+KEY\s*\([^\)]*\)\s+REFERENCES\s+`[^`]+`\s*\([^\)]*\)\s*(?:ON\s+DELETE\s+\w+\s*)?(?:ON\s+UPDATE\s+\w+\s*)?', ''
+
     # Remove dump artefacts
     $sql = $sql -replace '(?m)^DROP TABLE IF EXISTS.*$', ''
     $sql = $sql -replace '(?m)^LOCK TABLES.*$', ''

@@ -16,9 +16,6 @@ CREATE TABLE IF NOT EXISTS `repotting` (
   PRIMARY KEY (`repottingId`),
   KEY `ixRepottingPlantRepotDate` (`plantId`,`repotDate`),
   KEY `ixRepotStatusLookup` (`plantId`,`isActive`,`repotDate` DESC,`newGrowthMediumId`),
-  CONSTRAINT `fkRepottingPlant` FOREIGN KEY (`plantId`) REFERENCES `plant` (`plantId`),
-  CONSTRAINT `fk_repotting_new_growthmedium` FOREIGN KEY (`newGrowthMediumId`) REFERENCES `growthmedium` (`growthMediumId`),
-  CONSTRAINT `fk_repotting_old_growthmedium` FOREIGN KEY (`oldGrowthMediumId`) REFERENCES `growthmedium` (`growthMediumId`),
   CONSTRAINT `chkRepottingIsActive` CHECK (`isActive` in (0,1))
 
 ) ENGINE=InnoDB    COMMENT='Repotting history per plant.';

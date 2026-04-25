@@ -14,8 +14,6 @@ CREATE TABLE IF NOT EXISTS `plantlocationhistory` (
   KEY `ixPlantLocationHistoryPlantTime` (`plantId`,`startDateTime`,`endDateTime`),
   KEY `ixPlantLocationHistoryLocationTime` (`locationId`,`startDateTime`,`endDateTime`),
   KEY `ixPlhStatusLookup` (`plantId`,`isActive`,`startDateTime` DESC,`locationId`),
-  CONSTRAINT `fkPlantLocationHistoryLocation` FOREIGN KEY (`locationId`) REFERENCES `location` (`locationId`),
-  CONSTRAINT `fkPlantLocationHistoryPlant` FOREIGN KEY (`plantId`) REFERENCES `plant` (`plantId`),
   CONSTRAINT `chkPlantLocationHistoryDateOrder` CHECK (`endDateTime` is null or `endDateTime` > `startDateTime`),
   CONSTRAINT `chkPlantLocationHistoryIsActive` CHECK (`isActive` in (0,1))
 

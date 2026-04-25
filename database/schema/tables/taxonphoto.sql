@@ -8,8 +8,7 @@ CREATE TABLE IF NOT EXISTS `taxonphoto` (
   `isActive` tinyint(1) NOT NULL DEFAULT 1,
   `createdDateTime` datetime NOT NULL DEFAULT current_timestamp(),
   `updatedDateTime` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`taxonPhotoId`),
-  CONSTRAINT `fk_taxonphoto_taxon` FOREIGN KEY (`taxonId`) REFERENCES `taxon` (`taxonId`) ON DELETE NO
+  PRIMARY KEY (`taxonPhotoId`)
 
 ) ENGINE=InnoDB   ;
 
