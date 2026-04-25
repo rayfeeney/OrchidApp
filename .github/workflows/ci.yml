@@ -128,6 +128,9 @@ jobs:
             mysql --default-character-set=utf8mb4 -h 127.0.0.1 -uroot -proot orchids < "$f" || exit 1
           done
 
+      - name: Capture original plant table
+        run: cp database/schema/tables/plant.sql /tmp/plant_original.sql
+
       - name: Run schema export
         env:
           MARIADB_HOST: 127.0.0.1
@@ -136,14 +139,18 @@ jobs:
           MARIADB_PASSWORD: root
         run: pwsh ./database/scripts/Export-MariaDBSchema.ps1
 
-      - name: Detect drift
+      - name: Debug plant table drift
         run: |
-          if [[ -n $(git status --porcelain) ]]; then
-            echo "Schema drift detected!"
-            git status
-            git --no-pager diff
-            exit 1
-          fi
+          echo "=== ORIGINAL ==="
+          head -n 50 /tmp/plant_original.sql
+
+          echo "=== REGENERATED ==="
+          head -n 50 database/schema/tables/plant.sql
+
+          echo "=== DIFF ==="
+          diff -u /tmp/plant_original.sql database/schema/tables/plant.sql | head -n 100
+
+          exit 1
 
       - name: Schema validation passed
         run: echo "Schema is deterministic and valid"
