@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS `repotting` (
   `oldGrowthMediumId` int(11) DEFAULT NULL COMMENT 'Foreign key to growthmedium.growthMediumId representing the old growth medium used before repotting',
   `newGrowthMediumId` int(11) NOT NULL,
   PRIMARY KEY (`repottingId`),
+  KEY `ixRepottingPlantRepotDate` (`plantId`,`repotDate`),
+  KEY `ixRepotStatusLookup` (`plantId`,`isActive`,`repotDate` DESC,`newGrowthMediumId`),
   CONSTRAINT `chkRepottingIsActive` CHECK (`isActive` in (0,1))
 
 ) ENGINE=InnoDB   COMMENT='Repotting history per plant.';

@@ -272,27 +272,37 @@ if ($Type -eq "tables") {
     # Ensure idempotent create
     $sql = $sql -replace 'CREATE TABLE `', 'CREATE TABLE IF NOT EXISTS `'
 
-    # Remove ALL indexes that include FK columns
+    # Remove ONLY indexes that exactly match FK column sets
     if ($fkColumnMap.ContainsKey($Name)) {
 
-        # Get FK columns for this table
-        $fkColumns = @()
+        $fkColumnSets = @()
 
         foreach ($fkCols in $fkColumnMap[$Name]) {
-            $fkColumns += ($fkCols -split "," | ForEach-Object { $_.Trim() })
+            $set = ($fkCols -split "," | ForEach-Object { $_.Trim() }) -join ","
+            $fkColumnSets += $set
         }
 
-        $fkColumns = $fkColumns | Sort-Object -Unique
-
-        # Remove any KEY that references any FK column
-        $sql = [regex]::Replace($sql, '(?ms),?\s*KEY\s+`[^`]+`\s*\(([^)]*)\)', {
+        $sql = [regex]::Replace($sql, '(?ms),?\s*(UNIQUE\s+)?KEY\s+`([^`]+)`\s*\(([^)]*)\)', {
             param($match)
 
-            $cols = $match.Groups[1].Value
+            $isUnique = $match.Groups[1].Success
+            $colsRaw = $match.Groups[3].Value
 
-            foreach ($fkCol in $fkColumns) {
-                if ($cols -match "``$([regex]::Escape($fkCol))``") {
-                    return ''   # REMOVE the entire KEY
+            # Skip UNIQUE indexes
+            if ($isUnique) {
+                return $match.Value
+            }
+
+            # Normalise column list
+            $cols = (
+                $colsRaw -split "," |
+                ForEach-Object { $_.Trim().Trim('`') }
+            ) -join ","
+
+            # Compare with FK column sets
+            foreach ($fkSet in $fkColumnSets) {
+                if ($cols -eq $fkSet) {
+                    return ''   # REMOVE only exact FK support index
                 }
             }
 
@@ -451,7 +461,8 @@ foreach ($constraintName in ($constraints.Keys | Sort-Object)) {
 
   $sql = @"
 ALTER TABLE $tableQualified
-  ADD FOREIGN KEY ($columns)
+  ADD CONSTRAINT ``$constraintName``
+  FOREIGN KEY ($columns)
   REFERENCES $refTableQualified ($refColumns)
   ON DELETE $onDelete
   ON UPDATE $onUpdate;

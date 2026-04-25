@@ -11,6 +11,9 @@ CREATE TABLE IF NOT EXISTS `plantlocationhistory` (
   `isActive` tinyint(4) NOT NULL DEFAULT 1 COMMENT 'Indicates whether this record is valid for use; inactive records represent superseded or erroneous entries retained for audit purposes',
   `updatedDateTime` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`plantLocationHistoryId`),
+  KEY `ixPlantLocationHistoryPlantTime` (`plantId`,`startDateTime`,`endDateTime`),
+  KEY `ixPlantLocationHistoryLocationTime` (`locationId`,`startDateTime`,`endDateTime`),
+  KEY `ixPlhStatusLookup` (`plantId`,`isActive`,`startDateTime` DESC,`locationId`),
   CONSTRAINT `chkPlantLocationHistoryDateOrder` CHECK (`endDateTime` is null or `endDateTime` > `startDateTime`),
   CONSTRAINT `chkPlantLocationHistoryIsActive` CHECK (`isActive` in (0,1))
 

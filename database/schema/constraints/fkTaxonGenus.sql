@@ -1,5 +1,6 @@
 ALTER TABLE `taxon`
-  ADD FOREIGN KEY (`genusId`)
+  ADD CONSTRAINT `fkTaxonGenus`
+  FOREIGN KEY (`genusId`)
   REFERENCES `genus` (`genusId`)
   ON DELETE RESTRICT
   ON UPDATE RESTRICT;

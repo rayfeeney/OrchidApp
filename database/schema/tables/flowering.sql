@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS `flowering` (
   `isActive` tinyint(1) NOT NULL DEFAULT 1 COMMENT 'Indicates whether this record is valid for use; inactive records represent superseded or erroneous entries retained for audit purposes',
   `updatedDateTime` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'Last update timestamp (local time)',
   PRIMARY KEY (`floweringId`),
+  KEY `ixFloweringPlantStartDate` (`plantId`,`startDate`),
+  KEY `ixFlowerStatusLookup` (`plantId`,`isActive`,`startDate` DESC),
   CONSTRAINT `chkFloweringIsActive` CHECK (`isActive` in (0,1))
 
 ) ENGINE=InnoDB   COMMENT='Flowering history per plant. Current flowering = endDate IS NULL.';
