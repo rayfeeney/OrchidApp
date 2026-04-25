@@ -350,7 +350,7 @@ if ($Type -eq "tables") {
     $sql = $sql -replace '(?m)^\s*(;\s*)+$', ''
 
     # Formatting
-    $sql = $sql -replace '\)\s*ENGINE=InnoDB\s*', "`n) ENGINE=InnoDB"
+    $sql = $sql -replace '\)\s*ENGINE=InnoDB\b', "`n) ENGINE=InnoDB "
     $sql = $sql -replace "(\r?\n){3,}", "`n`n"
 
     # Final tidy

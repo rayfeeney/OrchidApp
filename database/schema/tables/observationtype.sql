@@ -10,5 +10,5 @@ CREATE TABLE IF NOT EXISTS `observationtype` (
   PRIMARY KEY (`Id`),
   UNIQUE KEY `ux_observationtype_typeCode` (`typeCode`)
 
-) ENGINE=InnoDB   COMMENT='Defines subtypes of Observation records. System rows may drive application behaviour.';
+) ENGINE=InnoDB     COMMENT='Defines subtypes of Observation records. System rows may drive application behaviour.';
 

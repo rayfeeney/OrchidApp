@@ -10,5 +10,5 @@ CREATE TABLE IF NOT EXISTS `taxonphoto` (
   `updatedDateTime` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`taxonPhotoId`)
 
-) ENGINE=InnoDB  ;
+) ENGINE=InnoDB    ;
 
