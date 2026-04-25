@@ -136,7 +136,22 @@ function Format-SqlContent {
 
   $Sql = $Sql -replace "(\r?\n){3,}", "`n`n"
 
-  return ($Sql.Trim() + "`n")
+  # --- FINAL NORMALISATION (deterministic output) -----------------------------
+
+  # Normalise line endings
+  $Sql = $Sql -replace '\r\n', "`n"
+  $Sql = $Sql -replace '\r', "`n"
+
+  # Remove trailing whitespace on each line
+  $Sql = ($Sql -split "`n" | ForEach-Object { $_.TrimEnd() }) -join "`n"
+
+  # Collapse multiple blank lines to max 1
+  $Sql = $Sql -replace "(`n){3,}", "`n`n"
+
+  # Trim overall
+  $Sql = $Sql.Trim()
+
+  return $Sql + "`n"
 }
 
 function Remove-DatabaseQualification {
