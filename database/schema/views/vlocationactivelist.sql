@@ -1,2 +1,7 @@
-CREATE OR REPLACE VIEW `vlocationactivelist` AS select `location`.`locationId` AS `locationId`,`location`.`locationName` AS `locationName`,`location`.`locationTypeCode` AS `locationTypeCode`,`location`.`climateCode` AS `climateCode` from `location` where (`location`.`isActive` = 1);
+CREATE OR REPLACE VIEW `vlocationactivelist`
+AS SELECT `location`.`locationId`
+AS `locationId`,`location`.`locationName`
+AS `locationName`,`location`.`locationTypeCode`
+AS `locationTypeCode`,`location`.`climateCode`
+AS `climateCode` FROM `location` WHERE `location`.`isActive` = 1
 
