@@ -17,12 +17,12 @@ else {
   $MariaDbDumpExe = "mariadb-dump"
 }
 
-if (-not (Test-Path $MariaDbExe)) {
-  throw "mariadb.exe not found at $MariaDbExe"
+if (-not (Get-Command $MariaDbExe -ErrorAction SilentlyContinue)) {
+  throw "mariadb command not found: $MariaDbExe"
 }
 
-if (-not (Test-Path $MariaDbDumpExe)) {
-  throw "mariadb-dump.exe not found at $MariaDbDumpExe"
+if (-not (Get-Command $MariaDbDumpExe -ErrorAction SilentlyContinue)) {
+  throw "mariadb-dump command not found: $MariaDbDumpExe"
 }
 
 $MariaDbHost = $env:MARIADB_HOST ?? $env:MYSQL_HOST ?? "localhost"
