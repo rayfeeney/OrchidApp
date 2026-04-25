@@ -3,6 +3,9 @@ $ErrorActionPreference = "Stop"
 try {
     Write-Host "Starting MariaDB migration runner..."
 
+    if (-not $env:MARIADB_USER) {
+        throw "Environment not configured. Set MARIADB_* variables before running."
+    }
     # --- PRECONDITIONS -----------------------------------------------------
 
     $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path

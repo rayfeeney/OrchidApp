@@ -41,13 +41,55 @@ Update system:
 
     sudo apt update && sudo apt upgrade -y
 
+Install curl (used for local validation and troubleshooting):
+
+    sudo apt install -y curl
+
 Install .NET runtime:
 
-    sudo apt install -y dotnet-runtime-8.0
+    sudo apt install -y dotnet-sdk-8.0
 
 Install MariaDB:
 
     sudo apt install -y mariadb-server
+
+Enable and start MariaDB:
+
+    sudo systemctl enable mariadb
+    sudo systemctl start mariadb
+
+Verify:
+
+    sudo systemctl status mariadb
+
+Install supporting libraries for image processing:
+
+    sudo apt install -y libglib2.0-dev libexpat1 libjpeg-dev libpng-dev libtiff5 libwebp-dev
+
+These ensure libvips and HEIC processing operate correctly on Raspberry Pi systems.
+
+Install image processing dependencies:
+
+    sudo apt install -y libvips libheif1 libheif-dev imagemagick
+
+These are required for:
+
+- HEIC image decoding
+- Canonical image processing via libvips
+
+If these dependencies are missing, photo uploads will fail by design.
+
+Install Git:
+
+    sudo apt install -y git
+
+Install PowerShell:
+
+    sudo apt install -y powershell
+
+Install rclone (required for encrypted off-device backups):
+
+    sudo apt install -y rclone
 
 ------------------------------------------------------------------------
 
@@ -100,6 +142,44 @@ Secure it:
 
 ------------------------------------------------------------------------
 
+## 3.4A Configure Upload Storage
+
+Create upload root directory:
+
+    sudo mkdir -p /opt/orchidapp/uploads
+
+Set ownership:
+
+    sudo chown raymond-23:raymond-23 /opt/orchidapp/uploads
+
+Set permissions:
+
+    chmod 750 /opt/orchidapp/uploads
+
+---
+
+### Configure application setting
+
+Ensure the upload path is configured via environment:
+
+Add to `/etc/orchidapp/orchidapp.env`:
+
+    StorageSettings__UploadRoot=/opt/orchidapp/uploads
+
+---
+
+### Validate
+
+The directory must:
+
+- exist before application startup
+- be writable by the application user
+- persist across restarts
+
+If this path is missing or invalid, the application must fail or reject uploads.
+
+------------------------------------------------------------------------
+
 ## 3.5 Create systemd Service
 
 Create:
@@ -133,6 +213,24 @@ Enable service:
 
 ------------------------------------------------------------------------
 
+## 3.5A Initialise Database Schema
+
+From the repository root:
+
+    cd /opt/orchidapp
+
+Run the database rebuild script:
+
+    pwsh ./database/scripts/rebuild.ps1
+
+This creates the required database schema from the repository export files.
+
+No manual SQL changes are allowed during first-time installation.
+
+Confirm the database contains the expected objects before starting the application.
+
+------------------------------------------------------------------------
+
 ## 3.6 First Publish
 
     cd /opt/orchidapp
@@ -149,7 +247,104 @@ Application should now be accessible at:
 
 ------------------------------------------------------------------------
 
+## 3.7 Configure Backups
+
+Backups are mandatory. A deployment without a working backup process is incomplete.
+
+### 3.7.1 Install backup script
+
+Ensure the backup script exists:
+
+    /opt/orchidapp/infrastructure/backups/backup_orchids.sh
+
+Make executable:
+
+    chmod +x /opt/orchidapp/infrastructure/backups/backup_orchids.sh
+
+---
+
+### 3.7.2 Configure storage target
+
+Ensure backup destination (e.g. OneDrive via rclone) is configured.
+
+If using rclone:
+
+    rclone config
+
+Confirm encrypted remote (e.g. `orchidcrypt`) is available.
+
+---
+
+### 3.7.3 Test backup manually
+
+Run:
+
+    /opt/orchidapp/infrastructure/backups/backup_orchids.sh
+
+Confirm:
+
+- Backup file created
+- File uploaded successfully (if remote configured)
+
+---
+
+### 3.7.4 Schedule automatic backups
+
+Edit crontab:
+
+    crontab -e
+
+Add:
+
+    0 2 * * * /opt/orchidapp/infrastructure/backups/backup_orchids.sh
+
+---
+
+### 3.7.5 Validate restore (required)
+
+Backups are only valid if restore succeeds.
+
+Test restore into a temporary database:
+
+    mysql -u root -p orchids_test < backup.sql
+
+Confirm:
+
+- Schema restored
+- Data present
+
+### 3.7.6 Uploads Backup
+
+The uploads directory must be included in the backup process.
+
+Ensure:
+
+- `/opt/orchidapp/uploads` is backed up alongside the database
+- The backup destination includes both database and uploads
+- Restores include both components to maintain consistency
+
+Failure to back up uploads will result in permanent loss of image data.
+
+------------------------------------------------------------------------
+
 # 4. Upgrade Procedure
+
+## 4.0 Pre-Upgrade Backup (Mandatory)
+
+Before applying any upgrade:
+
+Run:
+
+    /opt/orchidapp/infrastructure/backups/backup_orchids.sh
+
+Confirm:
+
+- Backup completes successfully
+- Backup file exists and is valid
+
+Upgrades must not proceed without a successful backup.
+
+This provides the only supported rollback mechanism.
 
 Upgrades must always follow this sequence.
 

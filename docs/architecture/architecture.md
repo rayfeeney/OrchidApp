@@ -28,6 +28,66 @@ layers:
 
 No layer may weaken another.
 
+### Environment Configuration Requirement
+
+All runtime configuration must be provided externally via environment variables or configuration files (e.g. .env).
+
+The application must not rely on hardcoded environment-specific values.
+
+A valid deployment must ensure:
+
+- All required configuration values are explicitly provided
+- Missing or invalid configuration causes application startup failure
+- File system paths (e.g. UploadRoot) are validated before use
+- Database connection settings are externally configurable
+
+Configuration is considered part of the deployment contract and must be consistent across environments.
+
+### Application Health Requirement
+
+OrchidApp must validate its operational readiness at startup and expose a clear health signal.
+
+A valid deployment must ensure:
+
+- Database connectivity is verified at startup
+- Required filesystem paths (e.g. UploadRoot) are validated
+- Critical dependencies required for core functionality are checked
+- Startup must fail if required components are unavailable
+
+The application must provide a simple health endpoint or equivalent mechanism to confirm that the system is operational.
+
+### Logging Requirement
+
+OrchidApp must produce structured logs for all critical system operations.
+
+A valid deployment must ensure:
+
+- Application startup events are logged
+- Configuration and dependency validation failures are logged
+- Database connectivity and operational errors are logged
+- File system operations (e.g. image ingestion) are logged
+- Backup and restore processes produce verifiable logs
+
+Logs must provide sufficient detail for diagnosis without exposing sensitive information.
+
+Logging is considered a core operational capability of the system.
+
+### Security Model
+
+OrchidApp is designed for deployment within a trusted home network environment.
+
+The system assumes:
+
+- The application is not exposed directly to the public internet
+- Access is restricted to trusted users within the local network
+- No built-in authentication or authorisation mechanisms are enforced by default
+
+Operational responsibility for network-level security lies with the deployment environment (e.g. router configuration, firewall rules).
+
+If external access is required, it must be implemented using appropriate network security controls outside the application.
+
+This model prioritises simplicity and aligns with the intended deployment scenario.
+
 ------------------------------------------------------------------------
 
 # 1. Database Layer --- Invariant Core
@@ -243,6 +303,16 @@ These dependencies are explicitly accepted due to:
 
 They must be treated as part of the system architecture, not
 implementation detail.
+
+### Runtime Media Dependencies
+
+In addition to libvips, the runtime environment must support decoding of common user image formats, including HEIC.
+
+This requires appropriate system-level libraries to be installed (e.g. libheif).
+
+The application assumes these capabilities are present and does not provide fallback decoding mechanisms.
+
+If required media libraries are missing, image ingestion will fail by design in accordance with the failure behaviour contract.
 
 ------------------------------------------------------------------------
 
@@ -487,7 +557,22 @@ Any new page must conform to one of the defined page types above.
 
 ------------------------------------------------------------------------
 
-# 9. Automation Layer --- Enforcement Mechanism
+# 9. Runtime Hosting Requirement
+
+OrchidApp must run as a continuously available service within the host environment.
+
+A valid deployment must ensure:
+
+- The application process is started automatically on system boot
+- The application binds to a network-accessible interface
+- The application is reachable from other devices on the local network
+- Process restarts are handled automatically in the event of failure
+
+The mechanism used (e.g. systemd) is an implementation detail, but these behaviours are mandatory.
+
+------------------------------------------------------------------------
+
+# 10. Automation Layer --- Enforcement Mechanism
 
 Automation enforces architectural guarantees through:
 
@@ -505,7 +590,7 @@ Automation is not optional. It is architectural enforcement.
 
 ------------------------------------------------------------------------
 
-# 10. Operations Layer --- State Protection
+# 11. Operations Layer --- State Protection
 
 OrchidApp maintains two stateful components:
 
@@ -526,7 +611,7 @@ Backups are only considered valid if restores succeed.
 
 ------------------------------------------------------------------------
 
-# 11. Non-Goals
+# 12. Non-Goals
 
 This architecture does not aim to:
 
@@ -539,7 +624,7 @@ Restrictions are intentional.
 
 ------------------------------------------------------------------------
 
-# 12. Evolution Strategy
+# 13. Evolution Strategy
 
 Change is permitted, but not everywhere equally.
 
