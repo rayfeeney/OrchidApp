@@ -5,14 +5,14 @@ try {
 
     # --- PRECONDITIONS -----------------------------------------------------
 
-    $RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
+    $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
     Set-Location $RepoRoot
 
     # --- KEY PATHS ---------------------------------------------------------
 
-    $MigrationFolder = Resolve-Path "database/migrations"
-    $SchemaFolder    = Resolve-Path "database/schema"
-    $ExportScript    = Resolve-Path "database/scripts/Export-MariaDbSchema.ps1"
+    $MigrationFolder = (Resolve-Path "database/migrations").Path
+    $SchemaFolder    = (Resolve-Path "database/schema").Path
+    $ExportScript    = (Resolve-Path "database/scripts/Export-MariaDbSchema.ps1").Path
 
     Write-Host "Repository root: $RepoRoot"
     Write-Host "Migration folder: $MigrationFolder"
