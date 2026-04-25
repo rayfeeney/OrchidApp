@@ -90,13 +90,19 @@ try {
             throw "SQL file not found: $FilePath"
         }
 
-        $output = Get-Content -Path $FilePath -Raw | & $MariaDbExe `
+        # MariaDB expects forward slashes even on Windows
+        $normalizedPath = $FilePath -replace '\\', '/'
+
+        $sql = "source $normalizedPath;"
+
+        $output = $sql | & $MariaDbExe `
             --protocol=TCP `
             --host=$MariaDbHost `
             --port=$MariaDbPort `
             --user=$User `
-            --connect-timeout=5 `
             --database=$Database `
+            --connect-timeout=5 `
+            --default-character-set=utf8mb4 `
             2>&1
 
         if ($LASTEXITCODE -ne 0) {
