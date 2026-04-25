@@ -9,8 +9,7 @@ CREATE TABLE IF NOT EXISTS `plantsplit` (
   `updatedDateTime` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'Last update timestamp (local time)',
   `isActive` tinyint(1) NOT NULL DEFAULT 1 COMMENT '1 = active record; 0 = logically removed (soft delete)',
   PRIMARY KEY (`plantSplitId`),
-  UNIQUE KEY `uxPlantSplit_parentPlantId` (`parentPlantId`),
-  KEY `ixPlantSplitParent` (`parentPlantId`),
+
   CONSTRAINT `chkPlantSplitIsActive` CHECK (`isActive` in (0,1))
 
 ) ENGINE=InnoDB  ;

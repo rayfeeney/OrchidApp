@@ -266,14 +266,37 @@ if ($Type -eq "tables") {
     # Ensure idempotent create
     $sql = $sql -replace 'CREATE TABLE `', 'CREATE TABLE IF NOT EXISTS `'
 
+    # Remove ALL indexes that include FK columns
+    if ($fkColumnMap.ContainsKey($Name)) {
+
+        # Get FK columns for this table
+        $fkColumns = @()
+
+        foreach ($fkCols in $fkColumnMap[$Name]) {
+            $fkColumns += ($fkCols -split "," | ForEach-Object { $_.Trim() })
+        }
+
+        $fkColumns = $fkColumns | Sort-Object -Unique
+
+        # Remove any KEY that references any FK column
+        $sql = [regex]::Replace($sql, '(?ms),?\s*KEY\s+`[^`]+`\s*\(([^)]*)\)', {
+            param($match)
+
+            $cols = $match.Groups[1].Value
+
+            foreach ($fkCol in $fkColumns) {
+                if ($cols -match "``$([regex]::Escape($fkCol))``") {
+                    return ''   # REMOVE the entire KEY
+                }
+            }
+
+            return $match.Value
+        })
+    }
+
     # Remove FOREIGN KEY constraints completely
     $sql = $sql -replace '(?ms),?\s*CONSTRAINT\s+`[^`]+`\s+FOREIGN\s+KEY\s*\([^\)]*\)\s+REFERENCES\s+`[^`]+`\s*\([^\)]*\)\s*(?:ON\s+DELETE\s+\w+\s*)?(?:ON\s+UPDATE\s+\w+\s*)?', ''
     $sql = $sql -replace '(?ms),?\s*FOREIGN\s+KEY\s*\([^\)]*\)\s+REFERENCES\s+`[^`]+`\s*\([^\)]*\)\s*(?:ON\s+DELETE\s+\w+\s*)?(?:ON\s+UPDATE\s+\w+\s*)?', ''
-
-    # Remove leftover FK action fragments only when they trail a KEY definition
-    $sql = $sql -replace '(KEY\s+`[^`]+`\s*\([^\)]*\))\s*ACTION\s+ON\s+UPDATE\s+NO\s+ACTION', '$1'
-    $sql = $sql -replace '(KEY\s+`[^`]+`\s*\([^\)]*\))\s*ON\s+UPDATE\s+NO\s+ACTION', '$1'
-    $sql = $sql -replace '(KEY\s+`[^`]+`\s*\([^\)]*\))\s*ON\s+DELETE\s+NO\s+ACTION', '$1'
 
     # Remove dump artefacts
     $sql = $sql -replace '(?m)^DROP TABLE IF EXISTS.*$', ''
@@ -287,13 +310,16 @@ if ($Type -eq "tables") {
     $sql = $sql -replace 'DEFAULT CHARSET=\w+', ''
     $sql = $sql -replace 'COLLATE=\w+', ''
 
-    # Remove orphan semicolon-only lines
+    # Cleanup after removals
+    $sql = $sql -replace '(?i)\bACTION\s+ON\s+UPDATE\s+NO\s+ACTION\b', ''
+    $sql = $sql -replace '(?i)\bON\s+UPDATE\s+NO\s+ACTION\b', ''
+    $sql = $sql -replace '(?i)\bON\s+DELETE\s+NO\s+ACTION\b', ''
+    $sql = $sql -replace '(?m)^\s*UNIQUE\s*,\s*$', ''
+    $sql = $sql -replace ',\s*\)', ')'
     $sql = $sql -replace '(?m)^\s*(;\s*)+$', ''
 
-    # Put closing bracket and ENGINE on separate line
+    # Formatting
     $sql = $sql -replace '\)\s*ENGINE=InnoDB\s*', "`n) ENGINE=InnoDB"
-
-    # Collapse excessive blank lines
     $sql = $sql -replace "(\r?\n){3,}", "`n`n"
 
     # Final tidy
@@ -318,6 +344,37 @@ if ($Type -eq "tables") {
 
 # --- DISCOVER & EXPORT ------------------------------------------------------
 Write-Host "Reading database metadata…"
+$fkColumnMap = @{}
+
+$fkRows = Invoke-MariaDbQuery @"
+SELECT
+    TABLE_NAME,
+    GROUP_CONCAT(COLUMN_NAME ORDER BY ORDINAL_POSITION SEPARATOR ',') AS Columns
+FROM information_schema.KEY_COLUMN_USAGE
+WHERE TABLE_SCHEMA = '$Database'
+  AND REFERENCED_TABLE_NAME IS NOT NULL
+GROUP BY TABLE_NAME, CONSTRAINT_NAME
+ORDER BY TABLE_NAME;
+"@
+
+foreach ($row in $fkRows) {
+    if ([string]::IsNullOrWhiteSpace($row)) { continue }
+
+    $parts = $row -split "`t"
+
+    if ($parts.Count -lt 2) {
+        throw "Unexpected FK metadata row: $row"
+    }
+
+    $table = $parts[0]
+    $cols  = $parts[1]
+
+    if (-not $fkColumnMap.ContainsKey($table)) {
+        $fkColumnMap[$table] = @()
+    }
+
+    $fkColumnMap[$table] += $cols
+}
 
 # --- Tables -----------------------------------------------------------------
 $tables = Invoke-MariaDbQuery @"
@@ -388,8 +445,7 @@ foreach ($constraintName in ($constraints.Keys | Sort-Object)) {
 
   $sql = @"
 ALTER TABLE $tableQualified
-  ADD CONSTRAINT ``$constraintName``
-  FOREIGN KEY ($columns)
+  ADD FOREIGN KEY ($columns)
   REFERENCES $refTableQualified ($refColumns)
   ON DELETE $onDelete
   ON UPDATE $onUpdate;

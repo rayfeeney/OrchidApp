@@ -21,9 +21,14 @@ try {
 
     # --- TOOL PATHS (deterministic, no PATH dependency) --------------------
 
-    $MariaDbExe = "C:\Program Files\MariaDB 10.11\bin\mariadb.exe"
+    if ($IsWindows) {
+        $MariaDbExe = "C:\Program Files\MariaDB 10.11\bin\mariadb.exe"
+    }
+    else {
+        $MariaDbExe = "mariadb"
+    }
 
-    if (-not (Test-Path $MariaDbExe)) {
+    if ($IsWindows -and -not (Test-Path $MariaDbExe)) {
         throw "mariadb.exe not found at $MariaDbExe"
     }
 

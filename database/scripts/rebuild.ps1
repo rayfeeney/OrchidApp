@@ -55,6 +55,8 @@ Assert-Env "MARIADB_PORT"
 Assert-Env "MARIADB_USER"
 Assert-Env "MARIADB_PASSWORD"
 Assert-Env "MARIADB_DATABASE"
+Assert-Env "MARIADB_CHARSET"
+Assert-Env "MARIADB_COLLATION"
 
 # -------------------------------------------------------
 # MariaDB executable
@@ -74,16 +76,23 @@ function Invoke-MariaDb {
         [string]$Sql
     )
 
-    $Sql | & $MariaDbExe `
+    $output = $Sql | & $MariaDbExe `
         --protocol=TCP `
         --host=$env:MARIADB_HOST `
         --port=$env:MARIADB_PORT `
         --user=$env:MARIADB_USER `
-        --database=$env:MARIADB_DATABASE
+        --default-character-set=$env:MARIADB_CHARSET `
+        2>&1
 
     if ($LASTEXITCODE -ne 0) {
+        Write-Host "---- MariaDB ERROR OUTPUT ----" -ForegroundColor Red
+        $output | ForEach-Object { Write-Host $_ -ForegroundColor Red }
+        Write-Host "--------------------------------" -ForegroundColor Red
+
         throw "MariaDB execution failed"
     }
+
+    return $output
 }
 
 Write-Host "Rebuild configuration:"
@@ -91,22 +100,37 @@ Write-Host "  Host: $($env:MARIADB_HOST)"
 Write-Host "  Port: $($env:MARIADB_PORT)"
 Write-Host "  User: $($env:MARIADB_USER)"
 Write-Host "  Database: $($env:MARIADB_DATABASE)"
+Write-Host "  Charset: $($env:MARIADB_CHARSET)"
+Write-Host "  Collation: $($env:MARIADB_COLLATION)"
+
 
 # -------------------------------------------------------
 # Drop and recreate database
 # -------------------------------------------------------
 Write-Host "Recreating database..."
 
-$db = $env:MARIADB_DATABASE
+$db        = $env:MARIADB_DATABASE
+$charset   = $env:MARIADB_CHARSET
+$collation = $env:MARIADB_COLLATION
 
 $recreateSql = @"
-DROP DATABASE IF EXISTS `$db`;
-CREATE DATABASE `$db`;
+DROP DATABASE IF EXISTS $db;
+CREATE DATABASE $db
+  CHARACTER SET $charset
+  COLLATE $collation;
 "@
 
 Invoke-MariaDb -Sql $recreateSql
 
 Write-Host "Database recreated."
+
+Write-Host "Verifying database exists..."
+
+$testSql = "USE $db; SELECT 1;"
+
+Invoke-MariaDb -Sql $testSql
+
+Write-Host "Database verified."
 
 function Invoke-RequiredDir($dir) {
 

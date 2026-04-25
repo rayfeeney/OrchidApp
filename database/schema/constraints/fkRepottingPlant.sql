@@ -1,6 +1,5 @@
 ALTER TABLE `repotting`
-  ADD CONSTRAINT `fkRepottingPlant`
-  FOREIGN KEY (`plantId`)
+  ADD FOREIGN KEY (`plantId`)
   REFERENCES `plant` (`plantId`)
   ON DELETE RESTRICT
   ON UPDATE RESTRICT;

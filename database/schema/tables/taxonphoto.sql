@@ -8,8 +8,7 @@ CREATE TABLE IF NOT EXISTS `taxonphoto` (
   `isActive` tinyint(1) NOT NULL DEFAULT 1,
   `createdDateTime` datetime NOT NULL DEFAULT current_timestamp(),
   `updatedDateTime` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`taxonPhotoId`),
-  KEY `fk_taxonphoto_taxon` (`taxonId`)
+  PRIMARY KEY (`taxonPhotoId`)
 
 ) ENGINE=InnoDB  ;
 
