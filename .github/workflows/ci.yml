@@ -130,10 +130,10 @@ jobs:
 
       - name: Run schema export
         env:
-          MYSQL_HOST: 127.0.0.1
-          MYSQL_PORT: 3306
-          MYSQL_USER: root
-          MYSQL_PASSWORD: root
+          MARIADB_HOST: 127.0.0.1
+          MARIADB_PORT: 3306
+          MARIADB_USER: root
+          MARIADB_PASSWORD: root
         run: pwsh ./database/scripts/Export-MariaDBSchema.ps1
 
       - name: Detect drift
