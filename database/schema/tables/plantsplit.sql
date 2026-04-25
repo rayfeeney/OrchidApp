@@ -11,6 +11,5 @@ CREATE TABLE IF NOT EXISTS `plantsplit` (
   PRIMARY KEY (`plantSplitId`),
   UNIQUE KEY `uxPlantSplit_parentPlantId` (`parentPlantId`),
   CONSTRAINT `chkPlantSplitIsActive` CHECK (`isActive` in (0,1))
-
 ) ENGINE=InnoDB   ;
 

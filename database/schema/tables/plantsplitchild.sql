@@ -9,6 +9,5 @@ CREATE TABLE IF NOT EXISTS `plantsplitchild` (
   UNIQUE KEY `uxPlantSplitChild_childPlantId` (`childPlantId`),
   KEY `ixPlantSplitChild_splitId` (`plantSplitId`),
   CONSTRAINT `chkPlantSplitChildIsActive` CHECK (`isActive` in (0,1))
-
 ) ENGINE=InnoDB   ;
 

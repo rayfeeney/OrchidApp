@@ -17,6 +17,5 @@ CREATE TABLE IF NOT EXISTS `plant` (
   KEY `ixPlantIsActive` (`isActive`),
   KEY `ixPlantEndReasonCode` (`endReasonCode`),
   CONSTRAINT `chkPlantIsActive` CHECK (`isActive` in (0,1))
-
 ) ENGINE=InnoDB    COMMENT='Individual orchid plants tracked in the collection.';
 

@@ -9,6 +9,5 @@ CREATE TABLE IF NOT EXISTS `taxonphoto` (
   `createdDateTime` datetime NOT NULL DEFAULT current_timestamp(),
   `updatedDateTime` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`taxonPhotoId`)
-
 ) ENGINE=InnoDB   ;
 

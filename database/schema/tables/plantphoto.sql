@@ -14,6 +14,5 @@ CREATE TABLE IF NOT EXISTS `plantphoto` (
   PRIMARY KEY (`plantPhotoId`),
   UNIQUE KEY `uxPlantPhotoSingleHero` (`heroPlantId`),
   CONSTRAINT `chkPlantPhotoIsHero` CHECK (`isHero` in (0,1))
-
 ) ENGINE=InnoDB    COMMENT='Photo metadata for Observation events. Image binaries are stored on disk; this table stores metadata only. Each photo belongs to exactly one plantEvent and one plant. At most one active hero photo per plant is permitted.';
 

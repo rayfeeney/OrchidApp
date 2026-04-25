@@ -349,9 +349,8 @@ if ($Type -eq "tables") {
     $sql = $sql -replace ',\s*\)', ')'
     $sql = $sql -replace '(?m)^\s*(;\s*)+$', ''
 
-    # Formatting
-    $sql = $sql -replace '\)\s*ENGINE=InnoDB\b', "`n) ENGINE=InnoDB"
-    $sql = $sql -replace 'ENGINE=InnoDB\s*COMMENT=', 'ENGINE=InnoDB COMMENT='
+    # Fully normalise table closing line (ENGINE + COMMENT)
+    $sql = $sql -replace '\)\s*ENGINE=InnoDB\s*COMMENT=', "`n) ENGINE=InnoDB COMMENT="
     $sql = $sql -replace "(\r?\n){3,}", "`n`n"
 
     # Final tidy

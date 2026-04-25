@@ -16,7 +16,6 @@ CREATE TABLE IF NOT EXISTS `plantlocationhistory` (
   KEY `ixPlhStatusLookup` (`plantId`,`isActive`,`startDateTime` DESC,`locationId`),
   CONSTRAINT `chkPlantLocationHistoryDateOrder` CHECK (`endDateTime` is null or `endDateTime` > `startDateTime`),
   CONSTRAINT `chkPlantLocationHistoryIsActive` CHECK (`isActive` in (0,1))
-
 ) ENGINE=InnoDB    COMMENT='Time-based history of where plants have been located.';
 
 DELIMITER ;;

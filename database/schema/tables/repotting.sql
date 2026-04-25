@@ -17,6 +17,5 @@ CREATE TABLE IF NOT EXISTS `repotting` (
   KEY `ixRepottingPlantRepotDate` (`plantId`,`repotDate`),
   KEY `ixRepotStatusLookup` (`plantId`,`isActive`,`repotDate` DESC,`newGrowthMediumId`),
   CONSTRAINT `chkRepottingIsActive` CHECK (`isActive` in (0,1))
-
 ) ENGINE=InnoDB    COMMENT='Repotting history per plant.';
 
