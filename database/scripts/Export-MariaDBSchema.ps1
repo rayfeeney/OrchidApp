@@ -96,7 +96,17 @@ $Query
 }
 
 function Get-Checksum($Content) {
-  $bytes = [System.Text.Encoding]::UTF8.GetBytes($Content)
+
+  # --- Canonical normalisation ---
+  $normalised = $Content
+
+  $normalised = $normalised -replace '\r\n', "`n"     # normalise line endings
+  $normalised = $normalised -replace '\s+', ' '       # collapse ALL whitespace
+  $normalised = $normalised -replace '\s*;\s*', ';'   # tidy statement endings
+  $normalised = $normalised -replace '^\s+|\s+$', ''  # trim
+
+  $bytes = [System.Text.Encoding]::UTF8.GetBytes($normalised)
+
   (Get-FileHash -InputStream ([IO.MemoryStream]::new($bytes)) -Algorithm SHA256).Hash
 }
 
