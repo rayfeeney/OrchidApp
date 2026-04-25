@@ -8,6 +8,5 @@ CREATE TABLE IF NOT EXISTS `genus` (
   PRIMARY KEY (`genusId`),
   UNIQUE KEY `uqGenus_GenusName` (`genusName`),
   CONSTRAINT `chkGenusIsActive` CHECK (`isActive` in (0,1))
-
-) ENGINE=InnoDB   COMMENT='Genus information for orchid species and hybrids.';
+) ENGINE=InnoDB    COMMENT='Genus information for orchid species and hybrids.';
 

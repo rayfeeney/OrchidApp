@@ -8,6 +8,5 @@ CREATE TABLE IF NOT EXISTS `growthmedium` (
   PRIMARY KEY (`growthMediumId`),
   UNIQUE KEY `uqname` (`name`),
   CONSTRAINT `chkGrowthMediumIsActive` CHECK (`isActive` in (0,1))
-
-) ENGINE=InnoDB   COMMENT='Lookup table for types of growing media used for plants.';
+) ENGINE=InnoDB    COMMENT='Lookup table for types of growing media used for plants.';
 

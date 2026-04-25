@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS `plantevent` (
   `updatedDateTime` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'Last update timestamp (local time)',
   `observationTypeId` int(11) NOT NULL,
   PRIMARY KEY (`plantEventId`),
+  KEY `ixPlantEventPlantDateTime` (`plantId`,`eventDateTime`),
+  KEY `ixPlantEventStatusLookup` (`plantId`,`isActive`,`eventDateTime` DESC,`observationTypeId`),
   CONSTRAINT `chkPlantEventIsActive` CHECK (`isActive` in (0,1))
-
-) ENGINE=InnoDB   COMMENT='General-purpose event log for plant care and observations.';
+) ENGINE=InnoDB    COMMENT='General-purpose event log for plant care and observations.';
 

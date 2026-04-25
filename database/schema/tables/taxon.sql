@@ -20,6 +20,5 @@ CREATE TABLE IF NOT EXISTS `taxon` (
   KEY `ixTaxonIsActive` (`isActive`),
   CONSTRAINT `chkTaxon_Shape` CHECK (`speciesName` is null and `hybridName` is null or `speciesName` is not null and `hybridName` is null or `speciesName` is null and `hybridName` is not null),
   CONSTRAINT `chkTaxonIsActive` CHECK (`isActive` in (0,1))
-
-) ENGINE=InnoDB   COMMENT='Taxonomic information for orchid species and hybrids.';
+) ENGINE=InnoDB    COMMENT='Taxonomic information for orchid species and hybrids.';
 

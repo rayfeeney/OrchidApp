@@ -5,6 +5,5 @@ CREATE TABLE IF NOT EXISTS `schemaversion` (
   `appliedAt` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`versionId`),
   UNIQUE KEY `uq_scriptName` (`scriptName`)
-
-) ENGINE=InnoDB  ;
+) ENGINE=InnoDB   ;
 

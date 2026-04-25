@@ -6,6 +6,5 @@ CREATE TABLE IF NOT EXISTS `phoneticprefix` (
   PRIMARY KEY (`prefixId`),
   UNIQUE KEY `uqPhoneticPrefixPrefix` (`prefix`),
   CONSTRAINT `chkPhoneticPrefixIsActive` CHECK (`isActive` in (0,1))
-
-) ENGINE=InnoDB  ;
+) ENGINE=InnoDB   ;
 

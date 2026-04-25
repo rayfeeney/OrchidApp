@@ -8,19 +8,25 @@ Set-Location $RepoRoot
 
 # --- TOOL PATHS (deterministic, no PATH dependency) --------------------------
 
-$MariaDbExe = "C:\Program Files\MariaDB 10.11\bin\mariadb.exe"
-$MariaDbDumpExe = "C:\Program Files\MariaDB 10.11\bin\mariadb-dump.exe"
-
-if (-not (Test-Path $MariaDbExe)) {
-  throw "mariadb.exe not found at $MariaDbExe"
+if ($IsWindows) {
+  $MariaDbExe = "C:\Program Files\MariaDB 10.11\bin\mariadb.exe"
+  $MariaDbDumpExe = "C:\Program Files\MariaDB 10.11\bin\mariadb-dump.exe"
+}
+else {
+  $MariaDbExe = "mariadb"
+  $MariaDbDumpExe = "mariadb-dump"
 }
 
-if (-not (Test-Path $MariaDbDumpExe)) {
-  throw "mariadb-dump.exe not found at $MariaDbDumpExe"
+if (-not (Get-Command $MariaDbExe -ErrorAction SilentlyContinue)) {
+  throw "mariadb command not found: $MariaDbExe"
+}
+
+if (-not (Get-Command $MariaDbDumpExe -ErrorAction SilentlyContinue)) {
+  throw "mariadb-dump command not found: $MariaDbDumpExe"
 }
 
 $MariaDbHost = $env:MARIADB_HOST ?? $env:MYSQL_HOST ?? "localhost"
-$MariaDbPort = $env:MARIADB_PORT ?? $env:MYSQL_PORT ?? 3307
+$MariaDbPort = $env:MARIADB_PORT ?? $env:MYSQL_PORT ?? 3306
 $Database = "orchids"
 $User = $env:MARIADB_USER
 $Password = $env:MARIADB_PASSWORD
@@ -90,7 +96,17 @@ $Query
 }
 
 function Get-Checksum($Content) {
-  $bytes = [System.Text.Encoding]::UTF8.GetBytes($Content)
+
+  # --- Canonical normalisation ---
+  $normalised = $Content
+
+  $normalised = $normalised -replace '\r\n', "`n"     # normalise line endings
+  $normalised = $normalised -replace '\s+', ' '       # collapse ALL whitespace
+  $normalised = $normalised -replace '\s*;\s*', ';'   # tidy statement endings
+  $normalised = $normalised -replace '^\s+|\s+$', ''  # trim
+
+  $bytes = [System.Text.Encoding]::UTF8.GetBytes($normalised)
+
   (Get-FileHash -InputStream ([IO.MemoryStream]::new($bytes)) -Algorithm SHA256).Hash
 }
 
@@ -130,7 +146,22 @@ function Format-SqlContent {
 
   $Sql = $Sql -replace "(\r?\n){3,}", "`n`n"
 
-  return ($Sql.Trim() + "`n")
+  # --- FINAL NORMALISATION (deterministic output) -----------------------------
+
+  # Normalise line endings
+  $Sql = $Sql -replace '\r\n', "`n"
+  $Sql = $Sql -replace '\r', "`n"
+
+  # Remove trailing whitespace on each line
+  $Sql = ($Sql -split "`n" | ForEach-Object { $_.TrimEnd() }) -join "`n"
+
+  # Collapse multiple blank lines to max 1
+  $Sql = $Sql -replace "(`n){3,}", "`n`n"
+
+  # Trim overall
+  $Sql = $Sql.Trim()
+
+  return $Sql + "`n"
 }
 
 function Remove-DatabaseQualification {
@@ -266,27 +297,37 @@ if ($Type -eq "tables") {
     # Ensure idempotent create
     $sql = $sql -replace 'CREATE TABLE `', 'CREATE TABLE IF NOT EXISTS `'
 
-    # Remove ALL indexes that include FK columns
+    # Remove ONLY indexes that exactly match FK column sets
     if ($fkColumnMap.ContainsKey($Name)) {
 
-        # Get FK columns for this table
-        $fkColumns = @()
+        $fkColumnSets = @()
 
         foreach ($fkCols in $fkColumnMap[$Name]) {
-            $fkColumns += ($fkCols -split "," | ForEach-Object { $_.Trim() })
+            $set = ($fkCols -split "," | ForEach-Object { $_.Trim() }) -join ","
+            $fkColumnSets += $set
         }
 
-        $fkColumns = $fkColumns | Sort-Object -Unique
-
-        # Remove any KEY that references any FK column
-        $sql = [regex]::Replace($sql, '(?ms),?\s*KEY\s+`[^`]+`\s*\(([^)]*)\)', {
+        $sql = [regex]::Replace($sql, '(?ms),?\s*(UNIQUE\s+)?KEY\s+`([^`]+)`\s*\(([^)]*)\)', {
             param($match)
 
-            $cols = $match.Groups[1].Value
+            $isUnique = $match.Groups[1].Success
+            $colsRaw = $match.Groups[3].Value
 
-            foreach ($fkCol in $fkColumns) {
-                if ($cols -match "``$([regex]::Escape($fkCol))``") {
-                    return ''   # REMOVE the entire KEY
+            # Skip UNIQUE indexes
+            if ($isUnique) {
+                return $match.Value
+            }
+
+            # Normalise column list
+            $cols = (
+                $colsRaw -split "," |
+                ForEach-Object { $_.Trim().Trim('`') }
+            ) -join ","
+
+            # Compare with FK column sets
+            foreach ($fkSet in $fkColumnSets) {
+                if ($cols -eq $fkSet) {
+                    return ''   # REMOVE only exact FK support index
                 }
             }
 
@@ -318,8 +359,13 @@ if ($Type -eq "tables") {
     $sql = $sql -replace ',\s*\)', ')'
     $sql = $sql -replace '(?m)^\s*(;\s*)+$', ''
 
-    # Formatting
-    $sql = $sql -replace '\)\s*ENGINE=InnoDB\s*', "`n) ENGINE=InnoDB"
+    # Remove blank lines before closing ENGINE line
+    $sql = $sql -replace '(?ms)\n\s*\n\s*\)\s*ENGINE=InnoDB\s*COMMENT=', "`n) ENGINE=InnoDB COMMENT="
+
+    # Also handle normal case (no blank line)
+    $sql = $sql -replace '\)\s*ENGINE=InnoDB\s*COMMENT=', "`n) ENGINE=InnoDB COMMENT="
+
+    # Collapse excessive blank lines globally
     $sql = $sql -replace "(\r?\n){3,}", "`n`n"
 
     # Final tidy
@@ -336,7 +382,7 @@ if ($Type -eq "tables") {
 
   if (-not (Test-Path $OutPath) -or $Checksums[$key] -ne $hash) {
     New-DirectoryForFile $OutPath
-    $sql | Out-File -Encoding utf8 $OutPath
+    $sql | Out-File -Encoding utf8NoBOM $OutPath
     $Checksums[$key] = $hash
     Write-Host "Updated $key"
   }
@@ -445,7 +491,8 @@ foreach ($constraintName in ($constraints.Keys | Sort-Object)) {
 
   $sql = @"
 ALTER TABLE $tableQualified
-  ADD FOREIGN KEY ($columns)
+  ADD CONSTRAINT ``$constraintName``
+  FOREIGN KEY ($columns)
   REFERENCES $refTableQualified ($refColumns)
   ON DELETE $onDelete
   ON UPDATE $onUpdate;
@@ -461,7 +508,7 @@ ALTER TABLE $tableQualified
 
   if (-not (Test-Path $OutPath) -or $Checksums[$key] -ne $hash) {
     New-DirectoryForFile $outPath
-    $sql | Out-File -Encoding utf8 $outPath
+    $sql | Out-File -Encoding utf8NoBOM $outPath
     $Checksums[$key] = $hash
     Write-Host "Updated $key"
   }
@@ -559,7 +606,7 @@ foreach ($row in $routines) {
 
   if (-not (Test-Path $OutPath) -or $Checksums[$key] -ne $hash) {
     New-DirectoryForFile $outPath
-    $definition | Out-File -Encoding utf8 $outPath
+    $definition | Out-File -Encoding utf8NoBOM $outPath
     $Checksums[$key] = $hash
     Write-Host "    Updated $relativePath"
   }
@@ -643,7 +690,7 @@ DELIMITER ;
 
   if (-not (Test-Path $OutPath) -or $Checksums[$key] -ne $hash) {
     New-DirectoryForFile $outPath
-    $definition | Out-File -Encoding utf8 $outPath
+    $definition | Out-File -Encoding utf8NoBOM $outPath
     $Checksums[$key] = $hash
     Write-Host "    Updated $key"
   }
@@ -659,7 +706,7 @@ $NewJson = ($Ordered | ConvertTo-Json -Depth 3).Trim()
 
 if (-not (Test-Path $ChecksumFile) -or (Get-Content $ChecksumFile -Raw).Trim() -ne $NewJson) {
   New-DirectoryForFile $ChecksumFile
-  $NewJson | Out-File $ChecksumFile -Encoding utf8
+  $NewJson | Out-File $ChecksumFile -Encoding utf8NoBOM
   Write-Host "Checksum file updated"
 }
 

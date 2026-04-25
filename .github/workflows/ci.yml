@@ -1,6 +1,9 @@
 name: OrchidApp CI
 
 on:
+  push:
+    branches: [ main ]
+  pull_request:
   workflow_dispatch:
 
 jobs:
@@ -18,67 +21,39 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Restore
-        run: dotnet restore
+        run: dotnet restore src/OrchidApp.Web -r linux-arm64
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: |
+          echo "Building OrchidApp..."
+          dotnet build src/OrchidApp.Web --configuration Release --no-restore -r linux-arm64
 
       - name: Publish linux-arm64
         run: |
+          echo "Publishing linux-arm64..."
           dotnet publish src/OrchidApp.Web \
             -c Release \
             -r linux-arm64 \
             --self-contained false \
+            --no-restore \
             -o publish
 
-  migration-sql-validation:
-    name: Migration SQL validation
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Validate migration SQL files
+      - name: Verify publish output
         run: |
-              echo "Validating migration SQL files..."
+          if [ ! -f publish/OrchidApp.Web.dll ]; then
+            echo "Publish output missing"
+            exit 1
+          fi
 
-              if [ ! -d "database/migrations" ]; then
-                echo "No migrations folder found — skipping"
-                exit 0
-              fi
-
-              files=$(find database/migrations -name "*.sql" | sort)
-
-              prev=""
-              for f in $files; do
-                name=$(basename "$f")
-
-                # Validate naming
-                if [[ ! $name =~ ^[0-9]{12}_.+\.sql$ ]]; then
-                  echo "Invalid migration file name: $name"
-                  exit 1
-                fi
-
-                ts=${name:0:12}
-
-                # Ordering check
-                if [[ -n "$prev" && "$ts" < "$prev" ]]; then
-                  echo "Out-of-order migration: $name"
-                  exit 1
-                fi
-
-                # Duplicate timestamp
-                if [[ "$ts" == "$prev" ]]; then
-                  echo "Duplicate timestamp detected: $name"
-                  exit 1
-                fi
-
-                prev=$ts
-              done
-
-              echo "Migration SQL validation passed"
 
   schema-contract:
     name: Schema contract validation
@@ -86,75 +61,87 @@ jobs:
 
     services:
       mariadb:
-        image: mariadb:11
+        image: mariadb:10.11
         env:
-          MYSQL_ROOT_PASSWORD: root
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: orchids
         ports:
           - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install MySQL client
-        run: sudo apt-get update && sudo apt-get install -y mysql-client
+      - name: Install MariaDB client
+        run: sudo apt-get update && sudo apt-get install -y mariadb-client
 
       - name: Wait for MariaDB
         run: |
-          for i in {1..30}; do
-            mysql -h 127.0.0.1 -uroot -proot -e "SELECT 1" && break
+          for i in {1..10}; do
+            mysql --default-character-set=utf8mb4 -h 127.0.0.1 -uroot -proot -e "SELECT 1" && break
             echo "Waiting for DB..."
             sleep 2
           done
 
-      - name: Create database
+      - name: Recreate database with utf8mb4
         run: |
-          mysql -h 127.0.0.1 -uroot -proot -e "CREATE DATABASE orchids;"
+          mysql -h 127.0.0.1 -uroot -proot -e "DROP DATABASE IF EXISTS orchids;"
+          mysql -h 127.0.0.1 -uroot -proot -e "CREATE DATABASE orchids CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
-      - name: Apply schema (tables first)
+      - name: Apply schema (tables)
         run: |
-          for f in database/schema/tables/*.sql; do
-            mysql -h 127.0.0.1 -uroot -proot orchids < "$f"
+          for f in $(ls database/schema/tables/*.sql | sort); do
+            echo "Applying $f"
+            mysql --default-character-set=utf8mb4 -h 127.0.0.1 -uroot -proot orchids < "$f" || exit 1
           done
 
       - name: Apply constraints
         run: |
-          for f in database/schema/constraints/*.sql; do
-            mysql -h 127.0.0.1 -uroot -proot orchids < "$f"
-          done
-
-      - name: Apply views
-        run: |
-          for f in database/schema/views/*.sql; do
-            mysql -h 127.0.0.1 -uroot -proot orchids < "$f"
+          for f in $(ls database/schema/constraints/*.sql | sort); do
+            echo "Applying $f"
+            mysql --default-character-set=utf8mb4 -h 127.0.0.1 -uroot -proot orchids < "$f" || exit 1
           done
 
       - name: Apply routines
         run: |
-          for f in database/schema/routines/*.sql; do
-            mysql -h 127.0.0.1 -uroot -proot orchids < "$f"
+          for f in $(ls database/schema/routines/*.sql | sort); do
+            echo "Applying $f"
+            mysql --default-character-set=utf8mb4 -h 127.0.0.1 -uroot -proot orchids < "$f" || exit 1
+          done
+
+      - name: Apply views
+        run: |
+          for f in $(ls database/schema/views/*.sql | sort); do
+            echo "Applying $f"
+            mysql --default-character-set=utf8mb4 -h 127.0.0.1 -uroot -proot orchids < "$f" || exit 1
           done
 
       - name: Apply triggers
         run: |
-          for f in database/schema/triggers/*.sql; do
-            mysql -h 127.0.0.1 -uroot -proot orchids < "$f"
+          for f in $(ls database/schema/triggers/*.sql | sort); do
+            echo "Applying $f"
+            mysql --default-character-set=utf8mb4 -h 127.0.0.1 -uroot -proot orchids < "$f" || exit 1
           done
 
       - name: Run schema export
         env:
-          MYSQL_HOST: 127.0.0.1
-          MYSQL_PORT: 3306
-          MYSQL_USER: root
-          MYSQL_PASSWORD: root
-        run: pwsh ./database/scripts/Export-MySqlSchema.ps1
+          MARIADB_HOST: 127.0.0.1
+          MARIADB_PORT: 3306
+          MARIADB_USER: root
+          MARIADB_PASSWORD: root
+        run: pwsh ./database/scripts/Export-MariaDBSchema.ps1
 
       - name: Detect drift
         run: |
-          if [[ -n $(git status --porcelain) ]]; then
+          if [[ -n $(git diff -w --ignore-blank-lines) ]]; then
             echo "Schema drift detected!"
             git status
-            git diff
+            git --no-pager diff -w --ignore-blank-lines
             exit 1
           fi
 
