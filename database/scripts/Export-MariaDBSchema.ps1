@@ -349,8 +349,13 @@ if ($Type -eq "tables") {
     $sql = $sql -replace ',\s*\)', ')'
     $sql = $sql -replace '(?m)^\s*(;\s*)+$', ''
 
-    # Fully normalise table closing line (ENGINE + COMMENT)
+    # Remove blank lines before closing ENGINE line
+    $sql = $sql -replace '(?ms)\n\s*\n\s*\)\s*ENGINE=InnoDB\s*COMMENT=', "`n) ENGINE=InnoDB COMMENT="
+
+    # Also handle normal case (no blank line)
     $sql = $sql -replace '\)\s*ENGINE=InnoDB\s*COMMENT=', "`n) ENGINE=InnoDB COMMENT="
+
+    # Collapse excessive blank lines globally
     $sql = $sql -replace "(\r?\n){3,}", "`n`n"
 
     # Final tidy
