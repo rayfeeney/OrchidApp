@@ -88,6 +88,11 @@ jobs:
             sleep 2
           done
 
+      - name: Recreate database with utf8mb4
+        run: |
+          mysql -h 127.0.0.1 -uroot -proot -e "DROP DATABASE IF EXISTS orchids;"
+          mysql -h 127.0.0.1 -uroot -proot -e "CREATE DATABASE orchids CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+
       - name: Apply schema (tables)
         run: |
           for f in $(ls database/schema/tables/*.sql | sort); do
