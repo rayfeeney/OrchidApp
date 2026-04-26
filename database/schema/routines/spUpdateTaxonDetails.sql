@@ -16,6 +16,8 @@ CREATE OR REPLACE PROCEDURE `spUpdateTaxonDetails`(
 )
 BEGIN
 
+    DECLARE v_genusId INT;
+
     DECLARE v_isSystemManaged TINYINT;
 
     DECLARE v_existingSpecies VARCHAR(100);
@@ -26,9 +28,9 @@ BEGIN
 
     SET p_hybridName  = NULLIF(TRIM(p_hybridName), '');
 
-    SELECT isSystemManaged, speciesName, hybridName
+    SELECT isSystemManaged, speciesName, hybridName, genusId
 
-    INTO v_isSystemManaged, v_existingSpecies, v_existingHybrid
+    INTO v_isSystemManaged, v_existingSpecies, v_existingHybrid, v_genusId
 
     FROM taxon
 
@@ -98,7 +100,9 @@ BEGIN
 
             FROM taxon
 
-            WHERE speciesName = p_speciesName
+            WHERE genusId = v_genusId
+
+              AND speciesName = p_speciesName
 
               AND taxonId <> p_taxonId
 
@@ -116,7 +120,9 @@ BEGIN
 
             FROM taxon
 
-            WHERE hybridName = p_hybridName
+            WHERE genusId = v_genusId
+
+              AND hybridName = p_hybridName
 
               AND taxonId <> p_taxonId
 
