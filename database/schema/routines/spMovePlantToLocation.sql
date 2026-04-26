@@ -21,8 +21,6 @@ BEGIN
     SET vNow = NOW();
     SET vStart = TIMESTAMP(DATE(pStartDate), TIME(vNow));
 
-
-
     IF NOT EXISTS (SELECT 1 FROM plant WHERE plantId = pPlantId) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'PlantId does not exist.';
     END IF;
@@ -30,7 +28,6 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM location WHERE locationId = pLocationId) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'LocationId does not exist.';
     END IF;
-
 
     SELECT plantLocationHistoryId, locationId, startDateTime
       INTO vCurrentId, vCurrentLocationId, vCurrentStart
@@ -73,8 +70,6 @@ BEGIN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Move would overlap existing history.';
     END IF;
-
-
 
     START TRANSACTION;
 

@@ -60,8 +60,6 @@ BEGIN
 
     ELSE
 
-
-
         IF v_existingSpecies IS NOT NULL AND p_hybridName IS NOT NULL THEN
 
             SIGNAL SQLSTATE '45000'
@@ -93,8 +91,6 @@ BEGIN
             SET MESSAGE_TEXT = 'Taxon cannot have both species and hybrid names';
 
         END IF;
-
-
 
         IF p_speciesName IS NOT NULL AND EXISTS (
 

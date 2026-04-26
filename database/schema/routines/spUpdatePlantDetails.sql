@@ -66,8 +66,6 @@ BEGIN
 
     ) INTO vIsSplitParent;
 
-
-
     IF (DATE(pAcquisitionDate) <=> DATE(vExistingAcquisitionDate)) = 0 THEN
 
         IF vIsSplitChild THEN
@@ -79,8 +77,6 @@ BEGIN
         END IF;
 
     END IF;
-
-
 
     IF (DATE(pEndDate) <=> DATE(vExistingEndDate)) = 0 THEN
 
@@ -94,8 +90,6 @@ BEGIN
 
     END IF;
 
-
-
     IF pAcquisitionDate IS NOT NULL AND DATE(pAcquisitionDate) > CURRENT_DATE THEN
 
         SIGNAL SQLSTATE '45000'
@@ -104,8 +98,6 @@ BEGIN
 
     END IF;
 
-
-
     IF pEndDate IS NOT NULL AND DATE(pEndDate) > CURRENT_DATE THEN
 
         SIGNAL SQLSTATE '45000'
@@ -113,8 +105,6 @@ BEGIN
         SET MESSAGE_TEXT = 'End date cannot be in the future.';
 
     END IF;
-
-
 
     IF pEndDate IS NOT NULL AND pAcquisitionDate IS NOT NULL
 
@@ -132,13 +122,9 @@ BEGIN
 
             WHEN pAcquisitionDate IS NULL THEN NULL
 
-
-
             WHEN vExistingAcquisitionDate IS NULL THEN
 
                 TIMESTAMP(DATE(pAcquisitionDate), CURRENT_TIME)
-
-
 
             ELSE
 
@@ -152,13 +138,9 @@ BEGIN
 
             WHEN pEndDate IS NULL THEN NULL
 
-
-
             WHEN vExistingEndDate IS NULL THEN
 
                 TIMESTAMP(DATE(pEndDate), CURRENT_TIME)
-
-
 
             ELSE
 
@@ -186,8 +168,6 @@ BEGIN
 
     IF vExistingEndDate IS NULL AND vFinalEndDate IS NOT NULL THEN
 
-
-
         UPDATE plantlocationhistory
 
            SET endDateTime = vFinalEndDate
@@ -195,8 +175,6 @@ BEGIN
          WHERE plantId = pPlantId
 
            AND endDateTime IS NULL;
-
-
 
         UPDATE flowering
 

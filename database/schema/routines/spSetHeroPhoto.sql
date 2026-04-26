@@ -7,7 +7,6 @@ BEGIN
 
     DECLARE vExists INT;
 
-
     SELECT COUNT(*)
     INTO vExists
     FROM orchids.plantphoto
@@ -20,13 +19,11 @@ BEGIN
             SET MESSAGE_TEXT = 'Invalid hero selection';
     END IF;
 
-
     UPDATE orchids.plantphoto
     SET isHero = 0
     WHERE plantId = pPlantId
       AND isHero = 1
       AND isActive = 1;
-
 
     UPDATE orchids.plantphoto
     SET isHero = 1

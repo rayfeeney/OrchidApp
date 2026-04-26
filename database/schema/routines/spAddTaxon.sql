@@ -20,13 +20,9 @@ BEGIN
 
     DECLARE vNewTaxonId  INT;
 
-
-
     SET vSpeciesName = NULLIF(TRIM(pSpeciesName), '');
 
     SET vHybridName  = NULLIF(TRIM(pHybridName), '');
-
-
 
     CALL spAddTaxonInternal(
 
@@ -45,8 +41,6 @@ BEGIN
         vNewTaxonId
 
     );
-
-
 
     SELECT vNewTaxonId AS TaxonId;
 
