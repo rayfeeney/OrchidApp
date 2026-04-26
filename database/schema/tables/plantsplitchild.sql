@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS `plantsplitchild` (
   `isActive` tinyint(4) NOT NULL DEFAULT 1 COMMENT 'Indicates whether this record is valid for use; inactive records represent superseded or erroneous entries retained for audit purposes',
   PRIMARY KEY (`plantSplitChildId`),
   UNIQUE KEY `uxPlantSplitChild_childPlantId` (`childPlantId`),
-  KEY `ixPlantSplitChild_splitId` (`plantSplitId`),
   CONSTRAINT `chkPlantSplitChildIsActive` CHECK (`isActive` in (0,1))
 ) ENGINE=InnoDB   ;
 
