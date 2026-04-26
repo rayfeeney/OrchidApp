@@ -1,5 +1,5 @@
 ALTER TABLE `plantevent`
-  ADD CONSTRAINT `fk_plantevent_observationtype`
+  ADD CONSTRAINT `fkPlantEventObservationType`
   FOREIGN KEY (`observationTypeId`)
   REFERENCES `observationtype` (`Id`)
   ON DELETE RESTRICT
