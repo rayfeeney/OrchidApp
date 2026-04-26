@@ -1,5 +1,5 @@
 ALTER TABLE `repotting`
-  ADD CONSTRAINT `fk_repotting_new_growthmedium`
+  ADD CONSTRAINT `fkRepottingNewGrowthMedium`
   FOREIGN KEY (`newGrowthMediumId`)
   REFERENCES `growthmedium` (`growthMediumId`)
   ON DELETE RESTRICT
