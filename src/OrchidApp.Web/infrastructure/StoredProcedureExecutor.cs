@@ -44,6 +44,13 @@ public class StoredProcedureExecutor : IStoredProcedureExecutor
         if (conn.State != ConnectionState.Open)
             await conn.OpenAsync();
 
+        // Enforce session collation
+        await using (var setCmd = conn.CreateCommand())
+        {
+            setCmd.CommandText = "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;";
+            await setCmd.ExecuteNonQueryAsync();
+        }
+
         await using var cmd = conn.CreateCommand();
         cmd.CommandText = BuildCallSql(procedureName, parameters);
         cmd.CommandType = CommandType.Text;
