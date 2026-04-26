@@ -15,17 +15,18 @@ builder.Services.AddRazorPages();
 builder.Services.AddDbContext<OrchidDbContext>(options =>
 {
     var connectionString = builder.Configuration.GetConnectionString("OrchidDb");
-        if (string.IsNullOrWhiteSpace(connectionString))
-        {
-            throw new InvalidOperationException(
-                "Connection string 'OrchidDb' is not configured. " +
-                "Ensure Production provides it via environment configuration.");
-        }
-    options.UseMySql(connectionString,new MySqlServerVersion(new Version(10, 6, 0))
-);
 
+    if (string.IsNullOrWhiteSpace(connectionString))
+    {
+        throw new InvalidOperationException(
+            "Connection string 'OrchidDb' is not configured. " +
+            "Ensure Production provides it via environment configuration.");
+    }
+
+    options
+        .UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
+        .AddInterceptors(new CollationInterceptor());
 });
-
 
 builder.Services.AddSingleton<PhotoPipeline>();
 

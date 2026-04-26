@@ -348,6 +348,69 @@ This provides the only supported rollback mechanism.
 
 Upgrades must always follow this sequence.
 
+# MariaDB Configuration (Required)
+
+The OrchidApp database requires MariaDB to be configured with:
+
+- Character Set: utf8mb4
+- Collation: utf8mb4_unicode_ci
+
+### Check Current Configuration
+
+Run:
+
+```sql
+SHOW VARIABLES LIKE 'collation%';
+
+Expected:
+
+collation_server = utf8mb4_unicode_ci
+collation_database = utf8mb4_unicode_ci
+collation_connection = utf8mb4_unicode_ci
+Apply Configuration (if required)
+
+Edit MariaDB config:
+
+sudo nano /etc/mysql/mariadb.conf.d/50-server.cnf
+
+Ensure:
+
+[mysqld]
+character-set-server = utf8mb4
+collation-server     = utf8mb4_unicode_ci
+
+Restart MariaDB:
+
+sudo systemctl restart mariadb
+Reconnect and Verify
+SHOW VARIABLES LIKE 'collation%';
+
+⚠️ This step must be completed before running any database migrations or application updates.
+
+
+---
+
+# 🧠 Why this is the right level
+
+You’ve now made:
+
+| Concern | Ownership |
+|--------|----------|
+| Collation | Infrastructure |
+| Schema | Git |
+| Behaviour | SPs |
+
+👉 Clean separation. No hidden assumptions.
+
+---
+
+# ⚠️ One small improvement (worth adding)
+
+Add a note like:
+
+```md
+If this step is skipped, the application may throw collation mismatch errors when executing stored procedures.
+
 ## 4.1 SQL Maria DB objects upgrade
 
 If SQL objects are included in the upgrade, these must be applied first. 
