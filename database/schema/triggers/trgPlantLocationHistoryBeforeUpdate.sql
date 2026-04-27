@@ -1,8 +1,8 @@
 DELIMITER //
 
-DROP TRIGGER IF EXISTS `trg_plh_single_open_before_update`//
+DROP TRIGGER IF EXISTS `trgPlantLocationHistoryBeforeUpdate`//
 
-CREATE TRIGGER `trg_plh_single_open_before_update` BEFORE UPDATE ON `plantlocationhistory` FOR EACH ROW BEGIN
+CREATE TRIGGER `trgPlantLocationHistoryBeforeUpdate` BEFORE UPDATE ON `plantlocationhistory` FOR EACH ROW BEGIN
 
     
     IF NEW.isActive = 1 AND NEW.endDateTime IS NULL THEN
