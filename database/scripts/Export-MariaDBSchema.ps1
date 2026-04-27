@@ -540,6 +540,7 @@ ORDER BY ROUTINE_TYPE, ROUTINE_NAME;
 "@
 
 foreach ($row in $routines) {
+
   $parts = $row -split "`t"
   $name  = $parts[0]
   $type  = $parts[1]
@@ -549,57 +550,64 @@ foreach ($row in $routines) {
   $result = Invoke-MariaDbQuery "SHOW CREATE $type ``$Database``.``$name``;"
 
   if (-not $result) {
-    throw "    Failed to read definition for $type $name"
-    continue
+    throw "Failed to read definition for $type $name"
   }
 
   $resultText = ($result -join "`n")
 
+  # Find actual CREATE FUNCTION / PROCEDURE (not CREATE_USER etc)
   $pattern = if ($type -eq "PROCEDURE") {
-    '(?is)\bCREATE\b.*?\bPROCEDURE\b'
+      '(?is)\bCREATE\s+(?:DEFINER\s*=\s*`[^`]+`\s*@\s*`[^`]+`\s+)?PROCEDURE\b'
   } else {
-    '(?is)\bCREATE\b.*?\bFUNCTION\b'
+      '(?is)\bCREATE\s+(?:DEFINER\s*=\s*`[^`]+`\s*@\s*`[^`]+`\s+)?FUNCTION\b'
   }
 
   $m = [regex]::Match($resultText, $pattern)
 
   if (-not $m.Success) {
-    throw "Exported definition for $type ${name} does not contain a CREATE $type statement. Raw output was: [$resultText]"
+      throw "Could not locate CREATE $type for $name. Raw: [$resultText]"
   }
 
   $definition = $resultText.Substring($m.Index)
-  $definition = $definition -replace '^(?i)CREATE\s+', 'CREATE OR REPLACE '
+
+  # --- Clean up noise ---
   $definition = $definition -replace '(?is)\bDEFINER\s*=\s*`[^`]+`\s*@\s*`[^`]+`\s*', ''
   $definition = $definition -replace '\\r\\n', "`n"
   $definition = $definition -replace '\\n', "`n"
   $definition = $definition -replace '\\t', "`t"
+
   # Remove charset / collation noise
   $definition = $definition -replace '(?i)\s+CHARSET\s+\w+', ''
   $definition = $definition -replace '(?i)\s+COLLATE\s+\w+', ''
 
-  # Collapse excessive blank lines (deterministic formatting)
-  $definition = $definition -replace "(`r?`n){3,}", "`n`n"
+  # Force idempotency
+  $definition = $definition -replace '^(?i)CREATE\s+', 'CREATE OR REPLACE '
 
-  # Trim trailing whitespace on each line
+  # --- Formatting ---
   $definition = ($definition -split "`n" | ForEach-Object { $_.TrimEnd() }) -join "`n"
+  $definition = $definition -replace "(`r?`n){3,}", "`n`n"
+  $definition = $definition.Trim() + "`n"
 
+  # --- Strip trailing metadata after final END (MariaDB SHOW CREATE quirk) ---
   $endMatch = [regex]::Match(
-    $definition,
-    '(?is)\bEND\b',
-    [System.Text.RegularExpressions.RegexOptions]::RightToLeft
+      $definition,
+      '(?is)\bEND\b',
+      [System.Text.RegularExpressions.RegexOptions]::RightToLeft
   )
 
   if (-not $endMatch.Success) {
-    throw "Could not locate END for $type ${name}"
+      throw "Could not locate final END for $type $name"
   }
 
-  $definition = $definition.Substring(0, $endMatch.Index + 3)
+  $definition = $definition.Substring(0, $endMatch.Index + $endMatch.Length)
   $definition = $definition.Trim() + "`n"
+
+  # --- Wrap delimiter (DO NOT try to trim to END) ---
   $definition = "DELIMITER //`n$definition//`nDELIMITER ;`n"
 
+  # --- Persist ---
   $key = "routines/$name"
-  $relativePath = "$key.sql"
-  $outPath = Join-Path $SchemaRoot $relativePath
+  $outPath = Join-Path $SchemaRoot "$key.sql"
 
   $hash = Get-Checksum $definition
   $SeenObjects[$key] = $true
@@ -608,7 +616,7 @@ foreach ($row in $routines) {
     New-DirectoryForFile $outPath
     $definition | Out-File -Encoding utf8NoBOM $outPath
     $Checksums[$key] = $hash
-    Write-Host "    Updated $relativePath"
+    Write-Host "    Updated $key"
   }
 }
 

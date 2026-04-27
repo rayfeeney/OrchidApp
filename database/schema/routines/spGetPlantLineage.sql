@@ -8,8 +8,6 @@ BEGIN
 
     WITH RECURSIVE lineage AS (
 
-
-
         SELECT
 
             p.plantId,
@@ -27,8 +25,6 @@ BEGIN
         WHERE p.plantId = pPlantId
 
         UNION ALL
-
-
 
         SELECT
 
@@ -55,8 +51,6 @@ BEGIN
         JOIN plant parent
 
             ON parent.plantId = ps.parentPlantId
-
-
 
         WHERE l.level > -20
 

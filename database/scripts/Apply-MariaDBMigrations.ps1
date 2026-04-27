@@ -96,7 +96,10 @@ try {
         # MariaDB expects forward slashes even on Windows
         $normalizedPath = $FilePath -replace '\\', '/'
 
-        $sql = "source $normalizedPath;"
+        $sql = @"
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+source $normalizedPath;
+"@
 
         $output = $sql | & $MariaDbExe `
             --protocol=TCP `

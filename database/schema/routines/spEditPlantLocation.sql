@@ -21,7 +21,6 @@ BEGIN
 
     START TRANSACTION;
 
-
         SELECT plantId, startDateTime, endDateTime
           INTO vPlantId, vOldStart, vOldEnd
         FROM plantlocationhistory
@@ -38,12 +37,10 @@ BEGIN
         SET vNewStart = COALESCE(pNewStartDateTime, vOldStart);
         SET vEffectiveEnd = IF(vIsCurrent = 1, NOW(), vOldEnd);
 
-
         IF vNewStart >= vEffectiveEnd THEN
             SIGNAL SQLSTATE '45000'
                 SET MESSAGE_TEXT = 'startDateTime must be earlier than endDateTime.';
         END IF;
-
 
         SELECT plantLocationHistoryId, startDateTime
           INTO vPrevId, vPrevStart
@@ -53,7 +50,6 @@ BEGIN
           AND endDateTime = vOldStart
           AND plantLocationHistoryId <> pPlantLocationHistoryId
         FOR UPDATE;
-
 
         SELECT startDateTime
           INTO vNextStart
@@ -65,24 +61,20 @@ BEGIN
         LIMIT 1
         FOR UPDATE;
 
-
         IF vNextStart IS NOT NULL AND vNewStart >= vNextStart THEN
             SIGNAL SQLSTATE '45000'
                 SET MESSAGE_TEXT = 'startDateTime cannot overlap next location.';
         END IF;
-
 
         IF vIsCurrent = 1 AND vNewStart >= NOW() THEN
             SIGNAL SQLSTATE '45000'
                 SET MESSAGE_TEXT = 'startDateTime cannot be in the future.';
         END IF;
 
-
         IF vPrevId IS NOT NULL AND vNewStart <= vPrevStart THEN
             SIGNAL SQLSTATE '45000'
                 SET MESSAGE_TEXT = 'startDateTime would invalidate previous location.';
         END IF;
-
 
         IF vPrevId IS NOT NULL AND vNewStart <> vOldStart THEN
             UPDATE plantlocationhistory
@@ -90,14 +82,12 @@ BEGIN
             WHERE plantLocationHistoryId = vPrevId;
         END IF;
 
-
         UPDATE plantlocationhistory
         SET
             startDateTime      = vNewStart,
             moveReasonNotes    = COALESCE(pMoveReasonNotes, moveReasonNotes),
             plantLocationNotes = COALESCE(pPlantLocationNotes, plantLocationNotes)
         WHERE plantLocationHistoryId = pPlantLocationHistoryId;
-
 
         IF (
             SELECT COUNT(*)

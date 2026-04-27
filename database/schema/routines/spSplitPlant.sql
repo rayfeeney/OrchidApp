@@ -42,12 +42,6 @@ BEGIN
 
     DECLARE vChildPlantId INT;
 
-
-
-
-
-
-
     IF pParentPlantId IS NULL THEN
 
         SIGNAL SQLSTATE '45000'
@@ -164,12 +158,6 @@ BEGIN
 
     END IF;
 
-
-
-
-
-
-
     INSERT INTO plantsplit (
 
         parentPlantId,
@@ -201,10 +189,6 @@ BEGIN
     SET vSplitId = LAST_INSERT_ID();
 
     SET vChildCount = JSON_LENGTH(pChildrenJson);
-
-
-
-
 
     DROP TEMPORARY TABLE IF EXISTS tmpChildren;
 
@@ -351,12 +335,6 @@ BEGIN
         SET vIdx = vIdx + 1;
 
     END WHILE;
-
-
-
-
-
-
 
     IF vParentEnd IS NULL THEN
 
