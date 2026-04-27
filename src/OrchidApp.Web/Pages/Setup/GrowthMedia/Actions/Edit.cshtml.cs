@@ -55,19 +55,29 @@ public class EditModel : PageModel
 
         try
         {
-            object descriptionParam =
+            var descriptionParam =
                 string.IsNullOrWhiteSpace(Input.Description)
-                    ? DBNull.Value
-                    : Input.Description.Trim();
+                    ? new MySqlConnector.MySqlParameter("@p2", MySqlConnector.MySqlDbType.VarChar)
+                    {
+                        Value = DBNull.Value
+                    }
+                    : new MySqlConnector.MySqlParameter("@p2", MySqlConnector.MySqlDbType.VarChar)
+                    {
+                        Value = Input.Description.Trim()
+                    };
 
             await _db.Database.ExecuteSqlRawAsync(
-                "CALL spUpdateGrowthMediumDetails({0},{1},{2})",
-                new object[]
+                "CALL spUpdateGrowthMediumDetails(@p0,@p1,@p2)",
+                new MySqlConnector.MySqlParameter("@p0", MySqlConnector.MySqlDbType.Int32)
                 {
-                    GrowthMediumId,
-                    Input.Name.Trim(),
-                    descriptionParam
-                });
+                    Value = GrowthMediumId
+                },
+                new MySqlConnector.MySqlParameter("@p1", MySqlConnector.MySqlDbType.VarChar)
+                {
+                    Value = Input.Name.Trim()
+                },
+                descriptionParam
+            );
         }
         catch (Exception ex)
         {
