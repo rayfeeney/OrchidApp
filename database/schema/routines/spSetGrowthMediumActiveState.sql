@@ -1,4 +1,7 @@
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 DELIMITER //
+
 CREATE OR REPLACE PROCEDURE `spSetGrowthMediumActiveState`(
     IN pGrowthMediumId INT,
     IN pIsActive BOOLEAN
@@ -22,5 +25,5 @@ proc: BEGIN
 
 END
 //
-DELIMITER ;
 
+DELIMITER ;

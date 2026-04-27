@@ -1,4 +1,7 @@
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 DELIMITER //
+
 CREATE OR REPLACE PROCEDURE `spAddGenus`(
     IN pGenusName   VARCHAR(100),
     IN pGenusNotes  TEXT
@@ -74,5 +77,5 @@ BEGIN
         vGenusOnlyTaxonId AS GenusOnlyTaxonId;
 END
 //
-DELIMITER ;
 
+DELIMITER ;

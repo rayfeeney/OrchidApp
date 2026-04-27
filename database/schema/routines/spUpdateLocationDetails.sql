@@ -1,4 +1,7 @@
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 DELIMITER //
+
 CREATE OR REPLACE PROCEDURE `spUpdateLocationDetails`(
 
     IN pLocationId INT,
@@ -92,5 +95,5 @@ BEGIN
 
 END
 //
-DELIMITER ;
 
+DELIMITER ;

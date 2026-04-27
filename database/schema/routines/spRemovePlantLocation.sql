@@ -1,4 +1,7 @@
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 DELIMITER //
+
 CREATE OR REPLACE PROCEDURE `spRemovePlantLocation`(
     IN pPlantLocationHistoryId INT
 )
@@ -99,5 +102,5 @@ BEGIN
     COMMIT;
 END
 //
-DELIMITER ;
 
+DELIMITER ;

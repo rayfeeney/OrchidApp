@@ -603,7 +603,15 @@ foreach ($row in $routines) {
   $definition = $definition.Trim() + "`n"
 
   # --- Wrap delimiter (DO NOT try to trim to END) ---
-  $definition = "DELIMITER //`n$definition//`nDELIMITER ;`n"
+  $definition = @"
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+DELIMITER //
+
+$definition//
+
+DELIMITER ;
+"@
 
   # --- Persist ---
   $key = "routines/$name"

@@ -1,4 +1,7 @@
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 DELIMITER //
+
 CREATE OR REPLACE PROCEDURE `spSetHeroPhoto`(
     IN pPlantId INT,
     IN pPlantPhotoId INT
@@ -31,5 +34,5 @@ BEGIN
 
 END
 //
-DELIMITER ;
 
+DELIMITER ;
