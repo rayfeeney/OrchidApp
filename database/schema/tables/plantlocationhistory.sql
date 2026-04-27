@@ -18,18 +18,3 @@ CREATE TABLE IF NOT EXISTS `plantlocationhistory` (
   CONSTRAINT `chkPlantLocationHistoryIsActive` CHECK (`isActive` in (0,1))
 ) ENGINE=InnoDB    COMMENT='Time-based history of where plants have been located.';
 
-ALTER DATABASE `orchids` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci ;
-
-DELIMITER ;;
-
-DELIMITER ;
-
-ALTER DATABASE `orchids` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ;
-ALTER DATABASE `orchids` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci ;
-
-DELIMITER ;;
-
-DELIMITER ;
-
-ALTER DATABASE `orchids` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ;
-

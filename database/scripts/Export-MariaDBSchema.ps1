@@ -137,6 +137,10 @@ function Format-SqlContent {
 
   $Sql = $Sql -replace '(?m)^\s*SET\s+.*?;\s*$', ''
 
+  # Remove environment/session dump artefacts (CI mismatch fix)
+  $Sql = $Sql -replace '(?m)^\s*ALTER\s+DATABASE\s+.*$', ''
+  $Sql = $Sql -replace '(?m)^\s*DELIMITER\s+.*$', ''
+
   $Sql = $Sql -replace '(?m)^\s*LOCK TABLES.*$', ''
   $Sql = $Sql -replace '(?m)^\s*UNLOCK TABLES.*$', ''
   $Sql = $Sql -replace '(?m)^\s*COMMIT;.*$', ''
