@@ -8,7 +8,7 @@ designed, migration-controlled and operationally validated MariaDB
 database schema.
 
 The system is deliberately opinionated. Invariants live in the database.
-Behaviour lives in the application. Enforcement lives in automation.
+Behaviour lives in the application. Enforcement lives  in automation.
 
 ------------------------------------------------------------------------
 
