@@ -689,6 +689,8 @@ foreach ($row in $triggers) {
   $definition = $definition.Trim()
 
   $definition = @"
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+  
 DELIMITER //
 
 DROP TRIGGER IF EXISTS ``$name``//
