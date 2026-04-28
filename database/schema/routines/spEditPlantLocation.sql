@@ -88,8 +88,8 @@ BEGIN
         UPDATE plantlocationhistory
         SET
             startDateTime      = vNewStart,
-            moveReasonNotes    = COALESCE(pMoveReasonNotes, moveReasonNotes),
-            plantLocationNotes = COALESCE(pPlantLocationNotes, plantLocationNotes)
+            moveReasonNotes    = NULLIF(pMoveReasonNotes, ''),
+            plantLocationNotes = NULLIF(pPlantLocationNotes, '')
         WHERE plantLocationHistoryId = pPlantLocationHistoryId;
 
         IF (
