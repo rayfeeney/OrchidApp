@@ -311,15 +311,29 @@
     <div class="mb-4">
 
         <p class="text-muted small mb-2">
-            Splitting ends this plant and creates new plants.
+            Splitting ends this plant and creates new plants. 
+            Propagation (Keiki, Backbulb, Cuttings) creates a new plant while keeping this one.
         </p>
 
-        <a asp-page="/Plants/Events/Split"
-        asp-route-plantId="@Model.StatusRequired.PlantId"
-        asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-        class="btn btn-outline-secondary btn-lg w-100">
-            Split plant
-        </a>
+        <div class="row g-2">
+            <div class="col-6">
+                <a asp-page="/Plants/Events/Split"
+                   asp-route-plantId="@Model.StatusRequired.PlantId"
+                   asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+                   class="btn btn-outline-secondary btn-lg w-100">
+                    Split plant
+                </a>
+            </div>
+
+            <div class="col-6">
+                <a asp-page="/Plants/Events/Propagate"
+                   asp-route-plantId="@Model.StatusRequired.PlantId"
+                   asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+                   class="btn btn-outline-secondary btn-lg w-100">
+                    Propagate plant
+                </a>
+            </div>
+        </div>
 
     </div>
 }

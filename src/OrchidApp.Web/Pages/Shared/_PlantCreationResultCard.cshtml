@@ -1,0 +1,29 @@
+@model (string Message, List<string> Tags, string ButtonText)
+
+<div class="card mt-3">
+    <div class="card-body">
+
+        <p class="mb-3">
+            @Model.Message
+        </p>
+
+        @for (int i = 0; i < Model.Tags.Count; i++)
+        {
+            <div class="mb-3">
+                <div class="text-muted mb-1">
+                    New plant @(@i + 1) permanent ID
+                </div>
+                <div class="plant-tag fs-3 fw-bold">
+                    @Model.Tags[i]
+                </div>
+            </div>
+        }
+
+        <form method="post" asp-page-handler="Continue" class="mt-4">
+            <button type="submit" class="btn btn-primary">
+                @Model.ButtonText
+            </button>
+        </form>
+
+    </div>
+</div>
