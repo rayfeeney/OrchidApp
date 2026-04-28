@@ -25,6 +25,7 @@ BEGIN
     DECLARE vChildPlantId INT;
 
     DECLARE vPropagationDateTime DATETIME;
+    DECLARE vPropagationTypeName VARCHAR(100);
 
     IF pParentPlantId IS NULL THEN
         SIGNAL SQLSTATE '45000'
@@ -89,12 +90,13 @@ BEGIN
             SET MESSAGE_TEXT = 'Propagation datetime cannot be before plant lifecycle start';
     END IF;
 
-    IF NOT EXISTS (
-        SELECT 1
-        FROM propagationtype
-        WHERE propagationTypeId = pPropagationTypeId
-          AND isActive = 1
-    ) THEN
+    SELECT propagationTypeName
+    INTO vPropagationTypeName
+    FROM propagationtype
+    WHERE propagationTypeId = pPropagationTypeId
+    AND isActive = 1;
+
+    IF vPropagationTypeName IS NULL THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Invalid propagation type';
     END IF;
@@ -114,7 +116,7 @@ BEGIN
         vChildTag,
         pChildPlantName,
         vPropagationDateTime,
-        CONCAT('Propagation from ', vParentPlantTag),
+        CONCAT(vPropagationTypeName, ' from ', vParentPlantTag),
         1
     );
 
