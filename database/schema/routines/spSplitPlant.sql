@@ -281,6 +281,16 @@ BEGIN
 
         SET vChildPlantId = LAST_INSERT_ID();
 
+        IF EXISTS (
+            SELECT 1
+            FROM plantpropagation
+            WHERE childPlantId = vChildPlantId
+            AND isActive = 1
+        ) THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'Plant already has a propagation origin';
+        END IF;
+
         IF vMediumId IS NOT NULL THEN
 
             INSERT INTO repotting (
