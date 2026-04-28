@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using OrchidApp.Web.Models;
+using OrchidApp.Web.Models.Lookups;
 
 namespace OrchidApp.Web.Data;
 
@@ -393,6 +394,7 @@ public class OrchidDbContext : DbContext
 
         modelBuilder.Entity<LocationChangeEditRow>().HasNoKey();
         modelBuilder.Entity<AddPlantResult>().HasNoKey();
+        modelBuilder.Entity<PropagationTypeLookup>().HasNoKey();
         
     }
 }

@@ -1,0 +1,23 @@
+@page "{plantId:int}"
+@model OrchidApp.Web.Pages.Plants.Events.PropagateConfirmationModel
+
+<h1 class="page-title fw-bold">Plant propagation completed</h1>
+
+<h2 class="h5 fw-bold mb-3">
+    @(string.IsNullOrWhiteSpace(Model.ParentPlant?.DisplayName)
+    ? "-"
+    : Model.ParentPlant?.DisplayName)
+</h2>
+
+@using System.Linq
+
+@{
+    var propagateConfirmationModel = (
+        Message: "A new plant has been created from this propagation.",
+        Tags: Model.Children.Select(c => c.ChildPlantTag).ToList(),
+        ButtonText: "Continue to new plant"
+    );
+}
+
+<partial name="_PlantCreationResultCard"
+         model="propagateConfirmationModel" />

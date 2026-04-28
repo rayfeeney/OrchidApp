@@ -1,0 +1,122 @@
+@page "{plantId:int}"
+@model OrchidApp.Web.Pages.Plants.Events.PropagateModel
+
+<h1 class="page-title fw-bold">Propagate plant</h1>
+
+@if (Model.Plant?.DisplayName != null)
+{
+    <h2 class="h5 fw-bold mb-1 @(Model.IsInactive ? "text-muted" : "")">
+        @Model.Plant?.DisplayName
+    </h2>
+
+    <div class="plant-tag mb-3">@Model.Plant?.PlantTag</div>
+}
+
+<p class="text-muted">
+    This will create a new independent plant from this one.
+    The original plant will continue unchanged and its full history
+    will remain intact.
+</p>
+
+<p class="text-muted small mb-3">
+    The new plant will be given a permanent ID automatically.
+</p>
+
+<div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+@if (Model.IsInactive)
+{
+    <div class="alert alert-secondary">
+        This plant cannot be propagated because its taxonomy (Genus / Species / Hybrid) is inactive.
+    </div>
+}
+else
+{
+<form method="post">
+
+    <input type="hidden" asp-for="PlantId" />
+
+    <!-- Propagation Type -->
+    <div class="mb-3">
+        <label asp-for="PropagationTypeId" class="fw-bold"></label>
+        <small class="text-muted d-block fw-normal">
+            Select how this plant is being propagated.
+        </small>
+        <select asp-for="PropagationTypeId"
+                asp-items="Model.PropagationTypes"
+                class="form-select">
+            <option value="">—</option>
+        </select>
+        <span asp-validation-for="PropagationTypeId" class="text-danger"></span>
+    </div>
+
+    <!-- Date -->
+    <div class="mb-3">
+        <label asp-for="PropagationDate" class="fw-bold"></label>
+        <small class="text-muted d-block fw-normal">
+            The date this propagation took place.
+        </small>
+        <input asp-for="PropagationDate" type="date" class="form-control" />
+        <span asp-validation-for="PropagationDate" class="text-danger"></span>
+    </div>
+
+    <!-- Medium -->
+    <div class="mb-3">
+        <label asp-for="MediumId" class="fw-bold"></label>
+        <small class="text-muted d-block fw-normal">
+            Optional. The starting growth medium for the new plant.
+        </small>
+        <select asp-for="MediumId"
+                asp-items="Model.GrowthMedia"
+                class="form-select">
+            <option value="">—</option>
+        </select>
+        <span asp-validation-for="MediumId" class="text-danger"></span>
+    </div>
+
+    <!-- Plant Name -->
+    <div class="mb-3">
+        <label asp-for="PlantName" class="fw-bold"></label>
+        <small class="text-muted d-block fw-normal">
+            Optional. A personal name to help you recognise this plant.
+        </small>
+        <input asp-for="PlantName" class="form-control" />
+        <span asp-validation-for="PlantName" class="text-danger"></span>
+    </div>
+
+    <!-- Notes -->
+    <div class="mb-3">
+        <label asp-for="PropagationNotes" class="fw-bold"></label>
+        <small class="text-muted d-block fw-normal">
+            Optional. Any additional notes about this propagation.
+        </small>
+        <textarea asp-for="PropagationNotes" class="form-control" rows="3"></textarea>
+        <span asp-validation-for="PropagationNotes" class="text-danger"></span>
+    </div>
+
+    <!-- Warning -->
+    <div class="alert alert-warning">
+        This will create a new plant from 
+        <strong>@Model.Plant?.PlantTag</strong>
+        on <strong>@Model.PropagationDate.ToString("dd/MM/yyyy")</strong>.
+        This action cannot be undone.
+    </div>
+
+    <!-- Actions -->
+    <div class="mt-4">
+        @{
+            var confirmMessage =
+                $"You are about to create a new plant from {Model.Plant?.PlantTag} on {Model.PropagationDate:dd/MM/yyyy}. " +
+                "This action cannot be undone.";
+        }
+
+        <partial name="_FormActionsDangerHandler"
+                model="@(Model.ReturnUrl
+                        ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }),
+                        "Create",
+                        "Confirm propagation",
+                        confirmMessage)" />
+    </div>
+
+</form>
+}

@@ -9,28 +9,15 @@
     : Model.ParentPlant?.DisplayName)
 </h2>
 
-<div class="card mt-3">
-    <div class="card-body">
-        <p class="mb-3">
-            The split has created the following new plants.
-        </p>
+@using System.Linq
 
-        @for (int i = 0; i < Model.Children.Count; i++)
-        {
-            <div class="mb-3">
-                <div class="text-muted mb-1">
-                    New plant @(@i + 1) permanent ID
-                </div>
-                <div class="plant-tag fs-3 fw-bold">
-                    @Model.Children[i].ChildPlantTag
-                </div>
-            </div>
-        }
+@{
+    var splitConfirmationModel = (
+        Message: "The split has created the following new plants.",
+        Tags: Model.Children.Select(c => c.ChildPlantTag).ToList(),
+        ButtonText: "Continue to first new plant"
+    );
+}
 
-        <form method="post" asp-page-handler="Continue" class="mt-4">
-            <button type="submit" class="btn btn-primary">
-                Continue to first new plant
-            </button>
-        </form>
-    </div>
-</div>
+<partial name="_PlantCreationResultCard"
+         model="splitConfirmationModel" />

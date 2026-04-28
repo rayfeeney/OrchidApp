@@ -281,6 +281,7 @@ BEGIN
 
         SET vChildPlantId = LAST_INSERT_ID();
 
+        -- Cross-origin protection
         IF EXISTS (
             SELECT 1
             FROM plantpropagation
