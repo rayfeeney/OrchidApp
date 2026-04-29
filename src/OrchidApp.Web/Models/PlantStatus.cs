@@ -30,4 +30,5 @@ public class PlantStatus
     public int? ParentPlantId { get; set; }
     public string? ParentPlantTag { get; set; }
     public bool HasChildren { get; set; }
+    public string? ParentRelationshipType { get; set; }
 }
