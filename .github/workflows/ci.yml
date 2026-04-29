@@ -151,6 +151,9 @@ jobs:
       # ---------------------------------------
       # MIGRATIONS (NON-BLOCKING OBSERVATION)
       # ---------------------------------------
+      - name: Make migration script executable
+        run: chmod +x ./database/scripts/apply-migrations.sh
+      
       - name: Run migrations (non-blocking)
         run: |
           echo "=== MIGRATION TEST START ==="
