@@ -147,3 +147,29 @@ jobs:
 
       - name: Schema validation passed
         run: echo "Schema is deterministic and valid"
+
+      # ---------------------------------------
+      # MIGRATIONS (NON-BLOCKING OBSERVATION)
+      # ---------------------------------------
+      - name: Run migrations (non-blocking)
+        run: |
+          echo "=== MIGRATION TEST START ==="
+          echo "NOTE: Non-blocking step (for observation only)"
+          
+          set +e
+          ./database/scripts/apply-migrations.sh
+          EXIT_CODE=$?
+          set -e
+
+          echo ""
+          echo "=== MIGRATION RESULT ==="
+
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "::warning::Migrations failed (non-blocking)"
+            echo "Exit code: $EXIT_CODE"
+            echo "See errors above"
+          else
+            echo "Migrations completed successfully"
+          fi
+
+          echo "=== MIGRATION TEST END ==="
