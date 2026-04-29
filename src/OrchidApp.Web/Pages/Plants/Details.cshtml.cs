@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using OrchidApp.Web.Data;
 using OrchidApp.Web.Models;
 using System;
@@ -32,7 +33,7 @@ public class DetailsModel : PageModel
     public bool IsInactive => !GenusIsActive || !TaxonIsActive;
     public bool IsEnded => StatusRequired.EndDate != null;
 
-    public List<PlantSplitChildren> ChildPlants { get; private set; } = [];
+    public List<PlantChildLink> ChildPlants { get; private set; } = [];
     public PlantStatus StatusRequired
         => Status ?? throw new InvalidOperationException("Plant status must be loaded before rendering the page.");
     private readonly PhotoUrlService _photoUrlService;
@@ -66,8 +67,19 @@ public class DetailsModel : PageModel
             .ThenByDescending(e => e.SourceId)
             .ToList();
 
-        ChildPlants = _db.PlantSplitChildren
-            .Where(c => c.ParentPlantId == PlantId)
+        ChildPlants = _db.Set<PlantChildLink>()
+            .FromSqlRaw(@"
+                SELECT 
+                    l.parentPlantId,
+                    l.childPlantId,
+                    p.plantTag,
+                    p.acquisitionDate,
+                    l.relationshipType
+                FROM vplantlineage l
+                JOIN plant p ON p.plantId = l.childPlantId
+                WHERE l.parentPlantId = {0}
+            ", PlantId)
+            .AsNoTracking()
             .ToList();
 
         return Page();

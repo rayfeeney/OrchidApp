@@ -395,6 +395,7 @@ public class OrchidDbContext : DbContext
         modelBuilder.Entity<LocationChangeEditRow>().HasNoKey();
         modelBuilder.Entity<AddPlantResult>().HasNoKey();
         modelBuilder.Entity<PropagationTypeLookup>().HasNoKey();
+        modelBuilder.Entity<PlantChildLink>().HasNoKey();
         
     }
 }
