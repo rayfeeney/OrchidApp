@@ -155,6 +155,11 @@ jobs:
         run: chmod +x ./database/scripts/apply-migrations.sh
       
       - name: Run migrations (non-blocking)
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_USER: root
+          DB_PASS: root
         run: |
           echo "=== MIGRATION TEST START ==="
           echo "NOTE: Non-blocking step (for observation only)"
