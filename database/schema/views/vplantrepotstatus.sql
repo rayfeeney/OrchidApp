@@ -23,5 +23,5 @@ AS `lastRepotDate`,coalesce(`repot`.`lastRepotDate`,`p`.`acquisitionDate`)
 AS `effectiveDate`,timestampdiff(MONTH,coalesce(`repot`.`lastRepotDate`,`p`.`acquisitionDate`),curdate())
 AS `monthsSinceRepot` FROM (((((`plant` `p` join `taxon` `t` on(`t`.`taxonId` = `p`.`taxonId`)) join `genus` `g` on(`g`.`genusId` = `t`.`genusId`)) left join (SELECT `r`.`plantId`
 AS `plantId`,max(`r`.`repotDate`)
-AS `lastRepotDate` FROM `repotting` `r` WHERE `r`.`isActive` = 1 group by `r`.`plantId`) `repot` on(`repot`.`plantId` = `p`.`plantId`)) left join `plantlocationhistory` `plh` on(`plh`.`plantId` = `p`.`plantId` and `plh`.`isActive` = 1 and `plh`.`endDateTime` is null)) left join `location` `l` on(`l`.`locationId` = `plh`.`locationId`)) WHERE `p`.`endDate` is null) `base` order by `base`.`effectiveDate` is not null,`base`.`monthsSinceRepot` desc,`base`.`effectiveDate` desc
+AS `lastRepotDate` FROM `repotting` `r` WHERE `r`.`isActive` = 1 group by `r`.`plantId`) `repot` on(`repot`.`plantId` = `p`.`plantId`)) left join `plantlocationhistory` `plh` on(`plh`.`plantId` = `p`.`plantId` and `plh`.`isActive` = 1 and `plh`.`endDateTime` is null)) left join `location` `l` on(`l`.`locationId` = `plh`.`locationId`)) WHERE `p`.`endDate` is null) `base`
 
