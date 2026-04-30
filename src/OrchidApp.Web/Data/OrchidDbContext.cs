@@ -34,6 +34,7 @@ public class OrchidDbContext : DbContext
     public DbSet<GrowthMediumIdResult> GrowthMediumIdResults { get; set; }
     public DbSet<TaxonPhoto> TaxonPhotos { get; set; }
     public DbSet<LineageItem> LineageItems { get; set; } = default!;
+    public DbSet<PlantRepotStatus> PlantRepotStatuses { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -331,6 +332,9 @@ public class OrchidDbContext : DbContext
             entity.Property(e => e.SourceId)                .HasColumnName("sourceId");
         });
         
+        // =========================
+        // View Plant status mapping
+        // =========================
         modelBuilder.Entity<PlantStatus>(entity =>
         {
             entity.HasNoKey();
@@ -390,6 +394,12 @@ public class OrchidDbContext : DbContext
             entity.Property(e => e.AcquisitionDate)         .HasColumnName("acquisitionDate");
             entity.Property(e => e.EndDate)                 .HasColumnName("endDate");
             entity.Property(e => e.Level).                  HasColumnName("level");
+        });
+
+        modelBuilder.Entity<PlantRepotStatus>(entity =>
+        {
+            entity.HasNoKey();
+            entity.ToView("vPlantRepotStatus");
         });
 
         modelBuilder.Entity<LocationChangeEditRow>().HasNoKey();

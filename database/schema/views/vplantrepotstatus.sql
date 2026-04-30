@@ -2,7 +2,8 @@ CREATE OR REPLACE VIEW `vplantrepotstatus`
 AS SELECT `base`.`plantId`
 AS `plantId`,`base`.`plantTag`
 AS `plantTag`,`base`.`locationName`
-AS `locationName`,`base`.`genusName`
+AS `locationName`,`base`.`genusId`
+AS `genusId`,`base`.`genusName`
 AS `genusName`,`base`.`displayName`
 AS `displayName`,`base`.`acquisitionDate`
 AS `acquisitionDate`,`base`.`lastRepotDate`
@@ -14,7 +15,8 @@ AS `repotSummary` FROM (SELECT `p`.`plantId`
 AS `plantId`,`p`.`plantTag`
 AS `plantTag`,`l`.`locationName`
 AS `locationName`,`g`.`genusName`
-AS `genusName`,case when `t`.`isSystemManaged` = 1 then concat(`g`.`genusName`,' sp.') when `t`.`speciesName` is not null then concat(`g`.`genusName`,' ',`t`.`speciesName`) when `t`.`hybridName` is not null then concat(`g`.`genusName`,' ',`t`.`hybridName`) else `g`.`genusName` end
+AS `genusName`,`g`.`genusId`
+AS `genusId`,case when `t`.`isSystemManaged` = 1 then concat(`g`.`genusName`,' sp.') when `t`.`speciesName` is not null then concat(`g`.`genusName`,' ',`t`.`speciesName`) when `t`.`hybridName` is not null then concat(`g`.`genusName`,' ',`t`.`hybridName`) else `g`.`genusName` end
 AS `displayName`,`p`.`acquisitionDate`
 AS `acquisitionDate`,`repot`.`lastRepotDate`
 AS `lastRepotDate`,coalesce(`repot`.`lastRepotDate`,`p`.`acquisitionDate`)
