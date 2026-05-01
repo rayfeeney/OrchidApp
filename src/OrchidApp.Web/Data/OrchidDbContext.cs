@@ -401,7 +401,7 @@ public class OrchidDbContext : DbContext
         modelBuilder.Entity<PlantRepotStatus>(entity =>
         {
             entity.HasNoKey();
-            entity.ToView("vPlantRepotStatus");
+            entity.ToView("vplantrepotstatus");
         });
 
         modelBuilder.Entity<PlantCurrentlyFlowering>(entity =>
