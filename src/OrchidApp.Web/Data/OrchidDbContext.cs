@@ -36,6 +36,7 @@ public class OrchidDbContext : DbContext
     public DbSet<LineageItem> LineageItems { get; set; } = default!;
     public DbSet<PlantRepotStatus> PlantRepotStatuses { get; set; }
     public DbSet<PlantCurrentlyFlowering> PlantCurrentlyFlowering { get; set; }
+    public DbSet<PlantSinceLastFlowered> PlantSinceLastFlowered { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -407,6 +408,12 @@ public class OrchidDbContext : DbContext
         {
             entity.HasNoKey();
             entity.ToView("vplantcurrentlyflowering");
+        });
+
+        modelBuilder.Entity<PlantSinceLastFlowered>(entity =>
+        {
+            entity.HasNoKey();
+            entity.ToView("vplantsincelastflowered");
         });
 
         modelBuilder.Entity<LocationChangeEditRow>().HasNoKey();
