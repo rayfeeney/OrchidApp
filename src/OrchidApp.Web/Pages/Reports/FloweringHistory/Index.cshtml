@@ -1,0 +1,83 @@
+@page
+@model OrchidApp.Web.Pages.Reports.FloweringHistory.IndexModel
+
+<div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-3">
+
+    <div>
+        <h1 class="page-title fw-bold mb-0">Last flowering</h1>
+        <h2 class="h5 fw-bold mb-0">Plants not currently flowering</h2>
+    </div>
+
+    <a asp-page="/Reports/Index"
+       class="btn btn-outline-secondary btn-lg mt-2 mt-sm-0">
+        ← Reports
+    </a>
+
+</div>
+
+<form method="get">
+    <div class="mb-3">
+        <label class="fw-bold">Filter by genus</label>
+        <select asp-for="GenusId"
+                class="form-select"
+                onchange="this.form.submit()">
+
+            <option value="">All genera</option>
+
+            @foreach (var g in Model.Genera)
+            {
+                <option value="@g.GenusId">
+                    @g.Name
+                </option>
+            }
+        </select>
+    </div>
+</form>
+
+@if (!Model.Plants.Any())
+{
+    <div class="text-muted">No plants found.</div>
+}
+else
+{
+    @foreach (var plant in Model.Plants)
+    {
+        var isNeverFlowered = plant.LastFlowerEndDate == null;
+
+        var cssClass = isNeverFlowered
+            ? "btn btn-lg btn-outline-primary w-100 mb-2 text-start bg-light"
+            : "btn btn-lg btn-outline-primary w-100 mb-2 text-start";
+
+        <a asp-page="/Plants/Details"
+           asp-route-plantId="@plant.PlantId"
+           class="@cssClass">
+
+            <div class="fw-bold">
+                @plant.DisplayName
+            </div>
+
+            <div>
+                @plant.LocationName
+            </div>
+
+            <div class="text-muted">
+                @plant.PlantTag
+            </div>
+
+            <div>
+                @(
+                    plant.MonthsSinceFlower == null
+                        ? "No flowering recorded"
+                        : $"{plant.MonthsSinceFlower} months since flowering ({plant.LastFlowerEndDate:dd/MM/yyyy})"
+                )
+            </div>
+
+        </a>
+    }
+}
+
+@{
+    var backUrl = "/Reports";
+}
+
+<partial name="_BackFullWidth" model="backUrl" />

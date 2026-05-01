@@ -34,6 +34,9 @@ public class OrchidDbContext : DbContext
     public DbSet<GrowthMediumIdResult> GrowthMediumIdResults { get; set; }
     public DbSet<TaxonPhoto> TaxonPhotos { get; set; }
     public DbSet<LineageItem> LineageItems { get; set; } = default!;
+    public DbSet<PlantRepotStatus> PlantRepotStatuses { get; set; }
+    public DbSet<PlantCurrentlyFlowering> PlantCurrentlyFlowering { get; set; }
+    public DbSet<PlantSinceLastFlowered> PlantSinceLastFlowered { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -331,6 +334,9 @@ public class OrchidDbContext : DbContext
             entity.Property(e => e.SourceId)                .HasColumnName("sourceId");
         });
         
+        // =========================
+        // View Plant status mapping
+        // =========================
         modelBuilder.Entity<PlantStatus>(entity =>
         {
             entity.HasNoKey();
@@ -390,6 +396,24 @@ public class OrchidDbContext : DbContext
             entity.Property(e => e.AcquisitionDate)         .HasColumnName("acquisitionDate");
             entity.Property(e => e.EndDate)                 .HasColumnName("endDate");
             entity.Property(e => e.Level).                  HasColumnName("level");
+        });
+
+        modelBuilder.Entity<PlantRepotStatus>(entity =>
+        {
+            entity.HasNoKey();
+            entity.ToView("vPlantRepotStatus");
+        });
+
+        modelBuilder.Entity<PlantCurrentlyFlowering>(entity =>
+        {
+            entity.HasNoKey();
+            entity.ToView("vplantcurrentlyflowering");
+        });
+
+        modelBuilder.Entity<PlantSinceLastFlowered>(entity =>
+        {
+            entity.HasNoKey();
+            entity.ToView("vplantsincelastflowered");
         });
 
         modelBuilder.Entity<LocationChangeEditRow>().HasNoKey();

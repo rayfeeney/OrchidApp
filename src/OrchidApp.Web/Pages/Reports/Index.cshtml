@@ -1,0 +1,26 @@
+@page "/Reports"
+@model OrchidApp.Web.Pages.Reports.IndexModel
+
+<h1 class="page-title fw-bold">Reports</h1>
+<h2 class="h5 fw-bold mb-3">Available reports</h2>
+
+<a asp-page="/Reports/Repotting/Index"
+   class="btn btn-lg btn-outline-primary w-100 mb-2 text-start">
+    Last repotting
+</a>
+
+<a asp-page="/Reports/Flowering/Index"
+   class="btn btn-lg btn-outline-primary w-100 mb-2 text-start">
+    Currently flowering
+</a>
+
+<a asp-page="/Reports/FloweringHistory/Index"
+   class="btn btn-lg btn-outline-primary w-100 mb-2 text-start">
+    Last flowering
+</a>
+
+@{
+    var backUrl = "/";
+}
+
+<partial name="_BackFullWidth" model="backUrl" />
