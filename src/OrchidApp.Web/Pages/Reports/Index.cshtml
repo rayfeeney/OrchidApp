@@ -1,0 +1,16 @@
+@page "/Reports"
+@model OrchidApp.Web.Pages.Reports.IndexModel
+
+<h1 class="page-title fw-bold">Reports</h1>
+<h2 class="h5 fw-bold mb-3">Available reports</h2>
+
+<a asp-page="/Reports/Repotting/Index"
+   class="btn btn-lg btn-outline-primary w-100 mb-2 text-start">
+    Repot status
+</a>
+
+@{
+    var backUrl = "/";
+}
+
+<partial name="_BackFullWidth" model="backUrl" />

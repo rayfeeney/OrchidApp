@@ -7,7 +7,7 @@ AS `genusId`,`base`.`genusName`
 AS `genusName`,`base`.`displayName`
 AS `displayName`,`base`.`acquisitionDate`
 AS `acquisitionDate`,`base`.`lastRepotDate`
-AS `lastRepotDate`,coalesce(`base`.`acquisitionDate`,`base`.`lastRepotDate`)
+AS `lastRepotDate`,coalesce(`base`.`lastRepotDate`,`base`.`acquisitionDate`)
 AS `effectiveRepotDate`,`base`.`monthsSinceRepot`
 AS `monthsSinceRepot`,case when `base`.`lastRepotDate` is null and `base`.`acquisitionDate` is null then 'Unknown' when `base`.`lastRepotDate` is not null then 'Repotted' else 'FROM acquisition' end
 AS `repotStatus`,case when `base`.`lastRepotDate` is null and `base`.`acquisitionDate` is null then 'No repotting information' else concat(`base`.`monthsSinceRepot`,case when `base`.`monthsSinceRepot` = 1 then ' month since ' else ' months since ' end,case when `base`.`lastRepotDate` is not null then 'repot' else 'acquisition' end,' (',date_format(`base`.`effectiveDate`,'%d/%m/%Y'),')') end

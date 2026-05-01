@@ -1,5 +1,19 @@
-<h1 class="page-title fw-bold">Repot status</h1>
-<h2 class="h5 fw-bold mb-3">All plants</h2>
+@page "/Reports/Repotting"
+@model OrchidApp.Web.Pages.Reports.Repotting.IndexModel
+
+<div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-3">
+
+    <div>
+        <h1 class="page-title fw-bold mb-0">Repot status</h1>
+        <h2 class="h5 fw-bold mb-0">All plants</h2>
+    </div>
+
+    <a asp-page="/Reports/Index"
+       class="btn btn-outline-secondary btn-lg mt-2 mt-sm-0">
+        ← Reports
+    </a>
+
+</div>
 
 <form method="get">
     <div class="mb-3">
@@ -13,7 +27,7 @@
             @foreach (var g in Model.Genera)
             {
                 <option value="@g.GenusId">
-                    @g.GenusName
+                    @g.Name
                 </option>
             }
         </select>
@@ -51,3 +65,9 @@ else
         </a>
     }
 }
+
+@{
+    var backUrl = "/Reports";
+}
+
+<partial name="_BackFullWidth" model="backUrl" />

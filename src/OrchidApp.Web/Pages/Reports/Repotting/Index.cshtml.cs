@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using OrchidApp.Web.Data;
 using OrchidApp.Web.Models;
 
-namespace OrchidApp.Web.Pages.Reports.Repotting.RepotStatus
+namespace OrchidApp.Web.Pages.Reports.Repotting
 {
     public class IndexModel : PageModel
     {
@@ -30,18 +30,23 @@ namespace OrchidApp.Web.Pages.Reports.Repotting.RepotStatus
                 .OrderBy(g => g.Name)
                 .ToListAsync();
 
-            var query = _context.PlantRepotStatuses.AsQueryable();
+            var data = await _context.PlantRepotStatuses
+                .ToListAsync();   // force SQL execution first
 
             if (GenusId.HasValue)
             {
-                query = query.Where(x => x.GenusId == GenusId.Value);
+                data = data
+                    .Where(x => x.GenusId == GenusId.Value)
+                    .ToList();
             }
 
-            Plants = await query
-                .OrderBy(x => x.MonthsSinceRepot == null)   // unknown first
+            Plants = data
+                .OrderBy(x => x.MonthsSinceRepot != null)
                 .ThenByDescending(x => x.MonthsSinceRepot)
-                .ThenByDescending(x => x.LastRepotDate ?? x.AcquisitionDate)
-                .ToListAsync();
+                .ThenByDescending(x => x.LastRepotDate.HasValue)
+                .ThenByDescending(x => x.LastRepotDate)
+                .ThenByDescending(x => x.AcquisitionDate)
+                .ToList();
         }
     }
 }
