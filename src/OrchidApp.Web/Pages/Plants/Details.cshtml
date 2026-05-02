@@ -54,6 +54,7 @@
 
     <a asp-page="/Plants/Edit/Index"
     asp-route-plantId="@Model.StatusRequired.PlantId"
+    asp-route-returnUrl="@(Request.Path + Request.QueryString)"
     class="btn btn-sm @(Model.IsEnded ? "btn-outline-secondary" : "btn-outline-primary") ms-2 px-3">
 
         <i class="bi @(Model.IsEnded ? "bi-eye" : "bi-pencil") me-1"></i>
@@ -267,46 +268,39 @@
 
 <h2 class="h5 fw-bold mb-3 mt-4">History</h2>
 
-@if (!Model.IsEnded)
-{
-    <p class="text-muted small mb-3">
-        Record observations (including photos), moves, repotting and flowering events.
-    </p>
+<div class="d-grid gap-2 d-sm-flex mb-3">
+    <a class="btn btn-primary flex-fill"
+       asp-page="/Plants/Events/Add"
+       asp-route-eventType="Observation"
+       asp-route-plantId="@Model.StatusRequired.PlantId"
+       asp-route-returnUrl="@(Request.Path + Request.QueryString)">
+        Add observation
+    </a>
 
-    <div class="d-grid gap-2 d-sm-flex mb-3">
-        <a asp-page="/Plants/Events/Add"
-        asp-route-eventType="Observation"
-        asp-route-plantId="@Model.StatusRequired.PlantId"
-        asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-        class="btn btn-primary">
-            Add observation
-        </a>
+    <a class="btn btn-primary flex-fill"
+       asp-page="/Plants/Events/Add"
+       asp-route-eventType="LocationChange"
+       asp-route-plantId="@Model.StatusRequired.PlantId"
+       asp-route-returnUrl="@(Request.Path + Request.QueryString)">
+        Move plant
+    </a>
 
-        <a asp-page="/Plants/Events/Add"
-        asp-route-eventType="LocationChange"
-        asp-route-plantId="@Model.StatusRequired.PlantId"
-        asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-        class="btn btn-primary">
-            Move plant
-        </a>
+    <a class="btn btn-primary flex-fill"
+       asp-page="/Plants/Events/Add"
+       asp-route-eventType="Flowering"
+       asp-route-plantId="@Model.StatusRequired.PlantId"
+       asp-route-returnUrl="@(Request.Path + Request.QueryString)">
+        Add flowering
+    </a>
 
-        <a asp-page="/Plants/Events/Add"
-        asp-route-eventType="Flowering"
-        asp-route-plantId="@Model.StatusRequired.PlantId"
-        asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-        class="btn btn-primary">
-            Add flowering
-        </a>
-
-        <a asp-page="/Plants/Events/Add"
-        asp-route-eventType="Repotting"
-        asp-route-plantId="@Model.StatusRequired.PlantId"
-        asp-route-returnUrl="@(Request.Path + Request.QueryString)"
-        class="btn btn-primary">
-            Add repotting
-        </a>
-    </div>
-}
+    <a class="btn btn-primary flex-fill"
+       asp-page="/Plants/Events/Add"
+       asp-route-eventType="Repotting"
+       asp-route-plantId="@Model.StatusRequired.PlantId"
+       asp-route-returnUrl="@(Request.Path + Request.QueryString)">
+        Add repotting
+    </a>
+</div>
 
 <hr class="my-4" />
 

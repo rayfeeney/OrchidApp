@@ -316,9 +316,16 @@
         </div>
     }
 
-    <partial name="_FormActions"
-            model="@(Model.ReturnUrl 
-                    ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }), 
-                    ViewData["Title"]?.ToString() ?? "Save")" />
+    <div class="d-grid gap-2 mt-3">
+        <button type="submit" class="btn btn-primary">
+            @(ViewData["Title"]?.ToString() ?? "Save")
+        </button>
+
+        <a href="@(Model.ReturnUrl 
+                    ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }))"
+        class="btn btn-outline-secondary">
+            Back
+        </a>
+    </div>
 
 </form>

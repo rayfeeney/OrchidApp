@@ -79,8 +79,16 @@ This event will no longer appear in the plant’s history.
 <form method="post">
     <input type="hidden" asp-for="EventType" />
 
-    <partial name="_FormActionsDanger"
-             model="@(Model.ReturnUrl 
-                      ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }),
-                      "Remove event")" />
+    <div class="d-grid gap-2 mt-3">
+        <button type="submit" class="btn btn-danger">
+            Remove event
+        </button>
+
+        <a href="@(Model.ReturnUrl 
+                    ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }))"
+        class="btn btn-outline-secondary">
+            Back
+        </a>
+    </div>
+
 </form>

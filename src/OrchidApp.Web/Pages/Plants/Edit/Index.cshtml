@@ -56,6 +56,7 @@
 <!-- ========================= -->
 <form method="post" asp-page-handler="GenusChanged" class="mb-4">
     <input type="hidden" asp-for="PlantId" />
+    <input type="hidden" asp-for="ReturnUrl" />
 
     <div class="mb-3">
         <label asp-for="GenusId" class="fw-bold"></label>
@@ -107,6 +108,7 @@
 <form method="post" asp-page-handler="TaxonChanged" class="mb-4">
     <input type="hidden" asp-for="PlantId" />
     <input type="hidden" asp-for="GenusId" />
+    <input type="hidden" asp-for="ReturnUrl" />
 
     <div class="mb-3">
         <label asp-for="TaxonId" class="fw-bold"></label>
@@ -161,6 +163,7 @@
     <input type="hidden" asp-for="PlantId" />
     <input type="hidden" asp-for="GenusId" />
     <input type="hidden" asp-for="TaxonId" />
+    <input type="hidden" asp-for="ReturnUrl" />
 
     <div class="mb-3">
         <label class="fw-bold">Plant tag</label>
@@ -273,20 +276,19 @@
         All taxonomy changes are only final after selecting <strong>Save changes</strong>.
     </p>
 
-    <div class="d-flex justify-content-between align-items-stretch mt-4">
-        <a asp-page="/Plants/Details"
-           asp-route-plantId="@Model.PlantId"
-           class="btn btn-outline-secondary btn-lg">
-            ← Back to plant
-        </a>
-
+    <div class="d-grid gap-2 mt-4">
         @if (!Model.IsEnded)
         {
-            <button type="submit"
-                    class="btn btn-primary btn-lg">
+            <button type="submit" class="btn btn-primary btn-lg">
                 Save changes
             </button>
         }
+
+        <a href="@(Model.ReturnUrl 
+                    ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }))"
+            class="btn btn-outline-secondary btn-lg">
+            ← Back
+        </a>
     </div>
 
 </form>

@@ -24,6 +24,9 @@ public class IndexModel : PageModel
     // =========================
 
     [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
+
+    [BindProperty(SupportsGet = true)]
     public int PlantId { get; set; }
 
     [BindProperty]
@@ -172,11 +175,13 @@ public class IndexModel : PageModel
             return Page();
         }
 
-        return RedirectToPage("/Plants/Taxon", new
+        if (!string.IsNullOrEmpty(ReturnUrl) && Url.IsLocalUrl(ReturnUrl))
         {
-            taxonId = TaxonId
-        });
-    }
+            return Redirect(ReturnUrl);
+        }
+
+        return RedirectToPage("/Plants/Details", new { plantId = PlantId });
+        }
 
     // =========================
     // GENUS CHANGE
@@ -196,7 +201,8 @@ public class IndexModel : PageModel
         return RedirectToPage(new
         {
             plantId = PlantId,
-            genusId = GenusId
+            genusId = GenusId,
+            returnUrl = ReturnUrl
         });
     }
 
@@ -218,7 +224,8 @@ public class IndexModel : PageModel
         return RedirectToPage(new
         {
             plantId = PlantId,
-            taxonId = TaxonId
+            taxonId = TaxonId,
+            returnUrl = ReturnUrl
         });
     }
 
