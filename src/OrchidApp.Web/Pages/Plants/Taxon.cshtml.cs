@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.WebUtilities;
 using OrchidApp.Web.Data;
 using OrchidApp.Web.Models;
 using OrchidApp.Web.Services;
@@ -16,6 +17,20 @@ public class TaxonModel : PageModel
 
     private readonly OrchidDbContext _db;
     private readonly PhotoUrlService _photoUrlService;
+
+    public string BuildPlantReturnUrl(int plantId)
+    {
+        var query = QueryHelpers.ParseQuery(Request.QueryString.Value ?? "");
+
+        // overwrite or add selectedPlantId
+        query["selectedPlantId"] = plantId.ToString();
+
+        var queryString = string.Join("&",
+            query.Select(kvp => $"{kvp.Key}={kvp.Value}"));
+
+        return $"{Request.Path}?{queryString}#plant-{plantId}";
+    }
+
     public TaxonModel(OrchidDbContext db, PhotoUrlService photoUrlService)
     {
         _db = db;
