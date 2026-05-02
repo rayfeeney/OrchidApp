@@ -43,21 +43,21 @@
 
     <a asp-page="/Setup/Locations/Actions/Edit"
     asp-route-locationId="@Model.Location.LocationId"
-    asp-route-returnUrl="@(Model.ReturnUrl ?? Url.Page("/Setup/Locations/Index"))"
+    asp-route-returnUrl="@(Request.Path + Request.QueryString)"
     class="btn btn-lg btn-primary">
         Edit location
     </a>
 
-    <form method="post" class="d-grid">
-        <button type="submit"
-                asp-page-handler="ToggleActive"
-                class="btn btn-lg @(Model.Location.IsActive ? "btn-outline-danger" : "btn-outline-success")"
-                onclick="return confirm('Are you sure you want to @(Model.Location.IsActive ? "deactivate" : "reactivate") this location?');">
-            @(Model.Location.IsActive ? "Deactivate location" : "Reactivate location")
-        </button>
-    </form>
+    <a asp-page="./Details"
+        asp-route-locationId="@Model.Location.LocationId"
+        asp-route-returnUrl="@Model.ReturnUrl"
+        asp-page-handler="ToggleActive"
+        class="btn btn-lg @(Model.Location.IsActive ? "btn-outline-danger" : "btn-outline-success")"
+        onclick="return confirm('Are you sure you want to @(Model.Location.IsActive ? "deactivate" : "reactivate") this location?');">
+
+        @(Model.Location.IsActive ? "Deactivate location" : "Reactivate location")
+    </a>
 
 </div>
 
-<partial name="_BackFullWidth"
-         model="@(Model.ReturnUrl ?? Url.Page("/Setup/Locations/Index"))" />
+<partial name="_BackFullWidth" model="@(Model.ReturnUrl)" />

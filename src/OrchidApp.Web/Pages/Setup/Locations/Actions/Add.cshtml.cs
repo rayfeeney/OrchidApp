@@ -10,10 +10,12 @@ namespace OrchidApp.Web.Pages.Setup.Locations.Actions;
 public class AddModel : PageModel
 {
     private readonly OrchidDbContext _db;
+    private readonly IStoredProcedureExecutor _sp;
 
-    public AddModel(OrchidDbContext db)
+    public AddModel(OrchidDbContext db, IStoredProcedureExecutor sp)
     {
         _db = db;
+        _sp = sp;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -44,21 +46,28 @@ public class AddModel : PageModel
         public string? LocationGeneralNotes { get; set; }
     }
 
+    public class AddLocationResult
+    {
+        public int LocationId { get; set; }
+    }
+
     public async Task<IActionResult> OnPostAsync(CancellationToken ct)
     {
         if (!ModelState.IsValid)
             return Page();
 
+        AddLocationResult result;
+
         try
         {
-            await _db.Database.ExecuteSqlRawAsync(
-                "CALL spAddLocation({0},{1},{2},{3},{4},{5})",
-                (object?)Input.LocationName!,
-                (object?)Input.LocationTypeCode!,
-                (object?)Input.LocationNotes!,
-                (object?)Input.ClimateCode!,
-                (object?)Input.ClimateNotes!,
-                (object?)Input.LocationGeneralNotes!
+            result = await _sp.QuerySingleAsync<AddLocationResult>(
+                "spAddLocation",
+                new StoredProcedureParameter("pLocationName", Input.LocationName),
+                new StoredProcedureParameter("pLocationTypeCode", Input.LocationTypeCode),
+                new StoredProcedureParameter("pLocationNotes", Input.LocationNotes),
+                new StoredProcedureParameter("pClimateCode", Input.ClimateCode),
+                new StoredProcedureParameter("pClimateNotes", Input.ClimateNotes),
+                new StoredProcedureParameter("pLocationGeneralNotes", Input.LocationGeneralNotes)
             );
         }
         catch (Exception ex)
@@ -72,6 +81,12 @@ public class AddModel : PageModel
             throw;
         }
 
-        return Redirect(ReturnUrl ?? Url.Page("/Setup/Locations/Index")!);
+        return RedirectToPage(
+            "../Details",
+            new
+            {
+                locationId = result.LocationId,
+                returnUrl = ReturnUrl
+            });
     }
 }

@@ -102,6 +102,9 @@ public class EditModel : PageModel
             throw;
         }
 
-        return Redirect(ReturnUrl ?? Url.Page("/Setup/Locations/Details", new { locationId = LocationId })!);
+        return RedirectToPage(
+            "../Details",
+            new { locationId = LocationId, returnUrl = ReturnUrl }
+        );
     }
 }

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using OrchidApp.Web.Data;
@@ -16,6 +17,9 @@ public class IndexModel : PageModel
 
     public List<GrowthMedium> GrowthMedia { get; private set; } = new();
 
+    [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
+    
     public async Task OnGetAsync()
     {
         GrowthMedia = await _db.GrowthMedia

@@ -12,7 +12,8 @@ Locations represent the environments where your plants are grown, such as greenh
 You can move plants between locations over time to reflect seasonal or environmental changes.
 </p>
 
-<form method="post">
+<form method="post"
+      asp-route-returnUrl="@Model.ReturnUrl">
 
     <div class="mb-3">
         <label asp-for="Input.LocationName" class="fw-bold"></label>
@@ -71,4 +72,4 @@ You can move plants between locations over time to reflect seasonal or environme
 </form>
 
 <partial name="_BackFullWidth"
-         model="@(Model.ReturnUrl ?? Url.Page("/Setup/Locations/Index"))" />
+         model="Model.ReturnUrl" />

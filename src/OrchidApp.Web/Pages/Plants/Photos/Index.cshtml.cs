@@ -101,7 +101,7 @@ public class IndexModel : PageModel
             new object[] { plantId, photoId },
             ct);
 
-        return RedirectToPage(new { plantId, focusPhotoId = photoId });
+        return RedirectToPage(new { plantId, focusPhotoId = photoId, returnUrl = ReturnUrl });
     }
 
     public async Task<IActionResult> OnPostUploadAsync(int plantId, string? returnUrl, CancellationToken ct)

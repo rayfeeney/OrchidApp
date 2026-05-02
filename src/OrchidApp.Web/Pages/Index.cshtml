@@ -10,17 +10,20 @@
 <div class="d-grid gap-3 mt-4">
 
     <a asp-page="/Plants/Index"
+       asp-route-returnUrl="@(Request.Path + Request.QueryString)"
        class="btn btn-lg btn-outline-primary">
        @* class="btn btn-lg btn-primary"> *@
         Plants
     </a>
 
     <a asp-page="/Reports/Index"
+       asp-route-returnUrl="@(Request.Path + Request.QueryString)"
        class="btn btn-lg btn-outline-primary">
         Reports
     </a>
 
     <a asp-page="/Setup/Index"
+       asp-route-returnUrl="@(Request.Path + Request.QueryString)"
        class="btn btn-lg btn-outline-primary">
         Setup
     </a>

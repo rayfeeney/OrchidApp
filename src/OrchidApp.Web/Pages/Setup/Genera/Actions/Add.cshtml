@@ -45,8 +45,17 @@ Each genus only needs to be added once.
                   class="text-danger"></span>
         </div>
 
-        <partial name="_FormActions"
-                 model="@((Model.ReturnUrl ?? Url.Page("/Setup/Genera/Index"), "Add genus"))" />
+        <div class="d-grid gap-2 mt-4">
+
+            <button type="submit"
+                    class="btn btn-primary btn-lg">
+                Add genus
+            </button>
+
+            <partial name="_BackFullWidth"
+                    model="@(Model.ReturnUrl ?? Url.Page("/Setup/Genera/Index"))" />
+
+        </div>
 
     </form>
 

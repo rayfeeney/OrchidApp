@@ -31,10 +31,12 @@ public class DetailsModel : PageModel
             .FirstOrDefaultAsync(l => l.LocationId == LocationId, ct)
             ?? throw new InvalidOperationException("Location not found.");
 
+        ReturnUrl = Url.Page("/Setup/Locations/Index");
+        
         return Page();
     }
 
-    public async Task<IActionResult> OnPostToggleActiveAsync(CancellationToken ct)
+    public async Task<IActionResult> OnGetToggleActiveAsync(CancellationToken ct)
     {
         var current = await _db.Locations
             .AsNoTracking()
@@ -56,12 +58,19 @@ public class DetailsModel : PageModel
             if (DatabaseErrorTranslator.TryTranslate(ex, out var message))
             {
                 ModelState.AddModelError(string.Empty, message);
-                return await OnGetAsync(ct);
             }
-
-            throw;
+            else
+            {
+                throw;
+            }
         }
 
-        return RedirectToPage(new { locationId = LocationId, ReturnUrl });
+        // reload entity
+        Location = await _db.Locations
+            .AsNoTracking()
+            .FirstOrDefaultAsync(l => l.LocationId == LocationId, ct)
+            ?? throw new InvalidOperationException("Location not found.");
+
+        return Page();
     }
 }

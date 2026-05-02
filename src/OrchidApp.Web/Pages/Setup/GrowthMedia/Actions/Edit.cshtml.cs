@@ -90,12 +90,9 @@ public class EditModel : PageModel
             throw;
         }
 
-        if (!string.IsNullOrWhiteSpace(ReturnUrl))
-            return LocalRedirect(ReturnUrl);
-
         return RedirectToPage(
-            "/Setup/GrowthMedia/Details",
-            new { growthMediumId = GrowthMediumId }
+            "../Details",
+            new { growthMediumId = GrowthMediumId, returnUrl = ReturnUrl }
         );
     }
 }
