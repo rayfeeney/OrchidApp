@@ -31,6 +31,8 @@ public class DetailsModel : PageModel
             .FirstOrDefaultAsync(l => l.LocationId == LocationId, ct)
             ?? throw new InvalidOperationException("Location not found.");
 
+        ReturnUrl = Url.Page("/Setup/Locations/Index");
+        
         return Page();
     }
 

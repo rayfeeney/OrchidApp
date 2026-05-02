@@ -32,6 +32,8 @@ public class DetailsModel : PageModel
         if (GrowthMedium == null)
             return NotFound();
 
+        ReturnUrl = Url.Page("/Setup/GrowthMedia/Index");
+        
         return Page();
     }
 

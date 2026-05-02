@@ -10,10 +10,12 @@ namespace OrchidApp.Web.Pages.Setup.Locations.Actions;
 public class AddModel : PageModel
 {
     private readonly OrchidDbContext _db;
+    private readonly IStoredProcedureExecutor _sp;
 
-    public AddModel(OrchidDbContext db)
+    public AddModel(OrchidDbContext db, IStoredProcedureExecutor sp)
     {
         _db = db;
+        _sp = sp;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -44,27 +46,29 @@ public class AddModel : PageModel
         public string? LocationGeneralNotes { get; set; }
     }
 
+    public class AddLocationResult
+    {
+        public int LocationId { get; set; }
+    }
+
     public async Task<IActionResult> OnPostAsync(CancellationToken ct)
     {
         if (!ModelState.IsValid)
             return Page();
 
-        int newId;
+        AddLocationResult result;
 
         try
         {
-            newId = await _db.Database
-                .SqlQuery<int>($@"
-                    CALL spAddLocation(
-                        {Input.LocationName},
-                        {Input.LocationTypeCode},
-                        {Input.LocationNotes},
-                        {Input.ClimateCode},
-                        {Input.ClimateNotes},
-                        {Input.LocationGeneralNotes}
-                    );
-                ")
-                .SingleAsync(ct);
+            result = await _sp.QuerySingleAsync<AddLocationResult>(
+                "spAddLocation",
+                new StoredProcedureParameter("pLocationName", Input.LocationName),
+                new StoredProcedureParameter("pLocationTypeCode", Input.LocationTypeCode),
+                new StoredProcedureParameter("pLocationNotes", Input.LocationNotes),
+                new StoredProcedureParameter("pClimateCode", Input.ClimateCode),
+                new StoredProcedureParameter("pClimateNotes", Input.ClimateNotes),
+                new StoredProcedureParameter("pLocationGeneralNotes", Input.LocationGeneralNotes)
+            );
         }
         catch (Exception ex)
         {
@@ -81,7 +85,7 @@ public class AddModel : PageModel
             "../Details",
             new
             {
-                locationId = newId,
+                locationId = result.LocationId,
                 returnUrl = ReturnUrl
             });
     }

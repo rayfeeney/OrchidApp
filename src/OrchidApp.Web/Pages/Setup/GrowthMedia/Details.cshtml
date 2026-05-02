@@ -46,7 +46,7 @@
 
     <a asp-page="/Setup/GrowthMedia/Actions/Edit"
     asp-route-growthMediumId="@Model.GrowthMedium.GrowthMediumId"
-    asp-route-returnUrl="@Model.ReturnUrl"
+    asp-route-returnUrl="@(Request.Path + Request.QueryString)"
     class="btn btn-lg btn-primary">
         Edit growth medium
     </a>

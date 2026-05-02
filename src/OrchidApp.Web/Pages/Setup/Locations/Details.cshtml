@@ -43,7 +43,7 @@
 
     <a asp-page="/Setup/Locations/Actions/Edit"
     asp-route-locationId="@Model.Location.LocationId"
-    asp-route-returnUrl="@Model.ReturnUrl"
+    asp-route-returnUrl="@(Request.Path + Request.QueryString)"
     class="btn btn-lg btn-primary">
         Edit location
     </a>
