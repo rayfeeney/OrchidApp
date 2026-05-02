@@ -90,7 +90,16 @@
             accept="image/*" />
     </div>
 
-    <partial name="_FormActions"
-         model="@((Model.ReturnUrl ?? Url.Page("/Setup/Taxa/Details", new { id = Model.Taxon.TaxonId }), "Save species / hybrid"))" />
+    <div class="d-grid gap-2 mt-4">
+
+        <button type="submit"
+                class="btn btn-primary btn-lg">
+            Save species / hybrid
+        </button>
+
+        <partial name="_BackFullWidth"
+                model="@(Model.ReturnUrl ?? Url.Page("/Setup/Taxa/Details", new { id = Model.Taxon.TaxonId }))" />
+
+    </div>
 
 </form>
