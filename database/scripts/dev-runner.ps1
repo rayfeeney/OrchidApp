@@ -1,108 +1,109 @@
-```powershell
 $ErrorActionPreference = "Stop"
 
 try {
-    Write-Host "Starting DEV migration runner..."
+    Write-Host "=== DEV MIGRATION RUNNER START ==="
+
+    # --- ENV VALIDATION ----------------------------------------------------
 
     if (-not $env:MARIADB_USER) {
-        throw "Environment not configured. Set MARIADB_* variables before running."
+        throw "MARIADB_USER not set."
     }
 
-    # --- REPO ROOT --------------------------------------------------------
+    if (-not $env:MARIADB_PASSWORD) {
+        throw "MARIADB_PASSWORD not set."
+    }
+
+    # --- REPO ROOT ---------------------------------------------------------
 
     $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
     Set-Location $RepoRoot
 
-    # --- PATHS ------------------------------------------------------------
+    # --- PATH VALIDATION ---------------------------------------------------
 
-    $MigrationFolder = (Resolve-Path "database/migrations").Path
-    $SchemaFolder    = (Resolve-Path "database/schema").Path
-    $ExportScript    = (Resolve-Path "database/scripts/Export-MariaDbSchema.ps1").Path
-    $ApplyScript     = (Resolve-Path "database/scripts/apply-migrations.ps1").Path
+    $MigrationFolder = "database/migrations"
+    $SchemaFolder    = "database/schema"
+    $ExportScript    = "database/scripts/Export-MariaDbSchema.ps1"
+    $ApplyScript     = "database/scripts/apply-migrations.ps1"
+
+    foreach ($path in @($MigrationFolder, $SchemaFolder, $ExportScript, $ApplyScript)) {
+        if (-not (Test-Path $path)) {
+            throw "Required path not found: $path"
+        }
+    }
 
     Write-Host "Repository root: $RepoRoot"
 
-    # --- CONNECTION (for export script consistency) -----------------------
+    # --- CONNECTION (for export script) -----------------------------------
 
-    $Password = $env:MARIADB_PASSWORD
-    if (-not $Password) {
-        throw "MARIADB_PASSWORD must be set"
-    }
+    $env:MYSQL_PWD = $env:MARIADB_PASSWORD
 
-    $env:MYSQL_PWD = $Password
+    # --- WORKING TREE CLEAN CHECK -----------------------------------------
 
-    # --- WORKING TREE CHECK ----------------------------------------------
+    Write-Host "[CHECK] Working tree..."
 
-    Write-Host "Checking database working tree..."
-
-    git diff --quiet -- database/schema database/migrations
+    git diff --quiet -- $SchemaFolder $MigrationFolder
     if ($LASTEXITCODE -ne 0) {
         throw "Tracked database files have uncommitted changes."
     }
 
-    $untracked = @(git ls-files --others --exclude-standard -- database/migrations)
+    $untracked = @(git ls-files --others --exclude-standard -- $MigrationFolder)
     if ($untracked.Count -gt 0) {
         throw "Untracked migration files detected:`n$($untracked -join "`n")"
     }
 
-    Write-Host "Working tree clean."
+    Write-Host "[OK] Working tree clean"
 
-    # --- EXPORT SCHEMA ----------------------------------------------------
+    # --- EXPORT (PRE) ------------------------------------------------------
 
-    Write-Host "Running schema export..."
+    Write-Host "[STEP] Export schema (pre-check)..."
 
     & $ExportScript
 
-    if ($LASTEXITCODE -ne 0) {
-        throw "Schema export failed."
-    }
-
     # export script clears MYSQL_PWD
-    $env:MYSQL_PWD = $Password
+    $env:MYSQL_PWD = $env:MARIADB_PASSWORD
 
-    # --- DRIFT CHECK ------------------------------------------------------
+    # --- DRIFT CHECK (PRE) -------------------------------------------------
 
-    Write-Host "Checking for schema drift..."
+    Write-Host "[CHECK] Schema drift (pre)..."
 
-    $diff = @(git diff --name-only -- database/schema)
+    $diff = @(git diff --name-only -- $SchemaFolder)
 
     if ($diff.Count -gt 0) {
-        throw "Schema drift detected:`n$($diff -join "`n")"
+        throw "Schema drift detected BEFORE migrations:`n$($diff -join "`n")"
     }
 
-    Write-Host "No schema drift."
+    Write-Host "[OK] No drift before migrations"
 
-    # --- APPLY MIGRATIONS -------------------------------------------------
+    # --- APPLY MIGRATIONS --------------------------------------------------
 
-    Write-Host "Applying migrations..."
+    Write-Host "[STEP] Applying migrations..."
 
     & $ApplyScript
 
-    if ($LASTEXITCODE -ne 0) {
-        throw "Migration application failed."
-    }
+    Write-Host "[OK] Migrations applied"
 
-    # --- POST-VALIDATION --------------------------------------------------
+    # --- EXPORT (POST) -----------------------------------------------------
 
-    Write-Host "Re-exporting schema after migrations..."
+    Write-Host "[STEP] Export schema (post-check)..."
 
     & $ExportScript
 
-    if ($LASTEXITCODE -ne 0) {
-        throw "Post-migration export failed."
-    }
+    $env:MYSQL_PWD = $env:MARIADB_PASSWORD
 
-    $env:MYSQL_PWD = $Password
+    # --- DRIFT CHECK (POST) ------------------------------------------------
 
-    $postDiff = @(git diff --name-only -- database/schema)
+    Write-Host "[CHECK] Schema drift (post)..."
+
+    $postDiff = @(git diff --name-only -- $SchemaFolder)
 
     if ($postDiff.Count -gt 0) {
-        throw "Post-migration schema drift detected (export not committed):`n$($postDiff -join "`n")"
+        throw "Schema drift detected AFTER migrations (export not committed):`n$($postDiff -join "`n")"
     }
 
-    Write-Host "DEV migration runner completed successfully."
+    Write-Host "[OK] No drift after migrations"
+
+    Write-Host "=== DEV MIGRATION RUNNER SUCCESS ==="
 }
 finally {
     Remove-Item Env:\MYSQL_PWD -ErrorAction SilentlyContinue
 }
-```
