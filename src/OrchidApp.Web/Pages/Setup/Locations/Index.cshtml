@@ -13,7 +13,7 @@ Each location represents a growing environment for your plants.
 
 <div class="d-grid gap-2 mb-4">
     <a asp-page="/Setup/Locations/Actions/Add"
-       asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+       asp-route-returnUrl="@Model.ReturnUrl"
        class="btn btn-lg btn-primary">
         Add location
     </a>
@@ -38,7 +38,7 @@ else
 
         <a asp-page="/Setup/Locations/Details"
         asp-route-locationId="@location.LocationId"
-        asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+        asp-route-returnUrl="@Model.ReturnUrl"
         class="btn btn-lg text-start @(isInactive ? "btn-outline-secondary text-muted" : "btn-outline-primary")">
 
             @location.DisplayName
@@ -55,5 +55,4 @@ else
 
 }
 
-<partial name="_BackFullWidth"
-         model="@(Model.ReturnUrl ?? Url.Page("/Setup/Index"))" />
+<partial name="_BackFullWidth" model="@(Model.ReturnUrl)" />

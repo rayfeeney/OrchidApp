@@ -18,7 +18,9 @@
     @Model.Input.LocationName
 </h2>
 
-<form method="post">
+<form method="post"
+      asp-route-locationId="@Model.LocationId"
+      asp-route-returnUrl="@Model.ReturnUrl">
 
     <div class="mb-3">
         <label asp-for="Input.LocationName" class="fw-bold"></label>
@@ -64,5 +66,4 @@
 
 </form>
 
-<partial name="_BackFullWidth"
-         model="@(Model.ReturnUrl ?? Url.Page("/Setup/Locations/Details", new { locationId = Model.LocationId }))" />
+<partial name="_BackFullWidth" model="@(Model.ReturnUrl)" />

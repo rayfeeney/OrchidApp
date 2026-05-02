@@ -21,7 +21,9 @@
 <div asp-validation-summary="ModelOnly"
      class="text-danger mb-3"></div>
 
-<form method="post">
+<form method="post"
+      asp-route-growthMediumId="@Model.GrowthMediumId"
+      asp-route-returnUrl="@Model.ReturnUrl">
 
     <div class="mb-3">
         <label asp-for="Input.Name" class="fw-bold"></label>
@@ -46,9 +48,14 @@
               class="text-danger"></span>
     </div>
 
-    <partial name="_FormActions"
-             model='(Url.Page("/Setup/GrowthMedia/Details",
-                     new { growthMediumId = Model.GrowthMediumId }),
-                     "Save changes")' />
+    <div class="d-grid gap-2 mt-3">
+        <button type="submit"
+                class="btn btn-primary btn-lg">
+            Save changes
+        </button>
+    </div>
 
 </form>
+
+<partial name="_BackFullWidth"
+         model="Model.ReturnUrl" />

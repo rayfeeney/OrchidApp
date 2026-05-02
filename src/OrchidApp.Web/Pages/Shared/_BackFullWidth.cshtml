@@ -1,6 +1,17 @@
-@model string
+@model string?
 
-<a href="@Model"
-   class="btn btn-outline-secondary btn-lg w-100 mt-3">
-    ← Back
-</a>
+@if (!string.IsNullOrEmpty(Model))
+{
+    <a href="@Model"
+       class="btn btn-outline-secondary btn-lg w-100 mt-3">
+        ← Back
+    </a>
+}
+else
+{
+    <button type="button"
+            class="btn btn-outline-secondary btn-lg w-100 mt-3"
+            onclick="history.back()">
+        ← Back
+    </button>
+}

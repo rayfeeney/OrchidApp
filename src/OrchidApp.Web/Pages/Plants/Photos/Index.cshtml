@@ -101,9 +101,11 @@ else
 
         @if (Model.PreviousPhotoId.HasValue)
         {
-            <a asp-route-plantId="@Model.PlantId"
-               asp-route-focusPhotoId="@Model.PreviousPhotoId"
-               class="btn btn-outline-primary btn-lg">
+            <a asp-page="./Index"
+                asp-route-plantId="@Model.PlantId"
+                asp-route-focusPhotoId="@Model.PreviousPhotoId"
+                asp-route-returnUrl="@Model.ReturnUrl"
+                class="btn btn-outline-primary btn-lg">
                 ◀ Previous photo
             </a>
         }
@@ -114,9 +116,11 @@ else
 
         @if (Model.NextPhotoId.HasValue)
         {
-            <a asp-route-plantId="@Model.PlantId"
-               asp-route-focusPhotoId="@Model.NextPhotoId"
-               class="btn btn-outline-primary btn-lg">
+            <a asp-page="./Index"
+                asp-route-plantId="@Model.PlantId"
+                asp-route-focusPhotoId="@Model.NextPhotoId"
+                asp-route-returnUrl="@Model.ReturnUrl"
+                class="btn btn-outline-primary btn-lg">
                 Next photo ▶
             </a>
         }
@@ -133,6 +137,7 @@ else
             {
                 <a asp-route-plantId="@Model.PlantId"
                    asp-route-focusPhotoId="@photo.PlantPhotoId"
+                   asp-route-returnUrl="@Model.ReturnUrl"
                    class="flex-shrink-0">
 
                     <img src="@Model.PhotoUrlService.GetPlantThumbnail(Model.PlantId, photo.ThumbnailFileName, photo.FileName)"
@@ -161,7 +166,7 @@ else
 
                 <input type="hidden" name="plantId" value="@Model.PlantId" />
                 <input type="hidden" name="returnUrl"
-                    value="@(Model.ReturnUrl ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }))" />
+                    value="@Model.ReturnUrl" />
 
                 <div class="mb-3">
                     <label asp-for="UploadFiles" class="fw-bold">
@@ -208,5 +213,5 @@ else
 
 
 <partial name="_BackFullWidth"
-         model="@(Model.ReturnUrl ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }))" />
+         model="@(Model.ReturnUrl)" />
 </div>

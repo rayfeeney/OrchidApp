@@ -16,6 +16,9 @@ public class AddModel : PageModel
         _db = db;
     }
 
+    [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
+
     [BindProperty]
     public InputModel Input { get; set; } = new();
 
@@ -54,8 +57,8 @@ public class AddModel : PageModel
         }
 
         return RedirectToPage(
-            "/Setup/GrowthMedia/Details",
-            new { growthMediumId = entity.GrowthMediumId }
+            "../Details",
+            new { growthMediumId = entity.GrowthMediumId, returnUrl = ReturnUrl }
         );
     }
 

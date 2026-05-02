@@ -35,27 +35,28 @@ public class DetailsModel : PageModel
         return Page();
     }
 
-    public async Task<IActionResult> OnPostToggleActiveAsync()
-    {
-        var current = await _db.GrowthMedia
-            .AsNoTracking()
-            .Where(g => g.GrowthMediumId == GrowthMediumId)
-            .Select(g => new
-            {
-                Exists = true,
-                g.IsActive
-            })
-            .SingleOrDefaultAsync();
+public async Task<IActionResult> OnGetToggleActiveAsync()
+{
+    var current = await _db.GrowthMedia
+        .AsNoTracking()
+        .Where(g => g.GrowthMediumId == GrowthMediumId)
+        .Select(g => new { g.IsActive })
+        .SingleOrDefaultAsync();
 
-        if (current == null)
-            return NotFound();
+    if (current == null)
+        return NotFound();
 
-        await _db.Database.ExecuteSqlRawAsync(
-            "CALL spSetGrowthMediumActiveState({0},{1})",
-            GrowthMediumId,
-            current.IsActive ? 0 : 1
-        );
+    await _db.Database.ExecuteSqlRawAsync(
+        "CALL spSetGrowthMediumActiveState({0},{1})",
+        GrowthMediumId,
+        current.IsActive ? 0 : 1
+    );
 
-        return RedirectToPage(new { growthMediumId = GrowthMediumId, ReturnUrl });
-    }
+    // reload updated entity
+    GrowthMedium = await _db.GrowthMedia
+        .AsNoTracking()
+        .FirstOrDefaultAsync(g => g.GrowthMediumId == GrowthMediumId);
+
+    return Page();
+}
 }

@@ -44,6 +44,7 @@ else
     {
         <a asp-page="/Plants/Details"
            asp-route-plantId="@plant.PlantId"
+           asp-route-returnUrl="@(Request.Path + Request.QueryString)"
            class="btn btn-lg btn-outline-primary w-100 mb-2 text-start">
 
             <div class="fw-bold">

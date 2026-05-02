@@ -10,8 +10,6 @@ public class CollationInterceptor : DbConnectionInterceptor
     ConnectionEndEventData eventData,
     CancellationToken cancellationToken = default)
 {
-    Console.WriteLine("🔥 Collation interceptor fired");
-
     using var cmd = connection.CreateCommand();
     cmd.CommandText = "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;";
     await cmd.ExecuteNonQueryAsync(cancellationToken);

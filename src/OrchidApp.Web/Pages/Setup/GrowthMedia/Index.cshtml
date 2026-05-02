@@ -15,6 +15,7 @@
 
 <div class="d-grid gap-2 mb-3">
     <a asp-page="Actions/Add"
+       asp-route-returnUrl="@(Request.Path + Request.QueryString)"
        class="btn btn-primary btn-lg">
         Add growth medium
     </a>
@@ -55,5 +56,4 @@ else
     </div>
 }
 
-<partial name="_BackFullWidth"
-         model='@Url.Page("/Setup/Index")' />
+<partial name="_BackFullWidth" model="@(Model.ReturnUrl)" />

@@ -49,17 +49,22 @@ public class AddModel : PageModel
         if (!ModelState.IsValid)
             return Page();
 
+        int newId;
+
         try
         {
-            await _db.Database.ExecuteSqlRawAsync(
-                "CALL spAddLocation({0},{1},{2},{3},{4},{5})",
-                (object?)Input.LocationName!,
-                (object?)Input.LocationTypeCode!,
-                (object?)Input.LocationNotes!,
-                (object?)Input.ClimateCode!,
-                (object?)Input.ClimateNotes!,
-                (object?)Input.LocationGeneralNotes!
-            );
+            newId = await _db.Database
+                .SqlQuery<int>($@"
+                    CALL spAddLocation(
+                        {Input.LocationName},
+                        {Input.LocationTypeCode},
+                        {Input.LocationNotes},
+                        {Input.ClimateCode},
+                        {Input.ClimateNotes},
+                        {Input.LocationGeneralNotes}
+                    );
+                ")
+                .SingleAsync(ct);
         }
         catch (Exception ex)
         {
@@ -72,6 +77,12 @@ public class AddModel : PageModel
             throw;
         }
 
-        return Redirect(ReturnUrl ?? Url.Page("/Setup/Locations/Index")!);
+        return RedirectToPage(
+            "../Details",
+            new
+            {
+                locationId = newId,
+                returnUrl = ReturnUrl
+            });
     }
 }
