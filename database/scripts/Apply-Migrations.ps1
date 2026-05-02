@@ -1,4 +1,3 @@
-```powershell
 param (
     [string]$MigrationFolder = "database/migrations"
 )
@@ -246,4 +245,3 @@ VALUES ('$safeName', '$checksum');
 finally {
     Remove-Item Env:\MYSQL_PWD -ErrorAction SilentlyContinue
 }
-```
