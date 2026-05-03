@@ -1,14 +1,34 @@
 # OrchidApp
 
-OrchidApp is a self-hosted web application for managing an orchid collection with **database-enforced lifecycle integrity**.
+A self-hosted orchid collection manager designed for **correctness, not convenience.**
 
-It is a production-grade system backed by a rigorously designed, migration-controlled and operationally validated MariaDB schema.
+OrchidApp enforces lifecycle integrity at the database level, ensuring that plant history, structure, and state remain valid over time - not just in the UI, but in the data itself.
 
-The system is deliberately opinionated.
+* Database-enforced lifecycle rules
+* Deterministic schema and migration system
+* Fully recoverable state (database + uploads)
+* Designed for Raspberry Pi and home lab environments
+
+This is not a CRUD app.
+This is a system with guarantees.
 
 > Invariants live in the database.
 > Behaviour lives in the application.
 > Enforcement lives in automation.
+
+---
+
+## Why OrchidApp exists
+
+Most plant tracking applications optimise for flexibility.
+
+OrchidApp optimises for correctness:
+
+* Lifecycle rules cannot be broken
+* Schema cannot drift
+* Backups are part of the system, not an afterthought
+
+It is designed for long-term, reliable collection management where data integrity matters.
 
 ---
 
@@ -17,18 +37,18 @@ The system is deliberately opinionated.
 * ASP.NET Core Razor Pages (.NET LTS)
 * EF Core for atomic entities
 * Stored procedures for structural entities
-* MariaDB (Linux) authoritative environment
+* MariaDB (Linux) as the authoritative database environment
 * Deterministic migration system with checksum enforcement
 * Automated nightly encrypted backups (database + uploads)
 * Restore process validated
 * Mobile-first UI design
 * Deterministic deployment model (systemd + environment file)
 
-OrchidApp is deployed and operational on Raspberry Pi (Linux).
+OrchidApp is deployed and running on Raspberry Pi (Linux).
 
 ---
 
-## System Guarantees
+## What This System Guarantees
 
 * The database schema can be rebuilt from scratch at any commit
 * Production state is fully recoverable from backups
@@ -51,37 +71,55 @@ Everything else is rebuildable from Git.
 
 ---
 
-## Architecture Overview
+## Architecture
 
-The system is intentionally layered:
+OrchidApp is a layered system:
 
-* **Database layer** — enforces invariants and lifecycle rules
-* **Application layer** — orchestrates valid workflows
-* **Automation layer** — enforces reproducibility and drift detection
-* **Operations layer** — backup, restore and deployment discipline
+* **Database layer** - structural integrity and lifecycle invariants
+* **Application layer** - behavioural orchestration
+* **Automation layer** - reproducibility and enforcement
+* **Operations layer** - backup, restore and deployment discipline
 
-No layer may weaken the guarantees of another.
+No layer may weaken another.
+
+👉 The **authoritative architectural contract** is defined in:
+
+```
+docs/architecture.md
+```
+
+This document defines all non-negotiable system rules.
+
+---
+
+## Temporal Model
+
+Time handling, lifecycle boundaries, and narrative vs structural behaviour are formally defined in:
+
+```
+docs/temporal-design.md
+```
+
+Temporal behaviour is part of the system’s core contract and must not be reinterpreted at the application level.
 
 ---
 
 ## Environment Model
 
-| Environment | Platform     | Configuration                            |
-| ----------- | ------------ | ---------------------------------------- |
-| Development | Windows PC   | `appsettings.Development.json`           |
-| Production  | Raspberry Pi | systemd + `/etc/orchidapp/orchidapp.env` |
+| Environment | Platform     | Configuration                  |
+| ----------- | ------------ | ------------------------------ |
+| Development | Windows PC   | `appsettings.Development.json` |
+| Production  | Raspberry Pi | `/etc/orchidapp/orchidapp.env` |
 
 Rules:
 
 * Production never depends on Development configuration
 * Secrets are never committed to Git
-* Production configuration is supplied via environment variables only
+* All runtime configuration is externally supplied
 
 ---
 
-## Database Layer (MariaDB)
-
-### Authoritative Environment
+## Database Model (MariaDB)
 
 MariaDB running on Linux is the authoritative validator for:
 
@@ -91,33 +129,20 @@ MariaDB running on Linux is the authoritative validator for:
 
 Windows MySQL behaviour must not be relied upon.
 
----
-
 ### Required Configuration
 
-MariaDB must be configured with:
-
-```sql
+```ini
 character-set-server = utf8mb4
 collation-server     = utf8mb4_unicode_ci
 ```
 
-If this is not configured correctly, stored procedures and comparisons may fail.
-
----
-
-### Core Principles
-
-1. The schema is treated as source code
-2. Every committed version can be rebuilt from scratch
-3. Drift between environments is detected automatically
-4. Structural invariants are enforced in the database
+If misconfigured, stored procedures and comparisons may fail.
 
 ---
 
 ## Migration System
 
-All structural schema changes are implemented via deterministic migration files:
+All structural schema changes are implemented via:
 
 ```
 database/migrations/
@@ -125,26 +150,30 @@ database/migrations/
 
 Each migration:
 
-* Follows naming convention `YYYYMMDDHHMM_Name.sql`
+* Follows `YYYYMMDDHHMM_Name.sql`
 * Is applied exactly once
-* Is recorded in the `schemaversion` table
-* Has its SHA256 checksum stored and enforced
+* Is recorded in `schemaversion`
+* Has SHA256 checksum enforcement
 
 The system prevents:
 
-* Out-of-order migrations
+* Out-of-order execution
 * Duplicate timestamps
-* Silent modification of historical migrations
+* Silent modification of history
 * Schema drift prior to execution
 
-Migrations are not intended to construct the database from scratch.
-They apply only to existing databases created from the canonical schema.
+### Critical Rule
 
-Production databases must never be modified outside the migration system.
+A database must be created using **one** of the following:
+
+* **Rebuild** (fresh installation)
+* **Migrations** (existing database evolution)
+
+These mechanisms must **never be combined** on the same database.
 
 ---
 
-## Schema Export & Enforcement
+## Schema as Source Code
 
 Schema files under:
 
@@ -152,158 +181,58 @@ Schema files under:
 database/schema/
 ```
 
-are generated artefacts.
+are:
 
-They:
+* Generated artefacts
+* Deterministic
+* Never manually edited
+* Validated in CI
 
-* Represent the full assembled schema
-* Must never be edited manually
-* Are regenerated deterministically
-* Are validated in CI
-
-Pre-commit hooks enforce export and validation.
-
-The schema export represents the canonical database definition.
-
-Rebuild uses this definition to construct a database from scratch.
-Migrations evolve databases forward from that baseline.
-
----
-
-## Lifecycle Model
-
-A plant has a single immutable lifecycle:
-
-```
-startDateTime → endDateTime
-```
-
-Rules:
-
-* A split ends a lifecycle and creates new plants
-* A plant may be split at most once
-* Propagation creates new plants without ending the parent
-* A plant may have at most one propagation record
-* Location history enforces strict temporal adjacency
-* Structural lifecycle changes are executed exclusively via stored procedures
-
-These invariants are database-enforced and non-negotiable.
-
----
-
-## Photo & Hero Image Model
-
-* Photos are attached only via Observation events
-* Photos are stored in `plantphoto`
-* Each photo belongs to exactly one Observation
-* Hero image selection is explicit (`isHero` flag)
-* At most one active hero image per plant
-* No automatic “latest photo” inference
-
-Heavy photo loading is isolated to dedicated pages.
+They represent the **canonical database definition**.
 
 ---
 
 ## File Storage
 
-Uploads are stored on the local filesystem.
-
-### Configuration
+Uploads are stored on the local filesystem:
 
 ```
-StorageSettings__UploadRoot=/opt/orchidapp/uploads
+/opt/orchidapp/uploads
 ```
 
-### Behaviour
-
-* Files are organised as:
-
-```
-plants/{plantId}
-taxa/{taxonId}
-```
-
-### Requirements
+Requirements:
 
 * Directory must exist before startup
-* Application must have read/write permissions
-* Invalid configuration causes startup or upload failure
+* Must be writable by the application
+* Included in backups
 
-Uploads are part of the canonical dataset and included in backups.
+Uploads are part of the canonical dataset.
 
 ---
 
-## Canonical Image Pipeline
+## Image Processing
 
-All uploaded images are normalised into a single canonical representation.
+All uploaded images are normalised into a canonical format:
 
-### Specification
-
-* Max dimension: 3072px (longest side)
+* Max dimension: 3072px
 * Format: JPEG
 * Quality: 90
-* Metadata: stripped
-* Colour profile: preserved
-* Alpha: flattened to white
-* Animated images: rejected
-* Originals: not stored
+* Metadata stripped
+* Alpha flattened
+* Animated images rejected
+* Originals not stored
 
-### Processing
+Processing is performed using:
 
-* **libvips (NetVips)** is used for all image processing
-
-This ensures:
-
-* Low memory usage
-* Deterministic output
-* Consistent rendering across platforms
-
-### Error Handling
-
-The pipeline must:
-
-* Fail fast on invalid media
-* Never create partial files
-* Never leak temporary files
-
-User-visible message:
-
-> The photo could not be processed.
-
----
-
-## Write Strategy
-
-* Atomic entities (e.g. `plantevent`) may be written via EF Core
-* Structural or temporal entities must be written via stored procedures
-
-Stored procedures:
-
-* Enforce invariants
-* Execute atomically
-* Reject invalid transitions
-
-Triggers may enforce low-level invariants but must not implement domain behaviour.
-
----
-
-## Web Application Layer
-
-* ASP.NET Core Razor Pages
-* Mobile-first UI
-* Environment-driven configuration
-* Explicit startup validation
-* Database treated as authoritative
-
-The application must not reinterpret or override database rules.
+* **libvips (NetVips)**
 
 ---
 
 ## Deployment Model
 
-### Fresh Install
+### Fresh Installation
 
-* Rebuild schema from exported artefacts
+* Rebuild database from schema export
 * No migrations applied
 
 ### Upgrade
@@ -312,85 +241,89 @@ The application must not reinterpret or override database rules.
 * Publish application
 * Restart service
 
----
-
-### Deterministic Deployment
-
-A correct application deployment consists only of:
+👉 The full installation and upgrade contract is defined in:
 
 ```
-git pull
-dotnet publish -c Release -o ./publish
-sudo systemctl restart orchidapp
+docs/installation-upgrade.md
 ```
-
-Database changes must be applied separately via migrations.
 
 ---
 
 ## Backups
 
-Nightly automated backup system:
+The system includes an automated backup solution:
 
-* MariaDB snapshot (`mysqldump --single-transaction --routines --triggers`)
-* gzip compression
+* MariaDB snapshot (`mysqldump`)
 * Encrypted via rclone
 * Uploaded to OneDrive
 * 14-day retention (database)
 * Encrypted mirror of uploads directory
 
-Backups are only valid if restore tests succeed.
-Backups must include both the database and uploads directory.
+Backups are only valid if restore succeeds.
 
----
+👉 Full operational runbook:
 
-## Restore Validation
-
-After restore:
-
-```sql
-SELECT scriptName FROM schemaversion ORDER BY appliedAt;
 ```
-
-Migration history must match repository state.
-
-Application binaries are rebuilt from Git.
+docs/OrchidApp-MariaDB-Backup-and-Restore-Runbook.md
+```
 
 ---
 
 ## Development Workflow
 
-After cloning:
+Initial setup:
 
-```
+```bash
 pwsh scripts/setup.ps1
 ```
 
 Local validation:
 
-```
+```bash
 pwsh scripts/ci-local.ps1
 ```
 
-CI behaviour:
+CI guarantees:
 
-* Rebuilds schema in clean MariaDB instance
-* Validates generated artefacts
-* Detects drift
+* Schema rebuild from committed artefacts
+* Drift detection
+* Application build validation
 
 If it fails locally, it will fail in CI.
 
 ---
 
+## Contributing
+
+All contributions must follow strict architectural and operational rules.
+
+👉 See:
+
+```
+CONTRIBUTING.md
+```
+
+---
+
+## Security Model
+
+OrchidApp is designed for deployment within a trusted home network.
+
+* No built-in authentication or authorisation
+* Not designed for direct exposure to the public internet
+* Security is enforced at the network level (router, firewall)
+
+---
+
 ## What This Project Is
 
-* A strict, reproducible, production-ready system
-* A learning and reference implementation
+* A strict, reproducible, production-grade system
+* A reference implementation for deterministic architecture
 * Designed for correctness over convenience
 
 ## What This Project Is Not
 
-* A rapid prototyping sandbox
+* A rapid prototyping tool
 * Tolerant of undocumented manual changes
 * Flexible about bypassing enforcement
 
@@ -406,6 +339,22 @@ Everything else follows from that.
 
 ---
 
+## Documentation
+
+All system documentation is located under:
+
+docs/
+
+Start here:
+
+docs/index.md
+
+---
+
 ## Third Party Licences
 
-See `THIRD_PARTY_NOTICES.md`
+See:
+
+```
+THIRD_PARTY_NOTICES.md
+```
