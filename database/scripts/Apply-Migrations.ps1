@@ -60,23 +60,33 @@ try {
     function Invoke-MariaDbQuery {
         param ([Parameter(Mandatory)][string]$Query)
 
-        $output = & $MariaDbExe `
-            --protocol=TCP `
-            --host=$MariaDbHost `
-            --port=$MariaDbPort `
-            --user=$User `
-            --connect-timeout=5 `
-            --batch `
-            --skip-column-names `
-            --database=$Database `
-            --execute="$Query" `
-            2>&1
+        if ($IsWindows) {
+            $env:MYSQL_PWD = $Password
 
-        if ($LASTEXITCODE -ne 0) {
+            $output = & $MariaDbExe `
+                --protocol=TCP `
+                --host=$MariaDbHost `
+                --port=$MariaDbPort `
+                --user=$User `
+                --database=$Database `
+                --connect-timeout=5 `
+                --default-character-set=utf8mb4 `
+                --execute="$Query" `
+                2>&1
+        }
+        else {
+            $cmd = "MYSQL_PWD='$Password' $MariaDbExe --protocol=TCP --host='$MariaDbHost' --port='$MariaDbPort' --user='$User' --database='$Database' --connect-timeout=5 --default-character-set=utf8mb4 --execute=""$Query"""
+
+            $output = & bash -c $cmd 2>&1
+        }
+
+        $exitCode = $LASTEXITCODE
+
+        if ($exitCode -ne 0) {
             Write-Host "---- MariaDB ERROR OUTPUT ----" -ForegroundColor Red
             $output | ForEach-Object { Write-Host $_ -ForegroundColor Red }
             Write-Host "--------------------------------" -ForegroundColor Red
-            throw "MariaDB command failed (exit code $LASTEXITCODE)"
+            throw "MariaDB command failed (exit code $exitCode)"
         }
 
         return $output
