@@ -73,7 +73,7 @@ database=$Database
             $env:MYSQL_PWD = $Password
 
             $output = & $MariaDbExe `
-                --defaults-extra-file="$credFile" `
+                "--defaults-extra-file=$credFile" `
                 --protocol=TCP `
                 --connect-timeout=5 `
                 --default-character-set=utf8mb4 `
@@ -113,7 +113,7 @@ source $normalizedPath;
 "@
 
         $output = & $MariaDbExe `
-            --defaults-extra-file="$credFile" `
+            "--defaults-extra-file=$credFile" `
             --protocol=TCP `
             --connect-timeout=5 `
             --default-character-set=utf8mb4 `
