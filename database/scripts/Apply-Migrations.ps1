@@ -96,7 +96,12 @@ SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 source $normalizedPath;
 "@
 
-        $output = $sql | & $MariaDbExe `
+        $tempFile = [System.IO.Path]::GetTempFileName()
+
+        try {
+            Set-Content -Path $tempFile -Value $sql -NoNewline
+
+        $output = & $MariaDbExe `
             --protocol=TCP `
             --host=$MariaDbHost `
             --port=$MariaDbPort `
@@ -104,7 +109,12 @@ source $normalizedPath;
             --database=$Database `
             --connect-timeout=5 `
             --default-character-set=utf8mb4 `
+            < $tempFile `
             2>&1
+        }
+        finally {
+            Remove-Item $tempFile -ErrorAction SilentlyContinue
+        }
 
         if ($LASTEXITCODE -ne 0) {
             Write-Host "---- MariaDB ERROR OUTPUT ----" -ForegroundColor Red
