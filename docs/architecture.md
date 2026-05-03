@@ -1,30 +1,29 @@
 # Architecture
 
-This document defines the architectural contract of OrchidApp.
+This document defines the **architectural contract** of OrchidApp.
 
-It explains the structural boundaries, invariants, enforcement
+It specifies the structural boundaries, invariants, enforcement
 mechanisms and operational guarantees that govern the system.
 
 This is not a how-to guide.
-It is the non-negotiable design philosophy of the system.
+This is the non-negotiable design of the system.
 
 ---
 
 # Architectural Summary
 
-OrchidApp is a layered system built around a strict principle:
+OrchidApp is a layered system built on a strict principle:
 
 > Invariants live in the database.
 > Behaviour lives in the application.
 > Enforcement lives in automation.
 
-The architecture deliberately separates responsibility across four
-layers:
+Responsibility is deliberately separated across four layers:
 
-1. **Database Layer** — structural integrity and lifecycle invariants
-2. **Application Layer** — behavioural workflows
-3. **Automation Layer** — reproducibility and validation
-4. **Operations Layer** — backup, restore and deployment discipline
+1. **Database Layer** - structural integrity and lifecycle invariants
+2. **Application Layer** - behavioural workflows
+3. **Automation Layer** - reproducibility and enforcement
+4. **Operations Layer** - backup, restore and deployment discipline
 
 No layer may weaken another.
 
@@ -43,7 +42,7 @@ A valid deployment must ensure:
 * File system paths (e.g. UploadRoot) are validated before use
 * Database connection settings are externally configurable
 
-Configuration is considered part of the deployment contract and must be consistent across environments.
+Configuration is part of the deployment contract and must be consistent across environments.
 
 ---
 
@@ -58,7 +57,7 @@ A valid deployment must ensure:
 * Critical dependencies required for core functionality are checked
 * Startup must fail if required components are unavailable
 
-The application must provide a simple health endpoint or equivalent mechanism to confirm that the system is operational.
+The application must provide a simple health endpoint or equivalent mechanism.
 
 ---
 
@@ -74,27 +73,29 @@ A valid deployment must ensure:
 * File system operations (e.g. image ingestion) are logged
 * Backup and restore processes produce verifiable logs
 
-Logs must provide sufficient detail for diagnosis without exposing sensitive information.
+Logs must support diagnosis without exposing sensitive information.
 
-Logging is considered a core operational capability of the system.
+Logging is a core operational capability.
 
 ---
 
 ## Security Model
 
-OrchidApp is designed for deployment within a trusted home network environment.
+OrchidApp is designed for deployment within a **trusted network environment**.
 
 The system assumes:
 
 * The application is not exposed directly to the public internet
-* Access is restricted to trusted users within the local network
-* No built-in authentication or authorisation mechanisms are enforced by default
+* Access is restricted to trusted users
+* No built-in authentication or authorisation is enforced
 
-Operational responsibility for network-level security lies with the deployment environment (e.g. router configuration, firewall rules).
+**This system is not designed for direct internet exposure.**
+
+Operational security (firewalls, routing, access control) is the responsibility of the deployment environment.
 
 ---
 
-# 1. Database Layer — Invariant Core
+# 1. Database Layer - Invariant Core
 
 The MariaDB schema is the authoritative source of truth.
 
@@ -106,9 +107,11 @@ It is responsible for:
 * Split and propagation semantics
 * Preventing invalid state transitions
 
-The database is treated as source code.
+The database is treated as source code:
 
-It must be reproducible, deterministic and resistant to drift.
+* Reproducible
+* Deterministic
+* Resistant to drift
 
 ### Authoritative Environment
 
@@ -123,15 +126,13 @@ Windows MySQL behaviour must not be relied upon.
 
 ---
 
-# 2. Migration System — Controlled Evolution
+# 2. Migration System - Controlled Evolution
 
-Schema evolution for existing installations is controlled exclusively through deterministic migration files:
+Schema evolution for existing databases is controlled exclusively through deterministic migration files:
 
 ```
 database/migrations/
 ```
-
-Migrations are the only permitted mechanism for upgrading a running database.
 
 Each migration:
 
@@ -140,30 +141,39 @@ Each migration:
 * Is recorded in the `schemaversion` table
 * Has its SHA256 checksum stored and enforced
 
-The migration system prevents:
+The system prevents:
 
 * Out-of-order execution
 * Duplicate timestamps
 * Silent historical modification
 * Schema drift prior to execution
 
+### Critical Rule - Database Creation vs Evolution
+
+A database must be managed using **one and only one** of the following strategies:
+
+* **Rebuild** - construct from canonical schema
+* **Migrations** - evolve an existing database
+
+These mechanisms must **never be combined on the same database**.
+
 ### Critical Design Constraint
 
-Migrations are not a database construction mechanism.
+Migrations are not a construction mechanism.
 
-Fresh installations and rebuilds use the canonical schema export under:
+Fresh installations and rebuilds use the canonical schema export:
 
 ```
 database/schema/
 ```
 
-Historical migrations must not be edited after they have been applied to any real environment.
+Historical migrations must never be edited after application.
 
 The production database must never be modified outside this system.
 
 ---
 
-# 3. Schema Export — Deterministic Representation
+# 3. Schema Export - Deterministic Representation
 
 Schema files under:
 
@@ -180,20 +190,40 @@ They:
 * Must never be edited manually
 * Are validated in CI
 
-The schema export represents the complete canonical database definition used for:
+The schema export is the **canonical database definition** used for:
 
 * Fresh installations
 * Full rebuilds
 * CI validation
-
-It is intentionally separate from migrations.
 
 Rebuild validates the assembled schema.
 Migrations evolve already-existing databases.
 
 ---
 
-# 4. Lifecycle Model — Structural Rules
+# 4. Temporal Model - Contractual Behaviour
+
+Temporal behaviour is part of the architectural contract.
+
+It is formally defined in:
+
+```
+docs/temporal-design.md
+```
+
+This includes:
+
+* Narrative vs structural time
+* Lifecycle boundaries
+* Temporal ordering guarantees
+* Mutability rules
+
+The application must not reinterpret temporal behaviour.
+All temporal invariants are database-enforced.
+
+---
+
+# 5. Lifecycle Model - Structural Rules
 
 A plant has a single immutable lifecycle:
 
@@ -225,7 +255,7 @@ These rules are database-enforced and non-negotiable.
 
 ---
 
-# 5. Photo & Hero Image Model
+# 6. Photo & Hero Image Model
 
 Photos are attached only via Observation events.
 
@@ -239,15 +269,13 @@ Rules:
 
 ---
 
-# 5A. Canonical Photo Ingestion Architecture
+# 6A. Canonical Photo Ingestion Architecture
 
 Image ingestion is a data integrity concern.
 
 All images are normalised into a single canonical representation.
 
 ### Processing Model
-
-Photo ingestion uses a single imaging engine:
 
 * **libvips (NetVips)**
 
@@ -271,7 +299,7 @@ Original uploads are not retained.
 
 ---
 
-# 6. Write Strategy — Responsibility Separation
+# 7. Write Strategy - Responsibility Separation
 
 ## Atomic Entities
 
@@ -289,36 +317,37 @@ Stored procedures:
 
 ---
 
-# 7. Application Layer — Behavioural Orchestration
+# 8. Application Layer - Behavioural Orchestration
 
 The application:
 
 * Orchestrates workflows
 * Invokes stored procedures for structural changes
 * Uses EF Core for atomic writes
-* Treats database as authoritative
+* Treats the database as authoritative
 
 The application must not:
 
 * Duplicate constraints
 * Override lifecycle rules
+* Reinterpret temporal behaviour
 
 ---
 
-# 8. UI Architecture — Navigation Contract
+# 9. UI Architecture - Navigation Contract
 
-UI follows strict, consistent patterns:
+UI follows strict patterns:
 
 * One primary action per page
 * One exit action per page
 * No duplicated controls
 * Mobile-first layout
 
-Navigation is enforced through shared partials.
+Navigation is enforced through shared components.
 
 ---
 
-# 9. Runtime Hosting Requirement
+# 10. Runtime Hosting Requirement
 
 The application must:
 
@@ -329,7 +358,7 @@ The application must:
 
 ---
 
-# 10. Automation Layer — Enforcement Mechanism
+# 11. Automation Layer - Enforcement Mechanism
 
 Automation enforces architectural guarantees through:
 
@@ -341,22 +370,22 @@ Automation enforces architectural guarantees through:
 
 CI validates:
 
-* The schema can be rebuilt from committed artefacts
-* The application builds and runs against that schema
+* Schema can be rebuilt from committed artefacts
+* Application builds and runs against that schema
 
-CI does not replay historical migrations on top of the rebuilt schema.
+CI does not replay historical migrations on rebuilt schema.
 
 Migration correctness is validated through:
 
-* the migration runner
-* checksum enforcement
-* controlled upgrade testing
+* The migration runner
+* Checksum enforcement
+* Controlled upgrade testing
 
-Local validation mirrors CI exactly.
+Local validation must mirror CI exactly.
 
 ---
 
-# 11. Operations Layer — State Protection
+# 12. Operations Layer - State Protection
 
 Stateful components:
 
@@ -369,11 +398,13 @@ The system includes:
 * Retention policy
 * Restore validation
 
+**Backup execution, monitoring and validation are the responsibility of the deployment operator.**
+
 Backups are only valid if restores succeed.
 
 ---
 
-# 12. Non-Goals
+# 13. Non-Goals
 
 The system does not aim to:
 

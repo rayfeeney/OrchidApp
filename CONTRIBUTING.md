@@ -1,14 +1,16 @@
 # Contributing to OrchidApp
 
-OrchidApp is a production-grade system built on strict architectural guarantees.
+OrchidApp is a production-grade system governed by a strict architectural contract.
 
-Automation is not advisory. It is the contract.
+Automation is not advisory.
+It is enforcement.
 
-This document defines how contributions must be made in order to preserve:
+All contributions must preserve:
 
 * Schema reproducibility
 * Migration integrity
 * Lifecycle invariants
+* Temporal correctness
 * Operational safety
 * Backup validity
 * CI determinism
@@ -17,9 +19,23 @@ If a change weakens any of these, it will be rejected.
 
 ---
 
+## Architectural Authority
+
+The system is governed by:
+
+```text
+docs/architecture.md
+```
+
+This document defines all non-negotiable rules.
+
+Contributions must not reinterpret, duplicate, or weaken these rules.
+
+---
+
 ## Core Principles
 
-All contributions must respect:
+All contributions must adhere to:
 
 1. **Database invariants are authoritative**
 2. **Migrations control structural change**
@@ -31,9 +47,9 @@ All contributions must respect:
 
 ## Mandatory Setup
 
-After cloning the repository, you must run:
+After cloning the repository:
 
-```bash id="m9v2qk"
+```bash id="2k9vft"
 pwsh scripts/setup.ps1
 ```
 
@@ -43,11 +59,13 @@ This:
 * Installs enforced Git hooks
 * Configures deterministic schema export
 
-Commits made without running setup are invalid and will fail CI.
+Commits made without setup are invalid and will fail CI.
 
 ---
 
 ## Contribution Types
+
+---
 
 ### 1. Database (Structural) Changes
 
@@ -55,7 +73,7 @@ Structural changes must:
 
 * Be implemented via migration files in:
 
-```id="l2r7dz"
+```text
 database/migrations/
 ```
 
@@ -77,7 +95,7 @@ Direct modification of any live database is prohibited.
 
 Files under:
 
-```id="o1d0px"
+```text
 database/schema/
 ```
 
@@ -91,13 +109,13 @@ They:
 
 If you need to change the schema:
 
-> Create a migration — do not edit generated SQL.
+> Create a migration - do not edit generated SQL.
 
 ---
 
 ### 3. Lifecycle & Structural Writes
 
-Certain entities enforce structural invariants and must be written via stored procedures.
+Structural domains enforce lifecycle invariants and must be written via stored procedures.
 
 Examples:
 
@@ -119,17 +137,17 @@ If unsure, default to stored procedures.
 
 ### 4. Stored Procedure Invocation Contract
 
-Stored procedures must be invoked using the project-standard patterns:
+Stored procedures must be invoked using project-standard patterns.
 
 **Command procedures (no result set):**
 
-```csharp id="9d3mqa"
+```csharp id="b2gx3f"
 Database.ExecuteSqlRawAsync(...)
 ```
 
 **Result-set procedures:**
 
-```csharp id="u9r8kb"
+```csharp id="3l6dbb"
 DbSet<TEntity>.FromSqlRaw(...).ToListAsync()
 ```
 
@@ -138,41 +156,36 @@ Rules:
 * All calls must be asynchronous
 * Manual ADO.NET commands are not permitted
 * Interpolated execution patterns are not permitted
-* Try/catch is used only to translate database errors into user-facing messages
+* Try/catch is used only to translate database errors
 
-Database behaviour must remain authoritative.
+Database behaviour remains authoritative.
 
 ---
 
-### 5. Web Application Changes
+### 5. Application Layer Changes
 
-The application layer:
+The application:
 
 * Orchestrates workflows
 * Must treat the database as authoritative
-* Must not duplicate database constraints
+* Must not duplicate constraints
 * Must not override lifecycle rules
+* Must not reinterpret temporal behaviour
 
-Application convenience must never override data correctness.
+Application convenience must never override correctness.
 
 ---
 
 ### 6. UI Navigation Contract
 
-All Razor Pages must comply with the navigation contract defined in:
+UI behaviour must comply with the architectural contract.
 
-```id="3h8xmk"
-docs/architecture.md
-```
+* Use shared components under `/Pages/Shared/`
+* Do not duplicate button layouts
+* Use the `returnUrl` pattern
+* Follow defined page types and navigation rules
 
-Rules:
-
-* Use shared partials under `/Pages/Shared/`
-* Do not duplicate button layouts per page
-* Use the `returnUrl` pattern for navigation
-* Conform to defined page types (list, form, destructive, content)
-
-UI consistency is an architectural constraint, not a preference.
+UI consistency is an architectural constraint.
 
 ---
 
@@ -194,7 +207,7 @@ Bypassing hooks (`--no-verify`) is not permitted.
 
 If changes are database-only:
 
-```bash id="w6g1sk"
+```bash id="3v2cxo"
 git commit --allow-empty
 ```
 
@@ -208,7 +221,7 @@ Do not manually stage generated files.
 
 Before opening a pull request:
 
-```bash id="qk2z0x"
+```bash id="t63s71"
 pwsh scripts/ci-local.ps1
 ```
 
@@ -224,7 +237,7 @@ If it fails locally, it will fail in CI.
 
 ## Pull Requests
 
-Each PR must clearly state whether it is:
+Each PR must clearly state its scope:
 
 * Database-focused
 * Application-focused
@@ -254,7 +267,7 @@ Backups are only valid if restore succeeds.
 
 ## Not Permitted
 
-The following are explicitly disallowed:
+The following are strictly disallowed:
 
 * Editing generated schema files
 * Modifying historical migrations

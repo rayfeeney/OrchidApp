@@ -1,8 +1,8 @@
-# OrchidApp — Installation & Upgrade Guide
+# OrchidApp - Installation & Upgrade Guide
 
 ## 1. Purpose
 
-This document defines the deterministic process for:
+This document defines the **deterministic procedures** for:
 
 * First-time installation on Raspberry Pi
 * Rebuilding the system from scratch
@@ -10,14 +10,16 @@ This document defines the deterministic process for:
 
 A correct execution of this guide must always result in a working system.
 
+If additional undocumented steps are required, the deployment model is considered broken.
+
 ---
 
 ## 2. Environment Model
 
-| Environment | Platform     | Configuration Source                     |
-| ----------- | ------------ | ---------------------------------------- |
-| Development | Windows PC   | `appsettings.Development.json`           |
-| Production  | Raspberry Pi | systemd + `/etc/orchidapp/orchidapp.env` |
+| Environment | Platform     | Configuration Source           |
+| ----------- | ------------ | ------------------------------ |
+| Development | Windows PC   | `appsettings.Development.json` |
+| Production  | Raspberry Pi | `/etc/orchidapp/orchidapp.env` |
 
 Rules:
 
@@ -27,11 +29,33 @@ Rules:
 
 ---
 
-## 3. First-Time Installation (Fresh Raspberry Pi)
+## 3. Installation Strategies (Critical)
+
+A database must be managed using **one and only one** strategy:
+
+### Strategy A - Rebuild (Fresh Installation)
+
+* Used for new environments
+* Uses canonical schema export
+* Does **not** use migrations
+
+### Strategy B - Migration (Existing System)
+
+* Used for upgrading an existing deployment
+* Applies forward-only migrations
+* Must not rebuild schema
+
+These strategies must **never be combined on the same database**.
 
 ---
 
-### 3.1 Install Prerequisites
+## 4. First-Time Installation (Fresh Raspberry Pi)
+
+This procedure uses the **Rebuild strategy**.
+
+---
+
+### 4.1 Install Prerequisites
 
 ```bash
 sudo apt update && sudo apt upgrade -y
@@ -49,9 +73,7 @@ sudo systemctl start mariadb
 
 ---
 
-### 3.2 Configure MariaDB (Required)
-
-MariaDB must be configured before schema creation.
+### 4.2 Configure MariaDB (Required)
 
 Edit:
 
@@ -87,7 +109,7 @@ If this step is skipped, stored procedures and comparisons may fail.
 
 ---
 
-### 3.3 Create Database and User
+### 4.3 Create Database and User
 
 ```sql
 CREATE DATABASE orchids CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -101,7 +123,7 @@ FLUSH PRIVILEGES;
 
 ---
 
-### 3.4 Clone Repository
+### 4.4 Clone Repository
 
 ```bash
 sudo mkdir -p /opt/orchidapp
@@ -113,7 +135,7 @@ git clone <repo-url> .
 
 ---
 
-### 3.5 Configure Environment
+### 4.5 Configure Environment
 
 Create:
 
@@ -138,7 +160,7 @@ sudo chmod 600 /etc/orchidapp/orchidapp.env
 
 ---
 
-### 3.6 Configure Uploads Directory
+### 4.6 Configure Uploads Directory
 
 ```bash
 sudo mkdir -p /opt/orchidapp/uploads
@@ -154,7 +176,7 @@ Requirements:
 
 ---
 
-### 3.7 Install Image Processing Dependencies
+### 4.7 Install Image Processing Dependencies
 
 ```bash
 sudo apt install -y libvips libheif1 libheif-dev
@@ -164,9 +186,9 @@ If missing, photo uploads will fail by design.
 
 ---
 
-### 3.8 Initialise Database Schema
+### 4.8 Initialise Database Schema (Rebuild)
 
-From repo root:
+From repository root:
 
 ```bash
 pwsh ./database/scripts/rebuild.ps1
@@ -174,15 +196,15 @@ pwsh ./database/scripts/rebuild.ps1
 
 This:
 
-* Drops and recreates schema
-* Applies full schema export
-* Produces a deterministic database state
+* Drops and recreates the database schema
+* Applies the canonical schema export
+* Produces a deterministic, clean state
 
 No manual SQL changes are permitted.
 
 ---
 
-### 3.9 Create systemd Service
+### 4.9 Create systemd Service
 
 ```bash
 sudo nano /etc/systemd/system/orchidapp.service
@@ -215,7 +237,7 @@ sudo systemctl enable orchidapp
 
 ---
 
-### 3.10 First Publish
+### 4.10 First Publish
 
 ```bash
 dotnet publish src/OrchidApp.Web/OrchidApp.Web.csproj -c Release -o /opt/orchidapp/publish
@@ -236,7 +258,7 @@ http://<pi-ip>:5000
 
 ---
 
-### 3.11 Configure Backups (Mandatory)
+### 4.11 Configure Backups (Mandatory)
 
 A deployment without backups is incomplete.
 
@@ -264,7 +286,7 @@ crontab -e
 
 ---
 
-### 3.12 Validate Restore (Required)
+### 4.12 Validate Restore (Required)
 
 ```bash
 mysql -u root -p orchids_test < backup.sql
@@ -274,11 +296,13 @@ Backups are only valid if restore succeeds.
 
 ---
 
-## 4. Upgrade Procedure
+## 5. Upgrade Procedure
+
+This procedure uses the **Migration strategy**.
 
 ---
 
-### 4.0 Pre-Upgrade Backup (Mandatory)
+### 5.0 Pre-Upgrade Backup (Mandatory)
 
 ```bash
 /opt/orchidapp/infrastructure/backups/backup_orchids.sh
@@ -288,28 +312,26 @@ Upgrade must not proceed without a successful backup.
 
 ---
 
-### 4.1 Apply Database Changes
+### 5.1 Apply Database Changes (Migrations)
 
 ```bash
 cd /opt/orchidapp
 git status
 git pull
-pwsh ./database/scripts/Apply-Migrations.ps1
+./database/scripts/apply-migrations.sh
 ```
 
 Rules:
 
 * Working tree must be clean
 * Migrations must succeed without manual intervention
+* Failures must be resolved before re-running
 
-Migrations are expected to fail fast on error.
-
-Partial application may occur and must be resolved before re-running.
 The system does not attempt automatic rollback.
 
 ---
 
-### 4.2 Upgrade Application
+### 5.2 Upgrade Application
 
 ```bash
 sudo systemctl stop orchidapp
@@ -321,12 +343,12 @@ sudo systemctl restart orchidapp
 
 Rules:
 
-* Never edit files in `publish/`
-* Never manually copy binaries
+* Do not manually modify files in `publish/`
+* Do not copy binaries manually
 
 ---
 
-## 5. Verification Checklist
+## 6. Verification Checklist
 
 After deployment:
 
@@ -340,7 +362,7 @@ Confirm:
 * No startup errors
 * Database connectivity successful
 
-Then test:
+Then verify:
 
 * Pages load
 * Data is visible
@@ -348,7 +370,7 @@ Then test:
 
 ---
 
-## 6. Troubleshooting
+## 7. Troubleshooting
 
 ### Application fails at startup
 
@@ -366,7 +388,7 @@ cat /etc/orchidapp/orchidapp.env
 
 Check:
 
-* Correct variable name
+* Correct variable names
 * Correct credentials
 * File permissions (600)
 
@@ -382,7 +404,7 @@ Check:
 
 ---
 
-## 7. Deterministic Deployment Contract
+## 8. Deterministic Deployment Contract
 
 A correct deployment consists only of:
 
