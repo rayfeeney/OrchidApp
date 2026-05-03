@@ -34,6 +34,17 @@ It is designed for long-term, reliable collection management where data integrit
 
 ---
 
+## Who this is for
+
+- Orchid collectors managing growing collections  
+- Home lab enthusiasts running self-hosted systems  
+- Developers interested in deterministic database design  
+- Anyone who values correctness and long-term data integrity  
+
+OrchidApp is designed for environments where reliability matters more than flexibility.
+
+---
+
 ## Production Status
 
 * ASP.NET Core Razor Pages (.NET LTS)
