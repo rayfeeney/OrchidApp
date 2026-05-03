@@ -1,6 +1,15 @@
 # OrchidApp
 ![Status](https://img.shields.io/badge/status-production--ready-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-raspberry--pi-blue)
+<p align="center">
+  <img src="docs/images/repot-status-mobile.png" alt="Mobile view" width="30%" />
+  &nbsp;&nbsp;&nbsp;
+  <img src="docs/images/plant-details-desktop.png" alt="Desktop view" width="65%" />
+</p>
+
+<p align="center">
+  <em>Mobile-first design with structured lifecycle management and full desktop visibility</em>
+</p>
 
 A self-hosted orchid collection manager designed for **correctness, not convenience.**
 
