@@ -49,7 +49,16 @@ try {
         throw "MARIADB_DATABASE must be set"
     }
 
-    $env:MYSQL_PWD = $Password
+    $credFile = [System.IO.Path]::GetTempFileName()
+
+Set-Content -Path $credFile -NoNewline -Value @"
+[client]
+user=$User
+password=$Password
+host=$MariaDbHost
+port=$MariaDbPort
+database=$Database
+"@
 
     Write-Host "Using DB user: $User"
     Write-Host "Server: ${MariaDbHost}:${MariaDbPort}"
@@ -64,11 +73,8 @@ try {
             $env:MYSQL_PWD = $Password
 
             $output = & $MariaDbExe `
+                --defaults-extra-file="$credFile" `
                 --protocol=TCP `
-                --host=$MariaDbHost `
-                --port=$MariaDbPort `
-                --user=$User `
-                --database=$Database `
                 --connect-timeout=5 `
                 --default-character-set=utf8mb4 `
                 --execute="$Query" `
@@ -107,11 +113,8 @@ source $normalizedPath;
 "@
 
         $output = & $MariaDbExe `
+            --defaults-extra-file="$credFile" `
             --protocol=TCP `
-            --host=$MariaDbHost `
-            --port=$MariaDbPort `
-            --user=$User `
-            --database=$Database `
             --connect-timeout=5 `
             --default-character-set=utf8mb4 `
             --execute="$sql" `
@@ -264,5 +267,5 @@ VALUES ('$safeName', '$checksum');
     Write-Host "Migration runner completed successfully."
 }
 finally {
-    Remove-Item Env:\MYSQL_PWD -ErrorAction SilentlyContinue
+    Remove-Item $credFile -ErrorAction SilentlyContinue
 }
