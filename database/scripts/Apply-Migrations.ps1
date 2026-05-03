@@ -33,12 +33,20 @@ try {
 
     $MariaDbHost = $env:MARIADB_HOST ?? $env:MYSQL_HOST ?? "localhost"
     $MariaDbPort = $env:MARIADB_PORT ?? $env:MYSQL_PORT ?? 3307
-    $Database    = "orchids"
+    $Database    = $env:MARIADB_DATABASE ?? "orchids"
     $User        = $env:MARIADB_USER
     $Password    = $env:MARIADB_PASSWORD
 
     if (-not $User -or -not $Password) {
         throw "MARIADB_USER and MARIADB_PASSWORD must be set"
+    }
+
+    if (-not $MariaDbHost) {
+        throw "MARIADB_HOST must be set"
+    }
+
+    if (-not $Database) {
+        throw "MARIADB_DATABASE must be set"
     }
 
     $env:MYSQL_PWD = $Password
