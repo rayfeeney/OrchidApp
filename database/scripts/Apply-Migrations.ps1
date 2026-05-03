@@ -45,8 +45,10 @@ try {
 
     $credFile = [System.IO.Path]::GetTempFileName()
 
-    [System.IO.File]::WriteAllText(
-        $credFile,
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+
+[System.IO.File]::WriteAllText(
+    $credFile,
 @"
 [client]
 user=$User
@@ -55,8 +57,8 @@ host=$MariaDbHost
 port=$MariaDbPort
 database=$Database
 "@,
-        [System.Text.Encoding]::UTF8
-    )
+    $utf8NoBom
+)
 
     if (-not $IsWindows) {
         chmod 600 $credFile
