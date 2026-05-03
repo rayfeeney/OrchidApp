@@ -29,6 +29,40 @@ This is a system with guarantees.
 
 ---
 
+## Screenshots
+
+### Mobile (Primary Experience)
+
+#### Repot Status
+![Repot Status Mobile](docs/images/repot-status-mobile.png)
+
+Track all plants with clear, structured status and quick access.
+
+---
+
+### Desktop
+
+#### Plant Details
+![Plant Details Desktop](docs/images/plant-details-desktop.png)
+
+Manage individual plants with full lifecycle history, location tracking, and structured event recording.
+
+---
+
+#### Species / Hybrids
+![Species Hybrids Desktop](docs/images/species-hybrids-desktop.png)
+
+Structured botanical taxonomy organised by genus, with support for species and hybrids.
+
+---
+
+#### Photo Viewer
+![Photo Viewer Desktop](docs/images/photo-viewer-desktop.png)
+
+Browse plant photos with a focused view and quick navigation.
+
+---
+
 ## Why OrchidApp exists
 
 Most plant tracking applications optimise for flexibility.
