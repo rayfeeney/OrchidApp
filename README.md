@@ -1,4 +1,6 @@
 # OrchidApp
+![Status](https://img.shields.io/badge/status-production--ready-brightgreen)
+![Platform](https://img.shields.io/badge/platform-raspberry--pi-blue)
 
 A self-hosted orchid collection manager designed for **correctness, not convenience.**
 
