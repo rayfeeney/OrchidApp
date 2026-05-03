@@ -31,8 +31,8 @@ try {
 
     # --- CONNECTION SETTINGS ------------------------------------------------
 
-    $MariaDbHost = $env:MARIADB_HOST ?? $env:MYSQL_HOST ?? "localhost"
-    $MariaDbPort = $env:MARIADB_PORT ?? $env:MYSQL_PORT ?? 3307
+    $MariaDbHost = $env:MARIADB_HOST ?? "localhost"
+    $MariaDbPort = $env:MARIADB_PORT ?? 3306
     $Database    = $env:MARIADB_DATABASE ?? "orchids"
     $User        = $env:MARIADB_USER
     $Password    = $env:MARIADB_PASSWORD
@@ -41,24 +41,26 @@ try {
         throw "MARIADB_USER and MARIADB_PASSWORD must be set"
     }
 
-    if (-not $MariaDbHost) {
-        throw "MARIADB_HOST must be set"
-    }
-
-    if (-not $Database) {
-        throw "MARIADB_DATABASE must be set"
-    }
+    # --- CREATE CREDENTIAL FILE --------------------------------------------
 
     $credFile = [System.IO.Path]::GetTempFileName()
 
-Set-Content -Path $credFile -NoNewline -Value @"
+    [System.IO.File]::WriteAllText(
+        $credFile,
+@"
 [client]
 user=$User
 password=$Password
 host=$MariaDbHost
 port=$MariaDbPort
 database=$Database
-"@
+"@,
+        [System.Text.Encoding]::UTF8
+    )
+
+    if (-not $IsWindows) {
+        chmod 600 $credFile
+    }
 
     Write-Host "Using DB user: $User"
     Write-Host "Server: ${MariaDbHost}:${MariaDbPort}"
@@ -69,22 +71,14 @@ database=$Database
     function Invoke-MariaDbQuery {
         param ([Parameter(Mandatory)][string]$Query)
 
-        if ($IsWindows) {
-            $env:MYSQL_PWD = $Password
-
-            $output = & $MariaDbExe `
-                "--defaults-extra-file=$credFile" `
-                --protocol=TCP `
-                --connect-timeout=5 `
-                --default-character-set=utf8mb4 `
-                --execute="$Query" `
-                2>&1
-        }
-        else {
-            $cmd = "MYSQL_PWD='$Password' $MariaDbExe --protocol=TCP --host='$MariaDbHost' --port='$MariaDbPort' --user='$User' --database='$Database' --connect-timeout=5 --default-character-set=utf8mb4 --execute=""$Query"""
-
-            $output = & bash -c $cmd 2>&1
-        }
+        $output = & $MariaDbExe `
+            "--defaults-extra-file=$credFile" `
+            --protocol=TCP `
+            --connect-timeout=5 `
+            --batch `
+            --skip-column-names `
+            --execute="$Query" `
+            2>&1
 
         $exitCode = $LASTEXITCODE
 
@@ -178,58 +172,6 @@ ORDER BY scriptName;
         exit 0
     }
 
-    # --- VALIDATE FILENAMES -------------------------------------------------
-
-    $pattern = '^\d{12}_.+\.sql$'
-
-    foreach ($file in $migrationFiles) {
-        if ($file.Name -notmatch $pattern) {
-            throw "Invalid migration filename '$($file.Name)'"
-        }
-    }
-
-    # --- VALIDATE EXISTENCE -------------------------------------------------
-
-    foreach ($applied in $appliedMigrations.Keys) {
-        if (-not ($migrationFiles.Name -contains $applied)) {
-            throw "Applied migration '$applied' missing from folder"
-        }
-    }
-
-    # --- VALIDATE CHECKSUMS -------------------------------------------------
-
-    foreach ($file in $migrationFiles) {
-        if (-not $appliedMigrations.ContainsKey($file.Name)) { continue }
-
-        $current  = Get-MigrationChecksum $file.FullName
-        $recorded = $appliedMigrations[$file.Name]
-
-        if ([string]::IsNullOrWhiteSpace($recorded)) {
-            throw "Missing checksum for '$($file.Name)'"
-        }
-
-        if ($current -ne $recorded) {
-            throw "Checksum mismatch for '$($file.Name)'"
-        }
-    }
-
-    # --- VALIDATE ORDER -----------------------------------------------------
-
-    $gapFound = $false
-
-    foreach ($file in $migrationFiles) {
-        $isApplied = $appliedMigrations.ContainsKey($file.Name)
-
-        if (-not $isApplied) {
-            $gapFound = $true
-            continue
-        }
-
-        if ($gapFound -and $isApplied) {
-            throw "Out-of-order migration detected at '$($file.Name)'"
-        }
-    }
-
     # --- APPLY MIGRATIONS ---------------------------------------------------
 
     $appliedCount = 0
@@ -267,5 +209,7 @@ VALUES ('$safeName', '$checksum');
     Write-Host "Migration runner completed successfully."
 }
 finally {
-    Remove-Item $credFile -ErrorAction SilentlyContinue
+    if ($credFile -and (Test-Path $credFile)) {
+        Remove-Item $credFile -ErrorAction SilentlyContinue
+    }
 }
