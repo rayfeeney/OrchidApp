@@ -51,3 +51,13 @@ src/OrchidApp.Web/wwwroot/uploads/plants/
 
 appsettings.Production.json
 appsettings.*.Local.json
+
+# =========================
+# Cleaning up spurious files
+# =========================
+Audit-GenusDependencies.ps1
+Audit-GenusUiSurface.ps1
+Audit-TaxonomyLifecycle.ps1
+DateDefaults.ps1
+database/CreateOrchidsDB.sql
+database/tests/
