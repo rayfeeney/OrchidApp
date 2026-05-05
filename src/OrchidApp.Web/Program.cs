@@ -1,13 +1,21 @@
-using OrchidApp.Web.Data;
-using OrchidApp.Web.Services;
+using System.IO;
+using System.Diagnostics;
+using System.Security.Cryptography;
+using System.Runtime.InteropServices;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.Extensions.FileProviders;
+using MySqlConnector;
+using OrchidApp.Web.Data;
+using OrchidApp.Web.Services;
 using OrchidApp.Web.Infrastructure;
 using OrchidApp.Web.Configuration;
 
-
 var builder = WebApplication.CreateBuilder(args);
+
+Console.WriteLine("Program starting...");
+Console.WriteLine($"ENV: {builder.Environment.EnvironmentName}");
+
 
 // Add services to the container.
 builder.Services.AddRazorPages();
@@ -54,7 +62,172 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+if (app.Environment.IsEnvironment("Desktop"))
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? throw new Exception("DefaultConnection is not configured");
+
+    var csBuilder = new MySqlConnector.MySqlConnectionStringBuilder(connectionString);
+    var dbName = csBuilder.Database;
+
+    // Server-level connection (no DB)
+    csBuilder.Database = "";
+
+    using var conn = new MySqlConnector.MySqlConnection(csBuilder.ConnectionString);
+    conn.Open();
+
+    // Check if DB exists
+    using (var cmd = conn.CreateCommand())
+    {
+        cmd.CommandText = @"
+            SELECT SCHEMA_NAME 
+            FROM INFORMATION_SCHEMA.SCHEMATA 
+            WHERE SCHEMA_NAME = @db";
+
+        cmd.Parameters.AddWithValue("@db", dbName);
+
+        var result = cmd.ExecuteScalar();
+
+        if (result == null)
+        {
+            Console.WriteLine("DB does not exist -> creating");
+
+            using var createCmd = conn.CreateCommand();
+            createCmd.CommandText = $@"
+            CREATE DATABASE `{dbName}`
+            CHARACTER SET utf8mb4
+            COLLATE utf8mb4_unicode_ci;";
+            createCmd.ExecuteNonQuery();
+
+            Console.WriteLine("DB created");
+        }
+        else
+        {
+            Console.WriteLine("DB already exists");
+        }
+    }
+
+    // ---------- DB connection (after DB exists) ----------
+    using (var dbConn = new MySqlConnector.MySqlConnection(connectionString))
+    {
+        dbConn.Open();
+
+        var repoRoot = Path.GetFullPath(
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..")
+        );
+
+        var dbFolder = Path.Combine(repoRoot, "database");
+        var mariadbRoot = Path.Combine(repoRoot, "app", "runtime", "mariadb");
+
+        string platformFolder = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "win-x64" :
+                                RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? "osx-arm64" :
+                                throw new Exception("Unsupported platform");
+
+        string exeName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "mariadb.exe" : "mariadb";
+
+        var mariadbExe = Path.Combine(
+            mariadbRoot,
+            platformFolder,
+            "bin",
+            exeName
+        );
+
+Console.WriteLine($"RepoRoot: {repoRoot}");
+Console.WriteLine($"DB Folder: {dbFolder}");
+Console.WriteLine($"MariaDB EXE: {mariadbExe}");
+
+        bool schemaExists;
+
+        using (var cmd = dbConn.CreateCommand())
+        {
+            cmd.CommandText = @"
+                SELECT COUNT(*)
+                FROM INFORMATION_SCHEMA.TABLES
+                WHERE TABLE_SCHEMA = @db
+                AND TABLE_NAME = 'schemaversion';";
+
+            cmd.Parameters.AddWithValue("@db", dbName);
+
+            var result = Convert.ToInt32(cmd.ExecuteScalar());
+            schemaExists = result > 0;
+        }
+
+        if (schemaExists)
+        {
+            Console.WriteLine("Schema already exists -> skipping bootstrap");
+        }
+        else
+        {
+            Console.WriteLine("Schema not found -> creating");
+
+            // Order matters
+            RunFolderWithMariaDb(Path.Combine(dbFolder, "schema", "tables"), mariadbExe);
+            RunFolderWithMariaDb(Path.Combine(dbFolder, "schema", "views"), mariadbExe);
+            RunFolderWithMariaDb(Path.Combine(dbFolder, "schema", "routines"), mariadbExe);
+            RunFolderWithMariaDb(Path.Combine(dbFolder, "schema", "triggers"), mariadbExe);
+            RunFolderWithMariaDb(Path.Combine(dbFolder, "schema", "constraints"), mariadbExe);
+            RunFolderWithMariaDb(Path.Combine(dbFolder, "schema", "seeds"), mariadbExe);
+    
+            using var tx = dbConn.BeginTransaction();
+
+            try
+            {
+                // 1. Record baseline
+                using (var cmd = dbConn.CreateCommand())
+                {
+                    cmd.Transaction = tx;
+                    cmd.CommandText = @"
+                        INSERT INTO schemaversion (scriptName, appliedAt, checksum)
+                        VALUES ('baseline', NOW(), 'baseline');";
+                    cmd.ExecuteNonQuery();
+                }
+
+                // 2. Mark ALL existing migrations as already applied
+                var baselineMigrationsFolder = Path.Combine(dbFolder, "migrations");
+
+                if (Directory.Exists(baselineMigrationsFolder))
+                {
+                    var files = Directory.GetFiles(baselineMigrationsFolder, "*.sql")
+                                        .OrderBy(f => f);
+
+                    foreach (var file in files)
+                    {
+                        var scriptName = Path.GetFileName(file);
+                        var checksum = ComputeChecksum(file);
+
+                        using var cmd = dbConn.CreateCommand();
+                        cmd.Transaction = tx;
+                        cmd.CommandText = @"
+                            INSERT IGNORE INTO schemaversion (scriptName, appliedAt, checksum)
+                            VALUES (@name, NOW(), @checksum);";
+
+                        cmd.Parameters.AddWithValue("@name", scriptName);
+                        cmd.Parameters.AddWithValue("@checksum", checksum);
+
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+
+                tx.Commit();
+                Console.WriteLine("Baseline + migrations recorded");
+            }
+            catch
+            {
+                tx.Rollback();
+                throw;
+            }
+
+        }
+
+        var migrationsFolder = Path.Combine(dbFolder, "migrations");
+
+        RunMigrations(migrationsFolder, mariadbExe, dbConn);
+    }
+
+    
+}
+
+// app.UseHttpsRedirection();
 
 app.UseStaticFiles(); // always serve wwwroot (Dev + Prod)
 
@@ -76,3 +249,133 @@ app.UseAuthorization();
 app.MapRazorPages();
 
 app.Run();
+
+static void RunFolderWithMariaDb(string folderPath, string mariadbExe)
+{
+    if (!Directory.Exists(folderPath))
+    {
+        Console.WriteLine($"Folder not found: {folderPath}");
+        return;
+    }
+
+    var files = Directory.GetFiles(folderPath, "*.sql")
+                         .OrderBy(f => f)
+                         .ToList();
+
+    foreach (var file in files)
+    {
+        RunScriptWithMariaDb(file, mariadbExe);
+    }
+}
+
+static void RunScriptWithMariaDb(string scriptPath, string mariadbExe)
+{
+    Console.WriteLine($"Running script: {Path.GetFileName(scriptPath)}");
+
+    var process = new Process
+    {
+        StartInfo = new ProcessStartInfo
+        {
+            FileName = mariadbExe,
+            Arguments = "-u orchid -porchid -P 3308 orchids",
+            UseShellExecute = false,
+            RedirectStandardInput = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true
+        }
+    };
+
+    process.OutputDataReceived += (s, e) =>
+    {
+        if (e.Data != null)
+            Console.WriteLine(e.Data);
+    };
+
+    process.ErrorDataReceived += (s, e) =>
+    {
+        if (e.Data != null)
+            Console.WriteLine("ERR: " + e.Data);
+    };
+
+    process.Start();
+
+    // START READING BEFORE WRITING
+    process.BeginOutputReadLine();
+    process.BeginErrorReadLine();
+
+    var sql = File.ReadAllText(scriptPath);
+
+    process.StandardInput.Write(sql);
+    process.StandardInput.Close();
+
+    process.WaitForExit();
+}
+
+static void RunMigrations(string folderPath, string mariadbExe, MySqlConnection dbConn)
+{
+    if (!Directory.Exists(folderPath))
+    {
+        Console.WriteLine($"No migrations folder: {folderPath}");
+        return;
+    }
+
+    var files = Directory.GetFiles(folderPath, "*.sql")
+                         .OrderBy(f => f)
+                         .ToList();
+
+    foreach (var file in files)
+    {
+        var scriptName = Path.GetFileName(file);
+
+        var checksum = ComputeChecksum(file);
+
+        using var checkCmd = dbConn.CreateCommand();
+        checkCmd.CommandText = @"
+            SELECT checksum 
+            FROM schemaversion 
+            WHERE scriptName = @name";
+
+        checkCmd.Parameters.AddWithValue("@name", scriptName);
+
+        var existingChecksum = checkCmd.ExecuteScalar() as string;
+
+        if (existingChecksum != null)
+        {
+            if (!string.Equals(existingChecksum, checksum, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new Exception(
+                    $"Checksum mismatch for migration '{scriptName}'. " +
+                    $"The script has been modified after execution."
+                );
+            }
+
+            Console.WriteLine($"Skipping migration: {scriptName}");
+            continue;
+        }
+
+        Console.WriteLine($"Applying migration: {scriptName}");
+
+        RunScriptWithMariaDb(file, mariadbExe);
+
+        // Record it
+        using var insertCmd = dbConn.CreateCommand();
+        insertCmd.CommandText = @"
+            INSERT INTO schemaversion (scriptName, appliedAt, checksum)
+            VALUES (@name, NOW(), @checksum)";
+
+        insertCmd.Parameters.AddWithValue("@name", scriptName);
+        insertCmd.Parameters.AddWithValue("@checksum", checksum);
+
+        insertCmd.ExecuteNonQuery();
+    }
+}
+
+static string ComputeChecksum(string filePath)
+{
+    using var sha = SHA256.Create();
+    var bytes = File.ReadAllBytes(filePath);
+    var hash = sha.ComputeHash(bytes);
+
+    return Convert.ToHexString(hash); // .NET 5+
+}
