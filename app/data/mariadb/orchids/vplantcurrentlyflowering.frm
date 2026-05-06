@@ -7,7 +7,7 @@ definer_user=orchid
 definer_host=localhost
 suid=2
 with_check_option=0
-timestamp=0001778010532933537
+timestamp=0001778087547396491
 create-version=2
 source=SELECT `p`.`plantId`\nAS `plantId`,`p`.`plantTag`\nAS `plantTag`,`l`.`locationName`\nAS `locationName`,`g`.`genusId`\nAS `genusId`,`g`.`genusName`\nAS `genusName`,case when `t`.`isSystemManaged` = 1 then concat(`g`.`genusName`,\' sp.\') when `t`.`speciesName` is not null then concat(`g`.`genusName`,\' \',`t`.`speciesName`) when `t`.`hybridName` is not null then concat(`g`.`genusName`,\' \',`t`.`hybridName`) else `g`.`genusName` end\nAS `displayName`,`f`.`startDate`\nAS `floweringStartDate` FROM (((((`plant` `p` join `taxon` `t` on(`t`.`taxonId` = `p`.`taxonId`)) join `genus` `g` on(`g`.`genusId` = `t`.`genusId`)) join `flowering` `f` on(`f`.`plantId` = `p`.`plantId` and `f`.`isActive` = 1 and `f`.`endDate` is null)) left join `plantlocationhistory` `plh` on(`plh`.`plantId` = `p`.`plantId` and `plh`.`isActive` = 1 and `plh`.`endDateTime` is null)) left join `location` `l` on(`l`.`locationId` = `plh`.`locationId`)) WHERE `p`.`endDate` is null
 client_cs_name=utf8mb4

@@ -30,11 +30,14 @@ public partial class Form1 : Form
         Controls.Add(logBox);
     }
 
-    protected override void OnLoad(EventArgs e)
+    protected override async void OnLoad(EventArgs e)
     {
         base.OnLoad(e);
 
         StartMariaDb();
+
+        await Task.Delay(2000); // give MariaDB time to start
+
         StartWebApp();
     }
 
@@ -50,8 +53,6 @@ public partial class Form1 : Form
                 "OrchidApp.Web.csproj"
             )
         );
-
-        var serverReady = new TaskCompletionSource<bool>();
 
         _webAppProcess = new Process
         {
@@ -73,11 +74,6 @@ public partial class Form1 : Form
             if (e.Data != null)
             {
                 AppendLog(e.Data);
-
-                if (e.Data.Contains("Now listening on") || e.Data.Contains("Application started"))
-                {
-                    serverReady.TrySetResult(true);
-                }
             }
         };
 
@@ -92,7 +88,7 @@ public partial class Form1 : Form
         _webAppProcess.BeginOutputReadLine();
         _webAppProcess.BeginErrorReadLine();
 
-        await Task.WhenAny(serverReady.Task, Task.Delay(10000));
+        await WaitForWebAppAsync("http://localhost:5285");
 
         Process.Start(new ProcessStartInfo
         {
@@ -142,6 +138,29 @@ public partial class Form1 : Form
         _mariaDbProcess.Start();
     }
 
+    private async Task WaitForWebAppAsync(string url)
+    {
+        using var client = new HttpClient();
+
+        for (int i = 0; i < 30; i++) // ~15 seconds
+        {
+            try
+            {
+                var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+                if (response.IsSuccessStatusCode)
+                    return;
+            }
+            catch
+            {
+                // not ready yet
+            }
+
+            await Task.Delay(500);
+        }
+
+        throw new Exception("Web app did not start in time");
+    }
+
     private void AppendLog(string text)
     {
         if (InvokeRequired)
@@ -155,16 +174,23 @@ public partial class Form1 : Form
 
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
+        try
+        {
+            if (_webAppProcess != null && !_webAppProcess.HasExited)
+            {
+                _webAppProcess.Kill(true);
+            }
+
+            if (_mariaDbProcess != null && !_mariaDbProcess.HasExited)
+            {
+                _mariaDbProcess.Kill(true);
+            }
+        }
+        catch
+        {
+            // ignore cleanup errors
+        }
+
         base.OnFormClosing(e);
-
-        if (_webAppProcess != null && !_webAppProcess.HasExited)
-        {
-            _webAppProcess.Kill(true);
-        }
-
-        if (_mariaDbProcess != null && !_mariaDbProcess.HasExited)
-        {
-            _mariaDbProcess.Kill(true);
-        }
     }
 }

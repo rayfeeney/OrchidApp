@@ -7,7 +7,7 @@ definer_user=orchid
 definer_host=localhost
 suid=2
 with_check_option=0
-timestamp=0001778010533612875
+timestamp=0001778087548025314
 create-version=2
 source=SELECT `t`.`taxonId`\nAS `taxonId`,`t`.`genusId`\nAS `genusId`,`g`.`genusName`\nAS `genusName`,`g`.`isActive`\nAS `genusIsActive`,`t`.`speciesName`\nAS `speciesName`,`t`.`hybridName`\nAS `hybridName`,case when `t`.`isSystemManaged` = 1 then concat(`g`.`genusName`,\' sp.\') when `t`.`speciesName` is null and `t`.`hybridName` is null then `g`.`genusName` when `t`.`speciesName` is not null then concat(`g`.`genusName`,\' \',`t`.`speciesName`) else concat(`g`.`genusName`,\' \',`t`.`hybridName`) end\nAS `displayName`,`t`.`taxonNotes`\nAS `taxonNotes`,`t`.`isActive`\nAS `isActive`,`t`.`isSystemManaged`\nAS `isSystemManaged`,`t`.`growthCode`\nAS `growthCode`,`t`.`growthNotes`\nAS `growthNotes` FROM (`taxon` `t` join `genus` `g` on(`g`.`genusId` = `t`.`genusId`))
 client_cs_name=utf8mb4

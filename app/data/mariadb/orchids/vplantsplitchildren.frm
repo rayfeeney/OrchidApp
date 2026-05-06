@@ -7,7 +7,7 @@ definer_user=orchid
 definer_host=localhost
 suid=2
 with_check_option=0
-timestamp=0001778010533406799
+timestamp=0001778087547842178
 create-version=2
 source=SELECT `ps`.`parentPlantId`\nAS `parentPlantId`,`child`.`plantId`\nAS `childPlantId`,`child`.`plantTag`\nAS `plantTag`,`child`.`acquisitionDate`\nAS `acquisitionDate` FROM ((`plantsplit` `ps` join `plantsplitchild` `psc` on(`psc`.`plantSplitId` = `ps`.`plantSplitId`)) join `plant` `child` on(`child`.`plantId` = `psc`.`childPlantId`))
 client_cs_name=utf8mb4

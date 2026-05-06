@@ -7,7 +7,7 @@ definer_user=orchid
 definer_host=localhost
 suid=2
 with_check_option=0
-timestamp=0001778010532396859
+timestamp=0001778087546951982
 create-version=2
 source=SELECT `location`.`locationId`\nAS `locationId`,`location`.`locationName`\nAS `locationName`,`location`.`locationTypeCode`\nAS `locationTypeCode`,`location`.`climateCode`\nAS `climateCode` FROM `location` WHERE `location`.`isActive` = 1
 client_cs_name=utf8mb4

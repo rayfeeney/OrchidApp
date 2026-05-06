@@ -7,7 +7,7 @@ definer_user=orchid
 definer_host=localhost
 suid=2
 with_check_option=0
-timestamp=0001778010533111023
+timestamp=0001778087547577067
 create-version=2
 source=SELECT `c`.`childPlantId`\nAS `childPlantId`,`s`.`parentPlantId`\nAS `parentPlantId`,\'Split\'\nAS `relationshipType` FROM (`plantsplitchild` `c` join `plantsplit` `s` on(`c`.`plantSplitId` = `s`.`plantSplitId`)) WHERE `c`.`isActive` = 1 union all SELECT `p`.`childPlantId`\nAS `childPlantId`,`p`.`parentPlantId`\nAS `parentPlantId`,`pt`.`propagationTypeName`\nAS `relationshipType` FROM (`plantpropagation` `p` join `propagationtype` `pt` on(`pt`.`propagationTypeId` = `p`.`propagationTypeId`)) WHERE `p`.`isActive` = 1
 client_cs_name=utf8mb4
