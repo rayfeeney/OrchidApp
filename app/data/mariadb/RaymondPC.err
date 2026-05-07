@@ -1,0 +1,1762 @@
+2026-05-04 13:03:07 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 22744
+2026-05-04 13:03:07 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 13:03:07 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 13:03:07 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 13:03:07 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 13:03:07 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 13:03:07 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 13:03:07 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 13:03:07 0 [Note] InnoDB: End of log at LSN=44942
+2026-05-04 13:03:07 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 13:03:07 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 13:03:07 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 13:03:07 0 [Note] InnoDB: log sequence number 44942; transaction id 14
+2026-05-04 13:03:07 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 13:03:07 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 13:03:07 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 13:03:07 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 13:03:07
+2026-05-04 13:03:07 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 13:03:07 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 13:03:07 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 14:01:01 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 34560
+2026-05-04 14:01:01 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 14:01:01 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 14:01:01 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 14:01:01 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 14:01:01 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 14:01:01 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 14:01:01 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 14:01:01 0 [Note] InnoDB: End of log at LSN=44942
+2026-05-04 14:01:02 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 14:01:02 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 14:01:02 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 14:01:02 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 14:01:02 0 [Note] InnoDB: log sequence number 44942; transaction id 14
+2026-05-04 14:01:02 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 14:01:02 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 14:01:02 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 14:01:02 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 14:01:02
+2026-05-04 14:01:02 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 14:01:02 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 14:01:02 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 14:04:21 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 42636
+2026-05-04 14:04:21 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 14:04:21 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 14:04:21 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 14:04:21 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 14:04:21 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 14:04:21 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 14:04:21 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 14:04:21 0 [Note] InnoDB: End of log at LSN=44942
+2026-05-04 14:04:21 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 14:04:21 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 14:04:21 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 14:04:21 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 14:04:21 0 [Note] InnoDB: log sequence number 44942; transaction id 14
+2026-05-04 14:04:21 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 14:04:21 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 14:04:21 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 14:04:21 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 14:04:21
+2026-05-04 14:04:21 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 14:04:21 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 14:04:21 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 14:06:47 3 [Warning] Access denied for user 'root'@'localhost' (using password: YES)
+2026-05-04 14:07:34 4 [Warning] Access denied for user 'root'@'localhost' (using password: YES)
+2026-05-04 14:08:18 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 23460
+2026-05-04 14:08:18 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 14:08:18 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 14:08:18 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 14:08:18 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 14:08:18 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 14:08:18 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 14:08:18 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 14:08:18 0 [Note] InnoDB: End of log at LSN=44942
+2026-05-04 14:08:18 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 14:08:18 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 14:08:18 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 14:08:18 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 14:08:18 0 [Note] InnoDB: log sequence number 44942; transaction id 14
+2026-05-04 14:08:18 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 14:08:18 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 14:08:18 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 14:08:18 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 14:08:18
+2026-05-04 14:08:18 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 14:08:18 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 14:08:18 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 14:13:39 0 [Note] console_event_handler: received CTRL_C_EVENT event, shutting down
+2026-05-04 14:13:39 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe (initiated by: unknown): Normal shutdown
+2026-05-04 14:13:39 0 [Note] InnoDB: FTS optimize thread exiting.
+2026-05-04 14:13:39 0 [Note] InnoDB: Starting shutdown...
+2026-05-04 14:13:39 0 [Note] InnoDB: Dumping buffer pool(s) to C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 14:13:39 0 [Note] InnoDB: Buffer pool(s) dump completed at 260504 14:13:39
+2026-05-04 14:13:39 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 14:13:39 0 [Note] InnoDB: Shutdown completed; log sequence number 44942; transaction id 15
+2026-05-04 14:13:39 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: Shutdown complete
+2026-05-04 14:13:48 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 42156
+2026-05-04 14:13:48 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 14:13:48 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 14:13:48 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 14:13:48 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 14:13:48 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 14:13:48 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 14:13:48 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 14:13:48 0 [Note] InnoDB: End of log at LSN=44942
+2026-05-04 14:13:48 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 14:13:48 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 14:13:48 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 14:13:48 0 [Note] InnoDB: log sequence number 44942; transaction id 14
+2026-05-04 14:13:48 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 14:13:48 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 14:13:48 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 14:13:48 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 14:13:48
+2026-05-04 14:13:48 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 14:13:48 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 14:13:48 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 14:19:08 0 [Note] console_event_handler: received CTRL_C_EVENT event, shutting down
+2026-05-04 14:19:08 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe (initiated by: unknown): Normal shutdown
+2026-05-04 14:19:08 0 [Note] InnoDB: FTS optimize thread exiting.
+2026-05-04 14:19:08 0 [Note] InnoDB: Starting shutdown...
+2026-05-04 14:19:08 0 [Note] InnoDB: Dumping buffer pool(s) to C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 14:19:08 0 [Note] InnoDB: Buffer pool(s) dump completed at 260504 14:19:08
+2026-05-04 14:19:08 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 14:19:08 0 [Note] InnoDB: Shutdown completed; log sequence number 44942; transaction id 15
+2026-05-04 14:19:08 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: Shutdown complete
+2026-05-04 14:20:38 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 33272
+2026-05-04 14:20:38 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 14:20:38 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 14:20:38 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 14:20:38 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 14:20:38 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 14:20:38 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 14:20:38 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 14:20:38 0 [Note] InnoDB: End of log at LSN=44942
+2026-05-04 14:20:38 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 14:20:38 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 14:20:38 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 14:20:38 0 [Note] InnoDB: log sequence number 44942; transaction id 14
+2026-05-04 14:20:38 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 14:20:38 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 14:20:38 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 14:20:38 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 14:20:38
+2026-05-04 14:20:38 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 14:20:38 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 14:20:38 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 14:51:24 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 47404
+2026-05-04 14:51:24 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 14:51:24 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 14:51:24 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 14:51:24 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 14:51:24 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 14:51:24 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 14:51:24 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 14:51:24 0 [Note] InnoDB: End of log at LSN=44942
+2026-05-04 14:51:24 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 14:51:24 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 14:51:24 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 14:51:24 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 14:51:24 0 [Note] InnoDB: log sequence number 44942; transaction id 14
+2026-05-04 14:51:24 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 14:51:24 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 14:51:24 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 14:51:24 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 14:51:24
+2026-05-04 14:51:24 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 14:51:24 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 14:51:24 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 14:57:09 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 17928
+2026-05-04 14:57:09 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 14:57:09 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 14:57:09 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 14:57:09 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 14:57:09 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 14:57:09 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 14:57:09 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 14:57:09 0 [Note] InnoDB: End of log at LSN=44942
+2026-05-04 14:57:09 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 14:57:09 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 14:57:09 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 14:57:09 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 14:57:09 0 [Note] InnoDB: log sequence number 44942; transaction id 14
+2026-05-04 14:57:09 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 14:57:09 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 14:57:09 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 14:57:09 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 14:57:09
+2026-05-04 14:57:09 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 14:57:09 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 14:57:09 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 15:05:06 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 15728
+2026-05-04 15:05:06 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 15:05:06 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 15:05:06 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 15:05:06 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 15:05:06 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 15:05:06 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 15:05:06 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 15:05:07 0 [Note] InnoDB: End of log at LSN=44942
+2026-05-04 15:05:07 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 15:05:07 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 15:05:07 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 15:05:07 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 15:05:07 0 [Note] InnoDB: log sequence number 44942; transaction id 14
+2026-05-04 15:05:07 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 15:05:07 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 15:05:07 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 15:05:07 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 15:05:07
+2026-05-04 15:05:07 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 15:05:07 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 15:05:07 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 15:09:20 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 32268
+2026-05-04 15:09:20 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 15:09:20 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 15:09:20 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 15:09:20 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 15:09:20 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 15:09:20 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 15:09:20 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 15:09:20 0 [Note] InnoDB: End of log at LSN=44942
+2026-05-04 15:09:20 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 15:09:20 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 15:09:20 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 15:09:20 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 15:09:20 0 [Note] InnoDB: log sequence number 44942; transaction id 14
+2026-05-04 15:09:20 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 15:09:20 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 15:09:20 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 15:09:20 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 15:09:20
+2026-05-04 15:09:20 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 15:09:20 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 15:09:20 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 15:11:33 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 29648
+2026-05-04 15:11:33 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 15:11:33 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 15:11:33 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 15:11:33 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 15:11:33 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 15:11:33 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 15:11:33 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 15:11:33 0 [Note] InnoDB: End of log at LSN=44942
+2026-05-04 15:11:33 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 15:11:33 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 15:11:33 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 15:11:33 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 15:11:33 0 [Note] InnoDB: log sequence number 44942; transaction id 14
+2026-05-04 15:11:33 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 15:11:33 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 15:11:33 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 15:11:33 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 15:11:33
+2026-05-04 15:11:33 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 15:11:33 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 15:11:33 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 15:17:26 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 28192
+2026-05-04 15:17:26 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 15:17:26 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 15:17:26 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 15:17:26 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 15:17:26 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 15:17:26 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 15:17:26 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 15:17:26 0 [Note] InnoDB: End of log at LSN=44942
+2026-05-04 15:17:26 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 15:17:26 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 15:17:26 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 15:17:26 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 15:17:26 0 [Note] InnoDB: log sequence number 44942; transaction id 14
+2026-05-04 15:17:26 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 15:17:26 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 15:17:26 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 15:17:26 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 15:17:26
+2026-05-04 15:17:26 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 15:17:26 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 15:17:26 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 15:27:50 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 32276
+2026-05-04 15:27:50 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 15:27:50 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 15:27:51 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 15:27:51 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 15:27:51 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 15:27:51 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 15:27:51 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 15:27:51 0 [Note] InnoDB: End of log at LSN=44942
+2026-05-04 15:27:51 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 15:27:51 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 15:27:51 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 15:27:51 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 15:27:51 0 [Note] InnoDB: log sequence number 44942; transaction id 14
+2026-05-04 15:27:51 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 15:27:51 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 15:27:51 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 15:27:51 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 15:27:51
+2026-05-04 15:27:51 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 15:27:51 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 15:27:51 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 17:16:21 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 8752
+2026-05-04 17:16:21 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 17:16:21 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 17:16:21 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 17:16:21 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 17:16:21 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 17:16:21 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 17:16:21 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 17:16:21 0 [Note] InnoDB: End of log at LSN=44942
+2026-05-04 17:16:21 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 17:16:21 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 17:16:21 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 17:16:21 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 17:16:21 0 [Note] InnoDB: log sequence number 44942; transaction id 14
+2026-05-04 17:16:21 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 17:16:21 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 17:16:21 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 17:16:21 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 17:16:21
+2026-05-04 17:16:21 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 17:16:21 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 17:16:21 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 17:21:33 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 19172
+2026-05-04 17:21:33 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 17:21:33 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 17:21:33 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 17:21:33 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 17:21:33 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 17:21:33 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 17:21:33 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 17:21:33 0 [Note] InnoDB: End of log at LSN=44942
+2026-05-04 17:21:33 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 17:21:33 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 17:21:33 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 17:21:33 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 17:21:33 0 [Note] InnoDB: log sequence number 44942; transaction id 14
+2026-05-04 17:21:33 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 17:21:33 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 17:21:33 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 17:21:33 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 17:21:33
+2026-05-04 17:21:33 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 17:21:33 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 17:21:33 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 17:21:42 3 [Warning] Aborted connection 3 to db: 'unconnected' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
+2026-05-04 17:21:42 4 [Warning] Aborted connection 4 to db: 'orchids' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
+2026-05-04 17:50:02 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 13056
+2026-05-04 17:50:02 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 17:50:02 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 17:50:02 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 17:50:02 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 17:50:02 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 17:50:02 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 17:50:02 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 17:50:02 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44926
+2026-05-04 17:50:02 0 [Note] InnoDB: End of log at LSN=125546
+2026-05-04 17:50:02 0 [Note] InnoDB: To recover: 22 pages
+2026-05-04 17:50:02 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 17:50:02 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 17:50:02 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 17:50:02 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 17:50:02 0 [Note] InnoDB: log sequence number 125546; transaction id 71
+2026-05-04 17:50:02 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 17:50:02 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 17:50:02 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 17:50:02 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 17:50:02
+2026-05-04 17:50:02 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 17:50:02 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 17:50:02 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 17:53:57 3 [Warning] Aborted connection 3 to db: 'unconnected' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
+2026-05-04 17:54:05 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 41368
+2026-05-04 17:54:05 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 17:54:05 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 17:54:05 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 17:54:05 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 17:54:05 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 17:54:05 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 17:54:05 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 17:54:05 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44942
+2026-05-04 17:54:05 0 [Note] InnoDB: End of log at LSN=125630
+2026-05-04 17:54:05 0 [Note] InnoDB: To recover: 22 pages
+2026-05-04 17:54:05 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 17:54:05 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 17:54:05 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 17:54:05 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 17:54:05 0 [Note] InnoDB: log sequence number 125630; transaction id 71
+2026-05-04 17:54:05 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 17:54:05 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 17:54:05 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 17:54:05 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 17:54:05
+2026-05-04 17:54:05 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 17:54:05 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 17:54:05 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 17:54:14 3 [Warning] Aborted connection 3 to db: 'unconnected' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
+2026-05-04 19:34:16 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 53884
+2026-05-04 19:34:16 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 19:34:16 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 19:34:16 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 19:34:16 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 19:34:16 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 19:34:16 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 19:34:16 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 19:34:16 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44942
+2026-05-04 19:34:16 0 [Note] InnoDB: End of log at LSN=125630
+2026-05-04 19:34:16 0 [Note] InnoDB: To recover: 22 pages
+2026-05-04 19:34:16 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 19:34:16 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 19:34:16 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 19:34:16 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 19:34:16 0 [Note] InnoDB: log sequence number 125630; transaction id 71
+2026-05-04 19:34:16 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 19:34:16 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 19:34:16 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 19:34:16 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 19:34:16
+2026-05-04 19:34:16 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 19:34:16 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 19:34:16 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 19:35:39 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 1828
+2026-05-04 19:35:40 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 19:35:40 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 19:35:40 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 19:35:40 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 19:35:40 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 19:35:40 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 19:35:40 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 19:35:40 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44942
+2026-05-04 19:35:40 0 [Note] InnoDB: End of log at LSN=125630
+2026-05-04 19:35:40 0 [Note] InnoDB: To recover: 22 pages
+2026-05-04 19:35:40 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 19:35:40 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 19:35:40 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 19:35:40 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 19:35:40 0 [Note] InnoDB: log sequence number 125630; transaction id 71
+2026-05-04 19:35:40 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 19:35:40 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 19:35:40 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 19:35:40 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 19:35:40
+2026-05-04 19:35:40 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 19:35:40 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 19:35:40 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 20:08:17 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 54252
+2026-05-04 20:08:17 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 20:08:17 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 20:08:17 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 20:08:17 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 20:08:17 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 20:08:17 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 20:08:17 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 20:08:17 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44942
+2026-05-04 20:08:17 0 [Note] InnoDB: End of log at LSN=125630
+2026-05-04 20:08:17 0 [Note] InnoDB: To recover: 22 pages
+2026-05-04 20:08:17 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 20:08:17 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 20:08:17 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 20:08:17 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 20:08:17 0 [Note] InnoDB: log sequence number 125630; transaction id 71
+2026-05-04 20:08:17 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 20:08:17 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 20:08:17 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 20:08:17 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 20:08:17
+2026-05-04 20:08:17 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 20:08:17 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 20:08:17 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 20:09:58 3 [Warning] Aborted connection 3 to db: 'unconnected' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
+2026-05-04 20:10:03 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 59168
+2026-05-04 20:10:03 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 20:10:03 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 20:10:03 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 20:10:03 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 20:10:03 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 20:10:03 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 20:10:03 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 20:10:03 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44942
+2026-05-04 20:10:03 0 [Note] InnoDB: End of log at LSN=125630
+2026-05-04 20:10:03 0 [Note] InnoDB: To recover: 22 pages
+2026-05-04 20:10:03 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 20:10:03 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 20:10:03 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 20:10:03 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 20:10:03 0 [Note] InnoDB: log sequence number 125630; transaction id 71
+2026-05-04 20:10:03 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 20:10:03 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 20:10:03 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 20:10:03 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 20:10:03
+2026-05-04 20:10:03 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 20:10:03 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 20:10:03 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 20:15:40 28 [Warning] Aborted connection 28 to db: 'orchids' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
+2026-05-04 20:15:40 3 [Warning] Aborted connection 3 to db: 'unconnected' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
+2026-05-04 20:15:46 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 16028
+2026-05-04 20:15:46 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 20:15:46 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 20:15:46 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 20:15:46 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 20:15:46 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 20:15:46 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 20:15:46 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 20:15:46 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44942
+2026-05-04 20:15:46 0 [Note] InnoDB: End of log at LSN=229081
+2026-05-04 20:15:46 0 [Note] InnoDB: To recover: 117 pages
+2026-05-04 20:15:46 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 20:15:46 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 20:15:46 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 20:15:46 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 20:15:46 0 [Note] InnoDB: log sequence number 229081; transaction id 145
+2026-05-04 20:15:46 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 20:15:46 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 20:15:46 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 20:15:46 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 20:15:46
+2026-05-04 20:15:46 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 20:15:46 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 20:15:46 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 20:22:32 28 [Warning] Aborted connection 28 to db: 'orchids' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
+2026-05-04 20:22:32 3 [Warning] Aborted connection 3 to db: 'unconnected' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
+2026-05-04 20:22:39 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 42232
+2026-05-04 20:22:39 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 20:22:39 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 20:22:39 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 20:22:39 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 20:22:39 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 20:22:39 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 20:22:39 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 20:22:39 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44942
+2026-05-04 20:22:40 0 [Note] InnoDB: End of log at LSN=229081
+2026-05-04 20:22:40 0 [Note] InnoDB: To recover: 117 pages
+2026-05-04 20:22:40 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 20:22:40 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 20:22:40 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 20:22:40 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 20:22:40 0 [Note] InnoDB: log sequence number 229081; transaction id 145
+2026-05-04 20:22:40 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 20:22:40 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 20:22:40 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 20:22:40 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 20:22:40
+2026-05-04 20:22:40 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 20:22:40 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 20:22:40 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 20:39:44 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 58572
+2026-05-04 20:39:44 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 20:39:44 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 20:39:44 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 20:39:44 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 20:39:44 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 20:39:44 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 20:39:44 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 20:39:44 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44942
+2026-05-04 20:39:44 0 [Note] InnoDB: End of log at LSN=861311
+2026-05-04 20:39:44 0 [Note] InnoDB: To recover: 218 pages
+2026-05-04 20:39:44 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 20:39:44 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 20:39:44 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 20:39:44 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 20:39:44 0 [Note] InnoDB: log sequence number 861311; transaction id 391
+2026-05-04 20:39:44 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 20:39:44 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 20:39:44 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 20:39:44 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 20:39:44
+2026-05-04 20:39:44 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 20:39:44 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 20:39:45 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 20:40:48 3 [Warning] Aborted connection 3 to db: 'unconnected' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
+2026-05-04 20:41:00 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 46976
+2026-05-04 20:41:00 0 [Note] mariadbd.exe: Aria engine: starting recovery
+recovered pages: 0% 10% 23% 34% 46% 58% 68% 78% 88% 100% (0.0 seconds); tables to flush: 1 0
+ (0.0 seconds); 
+2026-05-04 20:41:00 0 [Note] mariadbd.exe: Aria engine: recovery done
+2026-05-04 20:41:00 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 20:41:00 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 20:41:00 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 20:41:00 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 20:41:00 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 20:41:00 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 20:41:00 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 20:41:00 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44942
+2026-05-04 20:41:00 0 [Note] InnoDB: End of log at LSN=1045651
+2026-05-04 20:41:00 0 [Note] InnoDB: To recover: 124 pages
+2026-05-04 20:41:00 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 20:41:00 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 20:41:00 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 20:41:00 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 20:41:00 0 [Note] InnoDB: log sequence number 1045651; transaction id 494
+2026-05-04 20:41:00 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 20:41:00 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 20:41:00 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 20:41:00 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 20:41:00
+2026-05-04 20:41:00 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 20:41:00 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 20:41:00 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 20:45:31 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 57192
+2026-05-04 20:45:31 0 [Note] mariadbd.exe: Aria engine: starting recovery
+recovered pages: 0% 10% 20% 30% 45% 55% 68% 79% 93% 100% (0.0 seconds); tables to flush: 1 0
+ (0.0 seconds); 
+2026-05-04 20:45:31 0 [Note] mariadbd.exe: Aria engine: recovery done
+2026-05-04 20:45:31 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 20:45:31 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 20:45:31 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 20:45:31 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 20:45:31 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 20:45:31 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 20:45:31 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 20:45:31 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44942
+2026-05-04 20:45:31 0 [Note] InnoDB: End of log at LSN=1770009
+2026-05-04 20:45:31 0 [Note] InnoDB: To recover: 274 pages
+2026-05-04 20:45:31 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 20:45:31 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 20:45:31 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 20:45:31 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 20:45:31 0 [Note] InnoDB: log sequence number 1770009; transaction id 806
+2026-05-04 20:45:31 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 20:45:31 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 20:45:31 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 20:45:31 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 20:45:31
+2026-05-04 20:45:31 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 20:45:31 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 20:45:31 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 20:45:49 3 [Warning] Aborted connection 3 to db: 'unconnected' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
+2026-05-04 20:45:56 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 53144
+2026-05-04 20:45:56 0 [Note] mariadbd.exe: Aria engine: starting recovery
+recovered pages: 0% 10% 20% 30% 41% 52% 62% 72% 82% 93% 100% (0.0 seconds); tables to flush: 1 0
+ (0.0 seconds); 
+2026-05-04 20:45:56 0 [Note] mariadbd.exe: Aria engine: recovery done
+2026-05-04 20:45:56 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 20:45:56 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 20:45:56 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 20:45:56 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 20:45:56 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 20:45:56 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 20:45:56 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 20:45:56 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44942
+2026-05-04 20:45:56 0 [Note] InnoDB: End of log at LSN=1838832
+2026-05-04 20:45:56 0 [Note] InnoDB: To recover: 255 pages
+2026-05-04 20:45:56 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 20:45:56 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 20:45:56 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 20:45:56 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 20:45:56 0 [Note] InnoDB: log sequence number 1838832; transaction id 861
+2026-05-04 20:45:56 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 20:45:56 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 20:45:56 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 20:45:56 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 20:45:56
+2026-05-04 20:45:56 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 20:45:56 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 20:45:56 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 20:46:48 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 43440
+2026-05-04 20:46:48 0 [Note] mariadbd.exe: Aria engine: starting recovery
+recovered pages: 0% 10% 20% 30% 40% 50% 62% 72% 82% 92% 100% (0.0 seconds); tables to flush: 1 0
+ (0.0 seconds); 
+2026-05-04 20:46:48 0 [Note] mariadbd.exe: Aria engine: recovery done
+2026-05-04 20:46:48 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 20:46:48 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 20:46:48 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 20:46:48 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 20:46:48 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 20:46:48 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 20:46:48 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 20:46:48 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44942
+2026-05-04 20:46:48 0 [Note] InnoDB: End of log at LSN=2019150
+2026-05-04 20:46:48 0 [Note] InnoDB: To recover: 160 pages
+2026-05-04 20:46:48 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 20:46:48 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 20:46:48 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 20:46:48 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 20:46:48 0 [Note] InnoDB: log sequence number 2019150; transaction id 954
+2026-05-04 20:46:48 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 20:46:48 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 20:46:48 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 20:46:48 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 20:46:48
+2026-05-04 20:46:48 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 20:46:48 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 20:46:48 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 20:47:24 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 59716
+2026-05-04 20:47:24 0 [Note] mariadbd.exe: Aria engine: starting recovery
+recovered pages: 0% 10% 20% 30% 45% 55% 68% 79% 93% 100% (0.0 seconds); tables to flush: 1 0
+ (0.0 seconds); 
+2026-05-04 20:47:24 0 [Note] mariadbd.exe: Aria engine: recovery done
+2026-05-04 20:47:24 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 20:47:24 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 20:47:24 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 20:47:24 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 20:47:24 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 20:47:24 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 20:47:24 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 20:47:24 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44942
+2026-05-04 20:47:24 0 [Note] InnoDB: End of log at LSN=2779211
+2026-05-04 20:47:24 0 [Note] InnoDB: To recover: 299 pages
+2026-05-04 20:47:24 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 20:47:24 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 20:47:24 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 20:47:24 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 20:47:24 0 [Note] InnoDB: log sequence number 2779211; transaction id 1266
+2026-05-04 20:47:24 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 20:47:24 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 20:47:24 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 20:47:24 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 20:47:24
+2026-05-04 20:47:24 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 20:47:24 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 20:47:24 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 20:55:28 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 16612
+2026-05-04 20:55:28 0 [Note] mariadbd.exe: Aria engine: starting recovery
+recovered pages: 0% 10% 20% 30% 40% 50% 62% 72% 82% 92% 100% (0.0 seconds); tables to flush: 1 0
+ (0.0 seconds); 
+2026-05-04 20:55:28 0 [Note] mariadbd.exe: Aria engine: recovery done
+2026-05-04 20:55:28 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 20:55:28 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 20:55:28 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 20:55:28 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 20:55:28 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 20:55:28 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 20:55:28 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 20:55:28 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44942
+2026-05-04 20:55:28 0 [Note] InnoDB: End of log at LSN=2953580
+2026-05-04 20:55:28 0 [Note] InnoDB: To recover: 185 pages
+2026-05-04 20:55:28 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 20:55:28 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 20:55:28 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 20:55:28 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 20:55:28 0 [Note] InnoDB: log sequence number 2953580; transaction id 1359
+2026-05-04 20:55:28 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 20:55:28 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 20:55:28 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 20:55:28 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 20:55:28
+2026-05-04 20:55:28 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 20:55:28 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 20:55:28 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 20:55:55 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 57612
+2026-05-04 20:55:55 0 [Note] mariadbd.exe: Aria engine: starting recovery
+recovered pages: 0% 10% 20% 30% 45% 55% 68% 79% 93% 100% (0.0 seconds); tables to flush: 1 0
+ (0.0 seconds); 
+2026-05-04 20:55:55 0 [Note] mariadbd.exe: Aria engine: recovery done
+2026-05-04 20:55:55 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 20:55:55 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 20:55:55 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 20:55:55 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 20:55:55 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 20:55:55 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 20:55:55 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 20:55:55 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44942
+2026-05-04 20:55:55 0 [Note] InnoDB: End of log at LSN=3752973
+2026-05-04 20:55:55 0 [Note] InnoDB: To recover: 299 pages
+2026-05-04 20:55:55 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 20:55:55 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 20:55:55 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 20:55:55 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 20:55:55 0 [Note] InnoDB: log sequence number 3752973; transaction id 1671
+2026-05-04 20:55:55 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 20:55:55 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 20:55:55 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 20:55:55 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 20:55:55
+2026-05-04 20:55:55 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 20:55:55 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 20:55:55 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 20:57:02 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 52264
+2026-05-04 20:57:02 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 20:57:02 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 20:57:02 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 20:57:02 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 20:57:02 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 20:57:02 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 20:57:02 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 20:57:02 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44942
+2026-05-04 20:57:02 0 [Note] InnoDB: End of log at LSN=3752973
+2026-05-04 20:57:02 0 [Note] InnoDB: To recover: 299 pages
+2026-05-04 20:57:02 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 20:57:02 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 20:57:02 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 20:57:02 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 20:57:02 0 [Note] InnoDB: log sequence number 3752973; transaction id 1671
+2026-05-04 20:57:02 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 20:57:02 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 20:57:02 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 20:57:02 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 20:57:02
+2026-05-04 20:57:02 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 20:57:02 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 20:57:02 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 20:57:42 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 40808
+2026-05-04 20:57:42 0 [Note] mariadbd.exe: Aria engine: starting recovery
+recovered pages: 0% 10% 20% 30% 46% 56% 76% 93% 100% (0.0 seconds); tables to flush: 1 0
+ (0.0 seconds); 
+2026-05-04 20:57:42 0 [Note] mariadbd.exe: Aria engine: recovery done
+2026-05-04 20:57:42 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 20:57:42 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 20:57:42 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 20:57:42 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 20:57:42 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 20:57:42 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 20:57:42 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 20:57:42 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44942
+2026-05-04 20:57:42 0 [Note] InnoDB: End of log at LSN=3864609
+2026-05-04 20:57:42 0 [Note] InnoDB: To recover: 204 pages
+2026-05-04 20:57:42 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 20:57:42 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 20:57:42 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 20:57:42 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 20:57:42 0 [Note] InnoDB: log sequence number 3864609; transaction id 1710
+2026-05-04 20:57:42 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 20:57:42 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 20:57:42 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 20:57:42 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 20:57:42
+2026-05-04 20:57:42 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 20:57:42 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 20:57:42 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 21:04:05 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 59972
+2026-05-04 21:04:05 0 [Note] mariadbd.exe: Aria engine: starting recovery
+recovered pages: 0% 10% 23% 34% 46% 58% 68% 78% 88% 100% (0.0 seconds); tables to flush: 1 0
+ (0.0 seconds); 
+2026-05-04 21:04:05 0 [Note] mariadbd.exe: Aria engine: recovery done
+2026-05-04 21:04:05 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 21:04:05 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 21:04:05 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 21:04:05 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 21:04:05 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 21:04:05 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 21:04:05 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 21:04:05 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44942
+2026-05-04 21:04:05 0 [Note] InnoDB: End of log at LSN=4724924
+2026-05-04 21:04:05 0 [Note] InnoDB: To recover: 204 pages
+2026-05-04 21:04:05 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 21:04:05 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 21:04:05 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 21:04:05 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 21:04:05 0 [Note] InnoDB: log sequence number 4724924; transaction id 2059
+2026-05-04 21:04:05 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 21:04:05 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 21:04:05 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 21:04:05 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 21:04:05
+2026-05-04 21:04:05 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 21:04:05 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 21:04:05 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 21:05:22 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 21072
+2026-05-04 21:05:22 0 [Note] mariadbd.exe: Aria engine: starting recovery
+recovered pages: 0% 10% 20% 30% 45% 55% 68% 79% 93% 100% (0.0 seconds); tables to flush: 1 0
+ (0.0 seconds); 
+2026-05-04 21:05:22 0 [Note] mariadbd.exe: Aria engine: recovery done
+2026-05-04 21:05:22 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 21:05:22 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 21:05:22 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 21:05:22 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 21:05:22 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 21:05:22 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 21:05:22 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 21:05:22 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44942
+2026-05-04 21:05:23 0 [Note] InnoDB: End of log at LSN=5528840
+2026-05-04 21:05:23 0 [Note] InnoDB: To recover: 299 pages
+2026-05-04 21:05:23 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 21:05:23 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 21:05:23 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 21:05:23 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 21:05:23 0 [Note] InnoDB: log sequence number 5528840; transaction id 2373
+2026-05-04 21:05:23 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 21:05:23 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 21:05:23 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 21:05:23 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 21:05:23
+2026-05-04 21:05:23 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 21:05:23 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 21:05:23 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 21:50:36 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 60332
+2026-05-04 21:50:36 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 21:50:36 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 21:50:36 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 21:50:36 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 21:50:36 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 21:50:36 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 21:50:36 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 21:50:36 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44942
+2026-05-04 21:50:37 0 [Note] InnoDB: End of log at LSN=5528840
+2026-05-04 21:50:37 0 [Note] InnoDB: To recover: 299 pages
+2026-05-04 21:50:37 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 21:50:37 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 21:50:37 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 21:50:37 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 21:50:37 0 [Note] InnoDB: log sequence number 5528840; transaction id 2373
+2026-05-04 21:50:37 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 21:50:37 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 21:50:37 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 21:50:37 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 21:50:37
+2026-05-04 21:50:37 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 21:50:37 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 21:50:37 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 21:52:52 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 56684
+2026-05-04 21:52:52 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 21:52:52 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 21:52:52 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 21:52:52 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 21:52:52 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 21:52:52 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 21:52:52 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 21:52:52 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44942
+2026-05-04 21:52:52 0 [Note] InnoDB: End of log at LSN=5528840
+2026-05-04 21:52:52 0 [Note] InnoDB: To recover: 299 pages
+2026-05-04 21:52:52 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 21:52:52 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 21:52:52 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 21:52:52 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 21:52:52 0 [Note] InnoDB: log sequence number 5528840; transaction id 2373
+2026-05-04 21:52:52 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 21:52:52 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 21:52:52 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 21:52:52 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 21:52:52
+2026-05-04 21:52:52 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 21:52:52 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 21:52:52 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 21:54:00 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 23828
+2026-05-04 21:54:00 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 21:54:00 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 21:54:00 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 21:54:00 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 21:54:00 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 21:54:00 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 21:54:00 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 21:54:00 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44942
+2026-05-04 21:54:00 0 [Note] InnoDB: End of log at LSN=5528840
+2026-05-04 21:54:00 0 [Note] InnoDB: To recover: 299 pages
+2026-05-04 21:54:00 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 21:54:00 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 21:54:00 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 21:54:00 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 21:54:00 0 [Note] InnoDB: log sequence number 5528840; transaction id 2373
+2026-05-04 21:54:00 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 21:54:00 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 21:54:00 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 21:54:00 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 21:54:00
+2026-05-04 21:54:00 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 21:54:00 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 21:54:00 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-04 22:13:30 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 53728
+2026-05-04 22:13:30 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-04 22:13:30 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-04 22:13:30 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-04 22:13:30 0 [Note] InnoDB: Using ThreadPool
+2026-05-04 22:13:30 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-04 22:13:30 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-04 22:13:30 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-04 22:13:30 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44942
+2026-05-04 22:13:30 0 [Note] InnoDB: End of log at LSN=5528840
+2026-05-04 22:13:30 0 [Note] InnoDB: To recover: 299 pages
+2026-05-04 22:13:30 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-04 22:13:30 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-04 22:13:30 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-04 22:13:30 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-04 22:13:30 0 [Note] InnoDB: log sequence number 5528840; transaction id 2373
+2026-05-04 22:13:30 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-04 22:13:30 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-04 22:13:30 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-04 22:13:30 0 [Note] InnoDB: Buffer pool(s) load completed at 260504 22:13:30
+2026-05-04 22:13:30 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-04 22:13:30 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-04 22:13:30 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-05 18:52:46 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 34488
+2026-05-05 18:52:46 0 [Note] mariadbd.exe: Aria engine: starting recovery
+tables to flush: 1 0
+ (0.0 seconds); 
+2026-05-05 18:52:46 0 [Note] mariadbd.exe: Aria engine: recovery done
+2026-05-05 18:52:46 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-05 18:52:46 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-05 18:52:46 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-05 18:52:46 0 [Note] InnoDB: Using ThreadPool
+2026-05-05 18:52:46 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-05 18:52:46 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-05 18:52:46 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-05 18:52:46 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44942
+2026-05-05 18:52:46 0 [Note] InnoDB: End of log at LSN=5956225
+2026-05-05 18:52:46 0 [Note] InnoDB: To recover: 308 pages
+2026-05-05 18:52:46 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-05 18:52:46 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-05 18:52:46 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-05 18:52:46 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-05 18:52:46 0 [Note] InnoDB: log sequence number 5956225; transaction id 2983
+2026-05-05 18:52:46 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-05 18:52:46 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-05 18:52:46 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-05 18:52:46 0 [Note] InnoDB: Buffer pool(s) load completed at 260505 18:52:46
+2026-05-05 18:52:46 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-05 18:52:46 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-05 18:52:46 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-05 18:58:08 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 37044
+2026-05-05 18:58:08 0 [Note] mariadbd.exe: Aria engine: starting recovery
+recovered pages: 0% 10% 20% 30% 46% 56% 76% 93% 100% (0.0 seconds); tables to flush: 1 0
+ (0.0 seconds); 
+2026-05-05 18:58:08 0 [Note] mariadbd.exe: Aria engine: recovery done
+2026-05-05 18:58:08 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-05 18:58:08 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-05 18:58:08 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-05 18:58:08 0 [Note] InnoDB: Using ThreadPool
+2026-05-05 18:58:08 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-05 18:58:08 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-05 18:58:08 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-05 18:58:08 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44942
+2026-05-05 18:58:08 0 [Note] InnoDB: End of log at LSN=6076860
+2026-05-05 18:58:08 0 [Note] InnoDB: To recover: 204 pages
+2026-05-05 18:58:08 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-05 18:58:08 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-05 18:58:08 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-05 18:58:08 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-05 18:58:08 0 [Note] InnoDB: log sequence number 6076860; transaction id 3025
+2026-05-05 18:58:08 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-05 18:58:08 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-05 18:58:08 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-05 18:58:08 0 [Note] InnoDB: Buffer pool(s) load completed at 260505 18:58:08
+2026-05-05 18:58:08 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-05 18:58:08 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-05 18:58:08 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-05 19:01:20 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 13056
+2026-05-05 19:01:20 0 [Note] mariadbd.exe: Aria engine: starting recovery
+recovered pages: 0% 10% 20% 30% 45% 55% 68% 79% 93% 100% (0.0 seconds); tables to flush: 1 0
+ (0.0 seconds); 
+2026-05-05 19:01:20 0 [Note] mariadbd.exe: Aria engine: recovery done
+2026-05-05 19:01:20 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-05 19:01:20 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-05 19:01:20 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-05 19:01:20 0 [Note] InnoDB: Using ThreadPool
+2026-05-05 19:01:20 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-05 19:01:20 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-05 19:01:20 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-05 19:01:20 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44942
+2026-05-05 19:01:20 0 [Note] InnoDB: End of log at LSN=6954496
+2026-05-05 19:01:20 0 [Note] InnoDB: To recover: 306 pages
+2026-05-05 19:01:20 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-05 19:01:20 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-05 19:01:20 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-05 19:01:20 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-05 19:01:20 0 [Note] InnoDB: log sequence number 6954496; transaction id 3343
+2026-05-05 19:01:20 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-05 19:01:20 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-05 19:01:20 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-05 19:01:20 0 [Note] InnoDB: Buffer pool(s) load completed at 260505 19:01:20
+2026-05-05 19:01:20 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-05 19:01:20 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-05 19:01:20 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-05 19:02:44 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 33888
+2026-05-05 19:02:44 0 [Note] mariadbd.exe: Aria engine: starting recovery
+recovered pages: 0% 10% 20% 30% 46% 56% 76% 93% 100% (0.0 seconds); tables to flush: 1 0
+ (0.0 seconds); 
+2026-05-05 19:02:44 0 [Note] mariadbd.exe: Aria engine: recovery done
+2026-05-05 19:02:44 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-05 19:02:44 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-05 19:02:44 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-05 19:02:44 0 [Note] InnoDB: Using ThreadPool
+2026-05-05 19:02:44 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-05 19:02:44 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-05 19:02:44 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-05 19:02:44 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44942
+2026-05-05 19:02:44 0 [Note] InnoDB: End of log at LSN=7070514
+2026-05-05 19:02:44 0 [Note] InnoDB: To recover: 208 pages
+2026-05-05 19:02:44 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-05 19:02:44 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-05 19:02:44 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-05 19:02:44 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-05 19:02:44 0 [Note] InnoDB: log sequence number 7070514; transaction id 3391
+2026-05-05 19:02:44 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-05 19:02:44 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-05 19:02:44 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-05 19:02:44 0 [Note] InnoDB: Buffer pool(s) load completed at 260505 19:02:44
+2026-05-05 19:02:44 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-05 19:02:44 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-05 19:02:44 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-05 19:06:28 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 12440
+2026-05-05 19:06:28 0 [Note] mariadbd.exe: Aria engine: starting recovery
+recovered pages: 0% 10% 20% 30% 45% 55% 68% 79% 93% 100% (0.0 seconds); tables to flush: 1 0
+ (0.0 seconds); 
+2026-05-05 19:06:28 0 [Note] mariadbd.exe: Aria engine: recovery done
+2026-05-05 19:06:28 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-05 19:06:28 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-05 19:06:28 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-05 19:06:28 0 [Note] InnoDB: Using ThreadPool
+2026-05-05 19:06:28 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-05 19:06:28 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-05 19:06:28 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-05 19:06:28 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44942
+2026-05-05 19:06:28 0 [Note] InnoDB: End of log at LSN=7947543
+2026-05-05 19:06:28 0 [Note] InnoDB: To recover: 306 pages
+2026-05-05 19:06:28 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-05 19:06:28 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-05 19:06:28 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-05 19:06:28 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-05 19:06:28 0 [Note] InnoDB: log sequence number 7947543; transaction id 3709
+2026-05-05 19:06:28 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-05 19:06:28 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-05 19:06:28 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-05 19:06:28 0 [Note] InnoDB: Buffer pool(s) load completed at 260505 19:06:28
+2026-05-05 19:06:28 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-05 19:06:28 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-05 19:06:28 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-05 19:13:56 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 37588
+2026-05-05 19:13:56 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-05 19:13:56 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-05 19:13:56 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-05 19:13:56 0 [Note] InnoDB: Using ThreadPool
+2026-05-05 19:13:56 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-05 19:13:56 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-05 19:13:56 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-05 19:13:56 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44942
+2026-05-05 19:13:56 0 [Note] InnoDB: End of log at LSN=7947543
+2026-05-05 19:13:56 0 [Note] InnoDB: To recover: 306 pages
+2026-05-05 19:13:56 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-05 19:13:56 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-05 19:13:56 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-05 19:13:56 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-05 19:13:56 0 [Note] InnoDB: log sequence number 7947543; transaction id 3709
+2026-05-05 19:13:56 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-05 19:13:56 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-05 19:13:56 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-05 19:13:56 0 [Note] InnoDB: Buffer pool(s) load completed at 260505 19:13:56
+2026-05-05 19:13:56 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-05 19:13:56 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-05 19:13:56 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-05 19:14:44 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 17944
+2026-05-05 19:14:44 0 [Note] mariadbd.exe: Aria engine: starting recovery
+recovered pages: 0% 10% 20% 30% 46% 56% 76% 93% 100% (0.0 seconds); tables to flush: 1 0
+ (0.0 seconds); 
+2026-05-05 19:14:44 0 [Note] mariadbd.exe: Aria engine: recovery done
+2026-05-05 19:14:44 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-05 19:14:44 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-05 19:14:44 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-05 19:14:44 0 [Note] InnoDB: Using ThreadPool
+2026-05-05 19:14:44 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-05 19:14:44 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-05 19:14:44 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-05 19:14:44 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44942
+2026-05-05 19:14:44 0 [Note] InnoDB: End of log at LSN=8063325
+2026-05-05 19:14:44 0 [Note] InnoDB: To recover: 208 pages
+2026-05-05 19:14:44 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-05 19:14:44 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-05 19:14:44 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-05 19:14:44 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-05 19:14:44 0 [Note] InnoDB: log sequence number 8063325; transaction id 3757
+2026-05-05 19:14:44 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-05 19:14:44 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-05 19:14:44 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-05 19:14:44 0 [Note] InnoDB: Buffer pool(s) load completed at 260505 19:14:44
+2026-05-05 19:14:44 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-05 19:14:44 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-05 19:14:44 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-05 20:09:49 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 37876
+2026-05-05 20:09:49 0 [Note] mariadbd.exe: Aria engine: starting recovery
+recovered pages: 0% 10% 23% 34% 46% 58% 68% 78% 88% 100% (0.0 seconds); tables to flush: 1 0
+ (0.0 seconds); 
+2026-05-05 20:09:49 0 [Note] mariadbd.exe: Aria engine: recovery done
+2026-05-05 20:09:49 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-05 20:09:49 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-05 20:09:49 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-05 20:09:49 0 [Note] InnoDB: Using ThreadPool
+2026-05-05 20:09:49 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-05 20:09:49 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-05 20:09:49 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-05 20:09:49 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44942
+2026-05-05 20:09:49 0 [Note] InnoDB: End of log at LSN=8940322
+2026-05-05 20:09:49 0 [Note] InnoDB: To recover: 211 pages
+2026-05-05 20:09:49 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-05 20:09:49 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-05 20:09:49 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-05 20:09:49 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-05 20:09:49 0 [Note] InnoDB: log sequence number 8940322; transaction id 4112
+2026-05-05 20:09:49 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-05 20:09:49 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-05 20:09:49 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-05 20:09:49 0 [Note] InnoDB: Buffer pool(s) load completed at 260505 20:09:49
+2026-05-05 20:09:49 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-05 20:09:49 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-05 20:09:49 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-05 20:10:06 3 [Warning] Aborted connection 3 to db: 'unconnected' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
+2026-05-05 20:10:06 4 [Warning] Aborted connection 4 to db: 'orchids' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
+2026-05-05 20:10:15 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 4124
+2026-05-05 20:10:15 0 [Note] mariadbd.exe: Aria engine: starting recovery
+recovered pages: 0% 10% 20% 30% 45% 55% 68% 79% 93% 100% (0.0 seconds); tables to flush: 1 0
+ (0.0 seconds); 
+2026-05-05 20:10:15 0 [Note] mariadbd.exe: Aria engine: recovery done
+2026-05-05 20:10:15 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-05 20:10:15 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-05 20:10:15 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-05 20:10:15 0 [Note] InnoDB: Using ThreadPool
+2026-05-05 20:10:15 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-05 20:10:15 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-05 20:10:15 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-05 20:10:15 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=44942
+2026-05-05 20:10:15 0 [Note] InnoDB: End of log at LSN=9832067
+2026-05-05 20:10:15 0 [Note] InnoDB: To recover: 309 pages
+2026-05-05 20:10:15 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-05 20:10:15 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-05 20:10:15 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-05 20:10:15 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-05 20:10:15 0 [Note] InnoDB: log sequence number 9832067; transaction id 4428
+2026-05-05 20:10:15 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-05 20:10:15 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-05 20:10:15 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-05 20:10:15 0 [Note] InnoDB: Buffer pool(s) load completed at 260505 20:10:15
+2026-05-05 20:10:15 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-05 20:10:15 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-05 20:10:15 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-05 20:11:51 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 41048
+2026-05-05 20:11:51 0 [Note] mariadbd.exe: Aria engine: starting recovery
+recovered pages: 0% 10% 20% 30% 46% 56% 76% 93% 100% (0.0 seconds); tables to flush: 1 0
+ (0.0 seconds); 
+2026-05-05 20:11:51 0 [Note] mariadbd.exe: Aria engine: recovery done
+2026-05-05 20:11:51 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-05 20:11:51 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-05 20:11:51 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-05 20:11:51 0 [Note] InnoDB: Using ThreadPool
+2026-05-05 20:11:51 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-05 20:11:51 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-05 20:11:51 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-05 20:11:51 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=9228650
+2026-05-05 20:11:51 0 [Note] InnoDB: End of log at LSN=9945080
+2026-05-05 20:11:51 0 [Note] InnoDB: To recover: 81 pages
+2026-05-05 20:11:51 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-05 20:11:51 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-05 20:11:51 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-05 20:11:51 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-05 20:11:51 0 [Note] InnoDB: log sequence number 9945080; transaction id 4468
+2026-05-05 20:11:51 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-05 20:11:51 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-05 20:11:51 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-05 20:11:51 0 [Note] InnoDB: Buffer pool(s) load completed at 260505 20:11:51
+2026-05-05 20:11:51 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-05 20:11:51 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-05 20:11:51 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-05 20:35:43 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 41848
+2026-05-05 20:35:43 0 [Note] mariadbd.exe: Aria engine: starting recovery
+recovered pages: 0% 10% 23% 34% 46% 58% 68% 78% 88% 100% (0.0 seconds); tables to flush: 1 0
+ (0.0 seconds); 
+2026-05-05 20:35:43 0 [Note] mariadbd.exe: Aria engine: recovery done
+2026-05-05 20:35:43 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-05 20:35:43 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-05 20:35:43 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-05 20:35:43 0 [Note] InnoDB: Using ThreadPool
+2026-05-05 20:35:43 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-05 20:35:43 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-05 20:35:43 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-05 20:35:43 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=9833321
+2026-05-05 20:35:43 0 [Note] InnoDB: End of log at LSN=10921028
+2026-05-05 20:35:43 0 [Note] InnoDB: To recover: 85 pages
+2026-05-05 20:35:43 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-05 20:35:43 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-05 20:35:43 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-05 20:35:43 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-05 20:35:43 0 [Note] InnoDB: log sequence number 10921028; transaction id 4823
+2026-05-05 20:35:43 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-05 20:35:43 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-05 20:35:43 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-05 20:35:43 0 [Note] InnoDB: Buffer pool(s) load completed at 260505 20:35:43
+2026-05-05 20:35:43 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-05 20:35:43 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-05 20:35:43 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-05 20:36:02 3 [Warning] Aborted connection 3 to db: 'unconnected' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
+2026-05-05 20:36:02 4 [Warning] Aborted connection 4 to db: 'orchids' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
+2026-05-05 20:36:11 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 42820
+2026-05-05 20:36:11 0 [Note] mariadbd.exe: Aria engine: starting recovery
+recovered pages: 0% 10% 20% 30% 45% 55% 68% 79% 93% 100% (0.0 seconds); tables to flush: 1 0
+ (0.0 seconds); 
+2026-05-05 20:36:11 0 [Note] mariadbd.exe: Aria engine: recovery done
+2026-05-05 20:36:11 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-05 20:36:11 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-05 20:36:11 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-05 20:36:11 0 [Note] InnoDB: Using ThreadPool
+2026-05-05 20:36:11 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-05 20:36:11 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-05 20:36:11 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-05 20:36:11 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=9833321
+2026-05-05 20:36:12 0 [Note] InnoDB: End of log at LSN=11786974
+2026-05-05 20:36:12 0 [Note] InnoDB: To recover: 191 pages
+2026-05-05 20:36:12 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-05 20:36:12 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-05 20:36:12 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-05 20:36:12 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-05 20:36:12 0 [Note] InnoDB: log sequence number 11786974; transaction id 5141
+2026-05-05 20:36:12 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-05 20:36:12 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-05 20:36:12 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-05 20:36:12 0 [Note] InnoDB: Buffer pool(s) load completed at 260505 20:36:12
+2026-05-05 20:36:12 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-05 20:36:12 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-05 20:36:12 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-05 20:37:41 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 37064
+2026-05-05 20:37:41 0 [Note] mariadbd.exe: Aria engine: starting recovery
+recovered pages: 0% 10% 20% 30% 46% 56% 76% 93% 100% (0.0 seconds); tables to flush: 1 0
+ (0.0 seconds); 
+2026-05-05 20:37:41 0 [Note] mariadbd.exe: Aria engine: recovery done
+2026-05-05 20:37:41 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-05 20:37:41 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-05 20:37:41 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-05 20:37:41 0 [Note] InnoDB: Using ThreadPool
+2026-05-05 20:37:41 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-05 20:37:41 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-05 20:37:41 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-05 20:37:41 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=9833321
+2026-05-05 20:37:41 0 [Note] InnoDB: End of log at LSN=11898931
+2026-05-05 20:37:41 0 [Note] InnoDB: To recover: 94 pages
+2026-05-05 20:37:41 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-05 20:37:41 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-05 20:37:41 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-05 20:37:41 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-05 20:37:41 0 [Note] InnoDB: log sequence number 11898931; transaction id 5181
+2026-05-05 20:37:41 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-05 20:37:41 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-05 20:37:41 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-05 20:37:41 0 [Note] InnoDB: Buffer pool(s) load completed at 260505 20:37:41
+2026-05-05 20:37:41 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-05 20:37:41 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-05 20:37:41 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-05 20:38:32 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 32792
+2026-05-05 20:38:32 0 [Note] mariadbd.exe: Aria engine: starting recovery
+recovered pages: 0% 10% 23% 34% 46% 58% 68% 78% 88% 100% (0.0 seconds); tables to flush: 1 0
+ (0.0 seconds); 
+2026-05-05 20:38:32 0 [Note] mariadbd.exe: Aria engine: recovery done
+2026-05-05 20:38:32 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-05 20:38:32 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-05 20:38:32 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-05 20:38:32 0 [Note] InnoDB: Using ThreadPool
+2026-05-05 20:38:32 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-05 20:38:32 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-05 20:38:32 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-05 20:38:32 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=9833321
+2026-05-05 20:38:32 0 [Note] InnoDB: End of log at LSN=12872232
+2026-05-05 20:38:32 0 [Note] InnoDB: To recover: 94 pages
+2026-05-05 20:38:32 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-05 20:38:32 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-05 20:38:32 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-05 20:38:32 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-05 20:38:32 0 [Note] InnoDB: log sequence number 12872232; transaction id 5536
+2026-05-05 20:38:32 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-05 20:38:32 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-05 20:38:32 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-05 20:38:32 0 [Note] InnoDB: Buffer pool(s) load completed at 260505 20:38:32
+2026-05-05 20:38:32 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-05 20:38:32 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-05 20:38:32 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-05 20:39:17 3 [Warning] Aborted connection 3 to db: 'unconnected' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
+2026-05-05 20:39:17 4 [Warning] Aborted connection 4 to db: 'orchids' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
+2026-05-05 20:39:27 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 30760
+2026-05-05 20:39:27 0 [Note] mariadbd.exe: Aria engine: starting recovery
+recovered pages: 0% 10% 23% 34% 46% 58% 68% 78% 88% 100% (0.0 seconds); tables to flush: 1 0
+ (0.0 seconds); 
+2026-05-05 20:39:27 0 [Note] mariadbd.exe: Aria engine: recovery done
+2026-05-05 20:39:27 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-05 20:39:27 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-05 20:39:27 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-05 20:39:27 0 [Note] InnoDB: Using ThreadPool
+2026-05-05 20:39:27 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-05 20:39:27 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-05 20:39:27 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-05 20:39:27 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=9833321
+2026-05-05 20:39:27 0 [Note] InnoDB: End of log at LSN=13809195
+2026-05-05 20:39:27 0 [Note] InnoDB: To recover: 99 pages
+2026-05-05 20:39:27 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-05 20:39:27 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-05 20:39:27 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-05 20:39:27 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-05 20:39:27 0 [Note] InnoDB: log sequence number 13809195; transaction id 5891
+2026-05-05 20:39:27 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-05 20:39:27 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-05 20:39:27 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-05 20:39:27 0 [Note] InnoDB: Buffer pool(s) load completed at 260505 20:39:27
+2026-05-05 20:39:27 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-05 20:39:27 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-05 20:39:27 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-05 20:40:31 3 [Warning] Aborted connection 3 to db: 'unconnected' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
+2026-05-05 20:40:31 4 [Warning] Aborted connection 4 to db: 'orchids' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
+2026-05-05 20:40:41 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 34456
+2026-05-05 20:40:41 0 [Note] mariadbd.exe: Aria engine: starting recovery
+recovered pages: 0% 10% 23% 34% 46% 58% 68% 78% 88% 100% (0.0 seconds); tables to flush: 1 0
+ (0.0 seconds); 
+2026-05-05 20:40:41 0 [Note] mariadbd.exe: Aria engine: recovery done
+2026-05-05 20:40:41 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-05 20:40:41 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-05 20:40:41 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-05 20:40:41 0 [Note] InnoDB: Using ThreadPool
+2026-05-05 20:40:41 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-05 20:40:41 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-05 20:40:41 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-05 20:40:41 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=9833321
+2026-05-05 20:40:41 0 [Note] InnoDB: End of log at LSN=14742886
+2026-05-05 20:40:41 0 [Note] InnoDB: To recover: 145 pages
+2026-05-05 20:40:41 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-05 20:40:41 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-05 20:40:41 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-05 20:40:41 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-05 20:40:41 0 [Note] InnoDB: log sequence number 14742886; transaction id 6246
+2026-05-05 20:40:41 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-05 20:40:41 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-05 20:40:41 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-05 20:40:41 0 [Note] InnoDB: Buffer pool(s) load completed at 260505 20:40:41
+2026-05-05 20:40:41 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-05 20:40:41 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-05 20:40:41 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-05 20:41:04 3 [Warning] Aborted connection 3 to db: 'unconnected' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
+2026-05-05 20:41:04 4 [Warning] Aborted connection 4 to db: 'orchids' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
+2026-05-05 20:41:10 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 41064
+2026-05-05 20:41:10 0 [Note] mariadbd.exe: Aria engine: starting recovery
+recovered pages: 0% 10% 20% 30% 45% 55% 68% 79% 93% 100% (0.0 seconds); tables to flush: 1 0
+ (0.0 seconds); 
+2026-05-05 20:41:10 0 [Note] mariadbd.exe: Aria engine: recovery done
+2026-05-05 20:41:10 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-05 20:41:10 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-05 20:41:10 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-05 20:41:10 0 [Note] InnoDB: Using ThreadPool
+2026-05-05 20:41:10 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-05 20:41:10 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-05 20:41:10 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-05 20:41:10 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=9833321
+2026-05-05 20:41:10 0 [Note] InnoDB: End of log at LSN=15576982
+2026-05-05 20:41:10 0 [Note] InnoDB: To recover: 245 pages
+2026-05-05 20:41:10 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-05 20:41:10 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-05 20:41:10 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-05 20:41:10 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-05 20:41:10 0 [Note] InnoDB: log sequence number 15576982; transaction id 6564
+2026-05-05 20:41:10 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-05 20:41:10 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-05 20:41:10 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-05 20:41:10 0 [Note] InnoDB: Buffer pool(s) load completed at 260505 20:41:10
+2026-05-05 20:41:10 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-05 20:41:10 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-05 20:41:10 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-05 20:48:09 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 19032
+2026-05-05 20:48:10 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-05 20:48:10 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-05 20:48:10 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-05 20:48:10 0 [Note] InnoDB: Using ThreadPool
+2026-05-05 20:48:10 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-05 20:48:10 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-05 20:48:10 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-05 20:48:10 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=9833321
+2026-05-05 20:48:10 0 [Note] InnoDB: End of log at LSN=15576982
+2026-05-05 20:48:10 0 [Note] InnoDB: To recover: 245 pages
+2026-05-05 20:48:10 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-05 20:48:10 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-05 20:48:10 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-05 20:48:10 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-05 20:48:10 0 [Note] InnoDB: log sequence number 15576982; transaction id 6564
+2026-05-05 20:48:10 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-05 20:48:10 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-05 20:48:10 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-05 20:48:10 0 [Note] InnoDB: Buffer pool(s) load completed at 260505 20:48:10
+2026-05-05 20:48:10 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-05 20:48:10 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-05 20:48:10 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-05 20:48:48 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 436
+2026-05-05 20:48:48 0 [Note] mariadbd.exe: Aria engine: starting recovery
+recovered pages: 0% 10% 20% 30% 46% 56% 76% 93% 100% (0.0 seconds); tables to flush: 1 0
+ (0.0 seconds); 
+2026-05-05 20:48:48 0 [Note] mariadbd.exe: Aria engine: recovery done
+2026-05-05 20:48:48 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-05 20:48:48 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-05 20:48:48 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-05 20:48:48 0 [Note] InnoDB: Using ThreadPool
+2026-05-05 20:48:48 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-05 20:48:48 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-05 20:48:48 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-05 20:48:48 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=9833321
+2026-05-05 20:48:48 0 [Note] InnoDB: End of log at LSN=15680771
+2026-05-05 20:48:48 0 [Note] InnoDB: To recover: 147 pages
+2026-05-05 20:48:48 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-05 20:48:48 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-05 20:48:48 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-05 20:48:48 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-05 20:48:48 0 [Note] InnoDB: log sequence number 15680771; transaction id 6604
+2026-05-05 20:48:48 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-05 20:48:48 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-05 20:48:48 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-05 20:48:48 0 [Note] InnoDB: Buffer pool(s) load completed at 260505 20:48:48
+2026-05-05 20:48:48 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-05 20:48:48 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-05 20:48:48 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-06 18:11:29 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 41428
+2026-05-06 18:11:29 0 [Note] mariadbd.exe: Aria engine: starting recovery
+recovered pages: 0% 10% 20% 30% 45% 55% 68% 79% 93% 100% (0.0 seconds); tables to flush: 1 0
+ (0.0 seconds); 
+2026-05-06 18:11:29 0 [Note] mariadbd.exe: Aria engine: recovery done
+2026-05-06 18:11:29 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-06 18:11:29 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-06 18:11:29 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-06 18:11:29 0 [Note] InnoDB: Using ThreadPool
+2026-05-06 18:11:29 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-06 18:11:29 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-06 18:11:29 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-06 18:11:29 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=9833321
+2026-05-06 18:11:29 0 [Note] InnoDB: End of log at LSN=16502506
+2026-05-06 18:11:29 0 [Note] InnoDB: To recover: 287 pages
+2026-05-06 18:11:29 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-06 18:11:29 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-06 18:11:29 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-06 18:11:29 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-06 18:11:29 0 [Note] InnoDB: log sequence number 16502506; transaction id 6922
+2026-05-06 18:11:29 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-06 18:11:29 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-06 18:11:29 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-06 18:11:29 0 [Note] InnoDB: Buffer pool(s) load completed at 260506 18:11:29
+2026-05-06 18:11:29 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-06 18:11:29 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-06 18:11:29 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-06 18:12:21 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 42736
+2026-05-06 18:12:21 0 [Note] mariadbd.exe: Aria engine: starting recovery
+recovered pages: 0% 10% 20% 30% 46% 56% 76% 93% 100% (0.0 seconds); tables to flush: 1 0
+ (0.0 seconds); 
+2026-05-06 18:12:21 0 [Note] mariadbd.exe: Aria engine: recovery done
+2026-05-06 18:12:21 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-06 18:12:21 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-06 18:12:21 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-06 18:12:21 0 [Note] InnoDB: Using ThreadPool
+2026-05-06 18:12:21 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-06 18:12:21 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-06 18:12:21 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-06 18:12:21 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=9833321
+2026-05-06 18:12:21 0 [Note] InnoDB: End of log at LSN=16606567
+2026-05-06 18:12:21 0 [Note] InnoDB: To recover: 189 pages
+2026-05-06 18:12:21 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-06 18:12:21 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-06 18:12:21 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-06 18:12:21 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-06 18:12:21 0 [Note] InnoDB: log sequence number 16606567; transaction id 6962
+2026-05-06 18:12:21 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-06 18:12:21 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-06 18:12:21 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-06 18:12:21 0 [Note] InnoDB: Buffer pool(s) load completed at 260506 18:12:21
+2026-05-06 18:12:21 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-06 18:12:21 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-06 18:12:21 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-06 18:25:42 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 36940
+2026-05-06 18:25:42 0 [Note] mariadbd.exe: Aria engine: starting recovery
+recovered pages: 0% 10% 20% 30% 45% 55% 68% 79% 93% 100% (0.0 seconds); tables to flush: 1 0
+ (0.0 seconds); 
+2026-05-06 18:25:42 0 [Note] mariadbd.exe: Aria engine: recovery done
+2026-05-06 18:25:42 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-06 18:25:42 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-06 18:25:42 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-06 18:25:42 0 [Note] InnoDB: Using ThreadPool
+2026-05-06 18:25:42 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-06 18:25:42 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-06 18:25:42 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-06 18:25:42 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=9833321
+2026-05-06 18:25:42 0 [Note] InnoDB: End of log at LSN=17437162
+2026-05-06 18:25:42 0 [Note] InnoDB: To recover: 287 pages
+2026-05-06 18:25:42 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-06 18:25:42 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-06 18:25:42 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-06 18:25:42 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-06 18:25:42 0 [Note] InnoDB: log sequence number 17437162; transaction id 7280
+2026-05-06 18:25:42 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-06 18:25:42 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-06 18:25:42 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-06 18:25:42 0 [Note] InnoDB: Buffer pool(s) load completed at 260506 18:25:42
+2026-05-06 18:25:42 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-06 18:25:42 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-06 18:25:42 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-06 19:21:51 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 33168
+2026-05-06 19:21:51 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-06 19:21:51 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-06 19:21:51 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-06 19:21:51 0 [Note] InnoDB: Using ThreadPool
+2026-05-06 19:21:51 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-06 19:21:51 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-06 19:21:51 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-06 19:21:51 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=9833321
+2026-05-06 19:21:51 0 [Note] InnoDB: End of log at LSN=17437162
+2026-05-06 19:21:51 0 [Note] InnoDB: To recover: 287 pages
+2026-05-06 19:21:51 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-06 19:21:51 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-06 19:21:51 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-06 19:21:51 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-06 19:21:51 0 [Note] InnoDB: log sequence number 17437162; transaction id 7280
+2026-05-06 19:21:51 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-06 19:21:51 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-06 19:21:51 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-06 19:21:51 0 [Note] InnoDB: Buffer pool(s) load completed at 260506 19:21:51
+2026-05-06 19:21:51 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-06 19:21:51 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-06 19:21:51 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-06 19:36:14 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 27536
+2026-05-06 19:36:14 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-06 19:36:14 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-06 19:36:14 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-06 19:36:14 0 [Note] InnoDB: Using ThreadPool
+2026-05-06 19:36:14 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-06 19:36:14 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-06 19:36:14 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-06 19:36:14 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=9833321
+2026-05-06 19:36:14 0 [Note] InnoDB: End of log at LSN=17437162
+2026-05-06 19:36:14 0 [Note] InnoDB: To recover: 287 pages
+2026-05-06 19:36:14 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-06 19:36:14 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-06 19:36:14 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-06 19:36:14 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-06 19:36:14 0 [Note] InnoDB: log sequence number 17437162; transaction id 7280
+2026-05-06 19:36:14 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-06 19:36:14 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-06 19:36:14 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-06 19:36:14 0 [Note] InnoDB: Buffer pool(s) load completed at 260506 19:36:14
+2026-05-06 19:36:14 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-06 19:36:14 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-06 19:36:14 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-06 20:59:30 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 3372
+2026-05-06 20:59:30 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-06 20:59:30 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-06 20:59:30 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-06 20:59:30 0 [Note] InnoDB: Using ThreadPool
+2026-05-06 20:59:30 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-06 20:59:30 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-06 20:59:30 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-06 20:59:30 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=9833321
+2026-05-06 20:59:30 0 [Note] InnoDB: End of log at LSN=17437162
+2026-05-06 20:59:30 0 [Note] InnoDB: To recover: 287 pages
+2026-05-06 20:59:30 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-06 20:59:30 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-06 20:59:30 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-06 20:59:30 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-06 20:59:30 0 [Note] InnoDB: log sequence number 17437162; transaction id 7280
+2026-05-06 20:59:30 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-06 20:59:30 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-06 20:59:30 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-06 20:59:30 0 [Note] InnoDB: Buffer pool(s) load completed at 260506 20:59:30
+2026-05-06 20:59:30 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-06 20:59:30 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-06 20:59:30 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-06 21:02:29 4 [Warning] Aborted connection 4 to db: 'orchids' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
+2026-05-06 21:02:29 3 [Warning] Aborted connection 3 to db: 'unconnected' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
+2026-05-07 16:44:08 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 36400
+2026-05-07 16:44:08 0 [Note] InnoDB: Compressed tables use zlib 1.3.1
+2026-05-07 16:44:08 0 [Note] InnoDB: Number of transaction pools: 1
+2026-05-07 16:44:08 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-05-07 16:44:08 0 [Note] InnoDB: Using ThreadPool
+2026-05-07 16:44:08 0 [Note] InnoDB: innodb_buffer_pool_size_max=128m, innodb_buffer_pool_size=128m
+2026-05-07 16:44:08 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-05-07 16:44:08 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-05-07 16:44:08 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=9833321
+2026-05-07 16:44:08 0 [Note] InnoDB: End of log at LSN=17437162
+2026-05-07 16:44:08 0 [Note] InnoDB: To recover: 287 pages
+2026-05-07 16:44:08 0 [Note] InnoDB: 128 rollback segments are active.
+2026-05-07 16:44:08 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-05-07 16:44:08 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-05-07 16:44:08 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-05-07 16:44:08 0 [Note] InnoDB: log sequence number 17437162; transaction id 7280
+2026-05-07 16:44:08 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-07 16:44:08 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\rfeen\source\repos\OrchidApp\app\data\mariadb\ib_buffer_pool
+2026-05-07 16:44:08 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-07 16:44:08 0 [Note] InnoDB: Buffer pool(s) load completed at 260507 16:44:08
+2026-05-07 16:44:08 0 [Note] Server socket created on IP: '::', port: '3308'.
+2026-05-07 16:44:08 0 [Note] Server socket created on IP: '0.0.0.0', port: '3308'.
+2026-05-07 16:44:08 0 [Note] C:\Users\rfeen\source\repos\OrchidApp\app\runtime\mariadb\win-x64\bin\mariadbd.exe: ready for connections.
+Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
+2026-05-07 16:49:52 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 13204
+2026-05-07 16:49:52 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-05-07 16:49:52 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-05-07 16:49:52 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-05-07 16:49:52 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-07 16:49:52 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-07 16:49:52 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-05-07 16:49:52 0 [ERROR] Aborting
+2026-05-07 16:51:06 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 24152
+2026-05-07 16:51:06 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-05-07 16:51:06 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-05-07 16:51:06 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-05-07 16:51:06 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-07 16:51:06 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-07 16:51:06 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-05-07 16:51:06 0 [ERROR] Aborting
+2026-05-07 16:54:14 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 13276
+2026-05-07 16:54:14 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-05-07 16:54:14 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-05-07 16:54:14 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-05-07 16:54:14 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-07 16:54:14 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-07 16:54:14 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-05-07 16:54:14 0 [ERROR] Aborting
+2026-05-07 16:57:21 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 43304
+2026-05-07 16:57:21 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-05-07 16:57:21 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-05-07 16:57:21 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-05-07 16:57:21 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-07 16:57:21 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-07 16:57:21 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-05-07 16:57:21 0 [ERROR] Aborting
+2026-05-07 17:00:04 4 [Warning] Aborted connection 4 to db: 'orchids' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
+2026-05-07 17:01:06 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 36908
+2026-05-07 17:01:06 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-05-07 17:01:06 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-05-07 17:01:06 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-05-07 17:01:06 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-07 17:01:06 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-07 17:01:06 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-05-07 17:01:06 0 [ERROR] Aborting
+2026-05-07 17:03:41 7 [Warning] Aborted connection 7 to db: 'orchids' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
+2026-05-07 17:03:41 6 [Warning] Aborted connection 6 to db: 'unconnected' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
+2026-05-07 17:03:41 9 [Warning] Aborted connection 9 to db: 'orchids' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
+2026-05-07 17:03:49 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 38072
+2026-05-07 17:03:49 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-05-07 17:03:49 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-05-07 17:03:49 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-05-07 17:03:49 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-07 17:03:49 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-07 17:03:49 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-05-07 17:03:49 0 [ERROR] Aborting
+2026-05-07 17:05:16 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 31932
+2026-05-07 17:05:16 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-05-07 17:05:16 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-05-07 17:05:16 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-05-07 17:05:16 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-07 17:05:16 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-07 17:05:16 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-05-07 17:05:16 0 [ERROR] Aborting
+2026-05-07 17:07:56 10 [Warning] Aborted connection 10 to db: 'unconnected' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
+2026-05-07 17:07:56 11 [Warning] Aborted connection 11 to db: 'orchids' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
+2026-05-07 17:08:06 0 [Note] Starting MariaDB 10.11.16-MariaDB source revision 3218602d3100db9ce7a875511a591cddc173cc16 server_uid XE24Enyidtwt/lUzIwIHsNcuTFg= as process 43444
+2026-05-07 17:08:06 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-05-07 17:08:06 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-05-07 17:08:06 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-05-07 17:08:06 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-05-07 17:08:06 0 [Note] mariadbd.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-05-07 17:08:06 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-05-07 17:08:06 0 [ERROR] Aborting
+2026-05-07 17:11:15 13 [Warning] Aborted connection 13 to db: 'orchids' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
+2026-05-07 17:11:15 12 [Warning] Aborted connection 12 to db: 'unconnected' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
