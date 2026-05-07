@@ -1,5 +1,6 @@
 using System.Diagnostics;
 
+
 namespace OrchidApp.Launcher;
 
 public partial class Form1 : Form
@@ -67,6 +68,11 @@ public partial class Form1 : Form
             }
         };
 
+_webAppProcess.EnableRaisingEvents = true;
+_webAppProcess.Exited += (s, e) =>
+{
+    AppendLog("Web app process exited");
+};
         _webAppProcess.StartInfo.EnvironmentVariables["ASPNETCORE_ENVIRONMENT"] = "Desktop";
 
         _webAppProcess.OutputDataReceived += (s, e) =>
@@ -83,8 +89,14 @@ public partial class Form1 : Form
                 AppendLog("ERR: " + e.Data);
         };
 
-        _webAppProcess.Start();
+        _webAppProcess.StartInfo.EnvironmentVariables["ConnectionStrings__DefaultConnection"] =
+            "server=127.0.0.1;port=3308;database=orchids;user=orchid;password=orchid;";
+        
+        _webAppProcess.StartInfo.EnvironmentVariables["ConnectionStrings__OrchidDb"] =
+                "server=127.0.0.1;port=3308;database=orchids;user=orchid;password=orchid;";
 
+        _webAppProcess.Start();
+AppendLog("Launcher: process started");
         _webAppProcess.BeginOutputReadLine();
         _webAppProcess.BeginErrorReadLine();
 
@@ -101,27 +113,28 @@ public partial class Form1 : Form
 
     private void StartMariaDb()
     {
-        var mariaDbExe = Path.GetFullPath(
+        var repoRoot = Path.GetFullPath(
             Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "..", "..", "..", "..", "..",
-                "app",
-                "runtime",
-                "mariadb",
-                "win-x64",
-                "bin",
-                "mariadbd.exe"
+                AppContext.BaseDirectory,
+                "..", "..", "..", "..", ".."
             )
         );
 
-        var dataDir = Path.GetFullPath(
-            Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "..", "..", "..", "..", "..",
-                "app",
-                "data",
-                "mariadb"
-            )
+        var mariaDbExe = Path.Combine(
+            repoRoot,
+            "app",
+            "runtime",
+            "mariadb",
+            "win-x64",
+            "bin",
+            "mariadbd.exe"
+        );
+
+        var dataDir = Path.Combine(
+            repoRoot,
+            "app",
+            "data",
+            "mariadb"
         );
 
         _mariaDbProcess = new Process
