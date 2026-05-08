@@ -112,12 +112,10 @@ if (app.Environment.IsEnvironment("Desktop"))
     {
         dbConn.Open();
 
-        var repoRoot = Path.GetFullPath(
-            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..")
-        );
+        var runtimeRoot = AppContext.BaseDirectory;
 
-        var dbFolder = Path.Combine(repoRoot, "database");
-        var mariadbRoot = Path.Combine(repoRoot, "app", "runtime", "mariadb");
+        var dbFolder = Path.Combine(runtimeRoot, "database");
+        var mariadbRoot = Path.Combine(runtimeRoot, "runtime", "mariadb");
 
         string platformFolder = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "win-x64" :
                                 RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? "osx-arm64" :
@@ -132,7 +130,7 @@ if (app.Environment.IsEnvironment("Desktop"))
             exeName
         );
 
-Console.WriteLine($"RepoRoot: {repoRoot}");
+Console.WriteLine($"RuntimeRoot: {runtimeRoot}");
 Console.WriteLine($"DB Folder: {dbFolder}");
 Console.WriteLine($"MariaDB EXE: {mariadbExe}");
 

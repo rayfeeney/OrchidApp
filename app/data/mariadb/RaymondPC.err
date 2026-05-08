@@ -1760,3 +1760,5 @@ Version: '10.11.16-MariaDB'  socket: ''  port: 3308  MariaDB Server
 2026-05-07 17:08:06 0 [ERROR] Aborting
 2026-05-07 17:11:15 13 [Warning] Aborted connection 13 to db: 'orchids' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
 2026-05-07 17:11:15 12 [Warning] Aborted connection 12 to db: 'unconnected' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
+2026-05-07 22:42:42 17 [Warning] Aborted connection 17 to db: 'orchids' user: 'orchid' host: 'localhost' (Got an error reading communication packets)
+2026-05-07 22:42:42 16 [Warning] Aborted connection 16 to db: 'unconnected' user: 'orchid' host: 'localhost' (Got an error reading communication packets)

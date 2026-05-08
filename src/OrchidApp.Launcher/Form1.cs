@@ -1,5 +1,5 @@
 using System.Diagnostics;
-
+using MySqlConnector;
 
 namespace OrchidApp.Launcher;
 
@@ -11,9 +11,23 @@ public partial class Form1 : Form
     private Process? _webAppProcess;
     private Process? _mariaDbProcess;
 
+    private readonly object _logLock = new object();
+
+    private readonly string _logFilePath =
+        Path.Combine(AppContext.BaseDirectory, "launcher.log");
+
     public Form1()
     {
         InitializeComponent();
+
+        try
+        {
+            File.WriteAllText(_logFilePath, string.Empty);
+        }
+        catch
+        {
+            // ignore log reset errors
+        }
 
         statusLabel.Text = "Starting OrchidApp...";
         statusLabel.AutoSize = true;
@@ -35,32 +49,46 @@ public partial class Form1 : Form
     {
         base.OnLoad(e);
 
-        StartMariaDb();
+        try
+        {
+            StartMariaDb();
 
-        await Task.Delay(2000); // give MariaDB time to start
+            await WaitForMariaDbAsync(
+                "server=127.0.0.1;port=3308;user=orchid;password=orchid;"
+            );
 
-        StartWebApp();
+            AppendLog("MariaDB startup confirmed.");
+
+            StartWebApp();
+        }
+        catch (Exception ex)
+        {
+            AppendLog("STARTUP ERROR: " + ex.Message);
+
+            MessageBox.Show(
+                ex.ToString(),
+                "Startup Failure",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error
+            );
+        }
     }
 
     private async void StartWebApp()
     {
         statusLabel.Text = "Starting web application...";
 
-        var projectPath = Path.GetFullPath(
-            Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "..", "..", "..", "..",
-                "OrchidApp.Web",
-                "OrchidApp.Web.csproj"
-            )
-        );
+        var baseDir = AppContext.BaseDirectory;
+
+        var exePath = Path.Combine(baseDir, "OrchidApp.Web.exe");
 
         _webAppProcess = new Process
         {
             StartInfo = new ProcessStartInfo
             {
-                FileName = "dotnet",
-                Arguments = $"run --project \"{projectPath}\" --no-launch-profile --urls=http://localhost:5285",
+                FileName = exePath,
+                Arguments = "--urls=http://localhost:5285",
+                WorkingDirectory = baseDir,
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -113,16 +141,10 @@ AppendLog("Launcher: process started");
 
     private void StartMariaDb()
     {
-        var repoRoot = Path.GetFullPath(
-            Path.Combine(
-                AppContext.BaseDirectory,
-                "..", "..", "..", "..", ".."
-            )
-        );
+        var baseDir = AppContext.BaseDirectory;
 
         var mariaDbExe = Path.Combine(
-            repoRoot,
-            "app",
+            baseDir,
             "runtime",
             "mariadb",
             "win-x64",
@@ -131,77 +153,280 @@ AppendLog("Launcher: process started");
         );
 
         var dataDir = Path.Combine(
-            repoRoot,
-            "app",
+            baseDir,
             "data",
             "mariadb"
         );
 
-        _mariaDbProcess = new Process
+        AppendLog($"MariaDB EXE: {mariaDbExe}");
+        AppendLog($"MariaDB DataDir: {dataDir}");
+
+        var process = new Process
         {
             StartInfo = new ProcessStartInfo
             {
                 FileName = mariaDbExe,
-                Arguments = $"--datadir=\"{dataDir}\" --port=3308",
+                Arguments =
+                    $"--datadir=\"{dataDir}\" " +
+                    $"--port=3308 " +
+                    $"--bind-address=127.0.0.1 " +
+                    $"--console",
+                WorkingDirectory = baseDir,
                 UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
                 CreateNoWindow = true
             }
         };
 
-        _mariaDbProcess.Start();
+        process.EnableRaisingEvents = true;
+
+        process.Exited += (s, e) =>
+        {
+            AppendLog($"MariaDB exited. ExitCode={process.ExitCode}");
+        };
+
+        process.OutputDataReceived += (s, e) =>
+        {
+            if (e.Data != null)
+                AppendLog("DB: " + e.Data);
+        };
+
+        process.ErrorDataReceived += (s, e) =>
+        {
+            if (e.Data != null)
+                AppendLog("DB ERR: " + e.Data);
+        };
+
+        process.Start();
+
+        process.BeginOutputReadLine();
+        process.BeginErrorReadLine();
+
+        _mariaDbProcess = process;
     }
 
-    private async Task WaitForWebAppAsync(string url)
+    private async Task WaitForMariaDbAsync(
+        string connectionString,
+        int timeoutSeconds = 30)
     {
-        using var client = new HttpClient();
+        var start = DateTime.UtcNow;
 
-        for (int i = 0; i < 30; i++) // ~15 seconds
+        while (DateTime.UtcNow - start < TimeSpan.FromSeconds(timeoutSeconds))
         {
             try
             {
-                var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+                using var conn = new MySqlConnection(connectionString);
+
+                await conn.OpenAsync();
+
+                AppendLog("MariaDB is ready.");
+
+                return;
+            }
+            catch (Exception ex)
+            {
+                AppendLog("MariaDB wait: " + ex.Message);
+
+                if (_mariaDbProcess != null && _mariaDbProcess.HasExited)
+                {
+                    throw new Exception(
+                        $"MariaDB process exited early. ExitCode={_mariaDbProcess.ExitCode}");
+                }
+
+                await Task.Delay(1000);
+            }
+        }
+
+        throw new Exception("MariaDB did not start in time.");
+    }
+
+    private async Task WaitForWebAppAsync(
+        string url,
+        int timeoutSeconds = 600)
+    {
+        using var client = new HttpClient();
+
+        var start = DateTime.UtcNow;
+
+        while (DateTime.UtcNow - start < TimeSpan.FromSeconds(timeoutSeconds))
+        {
+            if (_webAppProcess != null && _webAppProcess.HasExited)
+            {
+                throw new Exception(
+                    $"Web app process exited before becoming ready. ExitCode={_webAppProcess.ExitCode}");
+            }
+
+            try
+            {
+                var response = await client.GetAsync(
+                    url,
+                    HttpCompletionOption.ResponseHeadersRead);
+
                 if (response.IsSuccessStatusCode)
+                {
+                    AppendLog("Web app is ready.");
                     return;
+                }
             }
             catch
             {
                 // not ready yet
             }
 
-            await Task.Delay(500);
+            await Task.Delay(1000);
         }
 
-        throw new Exception("Web app did not start in time");
+        throw new Exception(
+            $"Web app did not start in time after {timeoutSeconds} seconds.");
     }
 
     private void AppendLog(string text)
     {
         if (InvokeRequired)
         {
-            Invoke(new Action<string>(AppendLog), text);
+            BeginInvoke(new Action<string>(AppendLog), text);
             return;
         }
 
-        logBox.AppendText(text + Environment.NewLine);
+        var line = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {text}";
+
+        lock (_logLock)
+        {
+            try
+            {
+                using var stream = new FileStream(
+                    _logFilePath,
+                    FileMode.Append,
+                    FileAccess.Write,
+                    FileShare.ReadWrite);
+
+                using var writer = new StreamWriter(stream);
+                writer.WriteLine(line);
+            }
+            catch
+            {
+                // ignore file logging errors
+            }
+
+            logBox.AppendText(line + Environment.NewLine);
+        }
+    }
+
+    private void StopMariaDbGracefully()
+    {
+        try
+        {
+            if (_mariaDbProcess == null || _mariaDbProcess.HasExited)
+            {
+                AppendLog("MariaDB is not running.");
+                return;
+            }
+
+            var baseDir = AppContext.BaseDirectory;
+
+            var mariadbAdminExe = Path.Combine(
+                baseDir,
+                "runtime",
+                "mariadb",
+                "win-x64",
+                "bin",
+                "mariadb-admin.exe"
+            );
+
+            AppendLog($"MariaDB shutdown tool: {mariadbAdminExe}");
+
+            if (!File.Exists(mariadbAdminExe))
+            {
+                AppendLog("mariadb-admin.exe not found; falling back to process kill.");
+                _mariaDbProcess.Kill(true);
+                return;
+            }
+
+            var shutdown = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = mariadbAdminExe,
+                    Arguments = "-h 127.0.0.1 -P 3308 -u orchid_shutdown -porchid_shutdown shutdown",
+                    WorkingDirectory = baseDir,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true
+                }
+            };
+
+            AppendLog("Requesting MariaDB shutdown...");
+
+            shutdown.Start();
+
+            var stdout = shutdown.StandardOutput.ReadToEnd();
+            var stderr = shutdown.StandardError.ReadToEnd();
+
+            shutdown.WaitForExit(10000);
+
+            if (!string.IsNullOrWhiteSpace(stdout))
+                AppendLog("mariadb-admin OUT: " + stdout.Trim());
+
+            if (!string.IsNullOrWhiteSpace(stderr))
+                AppendLog("mariadb-admin ERR: " + stderr.Trim());
+
+            AppendLog($"mariadb-admin ExitCode={shutdown.ExitCode}");
+
+            if (shutdown.ExitCode != 0)
+            {
+                AppendLog("MariaDB shutdown command failed; falling back to process kill.");
+                _mariaDbProcess.Kill(true);
+                return;
+            }
+
+            AppendLog("Waiting for MariaDB process to exit...");
+
+            if (!_mariaDbProcess.WaitForExit(30000))
+            {
+                AppendLog("MariaDB did not stop gracefully within 30 seconds; killing process.");
+                _mariaDbProcess.Kill(true);
+                return;
+            }
+
+            AppendLog("MariaDB stopped gracefully.");
+        }
+        catch (Exception ex)
+        {
+            AppendLog("MariaDB shutdown error: " + ex.Message);
+
+            try
+            {
+                if (_mariaDbProcess != null && !_mariaDbProcess.HasExited)
+                    _mariaDbProcess.Kill(true);
+            }
+            catch
+            {
+                // ignore cleanup errors
+            }
+        }
     }
 
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
         try
         {
+            AppendLog("Launcher closing...");
+
             if (_webAppProcess != null && !_webAppProcess.HasExited)
             {
+                AppendLog("Stopping web app process...");
                 _webAppProcess.Kill(true);
+                _webAppProcess.WaitForExit(10000);
+                AppendLog("Web app process stopped.");
             }
 
-            if (_mariaDbProcess != null && !_mariaDbProcess.HasExited)
-            {
-                _mariaDbProcess.Kill(true);
-            }
+            StopMariaDbGracefully();
         }
-        catch
+        catch (Exception ex)
         {
-            // ignore cleanup errors
+            AppendLog("Shutdown error: " + ex.Message);
         }
 
         base.OnFormClosing(e);
