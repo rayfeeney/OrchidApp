@@ -52,24 +52,35 @@ function Wait-ForMariaDb {
 }
 
 function Stop-LocalMariaDb {
-    if ($StartedMariaDb -and $MariaDbProcess -and -not $MariaDbProcess.HasExited) {
-        Write-Step "Stopping local database"
+    if (-not $StartedMariaDb) {
+        Write-Host "MariaDB was already running before restore. Leaving it running."
+        return
+    }
 
-        & $MariaDbAdmin `
-            -h 127.0.0.1 `
-            -P $MariaDbPort `
-            -u orchid_shutdown `
-            -porchid_shutdown `
-            shutdown
+    if ($null -eq $MariaDbProcess) {
+        return
+    }
 
-        if ($LASTEXITCODE -eq 0) {
-            $MariaDbProcess.WaitForExit(30000) | Out-Null
-            Write-Host "MariaDB stopped." -ForegroundColor Green
-        }
-        else {
-            Stop-Process -Id $MariaDbProcess.Id -Force
-            Write-Host "MariaDB had to be force-stopped." -ForegroundColor Red
-        }
+    if ($MariaDbProcess.HasExited) {
+        return
+    }
+
+    Write-Step "Stopping local database"
+
+    & $MariaDbAdmin `
+        -h 127.0.0.1 `
+        -P $MariaDbPort `
+        -u orchid_shutdown `
+        -porchid_shutdown `
+        shutdown
+
+    if ($LASTEXITCODE -eq 0) {
+        $MariaDbProcess.WaitForExit(30000) | Out-Null
+        Write-Host "MariaDB stopped." -ForegroundColor Green
+    }
+    else {
+        Stop-Process -Id $MariaDbProcess.Id -Force
+        Write-Host "MariaDB had to be force-stopped." -ForegroundColor Red
     }
 }
 
@@ -152,6 +163,7 @@ try {
 
     if (Test-PortListening -Port $MariaDbPort) {
         Write-Host "MariaDB already appears to be running on port $MariaDbPort."
+        $StartedMariaDb = $false
     }
     else {
         $MariaDbProcess = Start-Process `
