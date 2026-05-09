@@ -1,0 +1,220 @@
+param(
+    [Parameter(Mandatory = $true)]
+    [string]$BackupZip,
+
+    [int]$MariaDbPort = 3308
+)
+
+$ErrorActionPreference = "Stop"
+
+function Write-Step {
+    param([string]$Message)
+
+    Write-Host ""
+    Write-Host "==> $Message"
+}
+
+function Test-PortListening {
+    param([int]$Port)
+
+    $listener = Get-NetTCPConnection `
+        -LocalPort $Port `
+        -State Listen `
+        -ErrorAction SilentlyContinue
+
+    return $null -ne $listener
+}
+
+function Wait-ForMariaDb {
+    param(
+        [string]$MariaDbClient,
+        [int]$Port,
+        [int]$TimeoutSeconds = 30
+    )
+
+    for ($i = 0; $i -lt $TimeoutSeconds; $i++) {
+        & $MariaDbClient `
+            -h 127.0.0.1 `
+            -P $Port `
+            -u orchid `
+            -porchid `
+            -e "SELECT 1;" `
+            2>$null | Out-Null
+
+        if ($LASTEXITCODE -eq 0) {
+            return
+        }
+
+        Start-Sleep -Seconds 1
+    }
+
+    throw "MariaDB did not become ready within $TimeoutSeconds seconds."
+}
+
+function Stop-LocalMariaDb {
+    if ($StartedMariaDb -and $MariaDbProcess -and -not $MariaDbProcess.HasExited) {
+        Write-Step "Stopping local database"
+
+        & $MariaDbAdmin `
+            -h 127.0.0.1 `
+            -P $MariaDbPort `
+            -u orchid_shutdown `
+            -porchid_shutdown `
+            shutdown
+
+        if ($LASTEXITCODE -eq 0) {
+            $MariaDbProcess.WaitForExit(30000) | Out-Null
+            Write-Host "MariaDB stopped." -ForegroundColor Green
+        }
+        else {
+            Stop-Process -Id $MariaDbProcess.Id -Force
+            Write-Host "MariaDB had to be force-stopped." -ForegroundColor Red
+        }
+    }
+}
+
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$AppRoot = Resolve-Path (Join-Path $ScriptDir "..")
+
+$MariaDbRoot = Join-Path $AppRoot "runtime\mariadb\win-x64"
+$MariaDbBin = Join-Path $MariaDbRoot "bin"
+
+$MariaDbServer = Join-Path $MariaDbBin "mariadbd.exe"
+$MariaDbClient = Join-Path $MariaDbBin "mariadb.exe"
+$MariaDbAdmin = Join-Path $MariaDbBin "mariadb-admin.exe"
+
+$MariaDbData = Join-Path $AppRoot "data\mariadb"
+$UploadsRoot = Join-Path $AppRoot "wwwroot\uploads"
+$RestoreRoot = Join-Path $AppRoot "restore-temp"
+
+$MariaDbServerLogPath = Join-Path $AppRoot "restore-mariadb-server.log"
+$MariaDbServerErrorLogPath = Join-Path $AppRoot "restore-mariadb-server-error.log"
+
+$StartedMariaDb = $false
+$MariaDbProcess = $null
+
+Write-Step "Checking restore prerequisites"
+
+if (-not (Test-Path $BackupZip)) {
+    throw "Backup ZIP not found: $BackupZip"
+}
+
+$BackupZip = Resolve-Path $BackupZip
+
+$RequiredPaths = @(
+    $MariaDbServer,
+    $MariaDbClient,
+    $MariaDbAdmin,
+    $MariaDbData
+)
+
+foreach ($RequiredPath in $RequiredPaths) {
+    if (-not (Test-Path $RequiredPath)) {
+        throw "Required restore item missing: $RequiredPath"
+    }
+
+    Write-Host "OK: $RequiredPath" -ForegroundColor Green
+}
+
+try {
+    Write-Step "Extracting backup"
+
+    if (Test-Path $RestoreRoot) {
+        Remove-Item $RestoreRoot -Recurse -Force
+    }
+
+    New-Item -ItemType Directory -Path $RestoreRoot -Force | Out-Null
+
+    Expand-Archive `
+        -Path $BackupZip `
+        -DestinationPath $RestoreRoot `
+        -Force
+
+    $ManifestPath = Join-Path $RestoreRoot "manifest.json"
+    $DatabaseBackupPath = Join-Path $RestoreRoot "orchids.sql"
+    $UploadsBackupPath = Join-Path $RestoreRoot "uploads"
+
+    if (-not (Test-Path $ManifestPath)) {
+        throw "Backup is invalid. manifest.json was not found."
+    }
+
+    if (-not (Test-Path $DatabaseBackupPath)) {
+        throw "Backup is invalid. orchids.sql was not found."
+    }
+
+    if (-not (Test-Path $UploadsBackupPath)) {
+        throw "Backup is invalid. uploads folder was not found."
+    }
+
+    Write-Host "OK: Backup contents validated." -ForegroundColor Green
+
+    Write-Step "Starting local database if needed"
+
+    if (Test-PortListening -Port $MariaDbPort) {
+        Write-Host "MariaDB already appears to be running on port $MariaDbPort."
+    }
+    else {
+        $MariaDbProcess = Start-Process `
+            -FilePath $MariaDbServer `
+            -ArgumentList "--datadir=`"$MariaDbData`" --port=$MariaDbPort --bind-address=127.0.0.1 --console" `
+            -WorkingDirectory $AppRoot `
+            -RedirectStandardOutput $MariaDbServerLogPath `
+            -RedirectStandardError $MariaDbServerErrorLogPath `
+            -PassThru `
+            -WindowStyle Hidden
+
+        $StartedMariaDb = $true
+
+        Write-Host "Waiting for MariaDB to become ready..."
+        Wait-ForMariaDb `
+            -MariaDbClient $MariaDbClient `
+            -Port $MariaDbPort
+    }
+
+    Write-Step "Restoring plant database"
+
+    $RestoreCommand = "`"$MariaDbClient`" -h 127.0.0.1 -P $MariaDbPort -u orchid -porchid < `"$DatabaseBackupPath`""
+
+    cmd.exe /c $RestoreCommand
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "Database restore failed."
+    }
+
+    Write-Host "OK: Plant database restored." -ForegroundColor Green
+
+    Write-Step "Restoring uploaded files"
+
+    if (Test-Path $UploadsRoot) {
+        Remove-Item $UploadsRoot -Recurse -Force
+    }
+
+    New-Item -ItemType Directory -Path $UploadsRoot -Force | Out-Null
+
+    $UploadItems = Get-ChildItem `
+        -Path $UploadsBackupPath `
+        -Force `
+        -ErrorAction SilentlyContinue
+
+    if ($UploadItems) {
+        Copy-Item `
+            -Path $UploadItems.FullName `
+            -Destination $UploadsRoot `
+            -Recurse `
+            -Force
+    }
+
+    Write-Host "OK: Uploaded files restored." -ForegroundColor Green
+
+    Write-Step "Restore complete"
+
+    Write-Host "Restore completed successfully." -ForegroundColor Green
+    Write-Host "Start OrchidApp again to use the restored data." -ForegroundColor Green
+}
+finally {
+    Stop-LocalMariaDb
+
+    if (Test-Path $RestoreRoot) {
+        Remove-Item $RestoreRoot -Recurse -Force
+    }
+}
