@@ -1,5 +1,6 @@
 param(
-    [int]$MariaDbPort = 3308
+    [int]$MariaDbPort = 3308,
+    [int]$BackupsToKeep = 3
 )
 
 $ErrorActionPreference = "Stop"
@@ -286,6 +287,7 @@ try {
         uploadsFileCount = $UploadsFileCount
         schemaVersionFile = "schemaversion.txt"
         mariaDbPort = $MariaDbPort
+        backupsToKeep = $BackupsToKeep
     }
 
     $ManifestPath = Join-Path $BackupWorkingRoot "manifest.json"
@@ -314,6 +316,39 @@ try {
     Write-Host $BackupZip -ForegroundColor Green
     Write-Log "Backup ZIP created: $BackupZip"
     Write-Log "Backup completed successfully."
+    Write-Log "Temporary backup folder will be removed: $BackupWorkingRoot"
+
+    Write-Step "Cleaning temporary backup files"
+
+    Remove-Item `
+        -Path $BackupWorkingRoot `
+        -Recurse `
+        -Force
+
+    Write-Host "Temporary backup files removed." -ForegroundColor Green
+
+    Write-Step "Removing old backups"
+
+    $OldBackups = Get-ChildItem `
+        -Path $BackupsRoot `
+        -Filter "OrchidAppBackup_*.zip" `
+        -File `
+        -ErrorAction SilentlyContinue |
+        Sort-Object LastWriteTime -Descending |
+        Select-Object -Skip $BackupsToKeep
+
+    if ($OldBackups) {
+        foreach ($OldBackup in $OldBackups) {
+            Remove-Item `
+                -Path $OldBackup.FullName `
+                -Force
+
+            Write-Host "Removed old backup: $($OldBackup.Name)" -ForegroundColor Yellow
+        }
+    }
+    else {
+        Write-Host "No old backups to remove." -ForegroundColor Green
+    }
 }
 catch {
     try {
