@@ -10,6 +10,7 @@ public partial class Form1 : Form
 
     private Process? _webAppProcess;
     private Process? _mariaDbProcess;
+    private string? _webAppStartupError;
 
     private readonly object _logLock = new object();
 
@@ -59,22 +60,22 @@ public partial class Form1 : Form
 
             AppendLog("MariaDB startup confirmed.");
 
-            StartWebApp();
+            await StartWebAppAsync();
         }
         catch (Exception ex)
         {
             AppendLog("STARTUP ERROR: " + ex.Message);
 
             MessageBox.Show(
-                ex.ToString(),
-                "Startup Failure",
+                ex.Message,
+                "OrchidApp could not start",
                 MessageBoxButtons.OK,
-                MessageBoxIcon.Error
+                MessageBoxIcon.Warning
             );
         }
     }
 
-    private async void StartWebApp()
+    private async Task StartWebAppAsync()
     {
         statusLabel.Text = "Starting web application...";
 
@@ -113,8 +114,18 @@ _webAppProcess.Exited += (s, e) =>
 
         _webAppProcess.ErrorDataReceived += (s, e) =>
         {
-            if (e.Data != null)
-                AppendLog("ERR: " + e.Data);
+            if (e.Data == null)
+                return;
+
+            AppendLog("ERR: " + e.Data);
+
+            if (e.Data.Contains("Database updates are available", StringComparison.OrdinalIgnoreCase) ||
+                e.Data.Contains("automatic backup is not implemented", StringComparison.OrdinalIgnoreCase) ||
+                e.Data.Contains("Please back up the OrchidApp data folder", StringComparison.OrdinalIgnoreCase))
+            {
+                _webAppStartupError =
+                    "Database updates are available. A backup is required before OrchidApp can apply them.";
+            }
         };
 
         _webAppProcess.StartInfo.EnvironmentVariables["ConnectionStrings__DefaultConnection"] =
@@ -253,8 +264,13 @@ AppendLog("Launcher: process started");
         {
             if (_webAppProcess != null && _webAppProcess.HasExited)
             {
+                if (!string.IsNullOrWhiteSpace(_webAppStartupError))
+                {
+                    throw new Exception(_webAppStartupError);
+                }
+
                 throw new Exception(
-                    $"Web app process exited before becoming ready. ExitCode={_webAppProcess.ExitCode}");
+                    $"OrchidApp could not start. ExitCode={_webAppProcess.ExitCode}");
             }
 
             try
@@ -265,7 +281,7 @@ AppendLog("Launcher: process started");
 
                 if (response.IsSuccessStatusCode)
                 {
-                    AppendLog("Web app is ready.");
+                    AppendLog("Opening OrchidApp...");
                     return;
                 }
             }

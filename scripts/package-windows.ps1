@@ -253,8 +253,9 @@ Write-Step "Checking packaged MariaDB data state"
     $PackagedOrchidsFolder = Join-Path $MariaDbDataDest "orchids"
 
     if (Test-Path $PackagedOrchidsFolder) {
-        Write-Host "Packaged application database exists and will need controlled cleanup:" -ForegroundColor Red
+        Write-Host "Packaged application database exists:" -ForegroundColor Red
         Write-Host $PackagedOrchidsFolder -ForegroundColor Red
+        throw "Package validation failed. Packaged orchids database folder must not exist."
     }
     else {
         Write-Host "No packaged orchids database folder found." -ForegroundColor Green
@@ -266,14 +267,46 @@ Write-Step "Checking packaged MariaDB data state"
         -ErrorAction SilentlyContinue
 
     if ($PackagedOrchidsFiles) {
-        Write-Host "Packaged orchids.* files found and will need controlled cleanup:" -ForegroundColor Red
+        Write-Host "Packaged orchids.* files found:" -ForegroundColor Red
         $PackagedOrchidsFiles | ForEach-Object {
             Write-Host $_.FullName -ForegroundColor Red
         }
+
+        throw "Package validation failed. Packaged orchids.* files must not exist."
     }
     else {
         Write-Host "No packaged orchids.* files found." -ForegroundColor Green
     }
+
+Write-Step "Validating package contents"
+
+    $RequiredPaths = @(
+        (Join-Path $DistRoot "OrchidApp.Launcher.exe"),
+        (Join-Path $DistRoot "OrchidApp.Web.exe"),
+        (Join-Path $DistRoot "database"),
+        (Join-Path $DistRoot "database\schema"),
+        (Join-Path $DistRoot "database\migrations"),
+        (Join-Path $DistRoot "runtime\mariadb\win-x64"),
+        (Join-Path $DistRoot "runtime\mariadb\win-x64\bin\mariadbd.exe"),
+        (Join-Path $DistRoot "runtime\mariadb\win-x64\bin\mariadb.exe"),
+        (Join-Path $DistRoot "runtime\mariadb\win-x64\bin\mariadb-admin.exe"),
+        (Join-Path $DistRoot "data"),
+        (Join-Path $DistRoot "data\mariadb")
+    )
+
+    foreach ($RequiredPath in $RequiredPaths) {
+        if (-not (Test-Path $RequiredPath)) {
+            throw "Package validation failed. Required path missing: $RequiredPath"
+        }
+
+        Write-Host "OK: $RequiredPath" -ForegroundColor Green
+    }
+
+    if (Test-PortListening -Port $MariaDbPort) {
+        throw "Package validation failed. Port $MariaDbPort is still in use."
+    }
+
+    Write-Host "Package validation passed." -ForegroundColor Green
 
 Write-Step "Creating Windows package ZIP"
 
