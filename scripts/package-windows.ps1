@@ -47,6 +47,9 @@ function Test-PortListening {
     $MariaDbClient = Join-Path $MariaDbRuntimeDest "bin\mariadb.exe"
     $MariaDbAdmin = Join-Path $MariaDbRuntimeDest "bin\mariadb-admin.exe"
 
+    $ToolsSource = Join-Path $RepoRoot "app\tools"
+    $ToolsDest = Join-Path $DistRoot "tools"
+    $BackupScriptSource = Join-Path $ToolsSource "backup-orchidapp.ps1"
     $ZipPath = Join-Path $RepoRoot "dist\windows\OrchidApp.zip"
 
 Write-Step "Checking source paths"
@@ -69,6 +72,14 @@ Write-Step "Checking source paths"
 
     if (-not (Test-Path $MariaDbDataSource)) {
         throw "MariaDB data folder not found: $MariaDbDataSource"
+    }
+
+    if (-not (Test-Path $ToolsSource)) {
+        throw "Tools folder not found: $ToolsSource"
+    }
+
+    if (-not (Test-Path $BackupScriptSource)) {
+        throw "Backup script not found: $BackupScriptSource"
     }
 
 Write-Step "Checking MariaDB port is free"
@@ -134,6 +145,14 @@ Write-Step "Copying MariaDB data directory"
     Copy-Item `
         -Path $MariaDbDataSource `
         -Destination $MariaDbDataDest `
+        -Recurse `
+        -Force
+
+Write-Step "Copying packaged tools"
+
+    Copy-Item `
+        -Path $ToolsSource `
+        -Destination $ToolsDest `
         -Recurse `
         -Force
 
@@ -290,8 +309,11 @@ Write-Step "Validating package contents"
         (Join-Path $DistRoot "runtime\mariadb\win-x64\bin\mariadbd.exe"),
         (Join-Path $DistRoot "runtime\mariadb\win-x64\bin\mariadb.exe"),
         (Join-Path $DistRoot "runtime\mariadb\win-x64\bin\mariadb-admin.exe"),
+        (Join-Path $DistRoot "runtime\mariadb\win-x64\bin\mariadb-dump.exe"),
         (Join-Path $DistRoot "data"),
-        (Join-Path $DistRoot "data\mariadb")
+        (Join-Path $DistRoot "data\mariadb"),
+        (Join-Path $DistRoot "tools"),
+        (Join-Path $DistRoot "tools\backup-orchidapp.ps1")
     )
 
     foreach ($RequiredPath in $RequiredPaths) {

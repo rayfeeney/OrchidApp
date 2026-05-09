@@ -3,10 +3,11 @@ using MySqlConnector;
 
 namespace OrchidApp.Launcher;
 
-public partial class Form1 : Form
+public partial class OrchidAppLauncherForm : Form
 {
     private Label statusLabel = new Label();
     private TextBox logBox = new TextBox();
+    private Button backupButton = new Button();
 
     private Process? _webAppProcess;
     private Process? _mariaDbProcess;
@@ -17,9 +18,13 @@ public partial class Form1 : Form
     private readonly string _logFilePath =
         Path.Combine(AppContext.BaseDirectory, "launcher.log");
 
-    public Form1()
+    public OrchidAppLauncherForm()
     {
         InitializeComponent();
+
+        Text = "OrchidApp Launcher";
+        Width = 680;
+        Height = 460;
 
         try
         {
@@ -30,7 +35,7 @@ public partial class Form1 : Form
             // ignore log reset errors
         }
 
-        statusLabel.Text = "Starting OrchidApp...";
+        statusLabel.Text = "Starting OrchidApp. Please keep this window open while using OrchidApp.";
         statusLabel.AutoSize = true;
         statusLabel.Left = 20;
         statusLabel.Top = 20;
@@ -40,10 +45,19 @@ public partial class Form1 : Form
         logBox.Left = 20;
         logBox.Top = 60;
         logBox.Width = 600;
-        logBox.Height = 300;
+        logBox.Height = 260;
+
+        backupButton.Text = "Back up now";
+        backupButton.Left = 20;
+        backupButton.Top = 335;
+        backupButton.Width = 140;
+        backupButton.Height = 35;
+        backupButton.Enabled = false;
+        backupButton.Click += async (s, e) => await RunBackupAsync();
 
         Controls.Add(statusLabel);
         Controls.Add(logBox);
+        Controls.Add(backupButton);
     }
 
     protected override async void OnLoad(EventArgs e)
@@ -147,7 +161,8 @@ AppendLog("Launcher: process started");
             UseShellExecute = true
         });
 
-        statusLabel.Text = "OrchidApp is running";
+        statusLabel.Text = "O. Keep this window open while using OrchidApp.";
+        backupButton.Enabled = true;
     }
 
     private void StartMariaDb()
@@ -424,11 +439,105 @@ AppendLog("Launcher: process started");
         }
     }
 
+    private async Task RunBackupAsync()
+    {
+        backupButton.Enabled = false;
+
+        try
+        {
+            AppendLog("Starting backup...");
+
+            var baseDir = AppContext.BaseDirectory;
+
+            var backupScript = Path.Combine(
+                baseDir,
+                "tools",
+                "backup-orchidapp.ps1"
+            );
+
+            if (!File.Exists(backupScript))
+            {
+                throw new FileNotFoundException(
+                    "Backup script not found.",
+                    backupScript
+                );
+            }
+
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "powershell.exe",
+                    Arguments =
+                        "-NoProfile -ExecutionPolicy Bypass " +
+                        $"-File \"{backupScript}\"",
+                    WorkingDirectory = baseDir,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true
+                }
+            };
+
+            process.OutputDataReceived += (s, e) =>
+            {
+                if (!string.IsNullOrWhiteSpace(e.Data))
+                    AppendLog("BACKUP: " + e.Data);
+            };
+
+            process.ErrorDataReceived += (s, e) =>
+            {
+                if (!string.IsNullOrWhiteSpace(e.Data))
+                    AppendLog("BACKUP ERR: " + e.Data);
+            };
+
+            process.Start();
+
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+
+            await process.WaitForExitAsync();
+
+            if (process.ExitCode != 0)
+            {
+                throw new Exception($"Backup failed. ExitCode={process.ExitCode}");
+            }
+
+            AppendLog("Backup completed successfully.");
+
+            MessageBox.Show(
+                "Backup completed successfully.",
+                "Backup Complete",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+        }
+        catch (Exception ex)
+        {
+            AppendLog("BACKUP ERROR: " + ex.Message);
+
+            MessageBox.Show(
+                ex.Message,
+                "Backup Failed",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error
+            );
+        }
+        finally
+        {
+            if (_webAppProcess != null && !_webAppProcess.HasExited)
+            {
+                backupButton.Enabled = true;
+            }
+        }
+    }
+
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
         try
         {
             AppendLog("Launcher closing...");
+            backupButton.Enabled = false;
 
             if (_webAppProcess != null && !_webAppProcess.HasExited)
             {
