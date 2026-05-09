@@ -8,6 +8,7 @@ public partial class OrchidAppLauncherForm : Form
     private Label statusLabel = new Label();
     private TextBox logBox = new TextBox();
     private Button backupButton = new Button();
+    private Button restoreButton = new Button();
 
     private Process? _webAppProcess;
     private Process? _mariaDbProcess;
@@ -55,9 +56,18 @@ public partial class OrchidAppLauncherForm : Form
         backupButton.Enabled = false;
         backupButton.Click += async (s, e) => await RunBackupAsync();
 
+        restoreButton.Text = "Restore from backup...";
+        restoreButton.Left = 180;
+        restoreButton.Top = 335;
+        restoreButton.Width = 180;
+        restoreButton.Height = 35;
+        restoreButton.Enabled = false;
+        restoreButton.Click += async (s, e) => await RunRestoreAsync();
+
         Controls.Add(statusLabel);
         Controls.Add(logBox);
         Controls.Add(backupButton);
+        Controls.Add(restoreButton);
     }
 
     protected override async void OnLoad(EventArgs e)
@@ -161,8 +171,9 @@ AppendLog("Launcher: process started");
             UseShellExecute = true
         });
 
-        statusLabel.Text = "O. Keep this window open while using OrchidApp.";
+        statusLabel.Text = "OrchidApp is running. Keep this window open while using OrchidApp.";
         backupButton.Enabled = true;
+        restoreButton.Enabled = true;
     }
 
     private void StartMariaDb()
@@ -439,6 +450,32 @@ AppendLog("Launcher: process started");
         }
     }
 
+    private async Task StopWebAppForRestoreAsync()
+    {
+        if (_webAppProcess == null || _webAppProcess.HasExited)
+        {
+            AppendLog("Web app is not running.");
+            return;
+        }
+
+        AppendLog("Stopping web app before restore...");
+
+        _webAppProcess.Kill(true);
+
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+
+        try
+        {
+            await _webAppProcess.WaitForExitAsync(timeout.Token);
+            AppendLog("Web app stopped.");
+        }
+        catch (OperationCanceledException)
+        {
+            AppendLog("Web app did not stop within 10 seconds.");
+            throw;
+        }
+    }
+
     private async Task RunBackupAsync()
     {
         backupButton.Enabled = false;
@@ -532,12 +569,149 @@ AppendLog("Launcher: process started");
         }
     }
 
+    private async Task RunRestoreAsync()
+    {
+        backupButton.Enabled = false;
+        restoreButton.Enabled = false;
+
+        try
+        {
+            AppendLog("Restore requested.");
+
+            using var dialog = new OpenFileDialog
+            {
+                Title = "Select OrchidApp backup ZIP",
+                Filter = "OrchidApp backup ZIP (*.zip)|*.zip",
+                CheckFileExists = true,
+                Multiselect = false
+            };
+
+            if (dialog.ShowDialog(this) != DialogResult.OK)
+            {
+                AppendLog("Restore cancelled. No backup selected.");
+                return;
+            }
+
+            var backupZip = dialog.FileName;
+
+            var confirm = MessageBox.Show(
+                "Restoring a backup will replace the current OrchidApp database and uploaded files.\n\n" +
+                "Only continue if you are recovering from a backup or intentionally reverting OrchidApp to a previous backup.\n\n" +
+                "Do you want to continue?",
+                "Confirm Restore from Backup",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning,
+                MessageBoxDefaultButton.Button2
+            );
+
+            if (confirm != DialogResult.Yes)
+            {
+                AppendLog("Restore cancelled by user.");
+                return;
+            }
+
+            AppendLog($"Restore confirmed. Backup selected: {backupZip}");
+
+            await StopWebAppForRestoreAsync();
+
+            AppendLog("Starting restore...");
+
+            var baseDir = AppContext.BaseDirectory;
+
+            var restoreScript = Path.Combine(
+                baseDir,
+                "tools",
+                "restore-orchidapp.ps1"
+            );
+
+            if (!File.Exists(restoreScript))
+            {
+                throw new FileNotFoundException(
+                    "Restore script not found.",
+                    restoreScript
+                );
+            }
+
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "powershell.exe",
+                    Arguments =
+                        "-NoProfile -ExecutionPolicy Bypass " +
+                        $"-File \"{restoreScript}\" " +
+                        $"-BackupZip \"{backupZip}\"",
+                    WorkingDirectory = baseDir,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true
+                }
+            };
+
+            process.OutputDataReceived += (s, e) =>
+            {
+                if (!string.IsNullOrWhiteSpace(e.Data))
+                    AppendLog("RESTORE: " + e.Data);
+            };
+
+            process.ErrorDataReceived += (s, e) =>
+            {
+                if (!string.IsNullOrWhiteSpace(e.Data))
+                    AppendLog("RESTORE ERR: " + e.Data);
+            };
+
+            process.Start();
+
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+
+            await process.WaitForExitAsync();
+
+            if (process.ExitCode != 0)
+            {
+                throw new Exception($"Restore failed. ExitCode={process.ExitCode}");
+            }
+
+            AppendLog("Restore completed successfully.");
+
+            MessageBox.Show(
+                "Restore completed successfully.\n\nPlease close and reopen OrchidApp.",
+                "Restore Complete",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+
+            Close();
+        }
+        catch (Exception ex)
+        {
+            AppendLog("RESTORE ERROR: " + ex.Message);
+
+            MessageBox.Show(
+                ex.Message,
+                "Restore Failed",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error
+            );
+        }
+        finally
+        {
+            if (_webAppProcess != null && !_webAppProcess.HasExited)
+            {
+                backupButton.Enabled = true;
+                restoreButton.Enabled = true;
+            }
+        }
+    }
+
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
         try
         {
             AppendLog("Launcher closing...");
             backupButton.Enabled = false;
+            restoreButton.Enabled = false;
 
             if (_webAppProcess != null && !_webAppProcess.HasExited)
             {
