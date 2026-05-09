@@ -313,7 +313,8 @@ Write-Step "Validating package contents"
         (Join-Path $DistRoot "data"),
         (Join-Path $DistRoot "data\mariadb"),
         (Join-Path $DistRoot "tools"),
-        (Join-Path $DistRoot "tools\backup-orchidapp.ps1")
+        (Join-Path $DistRoot "tools\backup-orchidapp.ps1"),
+        (Join-Path $DistRoot "tools\restore-orchidapp.ps1")
     )
 
     foreach ($RequiredPath in $RequiredPaths) {
