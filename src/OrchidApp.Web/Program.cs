@@ -62,6 +62,8 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+
+// ---------- DESKTOP-ONLY DB BOOTSTRAP LOGIC ----------
 if (app.Environment.IsEnvironment("Desktop"))
 {
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
@@ -90,7 +92,7 @@ if (app.Environment.IsEnvironment("Desktop"))
 
         if (result == null)
         {
-            Console.WriteLine("DB does not exist -> creating");
+            Console.WriteLine("Creating your plant database...");
 
             using var createCmd = conn.CreateCommand();
             createCmd.CommandText = $@"
@@ -99,7 +101,7 @@ if (app.Environment.IsEnvironment("Desktop"))
             COLLATE utf8mb4_unicode_ci;";
             createCmd.ExecuteNonQuery();
 
-            Console.WriteLine("DB created");
+            Console.WriteLine("Plant database created.");
         }
         else
         {
@@ -134,6 +136,7 @@ Console.WriteLine($"RuntimeRoot: {runtimeRoot}");
 Console.WriteLine($"DB Folder: {dbFolder}");
 Console.WriteLine($"MariaDB EXE: {mariadbExe}");
 
+        bool didBootstrapSchema = false;
         bool schemaExists;
 
         using (var cmd = dbConn.CreateCommand())
@@ -152,11 +155,13 @@ Console.WriteLine($"MariaDB EXE: {mariadbExe}");
 
         if (schemaExists)
         {
-            Console.WriteLine("Schema already exists -> skipping bootstrap");
+            Console.WriteLine("Existing plant database found.");
         }
         else
         {
-            Console.WriteLine("Schema not found -> creating");
+            didBootstrapSchema = true;
+
+            Console.WriteLine("Setting up OrchidApp for first use...");
 
             // Order matters
             RunFolderWithMariaDb(Path.Combine(dbFolder, "schema", "tables"), mariadbExe);
@@ -207,7 +212,7 @@ Console.WriteLine($"MariaDB EXE: {mariadbExe}");
                 }
 
                 tx.Commit();
-                Console.WriteLine("Baseline + migrations recorded");
+                Console.WriteLine("Finishing first-time setup...");
             }
             catch
             {
@@ -219,11 +224,22 @@ Console.WriteLine($"MariaDB EXE: {mariadbExe}");
 
         var migrationsFolder = Path.Combine(dbFolder, "migrations");
 
-        RunMigrations(migrationsFolder, mariadbExe, dbConn);
+        if (didBootstrapSchema)
+        {
+            Console.WriteLine("Your plant database is ready.");
+        }
+        else
+        {
+            RunMigrations(migrationsFolder, mariadbExe, dbConn);
+        }
     }
 
     
 }
+// ------------------------------------------------------------
+
+
+
 
 // app.UseHttpsRedirection();
 
@@ -268,7 +284,7 @@ static void RunFolderWithMariaDb(string folderPath, string mariadbExe)
 
 static void RunScriptWithMariaDb(string scriptPath, string mariadbExe)
 {
-    Console.WriteLine($"Running script: {Path.GetFileName(scriptPath)}");
+    Console.WriteLine($"Setting up database item: {Path.GetFileName(scriptPath)}");
 
     var process = new Process
     {
@@ -318,6 +334,12 @@ static void RunMigrations(string folderPath, string mariadbExe, MySqlConnection 
         return;
     }
 
+    var skippedCount = 0;
+    var pendingCount = 0;
+    var pendingFiles = new List<string>();
+
+    Console.WriteLine("Checking for database updates...");
+
     var files = Directory.GetFiles(folderPath, "*.sql")
                          .OrderBy(f => f)
                          .ToList();
@@ -343,30 +365,31 @@ static void RunMigrations(string folderPath, string mariadbExe, MySqlConnection 
             if (!string.Equals(existingChecksum, checksum, StringComparison.OrdinalIgnoreCase))
             {
                 throw new Exception(
-                    $"Checksum mismatch for migration '{scriptName}'. " +
-                    $"The script has been modified after execution."
+                    $"Database update check failed for '{scriptName}'. " +
+                    $"The update file has changed since it was first applied."
                 );
             }
 
-            Console.WriteLine($"Skipping migration: {scriptName}");
+            skippedCount++;
             continue;
         }
 
-        Console.WriteLine($"Applying migration: {scriptName}");
+        pendingFiles.Add(file);
+        pendingCount++;
 
-        RunScriptWithMariaDb(file, mariadbExe);
-
-        // Record it
-        using var insertCmd = dbConn.CreateCommand();
-        insertCmd.CommandText = @"
-            INSERT INTO schemaversion (scriptName, appliedAt, checksum)
-            VALUES (@name, NOW(), @checksum)";
-
-        insertCmd.Parameters.AddWithValue("@name", scriptName);
-        insertCmd.Parameters.AddWithValue("@checksum", checksum);
-
-        insertCmd.ExecuteNonQuery();
     }
+
+    if (pendingFiles.Count > 0)
+    {
+        Console.WriteLine($"Database updates are available: {pendingFiles.Count}");
+        Console.WriteLine("A backup is required before database updates can be applied.");
+
+        throw new Exception(
+            "Database updates are available, but automatic backup is not implemented yet. " +
+            "Please back up the OrchidApp data folder before applying updates.");
+    }
+
+    Console.WriteLine("Database is up to date.");
 }
 
 static string ComputeChecksum(string filePath)
