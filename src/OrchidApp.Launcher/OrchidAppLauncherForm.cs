@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Drawing;
 using MySqlConnector;
 
 namespace OrchidApp.Launcher;
@@ -6,6 +7,7 @@ namespace OrchidApp.Launcher;
 public partial class OrchidAppLauncherForm : Form
 {
     private Label statusLabel = new Label();
+    private Panel statusLight = new Panel();
     private TextBox logBox = new TextBox();
     private Button backupButton = new Button();
     private Button restoreButton = new Button();
@@ -18,6 +20,13 @@ public partial class OrchidAppLauncherForm : Form
 
     private readonly string _logFilePath =
         Path.Combine(AppContext.BaseDirectory, "launcher.log");
+
+    private enum LauncherStatus
+    {
+        Red,
+        Amber,
+        Green
+    }
 
     public OrchidAppLauncherForm()
     {
@@ -36,15 +45,23 @@ public partial class OrchidAppLauncherForm : Form
             // ignore log reset errors
         }
 
+
         statusLabel.Text = "Starting OrchidApp. Please keep this window open while using OrchidApp.";
         statusLabel.AutoSize = true;
-        statusLabel.Left = 20;
+        statusLabel.Left = 45;
         statusLabel.Top = 20;
+
+        statusLight.Left = 20;
+        statusLight.Top = 22;
+        statusLight.Width = 18;
+        statusLight.Height = 18;
+        statusLight.BackColor = Color.Firebrick;
+        statusLight.BorderStyle = BorderStyle.FixedSingle;
 
         logBox.Multiline = true;
         logBox.ScrollBars = ScrollBars.Vertical;
         logBox.Left = 20;
-        logBox.Top = 60;
+        logBox.Top = 70;
         logBox.Width = 600;
         logBox.Height = 260;
 
@@ -65,6 +82,7 @@ public partial class OrchidAppLauncherForm : Form
         restoreButton.Click += async (s, e) => await RunRestoreAsync();
 
         Controls.Add(statusLabel);
+        Controls.Add(statusLight);
         Controls.Add(logBox);
         Controls.Add(backupButton);
         Controls.Add(restoreButton);
@@ -76,6 +94,7 @@ public partial class OrchidAppLauncherForm : Form
 
         try
         {
+            SetLauncherStatus(LauncherStatus.Red);
             StartMariaDb();
 
             await WaitForMariaDbAsync(
@@ -83,11 +102,13 @@ public partial class OrchidAppLauncherForm : Form
             );
 
             AppendLog("MariaDB startup confirmed.");
+            SetLauncherStatus(LauncherStatus.Amber);
 
             await StartWebAppAsync();
         }
         catch (Exception ex)
         {
+            SetLauncherStatus(LauncherStatus.Red);
             AppendLog("STARTUP ERROR: " + ex.Message);
 
             MessageBox.Show(
@@ -172,6 +193,7 @@ AppendLog("Launcher: process started");
         });
 
         statusLabel.Text = "OrchidApp is running. Keep this window open while using OrchidApp.";
+        SetLauncherStatus(LauncherStatus.Green);
         backupButton.Enabled = true;
         restoreButton.Enabled = true;
     }
@@ -355,6 +377,23 @@ AppendLog("Launcher: process started");
         }
     }
 
+    private void SetLauncherStatus(LauncherStatus status)
+    {
+        if (InvokeRequired)
+        {
+            BeginInvoke(new Action<LauncherStatus>(SetLauncherStatus), status);
+            return;
+        }
+
+        statusLight.BackColor = status switch
+        {
+            LauncherStatus.Red => Color.Firebrick,
+            LauncherStatus.Amber => Color.Goldenrod,
+            LauncherStatus.Green => Color.ForestGreen,
+            _ => Color.Firebrick
+        };
+    }
+
     private void StopMariaDbGracefully()
     {
         try
@@ -400,6 +439,7 @@ AppendLog("Launcher: process started");
             };
 
             AppendLog("Requesting MariaDB shutdown...");
+            SetLauncherStatus(LauncherStatus.Red);
 
             shutdown.Start();
 
@@ -478,7 +518,8 @@ AppendLog("Launcher: process started");
 
     private async Task RunBackupAsync()
     {
-        backupButton.Enabled = false;
+        restoreButton.Enabled = false;
+        SetLauncherStatus(LauncherStatus.Amber);
 
         try
         {
@@ -564,7 +605,9 @@ AppendLog("Launcher: process started");
         {
             if (_webAppProcess != null && !_webAppProcess.HasExited)
             {
+                SetLauncherStatus(LauncherStatus.Green);
                 backupButton.Enabled = true;
+                restoreButton.Enabled = true;
             }
         }
     }
@@ -573,6 +616,7 @@ AppendLog("Launcher: process started");
     {
         backupButton.Enabled = false;
         restoreButton.Enabled = false;
+        SetLauncherStatus(LauncherStatus.Red);
 
         try
         {
@@ -687,6 +731,7 @@ AppendLog("Launcher: process started");
         catch (Exception ex)
         {
             AppendLog("RESTORE ERROR: " + ex.Message);
+            SetLauncherStatus(LauncherStatus.Red);
 
             MessageBox.Show(
                 ex.Message,
@@ -699,6 +744,7 @@ AppendLog("Launcher: process started");
         {
             if (_webAppProcess != null && !_webAppProcess.HasExited)
             {
+                SetLauncherStatus(LauncherStatus.Green);
                 backupButton.Enabled = true;
                 restoreButton.Enabled = true;
             }
@@ -710,6 +756,7 @@ AppendLog("Launcher: process started");
         try
         {
             AppendLog("Launcher closing...");
+            SetLauncherStatus(LauncherStatus.Amber);
             backupButton.Enabled = false;
             restoreButton.Enabled = false;
 
