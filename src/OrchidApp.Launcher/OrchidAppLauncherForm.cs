@@ -9,8 +9,10 @@ public partial class OrchidAppLauncherForm : Form
     private Label statusLabel = new Label();
     private Panel statusLight = new Panel();
     private TextBox logBox = new TextBox();
+    private Button openAppButton = new Button();
     private Button backupButton = new Button();
     private Button restoreButton = new Button();
+    private bool _closeConfirmed = false;
 
     private static readonly TimeSpan AutomaticBackupAgeThreshold = TimeSpan.FromHours(168);
     private bool _backupInProgress = false;
@@ -35,7 +37,18 @@ public partial class OrchidAppLauncherForm : Form
     {
         InitializeComponent();
 
-        Text = "OrchidApp Launcher";
+        var iconPath = Path.Combine(
+            AppContext.BaseDirectory,
+            "Assets",
+            "OrchidApp.ico"
+        );
+
+        if (File.Exists(iconPath))
+        {
+            Icon = new Icon(iconPath);
+        }
+        
+        SetWindowTitle("Starting");
         Width = 680;
         Height = 460;
 
@@ -52,7 +65,8 @@ public partial class OrchidAppLauncherForm : Form
         statusLabel.Text = "Starting OrchidApp. Please keep this window open while using OrchidApp.";
         statusLabel.AutoSize = true;
         statusLabel.Left = 45;
-        statusLabel.Top = 20;
+        statusLabel.Top = 15;
+        statusLabel.MaximumSize = new Size(580, 0);
 
         statusLight.Left = 20;
         statusLight.Top = 22;
@@ -64,12 +78,20 @@ public partial class OrchidAppLauncherForm : Form
         logBox.Multiline = true;
         logBox.ScrollBars = ScrollBars.Vertical;
         logBox.Left = 20;
-        logBox.Top = 70;
+        logBox.Top = 95;
         logBox.Width = 600;
-        logBox.Height = 260;
+        logBox.Height = 235;
+
+        openAppButton.Text = "Open OrchidApp";
+        openAppButton.Left = 20;
+        openAppButton.Top = 335;
+        openAppButton.Width = 140;
+        openAppButton.Height = 35;
+        openAppButton.Enabled = false;
+        openAppButton.Click += (s, e) => OpenOrchidAppInBrowser();
 
         backupButton.Text = "Back up now";
-        backupButton.Left = 20;
+        backupButton.Left = 180;
         backupButton.Top = 335;
         backupButton.Width = 140;
         backupButton.Height = 35;
@@ -77,7 +99,7 @@ public partial class OrchidAppLauncherForm : Form
         backupButton.Click += async (s, e) => await RunBackupAsync();
 
         restoreButton.Text = "Restore from backup...";
-        restoreButton.Left = 180;
+        restoreButton.Left = 340;
         restoreButton.Top = 335;
         restoreButton.Width = 180;
         restoreButton.Height = 35;
@@ -87,6 +109,7 @@ public partial class OrchidAppLauncherForm : Form
         Controls.Add(statusLabel);
         Controls.Add(statusLight);
         Controls.Add(logBox);
+        Controls.Add(openAppButton);
         Controls.Add(backupButton);
         Controls.Add(restoreButton);
     }
@@ -112,6 +135,7 @@ public partial class OrchidAppLauncherForm : Form
         catch (Exception ex)
         {
             SetLauncherStatus(LauncherStatus.Red);
+            SetWindowTitle("Error");
             AppendLog("STARTUP ERROR: " + ex.Message);
 
             MessageBox.Show(
@@ -126,6 +150,7 @@ public partial class OrchidAppLauncherForm : Form
     private async Task StartWebAppAsync()
     {
         statusLabel.Text = "Starting web application...";
+        SetWindowTitle("Starting");
 
         var baseDir = AppContext.BaseDirectory;
 
@@ -219,12 +244,26 @@ public partial class OrchidAppLauncherForm : Form
             UseShellExecute = true
         });
 
-        statusLabel.Text = "OrchidApp is running. Keep this window open while using OrchidApp.";
+        statusLabel.Text =
+            "Keep this launcher window open while using OrchidApp.\n" +
+            "If you close the browser tab, click Open OrchidApp.\n" +
+            "If you close this launcher, OrchidApp will stop.";
+        SetWindowTitle("Running");
         SetLauncherStatus(LauncherStatus.Green);
+        openAppButton.Enabled = true;
         backupButton.Enabled = true;
         restoreButton.Enabled = true;
 
         _ = RunAutomaticBackupIfDueAsync();
+    }
+
+    private void OpenOrchidAppInBrowser()
+    {
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = "http://localhost:5285",
+            UseShellExecute = true
+        });
     }
 
     private void StartMariaDb()
@@ -404,6 +443,17 @@ public partial class OrchidAppLauncherForm : Form
 
             logBox.AppendText(line + Environment.NewLine);
         }
+    }
+
+    private void SetWindowTitle(string status)
+    {
+        if (InvokeRequired)
+        {
+            BeginInvoke(new Action<string>(SetWindowTitle), status);
+            return;
+        }
+
+        Text = $"OrchidApp Launcher - {status}";
     }
 
     private void SetLauncherStatus(LauncherStatus status)
@@ -607,8 +657,10 @@ public partial class OrchidAppLauncherForm : Form
 
         _backupInProgress = true;
 
+        SetWindowTitle("Backing up");
         backupButton.Enabled = false;
         restoreButton.Enabled = false;
+        openAppButton.Enabled = false;
         SetLauncherStatus(LauncherStatus.Amber);
 
         try
@@ -701,6 +753,8 @@ public partial class OrchidAppLauncherForm : Form
             if (_webAppProcess != null && !_webAppProcess.HasExited)
             {
                 SetLauncherStatus(LauncherStatus.Green);
+                SetWindowTitle("Running");
+                openAppButton.Enabled = true;
                 backupButton.Enabled = true;
                 restoreButton.Enabled = true;
             }
@@ -709,8 +763,10 @@ public partial class OrchidAppLauncherForm : Form
 
     private async Task RunRestoreAsync()
     {
+        openAppButton.Enabled = false;
         backupButton.Enabled = false;
         restoreButton.Enabled = false;
+        SetWindowTitle("Restoring");
         SetLauncherStatus(LauncherStatus.Red);
 
         try
@@ -821,6 +877,7 @@ public partial class OrchidAppLauncherForm : Form
                 MessageBoxIcon.Information
             );
 
+            _closeConfirmed = true;
             Close();
         }
         catch (Exception ex)
@@ -840,6 +897,8 @@ public partial class OrchidAppLauncherForm : Form
             if (_webAppProcess != null && !_webAppProcess.HasExited)
             {
                 SetLauncherStatus(LauncherStatus.Green);
+                SetWindowTitle("Running");
+                openAppButton.Enabled = true;
                 backupButton.Enabled = true;
                 restoreButton.Enabled = true;
             }
@@ -848,10 +907,33 @@ public partial class OrchidAppLauncherForm : Form
 
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
+        if (!_closeConfirmed)
+        {
+            var confirm = MessageBox.Show(
+                "Closing this window will stop OrchidApp.\n\n" +
+                "Any open browser tabs will no longer work until you start OrchidApp again.\n\n" +
+                "Do you want to close OrchidApp?",
+                "Close OrchidApp?",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning,
+                MessageBoxDefaultButton.Button2
+            );
+
+            if (confirm != DialogResult.Yes)
+            {
+                e.Cancel = true;
+                return;
+            }
+
+            _closeConfirmed = true;
+        }
+        
         try
         {
             AppendLog("Launcher closing...");
             SetLauncherStatus(LauncherStatus.Amber);
+            SetWindowTitle("Closing");
+            openAppButton.Enabled = false;
             backupButton.Enabled = false;
             restoreButton.Enabled = false;
 
