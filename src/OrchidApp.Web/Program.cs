@@ -16,6 +16,20 @@ var builder = WebApplication.CreateBuilder(args);
 Console.WriteLine("Program starting...");
 Console.WriteLine($"ENV: {builder.Environment.EnvironmentName}");
 
+if (builder.Environment.IsEnvironment("Desktop"))
+{
+    var desktopUploadsRoot = Path.Combine(
+        AppContext.BaseDirectory,
+        "wwwroot",
+        "uploads"
+    );
+
+    Directory.CreateDirectory(desktopUploadsRoot);
+
+    builder.Configuration["Storage:UploadRoot"] = desktopUploadsRoot;
+
+    Console.WriteLine($"Desktop UploadRoot: {desktopUploadsRoot}");
+}
 
 // Add services to the container.
 builder.Services.AddRazorPages();
