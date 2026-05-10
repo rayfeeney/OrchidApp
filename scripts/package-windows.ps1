@@ -47,6 +47,10 @@ function Test-PortListening {
     $MariaDbClient = Join-Path $MariaDbRuntimeDest "bin\mariadb.exe"
     $MariaDbAdmin = Join-Path $MariaDbRuntimeDest "bin\mariadb-admin.exe"
 
+    $LibVipsRuntimeSource = Join-Path $RepoRoot "app\runtime\libvips\win-x64"
+    $LibVipsRuntimeDest = Join-Path $DistRoot "runtime\libvips\win-x64"
+    $LibVipsBinDest = Join-Path $LibVipsRuntimeDest "bin"
+
     $ToolsSource = Join-Path $RepoRoot "app\tools"
     $ToolsDest = Join-Path $DistRoot "tools"
     $BackupScriptSource = Join-Path $ToolsSource "backup-orchidapp.ps1"
@@ -76,6 +80,10 @@ Write-Step "Checking source paths"
 
     if (-not (Test-Path $ToolsSource)) {
         throw "Tools folder not found: $ToolsSource"
+    }
+
+    if (-not (Test-Path $LibVipsRuntimeSource)) {
+        throw "libvips runtime folder not found: $LibVipsRuntimeSource"
     }
 
     if (-not (Test-Path $BackupScriptSource)) {
@@ -153,6 +161,16 @@ Write-Step "Copying packaged tools"
     Copy-Item `
         -Path $ToolsSource `
         -Destination $ToolsDest `
+        -Recurse `
+        -Force
+
+Write-Step "Copying libvips runtime"
+
+    New-Item -ItemType Directory -Path (Split-Path -Parent $LibVipsRuntimeDest) -Force | Out-Null
+
+    Copy-Item `
+        -Path $LibVipsRuntimeSource `
+        -Destination $LibVipsRuntimeDest `
         -Recurse `
         -Force
 
@@ -310,6 +328,8 @@ Write-Step "Validating package contents"
         (Join-Path $DistRoot "runtime\mariadb\win-x64\bin\mariadb.exe"),
         (Join-Path $DistRoot "runtime\mariadb\win-x64\bin\mariadb-admin.exe"),
         (Join-Path $DistRoot "runtime\mariadb\win-x64\bin\mariadb-dump.exe"),
+        (Join-Path $DistRoot "runtime\libvips\win-x64"),
+        (Join-Path $DistRoot "runtime\libvips\win-x64\bin"),
         (Join-Path $DistRoot "data"),
         (Join-Path $DistRoot "data\mariadb"),
         (Join-Path $DistRoot "tools"),
@@ -324,6 +344,31 @@ Write-Step "Validating package contents"
 
         Write-Host "OK: $RequiredPath" -ForegroundColor Green
     }
+
+    Write-Step "Validating libvips runtime"
+
+    $RequiredLibVipsDlls = @(
+        "libvips-42.dll",
+        "libgobject-2.0-0.dll",
+        "libglib-2.0-0.dll",
+        "libgio-2.0-0.dll"
+    )
+
+    foreach ($Dll in $RequiredLibVipsDlls) {
+        $Path = Join-Path $LibVipsBinDest $Dll
+
+        if (-not (Test-Path $Path)) {
+            throw "Package validation failed. Required libvips DLL missing: $Path"
+        }
+
+        Write-Host "OK: $Path" -ForegroundColor Green
+    }
+
+    if (Test-PortListening -Port $MariaDbPort) {
+        throw "Package validation failed. Port $MariaDbPort is still in use."
+    }
+
+    Write-Host "Package validation passed." -ForegroundColor Green    
 
     if (Test-PortListening -Port $MariaDbPort) {
         throw "Package validation failed. Port $MariaDbPort is still in use."

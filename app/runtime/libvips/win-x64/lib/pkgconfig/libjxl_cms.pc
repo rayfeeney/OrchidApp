@@ -1,0 +1,13 @@
+prefix=/usr/local/mxe/usr/x86_64-w64-mingw32.shared
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: libjxl_cms
+Description: CMS support library for libjxl
+Version: 0.11.2
+Requires.private: lcms2
+Libs: -L${libdir} -ljxl_cms 
+Libs.private: -lm -lc++
+Cflags: -I${includedir}
+Cflags.private: -DJXL_CMS_STATIC_DEFINE

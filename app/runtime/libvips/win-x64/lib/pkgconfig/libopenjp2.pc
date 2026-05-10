@@ -1,0 +1,16 @@
+prefix=/usr/local/mxe/usr/x86_64-w64-mingw32.shared
+bindir=${prefix}/bin
+mandir=${prefix}/share/man
+docdir=${prefix}/share/doc/openjpeg
+libdir=${prefix}/lib
+includedir=${prefix}/include/openjpeg-2.5
+
+Name: openjp2
+Description: JPEG2000 library (Part 1 and 2)
+URL: http://www.openjpeg.org/
+Version: 2.5.4
+Libs: -L${libdir} -lopenjp2
+Libs.private: 
+Cflags: -I${includedir}
+Cflags.private: -DOPJ_STATIC
+Requires: lcms2 libpng libtiff-4 zlib

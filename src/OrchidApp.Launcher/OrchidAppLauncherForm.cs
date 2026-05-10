@@ -183,9 +183,31 @@ public partial class OrchidAppLauncherForm : Form
         _webAppProcess.StartInfo.EnvironmentVariables["ConnectionStrings__OrchidDb"] =
                 "server=127.0.0.1;port=3308;database=orchids;user=orchid;password=orchid;";
 
+        var libVipsBin = Path.Combine(
+            baseDir,
+            "runtime",
+            "libvips",
+            "win-x64",
+            "bin"
+        );
+
+        if (!Directory.Exists(libVipsBin))
+        {
+            throw new DirectoryNotFoundException(
+                $"libvips runtime folder not found: {libVipsBin}"
+            );
+        }
+
+        var currentPath = _webAppProcess.StartInfo.EnvironmentVariables["PATH"] ?? string.Empty;
+
+        _webAppProcess.StartInfo.EnvironmentVariables["PATH"] =
+            libVipsBin + Path.PathSeparator + currentPath;
+
+        AppendLog($"libvips PATH added: {libVipsBin}");
+
         _webAppProcess.Start();
         AppendLog("Launcher: process started");
-
+        
         _webAppProcess.BeginOutputReadLine();
         _webAppProcess.BeginErrorReadLine();
 

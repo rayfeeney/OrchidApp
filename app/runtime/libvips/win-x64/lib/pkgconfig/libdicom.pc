@@ -1,0 +1,10 @@
+prefix=/usr/local/mxe/usr/x86_64-w64-mingw32.shared
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+Name: libdicom
+Description: C library for reading DICOM files
+URL: https://github.com/ImagingDataCommons/libdicom
+Version: 1.2.0
+Libs: -L${libdir} -ldicom
+Cflags: -I${includedir}

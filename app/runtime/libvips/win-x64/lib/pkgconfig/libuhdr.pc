@@ -1,0 +1,11 @@
+prefix=/usr/local/mxe/usr/x86_64-w64-mingw32.shared
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: libuhdr
+Description: Library for encoding and decoding ultrahdr images
+Version: 1.4.0
+Requires.private: libjpeg
+Cflags: -I${includedir}
+Libs: -L${libdir} -luhdr
+Libs.private:  
