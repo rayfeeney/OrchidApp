@@ -244,7 +244,7 @@ Console.WriteLine($"MariaDB EXE: {mariadbExe}");
         }
         else
         {
-            RunMigrations(migrationsFolder, mariadbExe, dbConn);
+            RunMigrations(migrationsFolder, mariadbExe, dbConn, runtimeRoot);
         }
     }
 
@@ -338,9 +338,82 @@ static void RunScriptWithMariaDb(string scriptPath, string mariadbExe)
     process.StandardInput.Close();
 
     process.WaitForExit();
+
+    if (process.ExitCode != 0)
+    {
+        throw new Exception(
+            $"Database script failed: {Path.GetFileName(scriptPath)}"
+        );
+    }
 }
 
-static void RunMigrations(string folderPath, string mariadbExe, MySqlConnection dbConn)
+static void RunPreMigrationBackup(string runtimeRoot)
+{
+    var backupScript = Path.Combine(
+        runtimeRoot,
+        "tools",
+        "backup-orchidapp.ps1"
+    );
+
+    if (!File.Exists(backupScript))
+    {
+        throw new Exception(
+            $"Pre-update backup cannot run because the backup script was not found: {backupScript}"
+        );
+    }
+
+    Console.WriteLine("Creating a safety backup before applying database updates...");
+
+    var process = new Process
+    {
+        StartInfo = new ProcessStartInfo
+        {
+            FileName = "powershell.exe",
+            Arguments =
+                "-NoProfile -ExecutionPolicy Bypass " +
+                $"-File \"{backupScript}\"",
+            WorkingDirectory = runtimeRoot,
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true
+        }
+    };
+
+    process.OutputDataReceived += (s, e) =>
+    {
+        if (!string.IsNullOrWhiteSpace(e.Data))
+        {
+            Console.WriteLine(e.Data);
+        }
+    };
+
+    process.ErrorDataReceived += (s, e) =>
+    {
+        if (!string.IsNullOrWhiteSpace(e.Data))
+        {
+            Console.WriteLine("ERR: " + e.Data);
+        }
+    };
+
+    process.Start();
+
+    process.BeginOutputReadLine();
+    process.BeginErrorReadLine();
+
+    process.WaitForExit();
+
+    if (process.ExitCode != 0)
+    {
+        throw new Exception(
+            "Database updates cannot be applied because the safety backup failed."
+        );
+    }
+
+    Console.WriteLine("Safety backup completed.");
+}
+
+static void RunMigrations(string folderPath, string mariadbExe, MySqlConnection dbConn, string runtimeRoot)
 {
     if (!Directory.Exists(folderPath))
     {
@@ -348,8 +421,6 @@ static void RunMigrations(string folderPath, string mariadbExe, MySqlConnection 
         return;
     }
 
-    var skippedCount = 0;
-    var pendingCount = 0;
     var pendingFiles = new List<string>();
 
     Console.WriteLine("Checking for database updates...");
@@ -384,26 +455,84 @@ static void RunMigrations(string folderPath, string mariadbExe, MySqlConnection 
                 );
             }
 
-            skippedCount++;
             continue;
         }
 
         pendingFiles.Add(file);
-        pendingCount++;
-
     }
 
     if (pendingFiles.Count > 0)
     {
         Console.WriteLine($"Database updates are available: {pendingFiles.Count}");
-        Console.WriteLine("A backup is required before database updates can be applied.");
-
-        throw new Exception(
-            "Database updates are available, but automatic backup is not implemented yet. " +
-            "Please back up the OrchidApp data folder before applying updates.");
+        RunPreMigrationBackup(runtimeRoot);
     }
 
-    Console.WriteLine("Database is up to date.");
+    foreach (var file in pendingFiles)
+    {
+        var scriptName = Path.GetFileName(file);
+        var checksum = ComputeChecksum(file);
+
+        Console.WriteLine($"Applying database update: {scriptName}");
+
+        RunScriptWithMariaDb(file, mariadbExe);
+
+        using var insertCmd = dbConn.CreateCommand();
+        insertCmd.CommandText = @"
+            INSERT INTO schemaversion (scriptName, appliedAt, checksum)
+            VALUES (@name, NOW(), @checksum)";
+
+        insertCmd.Parameters.AddWithValue("@name", scriptName);
+        insertCmd.Parameters.AddWithValue("@checksum", checksum);
+
+        insertCmd.ExecuteNonQuery();
+    }
+
+    if (pendingFiles.Count == 0)
+    {
+        Console.WriteLine("Database is up to date.");
+    }
+    else
+    {
+        VerifyMigrationsApplied(pendingFiles, dbConn);
+        Console.WriteLine($"Database updates applied: {pendingFiles.Count}");
+    }
+}
+
+static void VerifyMigrationsApplied(
+    IEnumerable<string> migrationFiles,
+    MySqlConnection dbConn)
+{
+    foreach (var file in migrationFiles)
+    {
+        var scriptName = Path.GetFileName(file);
+        var checksum = ComputeChecksum(file);
+
+        using var cmd = dbConn.CreateCommand();
+        cmd.CommandText = @"
+            SELECT checksum
+            FROM schemaversion
+            WHERE scriptName = @name";
+
+        cmd.Parameters.AddWithValue("@name", scriptName);
+
+        var storedChecksum = cmd.ExecuteScalar() as string;
+
+        if (string.IsNullOrWhiteSpace(storedChecksum))
+        {
+            throw new Exception(
+                $"Database update verification failed. '{scriptName}' was not recorded."
+            );
+        }
+
+        if (!string.Equals(storedChecksum, checksum, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new Exception(
+                $"Database update verification failed. '{scriptName}' checksum does not match."
+            );
+        }
+    }
+
+    Console.WriteLine("Database update verification passed.");
 }
 
 static string ComputeChecksum(string filePath)
