@@ -12,6 +12,9 @@ public partial class OrchidAppLauncherForm : Form
     private Button backupButton = new Button();
     private Button restoreButton = new Button();
 
+    private static readonly TimeSpan AutomaticBackupAgeThreshold = TimeSpan.FromHours(168);
+    private bool _backupInProgress = false;
+
     private Process? _webAppProcess;
     private Process? _mariaDbProcess;
     private string? _webAppStartupError;
@@ -142,11 +145,12 @@ public partial class OrchidAppLauncherForm : Form
             }
         };
 
-_webAppProcess.EnableRaisingEvents = true;
-_webAppProcess.Exited += (s, e) =>
-{
-    AppendLog("Web app process exited");
-};
+        _webAppProcess.EnableRaisingEvents = true;
+        _webAppProcess.Exited += (s, e) =>
+        {
+            AppendLog("Web app process exited");
+        };
+
         _webAppProcess.StartInfo.EnvironmentVariables["ASPNETCORE_ENVIRONMENT"] = "Desktop";
 
         _webAppProcess.OutputDataReceived += (s, e) =>
@@ -180,7 +184,8 @@ _webAppProcess.Exited += (s, e) =>
                 "server=127.0.0.1;port=3308;database=orchids;user=orchid;password=orchid;";
 
         _webAppProcess.Start();
-AppendLog("Launcher: process started");
+        AppendLog("Launcher: process started");
+
         _webAppProcess.BeginOutputReadLine();
         _webAppProcess.BeginErrorReadLine();
 
@@ -196,6 +201,8 @@ AppendLog("Launcher: process started");
         SetLauncherStatus(LauncherStatus.Green);
         backupButton.Enabled = true;
         restoreButton.Enabled = true;
+
+        _ = RunAutomaticBackupIfDueAsync();
     }
 
     private void StartMariaDb()
@@ -516,8 +523,69 @@ AppendLog("Launcher: process started");
         }
     }
 
-    private async Task RunBackupAsync()
+    private FileInfo? GetLatestBackupFile()
     {
+        var backupsDir = Path.Combine(
+            AppContext.BaseDirectory,
+            "backups"
+        );
+
+        if (!Directory.Exists(backupsDir))
+        {
+            return null;
+        }
+
+        return new DirectoryInfo(backupsDir)
+            .GetFiles("OrchidAppBackup_*.zip")
+            .OrderByDescending(file => file.LastWriteTimeUtc)
+            .FirstOrDefault();
+    }
+
+    private bool IsAutomaticBackupDue()
+    {
+        var latestBackup = GetLatestBackupFile();
+
+        if (latestBackup == null)
+        {
+            AppendLog("No previous backup found.");
+            return true;
+        }
+
+        var backupAge = DateTime.UtcNow - latestBackup.LastWriteTimeUtc;
+
+        AppendLog(
+            $"Latest backup: {latestBackup.Name}, age: {backupAge.TotalHours:N1} hours."
+        );
+
+        return backupAge > AutomaticBackupAgeThreshold;
+    }
+
+    private async Task RunAutomaticBackupIfDueAsync()
+    {
+        if (!IsAutomaticBackupDue())
+        {
+            AppendLog("Automatic backup not required.");
+            return;
+        }
+
+        AppendLog("A safety backup has not been made in the last 7 days. Creating one now...");
+
+        await RunBackupAsync(showSuccessMessage: false);
+
+        AppendLog("Automatic safety backup completed.");
+    }
+
+    private async Task RunBackupAsync(bool showSuccessMessage = true)
+    {
+        if (_backupInProgress)
+        {
+            AppendLog("Backup is already running.");
+            return;
+        }
+
+        _backupInProgress = true;
+
+        backupButton.Enabled = false;
         restoreButton.Enabled = false;
         SetLauncherStatus(LauncherStatus.Amber);
 
@@ -583,12 +651,15 @@ AppendLog("Launcher: process started");
 
             AppendLog("Backup completed successfully.");
 
-            MessageBox.Show(
-                "Backup completed successfully.",
-                "Backup Complete",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information
-            );
+            if (showSuccessMessage)
+            {
+                MessageBox.Show(
+                    "Backup completed successfully.",
+                    "Backup Complete",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information
+                );
+            }
         }
         catch (Exception ex)
         {
@@ -603,6 +674,8 @@ AppendLog("Launcher: process started");
         }
         finally
         {
+            _backupInProgress = false;
+            
             if (_webAppProcess != null && !_webAppProcess.HasExited)
             {
                 SetLauncherStatus(LauncherStatus.Green);
