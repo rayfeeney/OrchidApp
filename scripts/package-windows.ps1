@@ -334,7 +334,13 @@ Write-Step "Validating package contents"
         (Join-Path $DistRoot "data\mariadb"),
         (Join-Path $DistRoot "tools"),
         (Join-Path $DistRoot "tools\backup-orchidapp.ps1"),
-        (Join-Path $DistRoot "tools\restore-orchidapp.ps1")
+        (Join-Path $DistRoot "tools\restore-orchidapp.ps1"),
+        (Join-Path $DistRoot "Legal"),
+        (Join-Path $DistRoot "Legal\LICENSE"),
+        (Join-Path $DistRoot "Legal\THIRD_PARTY_NOTICES.md"),
+        (Join-Path $DistRoot "Legal\mariadb\COPYING"),
+        (Join-Path $DistRoot "Legal\mariadb\THIRDPARTY"),
+        (Join-Path $DistRoot "Legal\libvips\LICENSE")
     )
 
     foreach ($RequiredPath in $RequiredPaths) {
