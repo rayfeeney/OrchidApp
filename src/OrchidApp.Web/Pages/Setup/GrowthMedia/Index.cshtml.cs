@@ -17,7 +17,7 @@ public class IndexModel : PageModel
 
     public List<GrowthMedium> GrowthMedia { get; private set; } = new();
 
-    public string ReturnUrl { get; private set; } = "/Index";
+    public string ReturnUrl { get; private set; } = "Index";
     
     public async Task OnGetAsync()
     {
