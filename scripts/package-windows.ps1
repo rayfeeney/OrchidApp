@@ -315,6 +315,20 @@ Write-Step "Checking packaged MariaDB data state"
         Write-Host "No packaged orchids.* files found." -ForegroundColor Green
     }
 
+Write-Step "Adding Windows shortcut helper"
+
+    $ShortcutSource = Join-Path $RepoRoot "app\windows\Create-Shortcut.cmd"
+    $ShortcutTarget = Join-Path $DistRoot "Create-Shortcut.cmd"
+
+    if (-not (Test-Path $ShortcutSource)) {
+        throw "Shortcut helper not found: $ShortcutSource"
+    }
+
+    Copy-Item `
+        -Path $ShortcutSource `
+        -Destination $ShortcutTarget `
+        -Force
+
 Write-Step "Validating package contents"
 
     $RequiredPaths = @(
@@ -334,7 +348,13 @@ Write-Step "Validating package contents"
         (Join-Path $DistRoot "data\mariadb"),
         (Join-Path $DistRoot "tools"),
         (Join-Path $DistRoot "tools\backup-orchidapp.ps1"),
-        (Join-Path $DistRoot "tools\restore-orchidapp.ps1")
+        (Join-Path $DistRoot "tools\restore-orchidapp.ps1"),
+        (Join-Path $DistRoot "Legal"),
+        (Join-Path $DistRoot "Legal\LICENSE"),
+        (Join-Path $DistRoot "Legal\THIRD_PARTY_NOTICES.md"),
+        (Join-Path $DistRoot "Legal\mariadb\COPYING"),
+        (Join-Path $DistRoot "Legal\mariadb\THIRDPARTY"),
+        (Join-Path $DistRoot "Legal\libvips\LICENSE")
     )
 
     foreach ($RequiredPath in $RequiredPaths) {
@@ -383,15 +403,15 @@ Write-Step "Creating Windows package ZIP"
     }
 
     Compress-Archive `
-        -Path (Join-Path $DistRoot "*") `
+        -Path $DistRoot `
         -DestinationPath $ZipPath `
         -Force
 
     Write-Host ""
-    Write-Host "ZIP package:"  -ForegroundColor Green
-    Write-Host $ZipPath  -ForegroundColor Green
+    Write-Host "ZIP package:" -ForegroundColor Green
+    Write-Host $ZipPath -ForegroundColor Green
 
-Write-Step "Windows package created successfully"
+    Write-Step "Windows package created successfully"
 
 Write-Host ""
 Write-Host "Package folder:"

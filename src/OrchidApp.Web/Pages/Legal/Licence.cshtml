@@ -1,11 +1,28 @@
 @page
 @model OrchidApp.Web.Pages.Legal.LicenceModel
 @{
-    ViewData["Title"] = "Licence";
+    ViewData["Title"] = "Licences";
 }
 
-<h1 class="page-title fw-bold">Licence</h1>
+<h1 class="page-title fw-bold">Licences</h1>
 
-<pre class="small">
-@Model.LicenceText
-</pre>
+<p>
+    OrchidApp is licensed under the GNU Affero General Public Licence version 3.
+    This packaged application also includes third-party components. Their licence
+    texts and notices are provided below.
+</p>
+
+<h2 class="h5 fw-bold mb-3">OrchidApp</h2>
+<pre class="small">@Model.OrchidAppLicenceText</pre>
+
+<h2 class="h5 fw-bold mb-3">Third-party notices</h2>
+<pre class="small">@Model.ThirdPartyNoticesText</pre>
+
+<h2 class="h5 fw-bold mb-3">MariaDB</h2>
+<pre class="small">@Model.MariaDbLicenceText</pre>
+
+<h2 class="h5 fw-bold mb-3">MariaDB third-party notices</h2>
+<pre class="small">@Model.MariaDbThirdPartyText</pre>
+
+<h2 class="h5 fw-bold mb-3">libvips</h2>
+<pre class="small">@Model.LibVipsLicenceText</pre>

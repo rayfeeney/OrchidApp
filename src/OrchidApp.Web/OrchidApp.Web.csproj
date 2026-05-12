@@ -14,15 +14,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\..\LICENSE">
-      <Link>LICENSE</Link>
+    <Content Include="Legal\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </None>
+    </Content>
   </ItemGroup>
 
-  <Target Name="CopyLicenceToProjectRoot" BeforeTargets="Build">
-    <Copy SourceFiles="..\..\LICENSE" DestinationFiles="LICENSE" SkipUnchangedFiles="true" />
-  </Target>
 
 </Project>
