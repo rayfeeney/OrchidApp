@@ -315,6 +315,20 @@ Write-Step "Checking packaged MariaDB data state"
         Write-Host "No packaged orchids.* files found." -ForegroundColor Green
     }
 
+Write-Step "Adding Windows shortcut helper"
+
+    $ShortcutSource = Join-Path $RepoRoot "app\windows\Create-Shortcut.cmd"
+    $ShortcutTarget = Join-Path $DistRoot "Create-Shortcut.cmd"
+
+    if (-not (Test-Path $ShortcutSource)) {
+        throw "Shortcut helper not found: $ShortcutSource"
+    }
+
+    Copy-Item `
+        -Path $ShortcutSource `
+        -Destination $ShortcutTarget `
+        -Force
+
 Write-Step "Validating package contents"
 
     $RequiredPaths = @(
@@ -389,15 +403,15 @@ Write-Step "Creating Windows package ZIP"
     }
 
     Compress-Archive `
-        -Path (Join-Path $DistRoot "*") `
+        -Path $DistRoot `
         -DestinationPath $ZipPath `
         -Force
 
     Write-Host ""
-    Write-Host "ZIP package:"  -ForegroundColor Green
-    Write-Host $ZipPath  -ForegroundColor Green
+    Write-Host "ZIP package:" -ForegroundColor Green
+    Write-Host $ZipPath -ForegroundColor Green
 
-Write-Step "Windows package created successfully"
+    Write-Step "Windows package created successfully"
 
 Write-Host ""
 Write-Host "Package folder:"
