@@ -161,6 +161,10 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      - name: Restore Windows runtime dependencies
+        shell: pwsh
+        run: ./scripts/restore-windows-runtime.ps1
+        
       - name: Create Windows package
         shell: pwsh
         run: ./scripts/package-windows.ps1
