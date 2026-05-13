@@ -37,40 +37,26 @@ if (Test-Path $MariaDbExe) {
 else {
     Write-Step "Restoring MariaDB runtime"
 
-    New-Item -ItemType Directory -Path $RuntimeDownloadRoot -Force | Out-Null
+    $ChocolateyMariaDbRoot = "C:\Program Files\MariaDB $MariaDbVersion"
 
-    if (-not (Test-Path $MariaDbArchivePath)) {
-        Write-Host "Downloading MariaDB $MariaDbVersion..."
-        Write-Host $MariaDbDownloadUrl
+    if (-not (Test-Path $ChocolateyMariaDbRoot)) {
+        Write-Host "Installing MariaDB $MariaDbVersion using Chocolatey..."
 
-        Invoke-WebRequest `
-            -Uri $MariaDbDownloadUrl `
-            -OutFile $MariaDbArchivePath
+        choco install mariadb `
+            --version=$MariaDbVersion `
+            --yes `
+            --no-progress
+
+        if ($LASTEXITCODE -ne 0) {
+            throw "Chocolatey MariaDB install failed. ExitCode=$LASTEXITCODE"
+        }
     }
     else {
-        Write-Host "MariaDB archive already downloaded: $MariaDbArchivePath"
+        Write-Host "MariaDB already installed by Chocolatey: $ChocolateyMariaDbRoot"
     }
 
-    if (Test-Path $MariaDbExtractRoot) {
-        Remove-Item $MariaDbExtractRoot -Recurse -Force
-    }
-
-    New-Item -ItemType Directory -Path $MariaDbExtractRoot -Force | Out-Null
-
-    Write-Host "Extracting MariaDB archive..."
-
-    Expand-Archive `
-        -Path $MariaDbArchivePath `
-        -DestinationPath $MariaDbExtractRoot `
-        -Force
-
-    $ExtractedMariaDbRoot = Get-ChildItem `
-        -Path $MariaDbExtractRoot `
-        -Directory |
-        Select-Object -First 1
-
-    if ($null -eq $ExtractedMariaDbRoot) {
-        throw "MariaDB archive extraction did not produce a folder."
+    if (-not (Test-Path $ChocolateyMariaDbRoot)) {
+        throw "Chocolatey MariaDB folder not found: $ChocolateyMariaDbRoot"
     }
 
     if (Test-Path $MariaDbRuntimeRoot) {
@@ -80,7 +66,7 @@ else {
     New-Item -ItemType Directory -Path (Split-Path -Parent $MariaDbRuntimeRoot) -Force | Out-Null
 
     Copy-Item `
-        -Path $ExtractedMariaDbRoot.FullName `
+        -Path $ChocolateyMariaDbRoot `
         -Destination $MariaDbRuntimeRoot `
         -Recurse `
         -Force
