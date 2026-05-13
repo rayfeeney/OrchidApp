@@ -37,9 +37,10 @@ if (Test-Path $MariaDbExe) {
 else {
     Write-Step "Restoring MariaDB runtime"
 
-    $ChocolateyMariaDbRoot = "C:\Program Files\MariaDB $MariaDbVersion"
+    $ChocolateyMariaDbInstallRoot = "C:\Program Files\MariaDB 10.11"
+    $ChocolateyMariaDbExe = Join-Path $ChocolateyMariaDbInstallRoot "bin\mariadbd.exe"
 
-    if (-not (Test-Path $ChocolateyMariaDbRoot)) {
+    if (-not (Test-Path $ChocolateyMariaDbExe)) {
         Write-Host "Installing MariaDB $MariaDbVersion using Chocolatey..."
 
         choco install mariadb `
@@ -52,11 +53,11 @@ else {
         }
     }
     else {
-        Write-Host "MariaDB already installed by Chocolatey: $ChocolateyMariaDbRoot"
+        Write-Host "MariaDB already installed by Chocolatey: $ChocolateyMariaDbInstallRoot"
     }
 
-    if (-not (Test-Path $ChocolateyMariaDbRoot)) {
-        throw "Chocolatey MariaDB folder not found: $ChocolateyMariaDbRoot"
+    if (-not (Test-Path $ChocolateyMariaDbExe)) {
+        throw "Chocolatey MariaDB executable not found after install: $ChocolateyMariaDbExe"
     }
 
     if (Test-Path $MariaDbRuntimeRoot) {
@@ -66,7 +67,7 @@ else {
     New-Item -ItemType Directory -Path (Split-Path -Parent $MariaDbRuntimeRoot) -Force | Out-Null
 
     Copy-Item `
-        -Path $ChocolateyMariaDbRoot `
+        -Path $ChocolateyMariaDbInstallRoot `
         -Destination $MariaDbRuntimeRoot `
         -Recurse `
         -Force
