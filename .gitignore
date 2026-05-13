@@ -61,3 +61,6 @@ Audit-TaxonomyLifecycle.ps1
 DateDefaults.ps1
 database/CreateOrchidsDB.sql
 database/tests/
+
+launcher-settings.json
+**/launcher-settings.json
