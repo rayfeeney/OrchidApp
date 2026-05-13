@@ -382,13 +382,7 @@ Write-Step "Validating package contents"
         }
 
         Write-Host "OK: $Path" -ForegroundColor Green
-    }
-
-    if (Test-PortListening -Port $MariaDbPort) {
-        throw "Package validation failed. Port $MariaDbPort is still in use."
-    }
-
-    Write-Host "Package validation passed." -ForegroundColor Green    
+    } 
 
     if (Test-PortListening -Port $MariaDbPort) {
         throw "Package validation failed. Port $MariaDbPort is still in use."
