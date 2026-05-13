@@ -64,3 +64,5 @@ database/tests/
 
 launcher-settings.json
 **/launcher-settings.json
+
+.runtime-downloads/
