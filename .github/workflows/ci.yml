@@ -147,3 +147,16 @@ jobs:
 
       - name: Schema validation passed
         run: echo "Schema is deterministic and valid"
+
+  windows-package:
+    name: Windows package validation
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
