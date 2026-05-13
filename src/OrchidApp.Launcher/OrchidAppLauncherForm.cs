@@ -12,9 +12,11 @@ public partial class OrchidAppLauncherForm : Form
     private Button openAppButton = new Button();
     private Button backupButton = new Button();
     private Button restoreButton = new Button();
+    private Button configureCloudBackupButton = new Button();
     private bool _closeConfirmed = false;
 
     private static readonly TimeSpan AutomaticBackupAgeThreshold = TimeSpan.FromHours(168);
+    private const string CloudBackupFileName = "OrchidAppDataBackup.zip";
     private bool _backupInProgress = false;
 
     private Process? _webAppProcess;
@@ -49,7 +51,7 @@ public partial class OrchidAppLauncherForm : Form
         }
         
         SetWindowTitle("Starting");
-        Width = 680;
+        Width = 900;
         Height = 460;
 
         try
@@ -66,7 +68,7 @@ public partial class OrchidAppLauncherForm : Form
         statusLabel.AutoSize = true;
         statusLabel.Left = 45;
         statusLabel.Top = 15;
-        statusLabel.MaximumSize = new Size(580, 0);
+        statusLabel.MaximumSize = new Size(800, 0);
 
         statusLight.Left = 20;
         statusLight.Top = 22;
@@ -79,7 +81,7 @@ public partial class OrchidAppLauncherForm : Form
         logBox.ScrollBars = ScrollBars.Vertical;
         logBox.Left = 20;
         logBox.Top = 95;
-        logBox.Width = 600;
+        logBox.Width = 840;
         logBox.Height = 235;
 
         openAppButton.Text = "Open OrchidApp";
@@ -106,12 +108,21 @@ public partial class OrchidAppLauncherForm : Form
         restoreButton.Enabled = false;
         restoreButton.Click += async (s, e) => await RunRestoreAsync();
 
+        configureCloudBackupButton.Text = "Configure cloud backup...";
+        configureCloudBackupButton.Left = 540;
+        configureCloudBackupButton.Top = 335;
+        configureCloudBackupButton.Width = 220;
+        configureCloudBackupButton.Height = 35;
+        configureCloudBackupButton.Enabled = true;
+        configureCloudBackupButton.Click += ConfigureCloudBackupButton_Click;
+
         Controls.Add(statusLabel);
         Controls.Add(statusLight);
         Controls.Add(logBox);
         Controls.Add(openAppButton);
         Controls.Add(backupButton);
         Controls.Add(restoreButton);
+        Controls.Add(configureCloudBackupButton);
     }
 
     protected override async void OnLoad(EventArgs e)
@@ -264,6 +275,56 @@ public partial class OrchidAppLauncherForm : Form
             FileName = "http://localhost:5285",
             UseShellExecute = true
         });
+    }
+
+    private void ConfigureCloudBackupButton_Click(object? sender, EventArgs e)
+    {
+        var settingsService = new LauncherSettingsService();
+        var settings = settingsService.Load();
+
+        using var dialog = new FolderBrowserDialog
+        {
+            Description = "Choose a folder synced by OneDrive, Google Drive, iCloud Drive or another cloud provider.",
+            ShowNewFolderButton = true
+        };
+
+        if (!string.IsNullOrWhiteSpace(settings.CloudBackupFolderPath) &&
+            Directory.Exists(settings.CloudBackupFolderPath))
+        {
+            dialog.SelectedPath = settings.CloudBackupFolderPath;
+        }
+
+        if (dialog.ShowDialog(this) != DialogResult.OK)
+        {
+            AppendLog("Cloud backup folder configuration cancelled.");
+            return;
+        }
+
+        if (!settingsService.TryValidateCloudBackupFolder(
+                dialog.SelectedPath,
+                out var validationMessage))
+        {
+            MessageBox.Show(
+                this,
+                validationMessage,
+                "Cloud backup folder",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+
+            return;
+        }
+
+        settings.CloudBackupFolderPath = dialog.SelectedPath;
+        settingsService.Save(settings);
+
+        AppendLog($"Cloud backup folder configured: {settings.CloudBackupFolderPath}");
+
+        MessageBox.Show(
+            this,
+            "Cloud backup folder saved.",
+            "Cloud backup folder",
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Information);
     }
 
     private void StartMariaDb()
@@ -613,6 +674,52 @@ public partial class OrchidAppLauncherForm : Form
             .FirstOrDefault();
     }
 
+    private void CopyLatestBackupToCloudFolder()
+    {
+        var settingsService = new LauncherSettingsService();
+        var settings = settingsService.Load();
+
+        if (string.IsNullOrWhiteSpace(settings.CloudBackupFolderPath))
+        {
+            AppendLog("Cloud backup folder is not configured. Skipping cloud backup copy.");
+            return;
+        }
+
+        if (!settingsService.TryValidateCloudBackupFolder(
+                settings.CloudBackupFolderPath,
+                out var validationMessage))
+        {
+            AppendLog("Cloud backup copy skipped: " + validationMessage);
+            return;
+        }
+
+        var latestBackup = GetLatestBackupFile();
+
+        if (latestBackup == null)
+        {
+            AppendLog("Cloud backup copy skipped: no local backup file found.");
+            return;
+        }
+
+        var cloudBackupPath = Path.Combine(
+            settings.CloudBackupFolderPath,
+            CloudBackupFileName);
+
+        try
+        {
+            File.Copy(
+                latestBackup.FullName,
+                cloudBackupPath,
+                overwrite: true);
+
+            AppendLog($"Cloud backup copy completed: {cloudBackupPath}");
+        }
+        catch (Exception ex)
+        {
+            AppendLog("Cloud backup copy failed: " + ex.Message);
+        }
+    }
+
     private bool IsAutomaticBackupDue()
     {
         var latestBackup = GetLatestBackupFile();
@@ -724,6 +831,8 @@ public partial class OrchidAppLauncherForm : Form
             }
 
             AppendLog("Backup completed successfully.");
+
+            CopyLatestBackupToCloudFolder();
 
             if (showSuccessMessage)
             {
