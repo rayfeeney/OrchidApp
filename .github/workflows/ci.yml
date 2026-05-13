@@ -148,23 +148,23 @@ jobs:
       - name: Schema validation passed
         run: echo "Schema is deterministic and valid"
 
-  # windows-package:
-  #   name: Windows package validation
-  #   runs-on: windows-latest
+  windows-package:
+    name: Windows package validation
+    runs-on: windows-latest
 
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-  #     - name: Setup .NET
-  #       uses: actions/setup-dotnet@v4
-  #       with:
-  #         dotnet-version: '8.0.x'
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
 
-  #     - name: Restore Windows runtime dependencies
-  #       shell: pwsh
-  #       run: ./scripts/restore-windows-runtime.ps1
-        
-  #     - name: Create Windows package
-  #       shell: pwsh
-  #       run: ./scripts/package-windows.ps1
+      - name: Restore Windows runtime dependencies
+        shell: pwsh
+        run: ./scripts/restore-windows-runtime.ps1
+      
+      - name: Create Windows package
+        shell: pwsh
+        run: ./scripts/package-windows.ps1
