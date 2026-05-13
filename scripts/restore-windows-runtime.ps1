@@ -37,9 +37,10 @@ if (Test-Path $MariaDbExe) {
 else {
     Write-Step "Restoring MariaDB runtime"
 
-    $ChocolateyMariaDbRoot = "C:\Program Files\MariaDB $MariaDbVersion"
+    $ChocolateyMariaDbPackageRoot = "C:\ProgramData\chocolatey\lib\mariadb"
+    $ChocolateyMariaDbToolsRoot = Join-Path $ChocolateyMariaDbPackageRoot "tools"
 
-    if (-not (Test-Path $ChocolateyMariaDbRoot)) {
+    if (-not (Test-Path $ChocolateyMariaDbPackageRoot)) {
         Write-Host "Installing MariaDB $MariaDbVersion using Chocolatey..."
 
         choco install mariadb `
@@ -52,12 +53,27 @@ else {
         }
     }
     else {
-        Write-Host "MariaDB already installed by Chocolatey: $ChocolateyMariaDbRoot"
+        Write-Host "MariaDB Chocolatey package already present: $ChocolateyMariaDbPackageRoot"
     }
 
-    if (-not (Test-Path $ChocolateyMariaDbRoot)) {
-        throw "Chocolatey MariaDB folder not found: $ChocolateyMariaDbRoot"
+    if (-not (Test-Path $ChocolateyMariaDbToolsRoot)) {
+        throw "Chocolatey MariaDB tools folder not found: $ChocolateyMariaDbToolsRoot"
     }
+
+    $ChocolateyMariaDbRuntimeRoot = Get-ChildItem `
+        -Path $ChocolateyMariaDbToolsRoot `
+        -Directory `
+        -Recurse |
+        Where-Object {
+            Test-Path (Join-Path $_.FullName "bin\mariadbd.exe")
+        } |
+        Select-Object -First 1
+
+    if ($null -eq $ChocolateyMariaDbRuntimeRoot) {
+        throw "Chocolatey MariaDB runtime folder containing bin\mariadbd.exe was not found under: $ChocolateyMariaDbToolsRoot"
+    }
+
+    Write-Host "Chocolatey MariaDB runtime found: $($ChocolateyMariaDbRuntimeRoot.FullName)"
 
     if (Test-Path $MariaDbRuntimeRoot) {
         Remove-Item $MariaDbRuntimeRoot -Recurse -Force
@@ -66,7 +82,7 @@ else {
     New-Item -ItemType Directory -Path (Split-Path -Parent $MariaDbRuntimeRoot) -Force | Out-Null
 
     Copy-Item `
-        -Path $ChocolateyMariaDbRoot `
+        -Path $ChocolateyMariaDbRuntimeRoot.FullName `
         -Destination $MariaDbRuntimeRoot `
         -Recurse `
         -Force
