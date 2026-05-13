@@ -37,10 +37,10 @@ if (Test-Path $MariaDbExe) {
 else {
     Write-Step "Restoring MariaDB runtime"
 
-    $ChocolateyMariaDbPackageRoot = "C:\ProgramData\chocolatey\lib\mariadb"
-    $ChocolateyMariaDbToolsRoot = Join-Path $ChocolateyMariaDbPackageRoot "tools"
+    $ChocolateyMariaDbInstallRoot = "C:\Program Files\MariaDB 10.11"
+    $ChocolateyMariaDbExe = Join-Path $ChocolateyMariaDbInstallRoot "bin\mariadbd.exe"
 
-    if (-not (Test-Path $ChocolateyMariaDbPackageRoot)) {
+    if (-not (Test-Path $ChocolateyMariaDbExe)) {
         Write-Host "Installing MariaDB $MariaDbVersion using Chocolatey..."
 
         choco install mariadb `
@@ -53,27 +53,12 @@ else {
         }
     }
     else {
-        Write-Host "MariaDB Chocolatey package already present: $ChocolateyMariaDbPackageRoot"
+        Write-Host "MariaDB already installed by Chocolatey: $ChocolateyMariaDbInstallRoot"
     }
 
-    if (-not (Test-Path $ChocolateyMariaDbToolsRoot)) {
-        throw "Chocolatey MariaDB tools folder not found: $ChocolateyMariaDbToolsRoot"
+    if (-not (Test-Path $ChocolateyMariaDbExe)) {
+        throw "Chocolatey MariaDB executable not found after install: $ChocolateyMariaDbExe"
     }
-
-    $ChocolateyMariaDbRuntimeRoot = Get-ChildItem `
-        -Path $ChocolateyMariaDbToolsRoot `
-        -Directory `
-        -Recurse |
-        Where-Object {
-            Test-Path (Join-Path $_.FullName "bin\mariadbd.exe")
-        } |
-        Select-Object -First 1
-
-    if ($null -eq $ChocolateyMariaDbRuntimeRoot) {
-        throw "Chocolatey MariaDB runtime folder containing bin\mariadbd.exe was not found under: $ChocolateyMariaDbToolsRoot"
-    }
-
-    Write-Host "Chocolatey MariaDB runtime found: $($ChocolateyMariaDbRuntimeRoot.FullName)"
 
     if (Test-Path $MariaDbRuntimeRoot) {
         Remove-Item $MariaDbRuntimeRoot -Recurse -Force
@@ -82,7 +67,7 @@ else {
     New-Item -ItemType Directory -Path (Split-Path -Parent $MariaDbRuntimeRoot) -Force | Out-Null
 
     Copy-Item `
-        -Path $ChocolateyMariaDbRuntimeRoot.FullName `
+        -Path $ChocolateyMariaDbInstallRoot `
         -Destination $MariaDbRuntimeRoot `
         -Recurse `
         -Force
