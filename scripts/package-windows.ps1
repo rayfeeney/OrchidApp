@@ -176,6 +176,22 @@ Write-Step "Copying libvips runtime"
 
 Write-Step "Removing packaged application database cleanly"
 
+    $PackagedOrchidsFolder = Join-Path $MariaDbDataDest "orchids"
+
+    if (Test-Path $PackagedOrchidsFolder) {
+        Write-Host "Removing packaged trigger metadata before database drop..."
+
+        Get-ChildItem `
+            -Path $PackagedOrchidsFolder `
+            -Include "*.TRG", "*.TRN" `
+            -File `
+            -ErrorAction SilentlyContinue |
+            ForEach-Object {
+                Write-Host "Removing trigger metadata file: $($_.FullName)"
+                Remove-Item -Path $_.FullName -Force
+            }
+    }
+
     if (-not (Test-Path $MariaDbExe)) {
         throw "MariaDB server executable not found: $MariaDbExe"
     }
