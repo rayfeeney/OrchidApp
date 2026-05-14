@@ -181,15 +181,26 @@ Write-Step "Removing packaged application database cleanly"
     if (Test-Path $PackagedOrchidsFolder) {
         Write-Host "Removing packaged trigger metadata before database drop..."
 
-        Get-ChildItem `
+        $TriggerMetadataFiles = @()
+
+        $TriggerMetadataFiles += Get-ChildItem `
             -Path $PackagedOrchidsFolder `
-            -Include "*.TRG", "*.TRN" `
+            -Filter "*.TRG" `
             -File `
-            -ErrorAction SilentlyContinue |
-            ForEach-Object {
-                Write-Host "Removing trigger metadata file: $($_.FullName)"
-                Remove-Item -Path $_.FullName -Force
-            }
+            -ErrorAction SilentlyContinue
+
+        $TriggerMetadataFiles += Get-ChildItem `
+            -Path $PackagedOrchidsFolder `
+            -Filter "*.TRN" `
+            -File `
+            -ErrorAction SilentlyContinue
+
+        foreach ($TriggerMetadataFile in $TriggerMetadataFiles) {
+            Write-Host "Removing trigger metadata file: $($TriggerMetadataFile.FullName)"
+            Remove-Item -Path $TriggerMetadataFile.FullName -Force
+        }
+
+        Write-Host "Removed $($TriggerMetadataFiles.Count) trigger metadata file(s)."
     }
 
     if (-not (Test-Path $MariaDbExe)) {
