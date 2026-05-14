@@ -174,43 +174,142 @@ Write-Step "Copying libvips runtime"
         -Recurse `
         -Force
 
-Write-Step "Removing packaged application database files"
-
-    $ExpectedMariaDbDataDest = Join-Path $DistRoot "data\mariadb"
-
-    if ($MariaDbDataDest -ne $ExpectedMariaDbDataDest) {
-        throw "Refusing to remove packaged database files because destination path is unexpected: $MariaDbDataDest"
-    }
-
-    if (-not ($MariaDbDataDest -like "*\dist\windows\OrchidApp\data\mariadb")) {
-        throw "Refusing to remove packaged database files because destination path is outside the package folder: $MariaDbDataDest"
-    }
+Write-Step "Removing packaged application database cleanly"
 
     $PackagedOrchidsFolder = Join-Path $MariaDbDataDest "orchids"
 
     if (Test-Path $PackagedOrchidsFolder) {
-        Remove-Item `
+        Write-Host "Removing packaged trigger metadata before database drop..."
+
+        $TriggerMetadataFiles = @()
+
+        $TriggerMetadataFiles += Get-ChildItem `
             -Path $PackagedOrchidsFolder `
-            -Recurse `
-            -Force
+            -Filter "*.TRG" `
+            -File `
+            -ErrorAction SilentlyContinue
 
-        Write-Host "Removed packaged orchids database folder: $PackagedOrchidsFolder" -ForegroundColor Green
+        $TriggerMetadataFiles += Get-ChildItem `
+            -Path $PackagedOrchidsFolder `
+            -Filter "*.TRN" `
+            -File `
+            -ErrorAction SilentlyContinue
+
+        foreach ($TriggerMetadataFile in $TriggerMetadataFiles) {
+            Write-Host "Removing trigger metadata file: $($TriggerMetadataFile.FullName)"
+            Remove-Item -Path $TriggerMetadataFile.FullName -Force
+        }
+
+        Write-Host "Removed $($TriggerMetadataFiles.Count) trigger metadata file(s)."
     }
-    else {
-        Write-Host "No packaged orchids database folder found."
+
+    if (-not (Test-Path $MariaDbExe)) {
+        throw "MariaDB server executable not found: $MariaDbExe"
     }
 
-    $PackagedOrchidsFiles = Get-ChildItem `
-        -Path $MariaDbDataDest `
-        -Filter "orchids.*" `
-        -ErrorAction SilentlyContinue
+    if (-not (Test-Path $MariaDbClient)) {
+        throw "MariaDB client executable not found: $MariaDbClient"
+    }
 
-    foreach ($File in $PackagedOrchidsFiles) {
-        Remove-Item `
-            -Path $File.FullName `
-            -Force
+    if (-not (Test-Path $MariaDbAdmin)) {
+        throw "MariaDB admin executable not found: $MariaDbAdmin"
+    }
 
-        Write-Host "Removed packaged orchids file: $($File.FullName)" -ForegroundColor Green
+    $mariaDbProcess = Start-Process `
+        -FilePath $MariaDbExe `
+        -ArgumentList "--datadir=`"$MariaDbDataDest`" --port=$MariaDbPort --bind-address=127.0.0.1 --console" `
+        -WorkingDirectory $DistRoot `
+        -PassThru `
+        -NoNewWindow
+
+    try {
+        Write-Host "Waiting for packaged MariaDB to accept connections..."
+
+        $ready = $false
+
+        for ($i = 0; $i -lt 30; $i++) {
+            & $MariaDbClient `
+                -h 127.0.0.1 `
+                -P $MariaDbPort `
+                -u orchid `
+                -porchid `
+                -e "SELECT 1;" `
+                2>$null | Out-Null
+
+            if ($LASTEXITCODE -eq 0) {
+                $ready = $true
+                break
+            }
+
+            if ($mariaDbProcess.HasExited) {
+                throw "Packaged MariaDB exited early. ExitCode=$($mariaDbProcess.ExitCode)"
+            }
+
+            Start-Sleep -Seconds 1
+        }
+
+        if (-not $ready) {
+            throw "Packaged MariaDB did not become ready."
+        }
+
+        Write-Host "Dropping packaged orchids database..."
+
+        & $MariaDbClient `
+            -h 127.0.0.1 `
+            -P $MariaDbPort `
+            -u orchid `
+            -porchid `
+            -e "DROP DATABASE IF EXISTS orchids;"
+
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed to drop packaged orchids database."
+        }
+
+        Write-Host "Requesting clean MariaDB shutdown..."
+
+        & $MariaDbAdmin `
+            -h 127.0.0.1 `
+            -P $MariaDbPort `
+            -u orchid_shutdown `
+            -porchid_shutdown `
+            shutdown
+
+        if ($LASTEXITCODE -ne 0) {
+            throw "MariaDB shutdown command failed."
+        }
+
+        Write-Host "Waiting for MariaDB process to exit..."
+
+        if (-not $mariaDbProcess.WaitForExit(30000)) {
+            throw "MariaDB did not exit cleanly after shutdown request."
+        }
+
+        if ($mariaDbProcess.ExitCode -ne 0) {
+            throw "MariaDB exited with non-zero code: $($mariaDbProcess.ExitCode)"
+        }
+
+        Write-Host "Packaged MariaDB stopped cleanly."
+    }
+    finally {
+        if ($mariaDbProcess -and -not $mariaDbProcess.HasExited) {
+            Stop-Process -Id $mariaDbProcess.Id -Force
+            throw "Packaged MariaDB had to be force-stopped during cleanup."
+        }
+    }
+
+Write-Host "Checking MariaDB listener has stopped..."
+
+    for ($i = 0; $i -lt 15; $i++) {
+        if (-not (Test-PortListening -Port $MariaDbPort)) {
+            Write-Host "MariaDB listener stopped."
+            break
+        }
+
+        Start-Sleep -Milliseconds 500
+    }
+
+    if (Test-PortListening -Port $MariaDbPort) {
+        throw "MariaDB stopped, but port $MariaDbPort is still listening."
     }
 
 Write-Step "Checking packaged MariaDB data state"
