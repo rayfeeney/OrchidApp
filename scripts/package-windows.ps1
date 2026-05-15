@@ -54,6 +54,8 @@ function Test-PortListening {
     $ToolsSource = Join-Path $RepoRoot "app\tools"
     $ToolsDest = Join-Path $DistRoot "tools"
     $BackupScriptSource = Join-Path $ToolsSource "backup-orchidapp.ps1"
+    $UserGuidesSource = Join-Path $RepoRoot "\docs\user-guides\windows"
+    $UserGuidesDest = Join-Path $DistRoot "user-guides"
     $ZipPath = Join-Path $RepoRoot "dist\windows\OrchidApp.zip"
 
 Write-Step "Checking source paths"
@@ -164,6 +166,14 @@ Write-Step "Copying packaged tools"
         -Recurse `
         -Force
 
+Write-Step "Copying user guides"
+
+    Copy-Item `
+        -Path $UserGuidesSource `
+        -Destination $UserGuidesDest `
+        -Recurse `
+        -Force
+
 Write-Step "Copying libvips runtime"
 
     New-Item -ItemType Directory -Path (Split-Path -Parent $LibVipsRuntimeDest) -Force | Out-Null
@@ -173,6 +183,7 @@ Write-Step "Copying libvips runtime"
         -Destination $LibVipsRuntimeDest `
         -Recurse `
         -Force
+
 
 Write-Step "Removing packaged application database cleanly"
 
