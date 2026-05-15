@@ -103,6 +103,7 @@ $MariaDbServerErrorLogPath = Join-Path $AppRoot "restore-mariadb-server-error.lo
 
 $StartedMariaDb = $false
 $MariaDbProcess = $null
+$RestoreUploads = $false
 
 Write-Step "Checking restore prerequisites"
 
@@ -153,8 +154,13 @@ try {
         throw "Backup is invalid. orchids.sql was not found."
     }
 
-    if (-not (Test-Path $UploadsBackupPath)) {
-        throw "Backup is invalid. uploads folder was not found."
+    if (Test-Path $UploadsBackupPath) {
+        $RestoreUploads = $true
+        Write-Host "OK: uploads folder found." -ForegroundColor Green
+    }
+    else {
+        $RestoreUploads = $false
+        Write-Host "WARNING: uploads folder was not found in backup. This is valid if no photos have been uploaded." -ForegroundColor Yellow
     }
 
     Write-Host "OK: Backup contents validated." -ForegroundColor Green
@@ -195,28 +201,41 @@ try {
 
     Write-Host "OK: Plant database restored." -ForegroundColor Green
 
-    Write-Step "Restoring uploaded files"
+    if ($RestoreUploads) {
+        Write-Step "Restoring uploaded files"
 
-    if (Test-Path $UploadsRoot) {
-        Remove-Item $UploadsRoot -Recurse -Force
+        if (Test-Path $UploadsRoot) {
+            Remove-Item $UploadsRoot -Recurse -Force
+        }
+
+        New-Item -ItemType Directory -Path $UploadsRoot -Force | Out-Null
+
+        $UploadItems = Get-ChildItem `
+            -Path $UploadsBackupPath `
+            -Force `
+            -ErrorAction SilentlyContinue
+
+        if ($UploadItems) {
+            Copy-Item `
+                -Path $UploadItems.FullName `
+                -Destination $UploadsRoot `
+                -Recurse `
+                -Force
+        }
+
+        Write-Host "OK: Uploaded files restored." -ForegroundColor Green
     }
+    else {
+        Write-Step "Skipping uploaded files"
 
-    New-Item -ItemType Directory -Path $UploadsRoot -Force | Out-Null
+        Write-Host "No uploads folder was present in the backup." -ForegroundColor Yellow
+        Write-Host "This is valid for OrchidApp installations with no uploaded photos." -ForegroundColor Yellow
 
-    $UploadItems = Get-ChildItem `
-        -Path $UploadsBackupPath `
-        -Force `
-        -ErrorAction SilentlyContinue
-
-    if ($UploadItems) {
-        Copy-Item `
-            -Path $UploadItems.FullName `
-            -Destination $UploadsRoot `
-            -Recurse `
-            -Force
+        if (-not (Test-Path $UploadsRoot)) {
+            New-Item -ItemType Directory -Path $UploadsRoot -Force | Out-Null
+            Write-Host "OK: Created empty uploads folder." -ForegroundColor Green
+        }
     }
-
-    Write-Host "OK: Uploaded files restored." -ForegroundColor Green
 
     Write-Step "Restore complete"
 
