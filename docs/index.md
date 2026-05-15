@@ -17,9 +17,9 @@ Start with the document that matches your intent:
 | --------------------------------------- | ------------------------------------------------- |
 | Understand how the system is designed   | `architecture.md`                                 |
 | Understand time, lifecycle and ordering | `temporal-design.md`                              |
-| Install or upgrade the system           | `installation-upgrade.md`                         |
+| Install or upgrade the system           | `user-guides/linux/installation-upgrade.md`                         |
 | Contribute safely to the project        | `../CONTRIBUTING.md`                              |
-| Operate backups and recovery            | `OrchidApp-MariaDB-Backup-and-Restore-Runbook.md` |
+| Operate backups and recovery            | `user-guides/linux/OrchidApp-MariaDB-Backup-and-Restore-Runbook.md` |
 
 Each document is authoritative within its domain.
 
