@@ -1,0 +1,61 @@
+@page
+@model OrchidApp.Web.Pages.AboutModel
+
+<h1 class="page-title fw-bold">About OrchidApp</h1>
+<h2 class="h5 fw-bold mb-3">Application information, support, privacy and licence details</h2>
+
+<div class="card mt-3">
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3 fw-bold">Application</dt>
+            <dd class="col-sm-9">OrchidApp</dd>
+
+            <dt class="col-sm-3 fw-bold">Description</dt>
+            <dd class="col-sm-9">
+                A self-hosted orchid collection manager for recording plant history, photos,
+                locations, repotting, flowering, propagation and lineage.
+            </dd>
+
+            <dt class="col-sm-3 fw-bold">Version</dt>
+            <dd class="col-sm-9">@Model.Version</dd>
+
+            <dt class="col-sm-3 fw-bold">Project website</dt>
+            <dd class="col-sm-9">
+                <a href="https://github.com/rayfeeney/OrchidApp" target="_blank" rel="noopener">
+                    https://github.com/rayfeeney/OrchidApp
+                </a>
+            </dd>
+
+            <dt class="col-sm-3 fw-bold">Support</dt>
+            <dd class="col-sm-9">
+                <a href="mailto:OrchidApp@proton.me?subject=OrchidApp%20support">
+                    OrchidApp@proton.me
+                </a>
+            </dd>
+
+            <dt class="col-sm-3 fw-bold">Privacy</dt>
+            <dd class="col-sm-9">
+                OrchidApp does not collect, transmit, analyse or sell your data.
+                All plant records, photographs and backups remain under your control and are stored
+                on your own device or infrastructure. OrchidApp does not use cloud services,
+                analytics, telemetry, advertising or tracking.
+            </dd>
+
+            <dt class="col-sm-3 fw-bold">Copyright</dt>
+            <dd class="col-sm-9">
+                © @DateTime.Now.Year Raymond Feeney. All rights reserved.
+            </dd>
+
+            <dt class="col-sm-3 fw-bold">Licence</dt>
+            <dd class="col-sm-9">
+                See the licence file included with this application and the project repository.
+            </dd>
+
+            <dt class="col-sm-3 fw-bold">Third-party components</dt>
+            <dd class="col-sm-9">
+                OrchidApp includes third-party open-source components, including MariaDB and libvips.
+                Licence notices are included with the application package.
+            </dd>
+        </dl>
+    </div>
+</div>

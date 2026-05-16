@@ -66,3 +66,5 @@ launcher-settings.json
 **/launcher-settings.json
 
 .runtime-downloads/
+
+*.csproj.lscache
