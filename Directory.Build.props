@@ -1,0 +1,15 @@
+<Project>
+  <PropertyGroup>
+    <!-- Public product version shown to users -->
+    <Version>1.1.0</Version>
+
+    <!-- Assembly identity version. Keep stable per public product version. -->
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+
+    <!-- Full internal packaged build version -->
+    <FileVersion>1.1.0.0</FileVersion>
+
+    <!-- Public version plus internal build metadata -->
+    <InformationalVersion>1.1.0+build.0</InformationalVersion>
+  </PropertyGroup>
+</Project>
