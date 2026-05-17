@@ -1,8 +1,41 @@
 using System.Diagnostics;
 using System.Drawing;
+using System.Reflection;
 using MySqlConnector;
 
 namespace OrchidApp.Launcher;
+
+public static class AppVersion
+{
+    public static string ProductVersion =>
+        Assembly
+            .GetExecutingAssembly()
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+            .InformationalVersion
+            .Split('+')[0]
+        ?? "Unknown";
+
+    public static string InformationalVersion =>
+        Assembly
+            .GetExecutingAssembly()
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+            .InformationalVersion
+        ?? "Unknown";
+
+    public static string FileVersion =>
+        FileVersionInfo
+            .GetVersionInfo(Assembly.GetExecutingAssembly().Location)
+            .FileVersion
+        ?? "Unknown";
+
+    public static string AssemblyVersion =>
+        Assembly
+            .GetExecutingAssembly()
+            .GetName()
+            .Version?
+            .ToString()
+        ?? "Unknown";
+}
 
 public partial class OrchidAppLauncherForm : Form
 {
@@ -63,6 +96,11 @@ public partial class OrchidAppLauncherForm : Form
             // ignore log reset errors
         }
 
+        AppendLog("OrchidApp launcher starting.");
+        AppendLog($"Product version:       {AppVersion.ProductVersion}");
+        AppendLog($"Assembly version:      {AppVersion.AssemblyVersion}");
+        AppendLog($"File version:          {AppVersion.FileVersion}");
+        AppendLog($"Informational version: {AppVersion.InformationalVersion}");
 
         statusLabel.Text = "Starting OrchidApp. Please keep this window open while using OrchidApp.";
         statusLabel.AutoSize = true;
