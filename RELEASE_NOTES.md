@@ -1,3 +1,61 @@
+# Release Notes
+
+- [Release Notes](#release-notes)
+  - [v1.1.0 - Windows now supported 2026-05-16](#v110---windows-now-supported-2026-05-16)
+    - [Highlights](#highlights)
+    - [Added](#added)
+    - [Changed](#changed)
+    - [Fixed](#fixed)
+    - [Known Notes](#known-notes)
+  - [OrchidApp v1.0.0 - General Availability](#orchidapp-v100---general-availability)
+  - [What’s Included](#whats-included)
+    - [Lifecycle Model (Complete)](#lifecycle-model-complete)
+    - [Deterministic Database System](#deterministic-database-system)
+    - [Temporal Model](#temporal-model)
+    - [Photo \& Media System](#photo--media-system)
+    - [Application Layer](#application-layer)
+    - [Backup \& Recovery](#backup--recovery)
+    - [Deployment Model](#deployment-model)
+  - [System Guarantees](#system-guarantees)
+  - [Architectural Contract](#architectural-contract)
+  - [Notes](#notes)
+  - [Status](#status)
+
+---
+
+## v1.1.0 - Windows now supported 2026-05-16
+
+### Highlights
+
+* Windows ZIP release added
+* Raspberry Pi package updated
+* Backup and restore documentation completed
+* Third-party notices included
+
+### Added
+
+* Cloud backup folder configuration
+* Latest-backup copy to configured cloud folder
+* About page with support and privacy information
+* User documentation for backup and disaster recovery
+
+### Changed
+
+* Packaging scripts now produce release-ready artefacts
+* Release documentation improved for non-GitHub users
+
+### Fixed
+
+* Corrected packaging output paths
+* Excluded transient `.lscache` files from packaged artefacts
+
+### Known Notes
+
+* Windows release is currently ZIP-based
+* Future work will focus on safer upgrade mechanics and installer preparation
+
+---
+
 ## OrchidApp v1.0.0 - General Availability
 
 OrchidApp is now considered **production-ready**.
