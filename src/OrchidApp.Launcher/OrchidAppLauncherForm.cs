@@ -170,6 +170,22 @@ public partial class OrchidAppLauncherForm : Form
         try
         {
             SetLauncherStatus(LauncherStatus.Red);
+
+            var layout = OrchidAppLayoutResolver.Resolve(AppContext.BaseDirectory);
+            LogLayoutState(layout);
+
+            if (layout.Status == OrchidAppLayoutStatus.ConflictingLayouts)
+            {
+                AppendLog("Startup stopped because both old and new OrchidApp data layouts were detected.");
+                AppendLog("Please resolve the conflicting data folders before starting OrchidApp.");
+
+                SetLauncherStatus(LauncherStatus.Red);
+                SetWindowTitle("Error");
+                statusLabel.Text = "Startup stopped: conflicting data layouts detected.";
+
+                return;
+            }
+
             StartMariaDb();
 
             await WaitForMariaDbAsync(
@@ -193,6 +209,204 @@ public partial class OrchidAppLauncherForm : Form
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Warning
             );
+        }
+    }
+
+    private void StartMariaDb()
+    {
+        var baseDir = AppContext.BaseDirectory;
+
+        var mariaDbExe = Path.Combine(
+            baseDir,
+            "runtime",
+            "mariadb",
+            "win-x64",
+            "bin",
+            "mariadbd.exe"
+        );
+
+        var dataDir = Path.Combine(
+            baseDir,
+            "data",
+            "mariadb"
+        );
+
+        AppendLog($"MariaDB EXE: {mariaDbExe}");
+        AppendLog($"MariaDB DataDir: {dataDir}");
+
+        var process = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = mariaDbExe,
+                Arguments =
+                    $"--datadir=\"{dataDir}\" " +
+                    $"--port=3308 " +
+                    $"--bind-address=127.0.0.1 " +
+                    $"--console",
+                WorkingDirectory = baseDir,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true
+            }
+        };
+
+        process.EnableRaisingEvents = true;
+
+        process.Exited += (s, e) =>
+        {
+            AppendLog($"MariaDB exited. ExitCode={process.ExitCode}");
+        };
+
+        process.OutputDataReceived += (s, e) =>
+        {
+            if (e.Data != null)
+                AppendLog("DB: " + e.Data);
+        };
+
+        process.ErrorDataReceived += (s, e) =>
+        {
+            if (e.Data != null)
+                AppendLog("DB ERR: " + e.Data);
+        };
+
+        process.Start();
+
+        process.BeginOutputReadLine();
+        process.BeginErrorReadLine();
+
+        _mariaDbProcess = process;
+    }
+
+    private async Task WaitForMariaDbAsync(
+        string connectionString,
+        int timeoutSeconds = 30)
+    {
+        var start = DateTime.UtcNow;
+
+        while (DateTime.UtcNow - start < TimeSpan.FromSeconds(timeoutSeconds))
+        {
+            try
+            {
+                using var conn = new MySqlConnection(connectionString);
+
+                await conn.OpenAsync();
+
+                AppendLog("MariaDB is ready.");
+
+                return;
+            }
+            catch (Exception ex)
+            {
+                AppendLog("MariaDB wait: " + ex.Message);
+
+                if (_mariaDbProcess != null && _mariaDbProcess.HasExited)
+                {
+                    throw new Exception(
+                        $"MariaDB process exited early. ExitCode={_mariaDbProcess.ExitCode}");
+                }
+
+                await Task.Delay(1000);
+            }
+        }
+
+        throw new Exception("MariaDB did not start in time.");
+    }
+
+    private void StopMariaDbGracefully()
+    {
+        try
+        {
+            if (_mariaDbProcess == null || _mariaDbProcess.HasExited)
+            {
+                AppendLog("MariaDB is not running.");
+                return;
+            }
+
+            var baseDir = AppContext.BaseDirectory;
+
+            var mariadbAdminExe = Path.Combine(
+                baseDir,
+                "runtime",
+                "mariadb",
+                "win-x64",
+                "bin",
+                "mariadb-admin.exe"
+            );
+
+            AppendLog($"MariaDB shutdown tool: {mariadbAdminExe}");
+
+            if (!File.Exists(mariadbAdminExe))
+            {
+                AppendLog("mariadb-admin.exe not found; falling back to process kill.");
+                _mariaDbProcess.Kill(true);
+                return;
+            }
+
+            var shutdown = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = mariadbAdminExe,
+                    Arguments = "-h 127.0.0.1 -P 3308 -u orchid_shutdown -porchid_shutdown shutdown",
+                    WorkingDirectory = baseDir,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true
+                }
+            };
+
+            AppendLog("Requesting MariaDB shutdown...");
+            SetLauncherStatus(LauncherStatus.Red);
+
+            shutdown.Start();
+
+            var stdout = shutdown.StandardOutput.ReadToEnd();
+            var stderr = shutdown.StandardError.ReadToEnd();
+
+            shutdown.WaitForExit(10000);
+
+            if (!string.IsNullOrWhiteSpace(stdout))
+                AppendLog("mariadb-admin OUT: " + stdout.Trim());
+
+            if (!string.IsNullOrWhiteSpace(stderr))
+                AppendLog("mariadb-admin ERR: " + stderr.Trim());
+
+            AppendLog($"mariadb-admin ExitCode={shutdown.ExitCode}");
+
+            if (shutdown.ExitCode != 0)
+            {
+                AppendLog("MariaDB shutdown command failed; falling back to process kill.");
+                _mariaDbProcess.Kill(true);
+                return;
+            }
+
+            AppendLog("Waiting for MariaDB process to exit...");
+
+            if (!_mariaDbProcess.WaitForExit(30000))
+            {
+                AppendLog("MariaDB did not stop gracefully within 30 seconds; killing process.");
+                _mariaDbProcess.Kill(true);
+                return;
+            }
+
+            AppendLog("MariaDB stopped gracefully.");
+        }
+        catch (Exception ex)
+        {
+            AppendLog("MariaDB shutdown error: " + ex.Message);
+
+            try
+            {
+                if (_mariaDbProcess != null && !_mariaDbProcess.HasExited)
+                    _mariaDbProcess.Kill(true);
+            }
+            catch
+            {
+                // ignore cleanup errors
+            }
         }
     }
 
@@ -306,167 +520,6 @@ public partial class OrchidAppLauncherForm : Form
         _ = RunAutomaticBackupIfDueAsync();
     }
 
-    private void OpenOrchidAppInBrowser()
-    {
-        Process.Start(new ProcessStartInfo
-        {
-            FileName = "http://localhost:5285",
-            UseShellExecute = true
-        });
-    }
-
-    private void ConfigureCloudBackupButton_Click(object? sender, EventArgs e)
-    {
-        var settingsService = new LauncherSettingsService();
-        var settings = settingsService.Load();
-
-        using var dialog = new FolderBrowserDialog
-        {
-            Description = "Choose a folder synced by OneDrive, Google Drive, iCloud Drive or another cloud provider.",
-            ShowNewFolderButton = true
-        };
-
-        if (!string.IsNullOrWhiteSpace(settings.CloudBackupFolderPath) &&
-            Directory.Exists(settings.CloudBackupFolderPath))
-        {
-            dialog.SelectedPath = settings.CloudBackupFolderPath;
-        }
-
-        if (dialog.ShowDialog(this) != DialogResult.OK)
-        {
-            AppendLog("Cloud backup folder configuration cancelled.");
-            return;
-        }
-
-        if (!settingsService.TryValidateCloudBackupFolder(
-                dialog.SelectedPath,
-                out var validationMessage))
-        {
-            MessageBox.Show(
-                this,
-                validationMessage,
-                "Cloud backup folder",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Warning);
-
-            return;
-        }
-
-        settings.CloudBackupFolderPath = dialog.SelectedPath;
-        settingsService.Save(settings);
-
-        AppendLog($"Cloud backup folder configured: {settings.CloudBackupFolderPath}");
-
-        MessageBox.Show(
-            this,
-            "Cloud backup folder saved.",
-            "Cloud backup folder",
-            MessageBoxButtons.OK,
-            MessageBoxIcon.Information);
-    }
-
-    private void StartMariaDb()
-    {
-        var baseDir = AppContext.BaseDirectory;
-
-        var mariaDbExe = Path.Combine(
-            baseDir,
-            "runtime",
-            "mariadb",
-            "win-x64",
-            "bin",
-            "mariadbd.exe"
-        );
-
-        var dataDir = Path.Combine(
-            baseDir,
-            "data",
-            "mariadb"
-        );
-
-        AppendLog($"MariaDB EXE: {mariaDbExe}");
-        AppendLog($"MariaDB DataDir: {dataDir}");
-
-        var process = new Process
-        {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = mariaDbExe,
-                Arguments =
-                    $"--datadir=\"{dataDir}\" " +
-                    $"--port=3308 " +
-                    $"--bind-address=127.0.0.1 " +
-                    $"--console",
-                WorkingDirectory = baseDir,
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                CreateNoWindow = true
-            }
-        };
-
-        process.EnableRaisingEvents = true;
-
-        process.Exited += (s, e) =>
-        {
-            AppendLog($"MariaDB exited. ExitCode={process.ExitCode}");
-        };
-
-        process.OutputDataReceived += (s, e) =>
-        {
-            if (e.Data != null)
-                AppendLog("DB: " + e.Data);
-        };
-
-        process.ErrorDataReceived += (s, e) =>
-        {
-            if (e.Data != null)
-                AppendLog("DB ERR: " + e.Data);
-        };
-
-        process.Start();
-
-        process.BeginOutputReadLine();
-        process.BeginErrorReadLine();
-
-        _mariaDbProcess = process;
-    }
-
-    private async Task WaitForMariaDbAsync(
-        string connectionString,
-        int timeoutSeconds = 30)
-    {
-        var start = DateTime.UtcNow;
-
-        while (DateTime.UtcNow - start < TimeSpan.FromSeconds(timeoutSeconds))
-        {
-            try
-            {
-                using var conn = new MySqlConnection(connectionString);
-
-                await conn.OpenAsync();
-
-                AppendLog("MariaDB is ready.");
-
-                return;
-            }
-            catch (Exception ex)
-            {
-                AppendLog("MariaDB wait: " + ex.Message);
-
-                if (_mariaDbProcess != null && _mariaDbProcess.HasExited)
-                {
-                    throw new Exception(
-                        $"MariaDB process exited early. ExitCode={_mariaDbProcess.ExitCode}");
-                }
-
-                await Task.Delay(1000);
-            }
-        }
-
-        throw new Exception("MariaDB did not start in time.");
-    }
-
     private async Task WaitForWebAppAsync(
         string url,
         int timeoutSeconds = 600)
@@ -512,162 +565,6 @@ public partial class OrchidAppLauncherForm : Form
             $"Web app did not start in time after {timeoutSeconds} seconds.");
     }
 
-    private void AppendLog(string text)
-    {
-        if (InvokeRequired)
-        {
-            BeginInvoke(new Action<string>(AppendLog), text);
-            return;
-        }
-
-        var line = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {text}";
-
-        lock (_logLock)
-        {
-            try
-            {
-                using var stream = new FileStream(
-                    _logFilePath,
-                    FileMode.Append,
-                    FileAccess.Write,
-                    FileShare.ReadWrite);
-
-                using var writer = new StreamWriter(stream);
-                writer.WriteLine(line);
-            }
-            catch
-            {
-                // ignore file logging errors
-            }
-
-            logBox.AppendText(line + Environment.NewLine);
-        }
-    }
-
-    private void SetWindowTitle(string status)
-    {
-        if (InvokeRequired)
-        {
-            BeginInvoke(new Action<string>(SetWindowTitle), status);
-            return;
-        }
-
-        Text = $"OrchidApp Launcher - {status}";
-    }
-
-    private void SetLauncherStatus(LauncherStatus status)
-    {
-        if (InvokeRequired)
-        {
-            BeginInvoke(new Action<LauncherStatus>(SetLauncherStatus), status);
-            return;
-        }
-
-        statusLight.BackColor = status switch
-        {
-            LauncherStatus.Red => Color.Firebrick,
-            LauncherStatus.Amber => Color.Goldenrod,
-            LauncherStatus.Green => Color.ForestGreen,
-            _ => Color.Firebrick
-        };
-    }
-
-    private void StopMariaDbGracefully()
-    {
-        try
-        {
-            if (_mariaDbProcess == null || _mariaDbProcess.HasExited)
-            {
-                AppendLog("MariaDB is not running.");
-                return;
-            }
-
-            var baseDir = AppContext.BaseDirectory;
-
-            var mariadbAdminExe = Path.Combine(
-                baseDir,
-                "runtime",
-                "mariadb",
-                "win-x64",
-                "bin",
-                "mariadb-admin.exe"
-            );
-
-            AppendLog($"MariaDB shutdown tool: {mariadbAdminExe}");
-
-            if (!File.Exists(mariadbAdminExe))
-            {
-                AppendLog("mariadb-admin.exe not found; falling back to process kill.");
-                _mariaDbProcess.Kill(true);
-                return;
-            }
-
-            var shutdown = new Process
-            {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = mariadbAdminExe,
-                    Arguments = "-h 127.0.0.1 -P 3308 -u orchid_shutdown -porchid_shutdown shutdown",
-                    WorkingDirectory = baseDir,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true
-                }
-            };
-
-            AppendLog("Requesting MariaDB shutdown...");
-            SetLauncherStatus(LauncherStatus.Red);
-
-            shutdown.Start();
-
-            var stdout = shutdown.StandardOutput.ReadToEnd();
-            var stderr = shutdown.StandardError.ReadToEnd();
-
-            shutdown.WaitForExit(10000);
-
-            if (!string.IsNullOrWhiteSpace(stdout))
-                AppendLog("mariadb-admin OUT: " + stdout.Trim());
-
-            if (!string.IsNullOrWhiteSpace(stderr))
-                AppendLog("mariadb-admin ERR: " + stderr.Trim());
-
-            AppendLog($"mariadb-admin ExitCode={shutdown.ExitCode}");
-
-            if (shutdown.ExitCode != 0)
-            {
-                AppendLog("MariaDB shutdown command failed; falling back to process kill.");
-                _mariaDbProcess.Kill(true);
-                return;
-            }
-
-            AppendLog("Waiting for MariaDB process to exit...");
-
-            if (!_mariaDbProcess.WaitForExit(30000))
-            {
-                AppendLog("MariaDB did not stop gracefully within 30 seconds; killing process.");
-                _mariaDbProcess.Kill(true);
-                return;
-            }
-
-            AppendLog("MariaDB stopped gracefully.");
-        }
-        catch (Exception ex)
-        {
-            AppendLog("MariaDB shutdown error: " + ex.Message);
-
-            try
-            {
-                if (_mariaDbProcess != null && !_mariaDbProcess.HasExited)
-                    _mariaDbProcess.Kill(true);
-            }
-            catch
-            {
-                // ignore cleanup errors
-            }
-        }
-    }
-
     private async Task StopWebAppForRestoreAsync()
     {
         if (_webAppProcess == null || _webAppProcess.HasExited)
@@ -692,89 +589,6 @@ public partial class OrchidAppLauncherForm : Form
             AppendLog("Web app did not stop within 10 seconds.");
             throw;
         }
-    }
-
-    private FileInfo? GetLatestBackupFile()
-    {
-        var backupsDir = Path.Combine(
-            AppContext.BaseDirectory,
-            "backups"
-        );
-
-        if (!Directory.Exists(backupsDir))
-        {
-            return null;
-        }
-
-        return new DirectoryInfo(backupsDir)
-            .GetFiles("OrchidAppBackup_*.zip")
-            .OrderByDescending(file => file.LastWriteTimeUtc)
-            .FirstOrDefault();
-    }
-
-    private void CopyLatestBackupToCloudFolder()
-    {
-        var settingsService = new LauncherSettingsService();
-        var settings = settingsService.Load();
-
-        if (string.IsNullOrWhiteSpace(settings.CloudBackupFolderPath))
-        {
-            AppendLog("Cloud backup folder is not configured. Skipping cloud backup copy.");
-            return;
-        }
-
-        if (!settingsService.TryValidateCloudBackupFolder(
-                settings.CloudBackupFolderPath,
-                out var validationMessage))
-        {
-            AppendLog("Cloud backup copy skipped: " + validationMessage);
-            return;
-        }
-
-        var latestBackup = GetLatestBackupFile();
-
-        if (latestBackup == null)
-        {
-            AppendLog("Cloud backup copy skipped: no local backup file found.");
-            return;
-        }
-
-        var cloudBackupPath = Path.Combine(
-            settings.CloudBackupFolderPath,
-            CloudBackupFileName);
-
-        try
-        {
-            File.Copy(
-                latestBackup.FullName,
-                cloudBackupPath,
-                overwrite: true);
-
-            AppendLog($"Cloud backup copy completed: {cloudBackupPath}");
-        }
-        catch (Exception ex)
-        {
-            AppendLog("Cloud backup copy failed: " + ex.Message);
-        }
-    }
-
-    private bool IsAutomaticBackupDue()
-    {
-        var latestBackup = GetLatestBackupFile();
-
-        if (latestBackup == null)
-        {
-            AppendLog("No previous backup found.");
-            return true;
-        }
-
-        var backupAge = DateTime.UtcNow - latestBackup.LastWriteTimeUtc;
-
-        AppendLog(
-            $"Latest backup: {latestBackup.Name}, age: {backupAge.TotalHours:N1} hours."
-        );
-
-        return backupAge > AutomaticBackupAgeThreshold;
     }
 
     private async Task RunAutomaticBackupIfDueAsync()
@@ -1050,6 +864,226 @@ public partial class OrchidAppLauncherForm : Form
                 restoreButton.Enabled = true;
             }
         }
+    }
+
+    private FileInfo? GetLatestBackupFile()
+    {
+        var backupsDir = Path.Combine(
+            AppContext.BaseDirectory,
+            "backups"
+        );
+
+        if (!Directory.Exists(backupsDir))
+        {
+            return null;
+        }
+
+        return new DirectoryInfo(backupsDir)
+            .GetFiles("OrchidAppBackup_*.zip")
+            .OrderByDescending(file => file.LastWriteTimeUtc)
+            .FirstOrDefault();
+    }
+
+    private void CopyLatestBackupToCloudFolder()
+    {
+        var settingsService = new LauncherSettingsService();
+        var settings = settingsService.Load();
+
+        if (string.IsNullOrWhiteSpace(settings.CloudBackupFolderPath))
+        {
+            AppendLog("Cloud backup folder is not configured. Skipping cloud backup copy.");
+            return;
+        }
+
+        if (!settingsService.TryValidateCloudBackupFolder(
+                settings.CloudBackupFolderPath,
+                out var validationMessage))
+        {
+            AppendLog("Cloud backup copy skipped: " + validationMessage);
+            return;
+        }
+
+        var latestBackup = GetLatestBackupFile();
+
+        if (latestBackup == null)
+        {
+            AppendLog("Cloud backup copy skipped: no local backup file found.");
+            return;
+        }
+
+        var cloudBackupPath = Path.Combine(
+            settings.CloudBackupFolderPath,
+            CloudBackupFileName);
+
+        try
+        {
+            File.Copy(
+                latestBackup.FullName,
+                cloudBackupPath,
+                overwrite: true);
+
+            AppendLog($"Cloud backup copy completed: {cloudBackupPath}");
+        }
+        catch (Exception ex)
+        {
+            AppendLog("Cloud backup copy failed: " + ex.Message);
+        }
+    }
+
+    private bool IsAutomaticBackupDue()
+    {
+        var latestBackup = GetLatestBackupFile();
+
+        if (latestBackup == null)
+        {
+            AppendLog("No previous backup found.");
+            return true;
+        }
+
+        var backupAge = DateTime.UtcNow - latestBackup.LastWriteTimeUtc;
+
+        AppendLog(
+            $"Latest backup: {latestBackup.Name}, age: {backupAge.TotalHours:N1} hours."
+        );
+
+        return backupAge > AutomaticBackupAgeThreshold;
+    }
+
+    private void ConfigureCloudBackupButton_Click(object? sender, EventArgs e)
+    {
+        var settingsService = new LauncherSettingsService();
+        var settings = settingsService.Load();
+
+        using var dialog = new FolderBrowserDialog
+        {
+            Description = "Choose a folder synced by OneDrive, Google Drive, iCloud Drive or another cloud provider.",
+            ShowNewFolderButton = true
+        };
+
+        if (!string.IsNullOrWhiteSpace(settings.CloudBackupFolderPath) &&
+            Directory.Exists(settings.CloudBackupFolderPath))
+        {
+            dialog.SelectedPath = settings.CloudBackupFolderPath;
+        }
+
+        if (dialog.ShowDialog(this) != DialogResult.OK)
+        {
+            AppendLog("Cloud backup folder configuration cancelled.");
+            return;
+        }
+
+        if (!settingsService.TryValidateCloudBackupFolder(
+                dialog.SelectedPath,
+                out var validationMessage))
+        {
+            MessageBox.Show(
+                this,
+                validationMessage,
+                "Cloud backup folder",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+
+            return;
+        }
+
+        settings.CloudBackupFolderPath = dialog.SelectedPath;
+        settingsService.Save(settings);
+
+        AppendLog($"Cloud backup folder configured: {settings.CloudBackupFolderPath}");
+
+        MessageBox.Show(
+            this,
+            "Cloud backup folder saved.",
+            "Cloud backup folder",
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Information);
+    }
+
+    private void OpenOrchidAppInBrowser()
+    {
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = "http://localhost:5285",
+            UseShellExecute = true
+        });
+    }
+
+    private void LogLayoutState(OrchidAppLayoutState layout)
+    {
+        AppendLog("Windows layout detection:");
+        AppendLog($"  Status: {layout.Status}");
+        AppendLog($"  Old layout exists: {layout.OldLayoutExists}");
+        AppendLog($"  New layout exists: {layout.NewLayoutExists}");
+        AppendLog($"  App root: {layout.AppRoot}");
+        AppendLog($"  ProgramData root: {layout.ProgramDataRoot}");
+        AppendLog($"  Old MariaDB data: {layout.OldMariaDbDataPath}");
+        AppendLog($"  New MariaDB data: {layout.NewMariaDbDataPath}");
+        AppendLog($"  Old uploads: {layout.OldUploadsPath}");
+        AppendLog($"  New uploads: {layout.NewUploadsPath}");
+        AppendLog($"  Old settings: {layout.OldLauncherSettingsPath}");
+        AppendLog($"  New settings: {layout.NewLauncherSettingsPath}");
+        AppendLog($"  New backups: {layout.NewBackupsPath}");
+        AppendLog($"  New logs: {layout.NewLogsPath}");
+    }
+
+    private void AppendLog(string text)
+    {
+        if (InvokeRequired)
+        {
+            BeginInvoke(new Action<string>(AppendLog), text);
+            return;
+        }
+
+        var line = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {text}";
+
+        lock (_logLock)
+        {
+            try
+            {
+                using var stream = new FileStream(
+                    _logFilePath,
+                    FileMode.Append,
+                    FileAccess.Write,
+                    FileShare.ReadWrite);
+
+                using var writer = new StreamWriter(stream);
+                writer.WriteLine(line);
+            }
+            catch
+            {
+                // ignore file logging errors
+            }
+
+            logBox.AppendText(line + Environment.NewLine);
+        }
+    }
+
+    private void SetWindowTitle(string status)
+    {
+        if (InvokeRequired)
+        {
+            BeginInvoke(new Action<string>(SetWindowTitle), status);
+            return;
+        }
+
+        Text = $"OrchidApp Launcher - {status}";
+    }
+
+    private void SetLauncherStatus(LauncherStatus status)
+    {
+        if (InvokeRequired)
+        {
+            BeginInvoke(new Action<LauncherStatus>(SetLauncherStatus), status);
+            return;
+        }
+
+        statusLight.BackColor = status switch
+        {
+            LauncherStatus.Red => Color.Firebrick,
+            LauncherStatus.Amber => Color.Goldenrod,
+            LauncherStatus.Green => Color.ForestGreen,
+            _ => Color.Firebrick
+        };
     }
 
     protected override void OnFormClosing(FormClosingEventArgs e)
