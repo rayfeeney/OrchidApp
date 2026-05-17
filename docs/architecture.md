@@ -1,5 +1,43 @@
 # Architecture
 
+- [Architecture](#architecture)
+- [Architectural Summary](#architectural-summary)
+  - [Environment Configuration Requirement](#environment-configuration-requirement)
+  - [Application Health Requirement](#application-health-requirement)
+  - [Logging Requirement](#logging-requirement)
+  - [Security Model](#security-model)
+- [1. Database Layer - Invariant Core](#1-database-layer---invariant-core)
+    - [Authoritative Environment](#authoritative-environment)
+- [2. Migration System - Controlled Evolution](#2-migration-system---controlled-evolution)
+    - [Critical Rule - Database Creation vs Evolution](#critical-rule---database-creation-vs-evolution)
+    - [Critical Design Constraint](#critical-design-constraint)
+- [3. Schema Export - Deterministic Representation](#3-schema-export---deterministic-representation)
+- [4. Temporal Model - Contractual Behaviour](#4-temporal-model---contractual-behaviour)
+- [5. Lifecycle Model - Structural Rules](#5-lifecycle-model---structural-rules)
+  - [Split Semantics](#split-semantics)
+  - [Propagation Semantics](#propagation-semantics)
+  - [Location History](#location-history)
+- [6. Photo \& Hero Image Model](#6-photo--hero-image-model)
+- [6A. Canonical Photo Ingestion Architecture](#6a-canonical-photo-ingestion-architecture)
+    - [Processing Model](#processing-model)
+    - [Canonical Output](#canonical-output)
+    - [Operational Model](#operational-model)
+- [7. Write Strategy - Responsibility Separation](#7-write-strategy---responsibility-separation)
+  - [Atomic Entities](#atomic-entities)
+  - [Structural Entities](#structural-entities)
+- [8. Application Layer - Behavioural Orchestration](#8-application-layer---behavioural-orchestration)
+- [9. UI Architecture - Navigation Contract](#9-ui-architecture---navigation-contract)
+- [10. Runtime Hosting Requirement](#10-runtime-hosting-requirement)
+  - [10A. Packaged Application Model](#10a-packaged-application-model)
+- [11. Automation Layer - Enforcement Mechanism](#11-automation-layer---enforcement-mechanism)
+- [12. Operations Layer - State Protection](#12-operations-layer---state-protection)
+  - [Upgrade Safety Requirement](#upgrade-safety-requirement)
+- [13. User Documentation Requirement](#13-user-documentation-requirement)
+- [14. Non-Goals](#14-non-goals)
+- [Final Principle](#final-principle)
+
+---
+
 This document defines the **architectural contract** of OrchidApp.
 
 It specifies the structural boundaries, invariants, enforcement
@@ -57,7 +95,7 @@ A valid deployment must ensure:
 * Critical dependencies required for core functionality are checked
 * Startup must fail if required components are unavailable
 
-The application must provide a simple health endpoint or equivalent mechanism.
+The application should expose a simple health endpoint or equivalent mechanism where the hosting model supports it.
 
 ---
 
@@ -349,12 +387,38 @@ Navigation is enforced through shared components.
 
 # 10. Runtime Hosting Requirement
 
-The application must:
+Runtime hosting depends on deployment model.
+
+For Raspberry Pi/Linux deployments, the application must:
 
 * Run continuously
 * Start on boot
 * Be network accessible
 * Restart automatically on failure
+
+For packaged desktop deployments, the application must:
+
+* Start predictably through the launcher
+* Validate required local dependencies
+* Preserve local user data between runs
+* Fail clearly if the database or required paths are unavailable
+
+## 10A. Packaged Application Model
+
+OrchidApp also supports a packaged Windows deployment model.
+
+In this model:
+
+* Application files are replaceable
+* User data is persistent
+* Database files and uploaded images are canonical state
+* Local launcher/application settings are runtime configuration
+* Upgrades must preserve user data
+* Upgrade workflows must take or require a backup before structural or destructive changes
+
+The packaged app model must be designed so it can evolve towards an installer-based distribution without changing the core state model.
+
+Application binaries, runtime files and generated package contents must never be treated as equivalent to user data.
 
 ---
 
@@ -381,7 +445,9 @@ Migration correctness is validated through:
 * Checksum enforcement
 * Controlled upgrade testing
 
-Local validation must mirror CI exactly.
+GitHub CI is the authoritative automated validation environment.
+
+Local validation scripts may exist for developer convenience, but they are not currently part of the architectural enforcement contract unless explicitly documented as maintained and equivalent to CI.
 
 ---
 
@@ -391,20 +457,56 @@ Stateful components:
 
 * MariaDB database
 * Uploads directory
+* Runtime user settings required for backup/location behaviour
 
-The system includes:
+Application binaries, package files and generated release contents are not canonical state.
 
-* Encrypted backups
-* Retention policy
-* Restore validation
+The backup model differs by deployment type.
+
+Raspberry Pi/Linux deployments support encrypted scheduled backups and upload mirroring.
+
+Windows packaged deployments support local backup creation and optional copy of the latest backup to a user-configured cloud-synchronised folder.
+
+In all deployment models:
+
+* Database state must be backed up
+* Uploaded images must be backed up
+* Restore must be documented and tested
+* Backup success must be logged or visible
+* Backup failure must not be silent
 
 **Backup execution, monitoring and validation are the responsibility of the deployment operator.**
 
 Backups are only valid if restores succeed.
 
+## Upgrade Safety Requirement
+
+All upgrade paths must protect user data.
+
+A valid upgrade must ensure:
+
+* A backup exists or is created before upgrade actions begin
+* Existing database state is evolved through migrations only
+* Uploaded images are preserved
+* Application files may be replaced
+* User data must not be deleted, overwritten or silently moved without version-aware handling
+* Failure during upgrade must leave a recoverable path
+
+Upgrade safety is part of the operational contract.
+
 ---
 
-# 13. Non-Goals
+# 13. User Documentation Requirement
+
+User-facing workflows must be documented when they affect installation, backup, restore, upgrade, privacy, support or data ownership.
+
+Documentation is part of the operational contract.
+
+A feature that changes how users install, protect or recover their data is incomplete until the relevant user documentation is updated.
+
+---
+
+# 14. Non-Goals
 
 The system does not aim to:
 

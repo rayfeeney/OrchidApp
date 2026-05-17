@@ -1,8 +1,33 @@
 # Contributing to OrchidApp
 
+- [Contributing to OrchidApp](#contributing-to-orchidapp)
+  - [Architectural Authority](#architectural-authority)
+  - [Core Principles](#core-principles)
+  - [Mandatory Setup](#mandatory-setup)
+  - [Contribution Types](#contribution-types)
+    - [1. Database Structural Changes](#1-database-structural-changes)
+    - [2. Schema Export Generated Artefacts](#2-schema-export-generated-artefacts)
+    - [3. Lifecycle and Structural Writes](#3-lifecycle-and-structural-writes)
+    - [4. Stored Procedure Invocation Contract](#4-stored-procedure-invocation-contract)
+    - [5. Application Layer Changes](#5-application-layer-changes)
+    - [6. Temporal Behaviour](#6-temporal-behaviour)
+    - [7. UI and Navigation Contract](#7-ui-and-navigation-contract)
+    - [8. Packaged App and Upgrade Safety](#8-packaged-app-and-upgrade-safety)
+    - [9. Backup and Restore Behaviour](#9-backup-and-restore-behaviour)
+    - [10. User Documentation](#10-user-documentation)
+  - [Commits and Hooks](#commits-and-hooks)
+  - [Database-Only Changes](#database-only-changes)
+  - [GitHub CI Validation](#github-ci-validation)
+  - [Pull Requests](#pull-requests)
+  - [Operational Awareness](#operational-awareness)
+  - [Not Permitted](#not-permitted)
+  - [Architectural Reminder](#architectural-reminder)
+
+---
+
 OrchidApp is a production-grade system governed by a strict architectural contract.
 
-Automation is not advisory.
+Automation is not advisory.  
 It is enforcement.
 
 All contributions must preserve:
@@ -13,6 +38,9 @@ All contributions must preserve:
 * Temporal correctness
 * Operational safety
 * Backup validity
+* Restore validity
+* Upgrade safety
+* User data preservation
 * CI determinism
 
 If a change weakens any of these, it will be rejected.
@@ -27,21 +55,23 @@ The system is governed by:
 docs/architecture.md
 ```
 
-This document defines all non-negotiable rules.
+This document defines the non-negotiable rules for the project.
 
-Contributions must not reinterpret, duplicate, or weaken these rules.
+Contributions must not reinterpret, duplicate or weaken these rules.
 
 ---
 
 ## Core Principles
 
-All contributions must adhere to:
+All contributions must adhere to these principles:
 
 1. **Database invariants are authoritative**
 2. **Migrations control structural change**
 3. **Generated artefacts are never edited manually**
 4. **Local validation must mirror CI**
 5. **Production behaviour must be reproducible**
+6. **User data must survive upgrades**
+7. **Backups and restores are part of the system contract**
 
 ---
 
@@ -49,7 +79,7 @@ All contributions must adhere to:
 
 After cloning the repository:
 
-```bash id="2k9vft"
+```powershell
 pwsh scripts/setup.ps1
 ```
 
@@ -67,31 +97,33 @@ Commits made without setup are invalid and will fail CI.
 
 ---
 
-### 1. Database (Structural) Changes
+### 1. Database Structural Changes
 
-Structural changes must:
-
-* Be implemented via migration files in:
+Structural changes must be implemented via migration files in:
 
 ```text
 database/migrations/
 ```
 
-* Follow naming format `YYYYMMDDHHMM_Name.sql`
+Migration files must:
+
+* Follow the naming format `YYYYMMDDHHMM_Name.sql`
 * Be applied exactly once
 * Never modify historical migrations
+* Preserve existing user data unless an intentional, documented migration says otherwise
 
 The system enforces:
 
 * SHA256 checksum validation
 * Ordering constraints
-* Drift detection prior to execution
+* Duplicate timestamp prevention
+* Drift detection before execution
 
 Direct modification of any live database is prohibited.
 
 ---
 
-### 2. Schema Export (Generated Artefacts)
+### 2. Schema Export Generated Artefacts
 
 Files under:
 
@@ -105,33 +137,41 @@ They:
 
 * Must never be edited manually
 * Are regenerated during pre-commit
-* Are validated in CI
+* Are validated locally and in CI
 
 If you need to change the schema:
 
-> Create a migration - do not edit generated SQL.
+> Create a migration. Do not edit generated SQL.
 
 ---
 
-### 3. Lifecycle & Structural Writes
+### 3. Lifecycle and Structural Writes
 
 Structural domains enforce lifecycle invariants and must be written via stored procedures.
 
-Examples:
+Examples include:
 
 * `plantlocationhistory`
 * `plantsplit`
 * propagation records
+* structural taxonomy lifecycle changes
 
 Rules:
 
 * EF Core must not bypass structural invariants
 * Stored procedures must enforce all lifecycle rules
 * Invalid transitions must fail atomically
+* Structural changes must remain transactionally safe
 
-Atomic entities (e.g. `plantevent`) may be written via EF Core.
+Atomic entities may be written via EF Core where this is already part of the project design.
 
-If unsure, default to stored procedures.
+Examples include:
+
+* Observations
+* Repotting events
+* Flowering events
+
+If unsure, default to stored procedures and discuss the design before implementation.
 
 ---
 
@@ -139,36 +179,40 @@ If unsure, default to stored procedures.
 
 Stored procedures must be invoked using project-standard patterns.
 
-**Command procedures (no result set):**
+Command procedures with no result set:
 
-```csharp id="b2gx3f"
-Database.ExecuteSqlRawAsync(...)
+```csharp
+await Database.ExecuteSqlRawAsync(...);
 ```
 
-**Result-set procedures:**
+Result-set procedures:
 
-```csharp id="3l6dbb"
-DbSet<TEntity>.FromSqlRaw(...).ToListAsync()
+```csharp
+await DbSet<TEntity>
+    .FromSqlRaw(...)
+    .ToListAsync();
 ```
 
 Rules:
 
 * All calls must be asynchronous
-* Manual ADO.NET commands are not permitted
-* Interpolated execution patterns are not permitted
-* Try/catch is used only to translate database errors
+* Manual ADO.NET commands are not permitted in PageModels
+* Interpolated SQL execution patterns are not permitted
+* Try/catch is used only to translate database errors into user-facing validation messages
+* Database behaviour remains authoritative
 
-Database behaviour remains authoritative.
+Exceptional output-parameter scenarios must use central infrastructure helpers only.
 
 ---
 
 ### 5. Application Layer Changes
 
-The application:
+The application layer:
 
 * Orchestrates workflows
+* Presents validation and error messages
 * Must treat the database as authoritative
-* Must not duplicate constraints
+* Must not duplicate structural constraints as an alternative to database enforcement
 * Must not override lifecycle rules
 * Must not reinterpret temporal behaviour
 
@@ -176,20 +220,104 @@ Application convenience must never override correctness.
 
 ---
 
-### 6. UI Navigation Contract
+### 6. Temporal Behaviour
 
-UI behaviour must comply with the architectural contract.
+Temporal behaviour is part of the system contract.
 
-* Use shared components under `/Pages/Shared/`
-* Do not duplicate button layouts
-* Use the `returnUrl` pattern
-* Follow defined page types and navigation rules
+Contributions must respect:
 
-UI consistency is an architectural constraint.
+* Date-only user input where established
+* Database `DATETIME` storage for ordering
+* System-assigned time components
+* Insertion-stable same-day ordering
+* Stored procedure ownership of structural temporal boundaries
+
+Do not introduce new temporal semantics without updating the formal temporal design documentation.
+
+See:
+
+```text
+docs/temporal-design.md
+```
 
 ---
 
-## Commits & Hooks
+### 7. UI and Navigation Contract
+
+UI behaviour must comply with the established project patterns.
+
+Rules:
+
+* Use shared components under `/Pages/Shared/` where appropriate
+* Do not duplicate button layouts unnecessarily
+* Use the `returnUrl` pattern where navigation context matters
+* Follow established mobile-first page patterns
+* Keep operational UI terminology user-friendly
+* Do not expose internal database terminology where user-facing labels already exist
+
+UI consistency is part of the product contract.
+
+---
+
+### 8. Packaged App and Upgrade Safety
+
+The Windows packaged app is now part of the project’s supported delivery model.
+
+Changes affecting packaging, startup, launcher behaviour, local settings, bundled components or data folders must preserve upgrade safety.
+
+Rules:
+
+* User data must not be deleted during package replacement or upgrade
+* Database files and uploaded images must be treated as persistent state
+* Application files must be treated as replaceable
+* Upgrade workflows should take or require a backup before making destructive or structural changes
+* Data-folder moves must be version-aware and documented
+* Failure during upgrade must not leave the user without a recoverable path
+
+Any change that affects packaged layout must consider future installer-based distribution.
+
+---
+
+### 9. Backup and Restore Behaviour
+
+Backup and restore are part of the system contract.
+
+Changes affecting any of the following must include corresponding validation and documentation updates:
+
+* Backup creation
+* Backup location selection
+* Cloud-folder copy behaviour
+* Restore process
+* Upload preservation
+* Database restore
+* Packaged app data layout
+
+Backups are only valid if restore succeeds.
+
+A backup feature that cannot be restored is not complete.
+
+---
+
+### 10. User Documentation
+
+User-facing behaviour changes must update user-facing documentation where relevant.
+
+This includes changes to:
+
+* Installation
+* Upgrade
+* Backup configuration
+* Disaster recovery
+* About page information
+* Privacy statement
+* Support instructions
+* Release assets and packaged documents
+
+Developer-facing correctness is not enough if the user workflow changes.
+
+---
+
+## Commits and Hooks
 
 Pre-commit hooks are enforced.
 
@@ -199,7 +327,7 @@ They:
 * Stage generated artefacts
 * Fail on validation errors
 
-Bypassing hooks (`--no-verify`) is not permitted.
+Bypassing hooks with `--no-verify` is not permitted.
 
 ---
 
@@ -207,61 +335,72 @@ Bypassing hooks (`--no-verify`) is not permitted.
 
 If changes are database-only:
 
-```bash id="3v2cxo"
+```bash
 git commit --allow-empty
 ```
 
-This triggers schema export via the pre-commit hook.
+This triggers schema export through the pre-commit hook.
 
-Do not manually stage generated files.
+Do not manually stage generated schema files.
 
 ---
 
-## Local CI Validation
+## GitHub CI Validation
 
-Before opening a pull request:
+GitHub CI is the authoritative automated validation environment.
 
-```bash id="t63s71"
-pwsh scripts/ci-local.ps1
-```
+All pull requests must pass GitHub CI before merge.
 
-This:
+CI validates:
 
-* Spins up a clean MariaDB instance
-* Rebuilds schema from committed artefacts
-* Detects drift and ordering issues
+* Application build behaviour
+* Database schema consistency
+* Migration ordering
+* Migration checksum integrity
+* Generated artefact consistency
+* Packaging or release checks where applicable
 
-If it fails locally, it will fail in CI.
+A change is not considered valid until CI passes.
+
+Local scripts may be used for developer convenience, but they are not currently the authoritative validation mechanism.
 
 ---
 
 ## Pull Requests
 
-Each PR must clearly state its scope:
+Each pull request must clearly state its scope:
 
 * Database-focused
 * Application-focused
-* Cross-cutting
+* UI-focused
+* Packaging-focused
+* Documentation-focused
 * Operational
+* Cross-cutting
 
-Structural changes receive heightened scrutiny.
+Structural, packaging, backup and restore changes receive heightened scrutiny.
 
-PRs that weaken invariants or bypass enforcement will be rejected.
+Pull requests that weaken invariants, bypass enforcement or risk user data loss will be rejected.
 
 ---
 
 ## Operational Awareness
 
-Changes affecting:
+Changes affecting operational behaviour must include documentation and validation updates.
+
+This includes:
 
 * Migrations
 * Backup scripts
 * Restore procedures
 * Deployment behaviour
+* Windows packaging
+* Raspberry Pi deployment
+* Cloud-folder backup copy
+* Upgrade behaviour
+* Data-folder layout
 
-must include corresponding documentation updates.
-
-Backups are only valid if restore succeeds.
+Operational changes must be safe, repeatable and recoverable.
 
 ---
 
@@ -269,12 +408,17 @@ Backups are only valid if restore succeeds.
 
 The following are strictly disallowed:
 
-* Editing generated schema files
+* Editing generated schema files manually
 * Modifying historical migrations
 * Bypassing stored procedures for structural entities
 * Introducing undocumented manual steps
 * Applying schema changes directly to production
-* Weakening checksum or drift enforcement
+* Weakening checksum enforcement
+* Weakening drift enforcement
+* Removing backup or restore safeguards without replacement
+* Deleting or overwriting user data during upgrade
+* Treating packaged application files and user data as the same kind of state
+* Shipping user-facing workflow changes without updating documentation
 
 ---
 
@@ -287,6 +431,9 @@ It is optimised for:
 * Reproducibility
 * Determinism
 * Invariant safety
+* Upgrade safety
+* Restore confidence
 * Long-term maintainability
 
 If a workflow feels strict, that strictness is intentional.
+
