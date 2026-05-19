@@ -26,9 +26,128 @@ function Test-PortListening {
     return $null -ne $listener
 }
 
+function Get-OrchidAppVersion {
+    param(
+        [string]$DirectoryBuildPropsPath
+    )
+
+    if (-not (Test-Path $DirectoryBuildPropsPath)) {
+        return [pscustomobject]@{
+            ProductVersion = "1.1.0"
+            BuildVersion   = "1.1.0.0"
+            BuildNumber    = 0
+        }
+    }
+
+    [xml]$props = Get-Content $DirectoryBuildPropsPath
+
+    $fileVersion = $props.Project.PropertyGroup.FileVersion
+
+    if ([string]::IsNullOrWhiteSpace($fileVersion)) {
+        $fileVersion = "1.1.0.0"
+    }
+
+    $parts = $fileVersion.Split(".")
+
+    if ($parts.Count -ne 4) {
+        throw "Invalid FileVersion in Directory.Build.props: $fileVersion. Expected Major.Minor.Patch.Build."
+    }
+
+    return [pscustomobject]@{
+        ProductVersion = "$($parts[0]).$($parts[1]).$($parts[2])"
+        BuildVersion   = $fileVersion
+        BuildNumber    = [int]$parts[3]
+    }
+}
+
+function Set-OrchidAppVersion {
+    param(
+        [string]$DirectoryBuildPropsPath,
+        [string]$ProductVersion,
+        [int]$BuildNumber
+    )
+
+    if ($ProductVersion -notmatch '^\d+\.\d+\.\d+$') {
+        throw "Invalid product version: $ProductVersion. Expected Major.Minor.Patch, for example 1.2.0."
+    }
+
+    $buildVersion = "$ProductVersion.$BuildNumber"
+    $assemblyVersion = "$ProductVersion.0"
+    $informationalVersion = "$ProductVersion+build.$BuildNumber"
+
+    $content = @"
+<Project>
+  <PropertyGroup>
+    <!-- Public product version shown to users -->
+    <Version>$ProductVersion</Version>
+
+    <!-- Assembly identity version. Keep aligned with the public product version. -->
+    <AssemblyVersion>$assemblyVersion</AssemblyVersion>
+
+    <!-- Full internal packaged build version -->
+    <FileVersion>$buildVersion</FileVersion>
+
+    <!-- Public version plus internal build metadata -->
+    <InformationalVersion>$informationalVersion</InformationalVersion>
+  </PropertyGroup>
+</Project>
+"@
+
+    Set-Content `
+        -Path $DirectoryBuildPropsPath `
+        -Value $content `
+        -Encoding UTF8
+
+    return [pscustomobject]@{
+        ProductVersion        = $ProductVersion
+        AssemblyVersion       = $assemblyVersion
+        FileVersion           = $buildVersion
+        InformationalVersion  = $informationalVersion
+    }
+}
+
+function Update-OrchidAppVersionForPackaging {
+    param(
+        [string]$DirectoryBuildPropsPath
+    )
+
+    $currentVersion = Get-OrchidAppVersion -DirectoryBuildPropsPath $DirectoryBuildPropsPath
+
+    Write-Host ""
+    Write-Host "Current OrchidApp product version: $($currentVersion.ProductVersion)"
+    Write-Host "Current OrchidApp build version:   $($currentVersion.BuildVersion)"
+    Write-Host ""
+
+    $enteredProductVersion = Read-Host "Enter public product version, or press Enter to keep $($currentVersion.ProductVersion) and increment build"
+
+    if ([string]::IsNullOrWhiteSpace($enteredProductVersion)) {
+        $newProductVersion = $currentVersion.ProductVersion
+        $newBuildNumber = $currentVersion.BuildNumber + 1
+    }
+    else {
+        $newProductVersion = $enteredProductVersion.Trim()
+        $newBuildNumber = 0
+    }
+
+    $newVersion = Set-OrchidAppVersion `
+        -DirectoryBuildPropsPath $DirectoryBuildPropsPath `
+        -ProductVersion $newProductVersion `
+        -BuildNumber $newBuildNumber
+
+    Write-Host ""
+    Write-Host "Stamped OrchidApp version:"
+    Write-Host "  Product version:       $($newVersion.ProductVersion)"
+    Write-Host "  Assembly version:      $($newVersion.AssemblyVersion)"
+    Write-Host "  File version:          $($newVersion.FileVersion)"
+    Write-Host "  Informational version: $($newVersion.InformationalVersion)"
+
+    return $newVersion
+}
+
 # Resolve repo root from this script location.
     $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
     $RepoRoot = Resolve-Path (Join-Path $ScriptDir "..")
+    $DirectoryBuildProps = Join-Path $RepoRoot "Directory.Build.props"
 
     $DistRoot = Join-Path $RepoRoot "dist\windows\OrchidApp"
 
@@ -56,7 +175,14 @@ function Test-PortListening {
     $BackupScriptSource = Join-Path $ToolsSource "backup-orchidapp.ps1"
     $UserGuidesSource = Join-Path $RepoRoot "\docs\user-guides\windows"
     $UserGuidesDest = Join-Path $DistRoot "user-guides"
-    $ZipPath = Join-Path $RepoRoot "dist\windows\OrchidApp.zip"
+
+
+Write-Step "Stamping application version"
+
+    $AppVersion = Update-OrchidAppVersionForPackaging `
+        -DirectoryBuildPropsPath $DirectoryBuildProps
+
+    $ZipPath = Join-Path $RepoRoot "dist\windows\OrchidApp-v$($AppVersion.ProductVersion)-Windows-$Runtime.zip"
 
 Write-Step "Checking source paths"
 

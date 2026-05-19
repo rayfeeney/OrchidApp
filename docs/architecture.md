@@ -27,13 +27,14 @@
   - [Structural Entities](#structural-entities)
 - [8. Application Layer - Behavioural Orchestration](#8-application-layer---behavioural-orchestration)
 - [9. UI Architecture - Navigation Contract](#9-ui-architecture---navigation-contract)
-- [10. Runtime Hosting Requirement](#10-runtime-hosting-requirement)
-  - [10A. Packaged Application Model](#10a-packaged-application-model)
-- [11. Automation Layer - Enforcement Mechanism](#11-automation-layer---enforcement-mechanism)
-- [12. Operations Layer - State Protection](#12-operations-layer---state-protection)
+- [10. Versioning Contract](#10-versioning-contract)
+- [11. Runtime Hosting Requirement](#11-runtime-hosting-requirement)
+  - [11A. Packaged Application Model](#11a-packaged-application-model)
+- [12. Automation Layer - Enforcement Mechanism](#12-automation-layer---enforcement-mechanism)
+- [13. Operations Layer - State Protection](#13-operations-layer---state-protection)
   - [Upgrade Safety Requirement](#upgrade-safety-requirement)
-- [13. User Documentation Requirement](#13-user-documentation-requirement)
-- [14. Non-Goals](#14-non-goals)
+- [14. User Documentation Requirement](#14-user-documentation-requirement)
+- [15. Non-Goals](#15-non-goals)
 - [Final Principle](#final-principle)
 
 ---
@@ -385,7 +386,64 @@ Navigation is enforced through shared components.
 
 ---
 
-# 10. Runtime Hosting Requirement
+# 10. Versioning Contract
+
+OrchidApp uses a single product version for each release.
+
+The public product version uses three numbers:
+
+```
+Major.Minor.Patch
+```
+Example:
+
+```
+1.2.0
+```
+The internal packaged build version uses four numbers:
+
+```
+Major.Minor.Patch.Build
+```
+Example:
+```
+1.2.0.17
+```
+Only the public product version is shown to users in normal UI, release notes and documentation. The internal build number is used for diagnostics, logs, backup manifests, migration manifests and support investigation.
+
+The launcher version is authoritative for upgrade, migration and operational decisions.
+
+The web application carries the same product and build version for display and diagnostics only. Web application version metadata must not drive upgrade logic.
+
+Version metadata is baked into the application at build/package time. Runtime user data must not be used as the source of application version information.
+
+The packaging process is responsible for updating version metadata before building release artefacts.
+
+If the public product version is unchanged during packaging, the internal build number is incremented.
+
+If a new public product version is supplied during packaging, the internal build number resets to zero.
+
+Skipped internal build numbers are acceptable and expected. They may represent failed, abandoned or test packaging runs.
+
+Release artefacts, release notes and user documentation identify the public product version.
+
+Operational artefacts may also record the full internal build version.
+
+Pre-upgrade backup manifests and migration-state records must include both the public product version and the internal build version.
+
+Example operational version metadata:
+
+```
+{
+  "productVersion": "1.2.0",
+  "buildVersion": "1.2.0.17",
+  "informationalVersion": "1.2.0+build.17"
+}
+```
+
+---
+
+# 11. Runtime Hosting Requirement
 
 Runtime hosting depends on deployment model.
 
@@ -403,7 +461,7 @@ For packaged desktop deployments, the application must:
 * Preserve local user data between runs
 * Fail clearly if the database or required paths are unavailable
 
-## 10A. Packaged Application Model
+## 11A. Packaged Application Model
 
 OrchidApp also supports a packaged Windows deployment model.
 
@@ -422,7 +480,7 @@ Application binaries, runtime files and generated package contents must never be
 
 ---
 
-# 11. Automation Layer - Enforcement Mechanism
+# 12. Automation Layer - Enforcement Mechanism
 
 Automation enforces architectural guarantees through:
 
@@ -451,7 +509,7 @@ Local validation scripts may exist for developer convenience, but they are not c
 
 ---
 
-# 12. Operations Layer - State Protection
+# 13. Operations Layer - State Protection
 
 Stateful components:
 
@@ -496,7 +554,7 @@ Upgrade safety is part of the operational contract.
 
 ---
 
-# 13. User Documentation Requirement
+# 14. User Documentation Requirement
 
 User-facing workflows must be documented when they affect installation, backup, restore, upgrade, privacy, support or data ownership.
 
@@ -506,7 +564,7 @@ A feature that changes how users install, protect or recover their data is incom
 
 ---
 
-# 14. Non-Goals
+# 15. Non-Goals
 
 The system does not aim to:
 
