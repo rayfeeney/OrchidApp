@@ -2,21 +2,45 @@ namespace OrchidApp.Launcher;
 
 public sealed class OrchidAppLayoutState
 {
-    public required string AppRoot { get; init; }
-    public required string ProgramDataRoot { get; init; }
+    public required OrchidAppLayoutStatus Status { get; init; }
 
-    public required string OldMariaDbDataPath { get; init; }
-    public required string OldUploadsPath { get; init; }
-    public required string OldLauncherSettingsPath { get; init; }
+    public required string AppRootPath { get; init; }
 
-    public required string NewMariaDbDataPath { get; init; }
-    public required string NewUploadsPath { get; init; }
-    public required string NewBackupsPath { get; init; }
-    public required string NewLogsPath { get; init; }
-    public required string NewLauncherSettingsPath { get; init; }
+    public required string ProgramDataRootPath { get; init; }
+
+    public required string CurrentAppLegacyMariaDbDataPath { get; init; }
+
+    public required string CurrentAppLegacyUploadsPath { get; init; }
+
+    public required string CurrentAppLegacyBackupsPath { get; init; }
+
+    public required string CurrentAppLegacyLogsPath { get; init; }
+
+    public required string CurrentAppLegacyLauncherSettingsPath { get; init; }
+
+    public required string ProgramDataMariaDbDataPath { get; init; }
+
+    public required string ProgramDataUploadsPath { get; init; }
+
+    public required string ProgramDataBackupsPath { get; init; }
+
+    public required string ProgramDataLogsPath { get; init; }
+
+    public required string ProgramDataLauncherSettingsPath { get; init; }
 
     public required bool OldLayoutExists { get; init; }
-    public required bool NewLayoutExists { get; init; }
 
-    public required OrchidAppLayoutStatus Status { get; init; }
+    public required bool ProgramDataLayoutExists { get; init; }
+
+    public required bool CurrentAppLegacyUploadsExists { get; init; }
+
+    public required bool CurrentAppLegacyLauncherSettingsExists { get; init; }
+
+    public required bool ProgramDataUploadsExists { get; init; }
+
+    public required bool ProgramDataLauncherSettingsExists { get; init; }
+
+    public required IReadOnlyList<OrchidAppLegacyCandidate> LegacyCandidates { get; init; }
+
+    public required int DataBearingLegacyCandidateCount { get; init; }
 }

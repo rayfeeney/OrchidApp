@@ -174,10 +174,11 @@ public partial class OrchidAppLauncherForm : Form
             var layout = OrchidAppLayoutResolver.Resolve(AppContext.BaseDirectory);
             LogLayoutState(layout);
 
-            if (layout.Status == OrchidAppLayoutStatus.ConflictingLayouts)
+            if (layout.Status == OrchidAppLayoutStatus.LegacyAndProgramDataFound ||
+                layout.Status == OrchidAppLayoutStatus.MultipleLegacyLayoutsFound)
             {
-                AppendLog("Startup stopped because both old and new OrchidApp data layouts were detected.");
-                AppendLog("Please resolve the conflicting data folders before starting OrchidApp.");
+                AppendLog($"Startup stopped because layout status is {layout.Status}.");
+                AppendLog("Please resolve the conflicting OrchidApp data folders before starting OrchidApp.");
 
                 SetLauncherStatus(LauncherStatus.Red);
                 SetWindowTitle("Error");
@@ -1012,18 +1013,42 @@ public partial class OrchidAppLauncherForm : Form
     {
         AppendLog("Windows layout detection:");
         AppendLog($"  Status: {layout.Status}");
+        AppendLog($"  Legacy candidates found: {layout.LegacyCandidates.Count}");
+        AppendLog($"  Data-bearing legacy candidates found: {layout.DataBearingLegacyCandidateCount}");
+
+        foreach (var candidate in layout.LegacyCandidates)
+        {
+            AppendLog($"  Legacy candidate: {candidate.RootPath}");
+            AppendLog($"    Source: {candidate.DiscoverySource}");
+            AppendLog($"    Has MariaDB data: {candidate.HasMariaDbData}");
+            AppendLog($"    Has uploads: {candidate.HasUploads}");
+            AppendLog($"    Has backups: {candidate.HasBackups}");
+            AppendLog($"    Has logs: {candidate.HasLogs}");
+            AppendLog($"    Has launcher settings: {candidate.HasLauncherSettings}");
+        }
+
         AppendLog($"  Old layout exists: {layout.OldLayoutExists}");
-        AppendLog($"  New layout exists: {layout.NewLayoutExists}");
-        AppendLog($"  App root: {layout.AppRoot}");
-        AppendLog($"  ProgramData root: {layout.ProgramDataRoot}");
-        AppendLog($"  Old MariaDB data: {layout.OldMariaDbDataPath}");
-        AppendLog($"  New MariaDB data: {layout.NewMariaDbDataPath}");
-        AppendLog($"  Old uploads: {layout.OldUploadsPath}");
-        AppendLog($"  New uploads: {layout.NewUploadsPath}");
-        AppendLog($"  Old settings: {layout.OldLauncherSettingsPath}");
-        AppendLog($"  New settings: {layout.NewLauncherSettingsPath}");
-        AppendLog($"  New backups: {layout.NewBackupsPath}");
-        AppendLog($"  New logs: {layout.NewLogsPath}");
+        AppendLog($"  Current app legacy uploads exist: {layout.CurrentAppLegacyUploadsExists}");
+        AppendLog($"  Current app legacy launcher settings exist: {layout.CurrentAppLegacyLauncherSettingsExists}");
+
+        AppendLog($"  ProgramData layout exists: {layout.ProgramDataLayoutExists}");
+        AppendLog($"  ProgramData uploads exist: {layout.ProgramDataUploadsExists}");
+        AppendLog($"  ProgramData launcher settings exist: {layout.ProgramDataLauncherSettingsExists}");
+
+        AppendLog($"  App root: {layout.AppRootPath}");
+        AppendLog($"  ProgramData root: {layout.ProgramDataRootPath}");
+
+        AppendLog($"  Current app legacy MariaDB data: {layout.CurrentAppLegacyMariaDbDataPath}");
+        AppendLog($"  Current app legacy uploads: {layout.CurrentAppLegacyUploadsPath}");
+        AppendLog($"  Current app legacy backups: {layout.CurrentAppLegacyBackupsPath}");
+        AppendLog($"  Current app legacy logs: {layout.CurrentAppLegacyLogsPath}");
+        AppendLog($"  Current app legacy settings: {layout.CurrentAppLegacyLauncherSettingsPath}");
+
+        AppendLog($"  ProgramData MariaDB data: {layout.ProgramDataMariaDbDataPath}");
+        AppendLog($"  ProgramData uploads: {layout.ProgramDataUploadsPath}");
+        AppendLog($"  ProgramData backups: {layout.ProgramDataBackupsPath}");
+        AppendLog($"  ProgramData logs: {layout.ProgramDataLogsPath}");
+        AppendLog($"  ProgramData settings: {layout.ProgramDataLauncherSettingsPath}");
     }
 
     private void AppendLog(string text)

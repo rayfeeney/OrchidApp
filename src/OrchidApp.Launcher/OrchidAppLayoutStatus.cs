@@ -2,8 +2,15 @@ namespace OrchidApp.Launcher;
 
 public enum OrchidAppLayoutStatus
 {
-    CleanFirstInstall,
-    CurrentLayout,
+    Unknown = 0,
+
+    NewInstall,
     OldLayoutRequiresMigration,
-    ConflictingLayouts
+    ProgramDataLayoutInPlace,
+
+    MultipleLegacyLayoutsFound,
+    LegacyAndProgramDataFound,
+
+    InvalidLegacyLayout,
+    InvalidProgramDataLayout
 }
