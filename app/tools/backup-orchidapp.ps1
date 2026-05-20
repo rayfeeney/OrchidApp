@@ -2,6 +2,8 @@ param(
     [ValidateSet("Normal", "PreUpgrade")]
     [string]$BackupType = "Normal",
 
+    [string]$BackupsRoot,
+
     [int]$MariaDbPort = 3308,
 
     [int]$BackupsToKeep = 3,
@@ -110,7 +112,28 @@ $MariaDbAdmin = Join-Path $MariaDbBin "mariadb-admin.exe"
 
 $MariaDbData = Join-Path $AppRoot "data\mariadb"
 $UploadsRoot = Join-Path $AppRoot "wwwroot\uploads"
-$BackupsRoot = Join-Path $AppRoot "backups"
+if ([string]::IsNullOrWhiteSpace($BackupsRoot)) {
+    $BackupsRoot = Join-Path $AppRoot "backups"
+}
+if ($BackupType -eq "PreUpgrade") {
+    $ResolvedBackupsRootParent = Split-Path -Parent $BackupsRoot
+
+    if (-not (Test-Path $ResolvedBackupsRootParent)) {
+        New-Item `
+            -Path $ResolvedBackupsRootParent `
+            -ItemType Directory `
+            -Force | Out-Null
+    }
+
+    $ResolvedBackupsRoot = Resolve-Path `
+        -Path $BackupsRoot `
+        -ErrorAction SilentlyContinue
+
+    if ($ResolvedBackupsRoot -and
+        $ResolvedBackupsRoot.Path.StartsWith($AppRoot.Path, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Pre-upgrade backup destination must not be inside the source app root."
+    }
+}
 
 $Timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
 if ($BackupType -eq "PreUpgrade") {
@@ -124,6 +147,7 @@ $BackupLogPath = Join-Path $BackupWorkingRoot "backup.log"
 $MariaDbServerLogPath = Join-Path $BackupWorkingRoot "mariadb-server.log"
 $MariaDbServerErrorLogPath = Join-Path $BackupWorkingRoot "mariadb-server-error.log"
 $BackupZip = Join-Path $BackupsRoot "$BackupName.zip"
+$MariaDbDataRoot = Join-Path $AppRoot "data\mariadb"
 
 $StartedMariaDb = $false
 $MariaDbProcess = $null
@@ -270,6 +294,28 @@ try {
         Write-Log "Uploads folder not found. Empty uploads folder included."
     }
 
+    Write-Step "Backing up launcher settings"
+
+    $LauncherSettingsPath = Join-Path $AppRoot "launcher-settings.json"
+    $LauncherSettingsBackupPath = Join-Path $BackupWorkingRoot "launcher-settings"
+
+    New-Item `
+        -Path $LauncherSettingsBackupPath `
+        -ItemType Directory `
+        -Force | Out-Null
+
+    if (Test-Path $LauncherSettingsPath) {
+        Copy-Item `
+            -Path $LauncherSettingsPath `
+            -Destination $LauncherSettingsBackupPath `
+            -Force
+
+        Write-Host "OK: Launcher settings backed up." -ForegroundColor Green
+    }
+    else {
+        Write-Host "OK: Launcher settings file not found. Empty launcher-settings folder included." -ForegroundColor Green
+    }
+
     Write-Step "Writing backup manifest"
 
     $SchemaVersionPath = Join-Path $BackupWorkingRoot "schemaversion.txt"
@@ -286,11 +332,19 @@ try {
         throw "Failed to export schema version information."
     }
 
+    if ($BackupType -eq "PreUpgrade") {
+        $BackupReason = "Upgrade safety backup before an upgrade-sensitive operation."
+    }
+    else {
+        $BackupReason = "Manual OrchidApp backup."
+    }
+
     Write-Log "Uploads file count: $UploadsFileCount"
 
     $Manifest = [ordered]@{
         backupName = $BackupName
         backupType = $BackupType
+        backupReason = $BackupReason
         createdAt = (Get-Date).ToString("o")
         appRoot = $AppRoot.Path
         database = "orchids"
@@ -300,6 +354,10 @@ try {
         schemaVersionFile = "schemaversion.txt"
         mariaDbPort = $MariaDbPort
         backupsToKeep = $BackupsToKeep
+        backupsRoot = $BackupsRoot
+        mariaDbDataRoot = $MariaDbDataRoot
+        uploadsRoot = $UploadsRoot
+        launcherSettingsPath = $LauncherSettingsPath
     }
 
     $ManifestPath = Join-Path $BackupWorkingRoot "manifest.json"
