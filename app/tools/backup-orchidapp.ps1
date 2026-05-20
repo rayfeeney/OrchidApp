@@ -1,6 +1,12 @@
 param(
+    [ValidateSet("Normal", "PreUpgrade")]
+    [string]$BackupType = "Normal",
+
     [int]$MariaDbPort = 3308,
-    [int]$BackupsToKeep = 3
+
+    [int]$BackupsToKeep = 3,
+
+    [bool]$PruneOldBackups = $true
 )
 
 $ErrorActionPreference = "Stop"
@@ -107,7 +113,12 @@ $UploadsRoot = Join-Path $AppRoot "wwwroot\uploads"
 $BackupsRoot = Join-Path $AppRoot "backups"
 
 $Timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-$BackupName = "OrchidAppBackup_$Timestamp"
+if ($BackupType -eq "PreUpgrade") {
+    $BackupName = "OrchidAppPreUpgradeBackup_$Timestamp"
+}
+else {
+    $BackupName = "OrchidAppBackup_$Timestamp"
+}
 $BackupWorkingRoot = Join-Path $BackupsRoot $BackupName
 $BackupLogPath = Join-Path $BackupWorkingRoot "backup.log"
 $MariaDbServerLogPath = Join-Path $BackupWorkingRoot "mariadb-server.log"
@@ -279,6 +290,7 @@ try {
 
     $Manifest = [ordered]@{
         backupName = $BackupName
+        backupType = $BackupType
         createdAt = (Get-Date).ToString("o")
         appRoot = $AppRoot.Path
         database = "orchids"
@@ -327,27 +339,33 @@ try {
 
     Write-Host "Temporary backup files removed." -ForegroundColor Green
 
-    Write-Step "Removing old backups"
+    if ($PruneOldBackups) {
+        Write-Step "Removing old backups"
 
-    $OldBackups = Get-ChildItem `
-        -Path $BackupsRoot `
-        -Filter "OrchidAppBackup_*.zip" `
-        -File `
-        -ErrorAction SilentlyContinue |
-        Sort-Object LastWriteTime -Descending |
-        Select-Object -Skip $BackupsToKeep
+        $OldBackups = Get-ChildItem `
+            -Path $BackupsRoot `
+            -Filter "OrchidAppBackup_*.zip" `
+            -File `
+            -ErrorAction SilentlyContinue |
+            Sort-Object LastWriteTime -Descending |
+            Select-Object -Skip $BackupsToKeep
 
-    if ($OldBackups) {
-        foreach ($OldBackup in $OldBackups) {
-            Remove-Item `
-                -Path $OldBackup.FullName `
-                -Force
+        if ($OldBackups) {
+            foreach ($OldBackup in $OldBackups) {
+                Remove-Item `
+                    -Path $OldBackup.FullName `
+                    -Force
 
-            Write-Host "Removed old backup: $($OldBackup.Name)" -ForegroundColor Yellow
+                Write-Host "Removed old backup: $($OldBackup.Name)" -ForegroundColor Yellow
+            }
+        }
+        else {
+            Write-Host "No old backups to remove." -ForegroundColor Green
         }
     }
     else {
-        Write-Host "No old backups to remove." -ForegroundColor Green
+        Write-Step "Skipping old backup pruning"
+        Write-Host "Old backup pruning disabled for this backup run." -ForegroundColor Green
     }
 }
 catch {
