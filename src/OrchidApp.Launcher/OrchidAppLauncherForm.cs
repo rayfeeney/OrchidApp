@@ -607,6 +607,93 @@ public partial class OrchidAppLauncherForm : Form
         AppendLog("Automatic safety backup completed.");
     }
 
+    private async Task<bool> RunPreUpgradeBackupAsync()
+    {
+        AppendLog("Starting mandatory pre-upgrade backup...");
+
+        var baseDir = AppContext.BaseDirectory;
+
+        var backupScript = Path.Combine(
+            baseDir,
+            "tools",
+            "backup-orchidapp.ps1"
+        );
+
+        if (!File.Exists(backupScript))
+        {
+            AppendLog($"PRE-UPGRADE BACKUP ERROR: Backup script not found: {backupScript}");
+            return false;
+        }
+
+        var preUpgradeBackupsRoot = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+            "OrchidApp",
+            "Backups",
+            "PreUpgrade"
+        );
+
+        var arguments =
+            "-NoProfile -ExecutionPolicy Bypass " +
+            $"-File \"{backupScript}\" " +
+            "-BackupType PreUpgrade " +
+            $"-BackupsRoot \"{preUpgradeBackupsRoot}\" " +
+            "-PruneOldBackups:$false";
+
+        var process = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = "powershell.exe",
+                Arguments = arguments,
+                WorkingDirectory = baseDir,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true
+            }
+        };
+
+        process.OutputDataReceived += (s, e) =>
+        {
+            if (!string.IsNullOrWhiteSpace(e.Data))
+            {
+                AppendLog("PRE-UPGRADE BACKUP: " + e.Data);
+            }
+        };
+
+        process.ErrorDataReceived += (s, e) =>
+        {
+            if (!string.IsNullOrWhiteSpace(e.Data))
+            {
+                AppendLog("PRE-UPGRADE BACKUP ERR: " + e.Data);
+            }
+        };
+
+        try
+        {
+            process.Start();
+
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+
+            await process.WaitForExitAsync();
+
+            if (process.ExitCode != 0)
+            {
+                AppendLog($"PRE-UPGRADE BACKUP ERROR: Backup failed. ExitCode={process.ExitCode}");
+                return false;
+            }
+
+            AppendLog("Mandatory pre-upgrade backup completed successfully.");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            AppendLog("PRE-UPGRADE BACKUP ERROR: " + ex.Message);
+            return false;
+        }
+    }
+
     private async Task RunBackupAsync(bool showSuccessMessage = true)
     {
         if (_backupInProgress)
