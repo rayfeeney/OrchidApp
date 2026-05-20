@@ -28,13 +28,14 @@
 - [8. Application Layer - Behavioural Orchestration](#8-application-layer---behavioural-orchestration)
 - [9. UI Architecture - Navigation Contract](#9-ui-architecture---navigation-contract)
 - [10. Versioning Contract](#10-versioning-contract)
-- [11. Runtime Hosting Requirement](#11-runtime-hosting-requirement)
-  - [11A. Packaged Application Model](#11a-packaged-application-model)
-- [12. Automation Layer - Enforcement Mechanism](#12-automation-layer---enforcement-mechanism)
-- [13. Operations Layer - State Protection](#13-operations-layer---state-protection)
+- [11. Windows installer-led upgrade safety](#11-windows-installer-led-upgrade-safety)
+- [12. Runtime Hosting Requirement](#12-runtime-hosting-requirement)
+  - [12A. Packaged Application Model](#12a-packaged-application-model)
+- [13. Automation Layer - Enforcement Mechanism](#13-automation-layer---enforcement-mechanism)
+- [14. Operations Layer - State Protection](#14-operations-layer---state-protection)
   - [Upgrade Safety Requirement](#upgrade-safety-requirement)
-- [14. User Documentation Requirement](#14-user-documentation-requirement)
-- [15. Non-Goals](#15-non-goals)
+- [15. User Documentation Requirement](#15-user-documentation-requirement)
+- [16. Non-Goals](#16-non-goals)
 - [Final Principle](#final-principle)
 
 ---
@@ -443,7 +444,23 @@ Example operational version metadata:
 
 ---
 
-# 11. Runtime Hosting Requirement
+# 11. Windows installer-led upgrade safety
+
+Windows upgrades are governed by an installer-led upgrade contract.
+
+The installer owns application files only and must never overwrite user data. Durable Windows user data is migrated to, and then resolved from, `C:\ProgramData\OrchidApp`.
+
+Existing v1.1.0-style Windows layouts are valid runtime layouts for v1.1.0 and will contain live user data under the extracted application folder. Under the installer-led model, these layouts are migration sources only.
+
+The Windows launcher owns layout detection, ambiguity handling, mandatory pre-upgrade backup, controlled migration, database verification and runtime data-path resolution. It must stop safely rather than guess when multiple plausible data layouts exist.
+
+A ProgramData layout becomes authoritative only after successful backup, migration, database verification and migration-state recording where migration is required.
+
+Once ProgramData is valid and authoritative, it takes precedence over legacy app-root layouts. Later launches and upgrades start from ProgramData directly and must not rerun the legacy migration flow.
+
+---
+
+# 12. Runtime Hosting Requirement
 
 Runtime hosting depends on deployment model.
 
@@ -461,7 +478,7 @@ For packaged desktop deployments, the application must:
 * Preserve local user data between runs
 * Fail clearly if the database or required paths are unavailable
 
-## 11A. Packaged Application Model
+## 12A. Packaged Application Model
 
 OrchidApp also supports a packaged Windows deployment model.
 
@@ -480,7 +497,7 @@ Application binaries, runtime files and generated package contents must never be
 
 ---
 
-# 12. Automation Layer - Enforcement Mechanism
+# 13. Automation Layer - Enforcement Mechanism
 
 Automation enforces architectural guarantees through:
 
@@ -509,7 +526,7 @@ Local validation scripts may exist for developer convenience, but they are not c
 
 ---
 
-# 13. Operations Layer - State Protection
+# 14. Operations Layer - State Protection
 
 Stateful components:
 
@@ -554,7 +571,7 @@ Upgrade safety is part of the operational contract.
 
 ---
 
-# 14. User Documentation Requirement
+# 15. User Documentation Requirement
 
 User-facing workflows must be documented when they affect installation, backup, restore, upgrade, privacy, support or data ownership.
 
@@ -564,7 +581,7 @@ A feature that changes how users install, protect or recover their data is incom
 
 ---
 
-# 15. Non-Goals
+# 16. Non-Goals
 
 The system does not aim to:
 

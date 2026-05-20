@@ -34,6 +34,7 @@
     - [Upgrade](#upgrade)
   - [Backups](#backups)
   - [Disaster Recovery](#disaster-recovery)
+  - [Windows upgrades](#windows-upgrades)
   - [Development Workflow](#development-workflow)
   - [Contributing](#contributing)
   - [Security Model](#security-model)
@@ -44,6 +45,7 @@
   - [Documentation](#documentation)
   - [Third-Party Licences](#third-party-licences)
   - [Architectural Principle](#architectural-principle)
+
 
 ---
 
@@ -455,6 +457,20 @@ User-facing recovery instructions live under:
 docs/user-guides/linux
 docs/user-guides/windows
 ```
+
+---
+
+## Windows upgrades
+
+Public Windows upgrades are installer-led. Do not upgrade OrchidApp by extracting a new ZIP over an existing installation.
+
+The installer owns application files only. User data, including the MariaDB database, uploaded plant photos and launcher settings, is protected separately.
+
+The future canonical Windows data root is `C:\ProgramData\OrchidApp`. Existing v1.1.0-style ZIP layouts keep live data under the extracted application folder and are treated as migration sources during the first installer-led migration.
+
+Before any legacy-to-ProgramData migration, OrchidApp must create a successful pre-upgrade backup. If the launcher detects an ambiguous or unsafe layout, it stops safely rather than guessing.
+
+After ProgramData has become authoritative, later Windows upgrades start from ProgramData directly and do not rerun the legacy migration flow.
 
 ---
 
