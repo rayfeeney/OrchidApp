@@ -187,6 +187,27 @@ public partial class OrchidAppLauncherForm : Form
                 return;
             }
 
+            if (layout.Status == OrchidAppLayoutStatus.OldLayoutRequiresMigration)
+            {
+                AppendLog("Existing legacy OrchidApp layout detected. Mandatory pre-upgrade backup is required.");
+
+                var preUpgradeBackupSucceeded = await RunPreUpgradeBackupAsync();
+
+                if (!preUpgradeBackupSucceeded)
+                {
+                    AppendLog("Pre-upgrade backup failed. Startup stopped for safety.");
+                    AppendLog("The existing legacy OrchidApp layout has not been changed.");
+
+                    SetLauncherStatus(LauncherStatus.Red);
+                    SetWindowTitle("Backup failed");
+                    statusLabel.Text = "Startup stopped: pre-upgrade backup failed.";
+
+                    return;
+                }
+
+                AppendLog("Pre-upgrade backup succeeded. Startup may continue.");
+            }
+
             StartMariaDb();
 
             await WaitForMariaDbAsync(
@@ -607,6 +628,8 @@ public partial class OrchidAppLauncherForm : Form
         AppendLog("Automatic safety backup completed.");
     }
 
+
+
     private async Task<bool> RunPreUpgradeBackupAsync()
     {
         AppendLog("Starting mandatory pre-upgrade backup...");
@@ -637,7 +660,7 @@ public partial class OrchidAppLauncherForm : Form
             $"-File \"{backupScript}\" " +
             "-BackupType PreUpgrade " +
             $"-BackupsRoot \"{preUpgradeBackupsRoot}\" " +
-            "-PruneOldBackups:$false";
+            "-PruneOldBackups 0";
 
         var process = new Process
         {

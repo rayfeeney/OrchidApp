@@ -52,6 +52,8 @@ public static class OrchidAppLayoutResolver
         }
 
         legacyCandidates = legacyCandidates
+            .Where(candidate => !PathsEqual(candidate.RootPath, programDataRootPath))
+            .Where(candidate => !IsProgramDataAlias(candidate.RootPath, programDataRootPath))
             .GroupBy(
                 candidate => Path.GetFullPath(candidate.RootPath).TrimEnd(Path.DirectorySeparatorChar),
                 StringComparer.OrdinalIgnoreCase)
@@ -268,51 +270,51 @@ public static class OrchidAppLayoutResolver
             .ToList();
     }
 
-private static IEnumerable<string> FindOrchidAppFolders(
-    string rootPath,
-    int maxDepth)
-{
-    if (maxDepth < 0 ||
-        string.IsNullOrWhiteSpace(rootPath) ||
-        !Directory.Exists(rootPath))
+    private static IEnumerable<string> FindOrchidAppFolders(
+        string rootPath,
+        int maxDepth)
     {
-        yield break;
-    }
-
-    IEnumerable<string> childDirectories;
-
-    try
-    {
-        childDirectories = Directory.EnumerateDirectories(rootPath);
-    }
-    catch
-    {
-        yield break;
-    }
-
-    foreach (var childDirectory in childDirectories)
-    {
-        var directoryName = Path.GetFileName(childDirectory);
-
-        if (string.Equals(
-                directoryName,
-                "OrchidApp",
-                StringComparison.OrdinalIgnoreCase))
+        if (maxDepth < 0 ||
+            string.IsNullOrWhiteSpace(rootPath) ||
+            !Directory.Exists(rootPath))
         {
-            yield return childDirectory;
+            yield break;
         }
 
-        if (maxDepth == 0)
+        IEnumerable<string> childDirectories;
+
+        try
         {
-            continue;
+            childDirectories = Directory.EnumerateDirectories(rootPath);
+        }
+        catch
+        {
+            yield break;
         }
 
-        foreach (var match in FindOrchidAppFolders(childDirectory, maxDepth - 1))
+        foreach (var childDirectory in childDirectories)
         {
-            yield return match;
+            var directoryName = Path.GetFileName(childDirectory);
+
+            if (string.Equals(
+                    directoryName,
+                    "OrchidApp",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                yield return childDirectory;
+            }
+
+            if (maxDepth == 0)
+            {
+                continue;
+            }
+
+            foreach (var match in FindOrchidAppFolders(childDirectory, maxDepth - 1))
+            {
+                yield return match;
+            }
         }
     }
-}
 
     private static OrchidAppLegacyCandidate InspectLegacyCandidate(string rootPath, string discoverySource)
     {
@@ -341,6 +343,40 @@ private static IEnumerable<string> FindOrchidAppFolders(
             HasLogs = Directory.Exists(logsPath),
             HasLauncherSettings = File.Exists(launcherSettingsPath)
         };
+    }
+
+    private static bool PathsEqual(string left, string right)
+    {
+        var normalisedLeft = Path.GetFullPath(left)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+        var normalisedRight = Path.GetFullPath(right)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+        return string.Equals(
+            normalisedLeft,
+            normalisedRight,
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsProgramDataAlias(string candidatePath, string programDataRootPath)
+    {
+        var normalisedCandidate = Path.GetFullPath(candidatePath)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+        var normalisedProgramData = Path.GetFullPath(programDataRootPath)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+        var allUsersAlias = Path.Combine(
+            Path.GetPathRoot(normalisedProgramData) ?? "C:\\",
+            "Users",
+            "All Users",
+            "OrchidApp");
+
+        return string.Equals(
+            normalisedCandidate,
+            allUsersAlias,
+            StringComparison.OrdinalIgnoreCase);
     }
 
     private static OrchidAppLayoutStatus ResolveStatus(

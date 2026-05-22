@@ -5,11 +5,11 @@ updatable=1
 algorithm=0
 definer_user=orchid
 definer_host=localhost
-suid=2
+suid=1
 with_check_option=0
-timestamp=0001778087546951982
+timestamp=0001779391637492325
 create-version=2
-source=SELECT `location`.`locationId`\nAS `locationId`,`location`.`locationName`\nAS `locationName`,`location`.`locationTypeCode`\nAS `locationTypeCode`,`location`.`climateCode`\nAS `climateCode` FROM `location` WHERE `location`.`isActive` = 1
+source=select `location`.`locationId` AS `locationId`,`location`.`locationName` AS `locationName`,`location`.`locationTypeCode` AS `locationTypeCode`,`location`.`climateCode` AS `climateCode` from `location` where `location`.`isActive` = 1
 client_cs_name=utf8mb4
 connection_cl_name=utf8mb4_general_ci
 view_body_utf8=select `orchids`.`location`.`locationId` AS `locationId`,`orchids`.`location`.`locationName` AS `locationName`,`orchids`.`location`.`locationTypeCode` AS `locationTypeCode`,`orchids`.`location`.`climateCode` AS `climateCode` from `orchids`.`location` where `orchids`.`location`.`isActive` = 1

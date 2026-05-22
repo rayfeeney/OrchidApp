@@ -8,7 +8,7 @@ param(
 
     [int]$BackupsToKeep = 3,
 
-    [bool]$PruneOldBackups = $true
+    [switch]$SkipOldBackupPruning
 )
 
 $ErrorActionPreference = "Stop"
@@ -218,6 +218,10 @@ try {
     }
 
     if ([int]$DatabaseExists -ne 1) {
+        if ($BackupType -eq "PreUpgrade") {
+            throw "Pre-upgrade backup was not required because no existing OrchidApp database was found in the detected source layout."
+        }
+
         throw "No OrchidApp database was found. Start OrchidApp once before creating a backup."
     }
 
