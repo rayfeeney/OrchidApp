@@ -47,7 +47,7 @@ public partial class OrchidAppLauncherForm : Form
     private Button restoreButton = new Button();
     private Button configureCloudBackupButton = new Button();
     private bool _closeConfirmed = false;
-
+    private bool _preUpgradeBackupCompletedThisStartup;
     private static readonly TimeSpan AutomaticBackupAgeThreshold = TimeSpan.FromHours(168);
     private const string CloudBackupFileName = "OrchidAppDataBackup.zip";
     private bool _backupInProgress = false;
@@ -205,6 +205,7 @@ public partial class OrchidAppLauncherForm : Form
                     return;
                 }
 
+                _preUpgradeBackupCompletedThisStartup = true;
                 AppendLog("Pre-upgrade backup succeeded. Startup may continue.");
             }
 
@@ -615,6 +616,12 @@ public partial class OrchidAppLauncherForm : Form
 
     private async Task RunAutomaticBackupIfDueAsync()
     {
+        if (_preUpgradeBackupCompletedThisStartup)
+        {
+            AppendLog("Pre-upgrade backup was completed during this startup. Skipping automatic safety backup.");
+            return;
+        }
+
         if (!IsAutomaticBackupDue())
         {
             AppendLog("Automatic backup not required.");
