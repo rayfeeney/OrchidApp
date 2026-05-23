@@ -1,3 +1,5 @@
+using OrchidApp.Launcher.Infrastructure;
+
 namespace OrchidApp.Launcher;
 
 public static class OrchidAppLayoutResolver
@@ -6,9 +8,9 @@ public static class OrchidAppLayoutResolver
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(appRoot);
 
-        var programDataRootPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
-            "OrchidApp");
+        var programDataPaths = new WindowsProgramDataPaths();
+
+        var programDataRootPath = programDataPaths.Root;
 
         var currentAppLegacyCandidate = InspectLegacyCandidate(
             appRoot,
@@ -52,17 +54,19 @@ public static class OrchidAppLayoutResolver
         }
 
         legacyCandidates = legacyCandidates
+            .Where(candidate => !PathsEqual(candidate.RootPath, programDataRootPath))
+            .Where(candidate => !IsProgramDataAlias(candidate.RootPath, programDataRootPath))
             .GroupBy(
                 candidate => Path.GetFullPath(candidate.RootPath).TrimEnd(Path.DirectorySeparatorChar),
                 StringComparer.OrdinalIgnoreCase)
             .Select(group => group.First())
             .ToList();
 
-        var programDataMariaDbDataPath = Path.Combine(programDataRootPath, "data", "mariadb");
-        var programDataUploadsPath = Path.Combine(programDataRootPath, "uploads");
-        var programDataBackupsPath = Path.Combine(programDataRootPath, "backups");
-        var programDataLogsPath = Path.Combine(programDataRootPath, "logs");
-        var programDataLauncherSettingsPath = Path.Combine(programDataRootPath, "launcher-settings.json");
+        var programDataMariaDbDataPath = programDataPaths.MariaDbData;
+        var programDataUploadsPath = programDataPaths.Uploads;
+        var programDataBackupsPath = programDataPaths.Backups;
+        var programDataLogsPath = programDataPaths.Logs;
+        var programDataLauncherSettingsPath = programDataPaths.LauncherSettingsFile;
 
         var dataBearingLegacyCandidates = legacyCandidates
             .Where(candidate => candidate.IsDataBearingLegacyCandidate)
@@ -72,7 +76,7 @@ public static class OrchidAppLayoutResolver
             dataBearingLegacyCandidates.Count > 0;
 
         var programDataLayoutExists =
-            Directory.Exists(programDataMariaDbDataPath);
+            ContainsOrchidsDatabase(programDataMariaDbDataPath);
 
         var programDataUploadsExists =
             Directory.Exists(programDataUploadsPath);
@@ -268,51 +272,51 @@ public static class OrchidAppLayoutResolver
             .ToList();
     }
 
-private static IEnumerable<string> FindOrchidAppFolders(
-    string rootPath,
-    int maxDepth)
-{
-    if (maxDepth < 0 ||
-        string.IsNullOrWhiteSpace(rootPath) ||
-        !Directory.Exists(rootPath))
+    private static IEnumerable<string> FindOrchidAppFolders(
+        string rootPath,
+        int maxDepth)
     {
-        yield break;
-    }
-
-    IEnumerable<string> childDirectories;
-
-    try
-    {
-        childDirectories = Directory.EnumerateDirectories(rootPath);
-    }
-    catch
-    {
-        yield break;
-    }
-
-    foreach (var childDirectory in childDirectories)
-    {
-        var directoryName = Path.GetFileName(childDirectory);
-
-        if (string.Equals(
-                directoryName,
-                "OrchidApp",
-                StringComparison.OrdinalIgnoreCase))
+        if (maxDepth < 0 ||
+            string.IsNullOrWhiteSpace(rootPath) ||
+            !Directory.Exists(rootPath))
         {
-            yield return childDirectory;
+            yield break;
         }
 
-        if (maxDepth == 0)
+        IEnumerable<string> childDirectories;
+
+        try
         {
-            continue;
+            childDirectories = Directory.EnumerateDirectories(rootPath);
+        }
+        catch
+        {
+            yield break;
         }
 
-        foreach (var match in FindOrchidAppFolders(childDirectory, maxDepth - 1))
+        foreach (var childDirectory in childDirectories)
         {
-            yield return match;
+            var directoryName = Path.GetFileName(childDirectory);
+
+            if (string.Equals(
+                    directoryName,
+                    "OrchidApp",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                yield return childDirectory;
+            }
+
+            if (maxDepth == 0)
+            {
+                continue;
+            }
+
+            foreach (var match in FindOrchidAppFolders(childDirectory, maxDepth - 1))
+            {
+                yield return match;
+            }
         }
     }
-}
 
     private static OrchidAppLegacyCandidate InspectLegacyCandidate(string rootPath, string discoverySource)
     {
@@ -327,20 +331,73 @@ private static IEnumerable<string> FindOrchidAppFolders(
         return new OrchidAppLegacyCandidate
         {
             RootPath = rootPath,
-
             MariaDbDataPath = mariaDbDataPath,
             UploadsPath = uploadsPath,
             BackupsPath = backupsPath,
             LogsPath = logsPath,
             LauncherSettingsPath = launcherSettingsPath,
-            DiscoverySource = discoverySource,
 
-            HasMariaDbData = Directory.Exists(mariaDbDataPath),
+            HasMariaDbData = ContainsMariaDbData(mariaDbDataPath),
+            HasOrchidsDatabase = ContainsOrchidsDatabase(mariaDbDataPath),
             HasUploads = Directory.Exists(uploadsPath),
             HasBackups = Directory.Exists(backupsPath),
             HasLogs = Directory.Exists(logsPath),
-            HasLauncherSettings = File.Exists(launcherSettingsPath)
+            HasLauncherSettings = File.Exists(launcherSettingsPath),
+
+            DiscoverySource = discoverySource
         };
+    }
+
+    private static bool PathsEqual(string left, string right)
+    {
+        var normalisedLeft = Path.GetFullPath(left)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+        var normalisedRight = Path.GetFullPath(right)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+        return string.Equals(
+            normalisedLeft,
+            normalisedRight,
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsProgramDataAlias(string candidatePath, string programDataRootPath)
+    {
+        var normalisedCandidate = Path.GetFullPath(candidatePath)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+        var normalisedProgramData = Path.GetFullPath(programDataRootPath)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+        var allUsersAlias = Path.Combine(
+            Path.GetPathRoot(normalisedProgramData) ?? "C:\\",
+            "Users",
+            "All Users",
+            "OrchidApp");
+
+        return string.Equals(
+            normalisedCandidate,
+            allUsersAlias,
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool ContainsMariaDbData(string mariaDbDataPath)
+    {
+        if (!Directory.Exists(mariaDbDataPath))
+        {
+            return false;
+        }
+
+        return Directory.EnumerateFileSystemEntries(mariaDbDataPath).Any();
+    }
+
+    private static bool ContainsOrchidsDatabase(string mariaDbDataPath)
+    {
+        var orchidsDatabasePath = Path.Combine(mariaDbDataPath, "orchids");
+
+        return Directory.Exists(orchidsDatabasePath)
+            && Directory.EnumerateFileSystemEntries(orchidsDatabasePath).Any();
     }
 
     private static OrchidAppLayoutStatus ResolveStatus(

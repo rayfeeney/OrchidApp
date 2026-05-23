@@ -1,6 +1,14 @@
 param(
+    [ValidateSet("Normal", "PreUpgrade")]
+    [string]$BackupType = "Normal",
+
+    [string]$BackupsRoot,
+
     [int]$MariaDbPort = 3308,
-    [int]$BackupsToKeep = 3
+
+    [int]$BackupsToKeep = 3,
+
+    [switch]$SkipOldBackupPruning
 )
 
 $ErrorActionPreference = "Stop"
@@ -104,15 +112,42 @@ $MariaDbAdmin = Join-Path $MariaDbBin "mariadb-admin.exe"
 
 $MariaDbData = Join-Path $AppRoot "data\mariadb"
 $UploadsRoot = Join-Path $AppRoot "wwwroot\uploads"
-$BackupsRoot = Join-Path $AppRoot "backups"
+if ([string]::IsNullOrWhiteSpace($BackupsRoot)) {
+    $BackupsRoot = Join-Path $AppRoot "backups"
+}
+if ($BackupType -eq "PreUpgrade") {
+    $ResolvedBackupsRootParent = Split-Path -Parent $BackupsRoot
+
+    if (-not (Test-Path $ResolvedBackupsRootParent)) {
+        New-Item `
+            -Path $ResolvedBackupsRootParent `
+            -ItemType Directory `
+            -Force | Out-Null
+    }
+
+    $ResolvedBackupsRoot = Resolve-Path `
+        -Path $BackupsRoot `
+        -ErrorAction SilentlyContinue
+
+    if ($ResolvedBackupsRoot -and
+        $ResolvedBackupsRoot.Path.StartsWith($AppRoot.Path, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Pre-upgrade backup destination must not be inside the source app root."
+    }
+}
 
 $Timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-$BackupName = "OrchidAppBackup_$Timestamp"
+if ($BackupType -eq "PreUpgrade") {
+    $BackupName = "OrchidAppPreUpgradeBackup_$Timestamp"
+}
+else {
+    $BackupName = "OrchidAppBackup_$Timestamp"
+}
 $BackupWorkingRoot = Join-Path $BackupsRoot $BackupName
 $BackupLogPath = Join-Path $BackupWorkingRoot "backup.log"
 $MariaDbServerLogPath = Join-Path $BackupWorkingRoot "mariadb-server.log"
 $MariaDbServerErrorLogPath = Join-Path $BackupWorkingRoot "mariadb-server-error.log"
 $BackupZip = Join-Path $BackupsRoot "$BackupName.zip"
+$MariaDbDataRoot = Join-Path $AppRoot "data\mariadb"
 
 $StartedMariaDb = $false
 $MariaDbProcess = $null
@@ -183,6 +218,10 @@ try {
     }
 
     if ([int]$DatabaseExists -ne 1) {
+        if ($BackupType -eq "PreUpgrade") {
+            throw "Pre-upgrade backup was not required because no existing OrchidApp database was found in the detected source layout."
+        }
+
         throw "No OrchidApp database was found. Start OrchidApp once before creating a backup."
     }
 
@@ -259,6 +298,28 @@ try {
         Write-Log "Uploads folder not found. Empty uploads folder included."
     }
 
+    Write-Step "Backing up launcher settings"
+
+    $LauncherSettingsPath = Join-Path $AppRoot "launcher-settings.json"
+    $LauncherSettingsBackupPath = Join-Path $BackupWorkingRoot "launcher-settings"
+
+    New-Item `
+        -Path $LauncherSettingsBackupPath `
+        -ItemType Directory `
+        -Force | Out-Null
+
+    if (Test-Path $LauncherSettingsPath) {
+        Copy-Item `
+            -Path $LauncherSettingsPath `
+            -Destination $LauncherSettingsBackupPath `
+            -Force
+
+        Write-Host "OK: Launcher settings backed up." -ForegroundColor Green
+    }
+    else {
+        Write-Host "OK: Launcher settings file not found. Empty launcher-settings folder included." -ForegroundColor Green
+    }
+
     Write-Step "Writing backup manifest"
 
     $SchemaVersionPath = Join-Path $BackupWorkingRoot "schemaversion.txt"
@@ -275,10 +336,19 @@ try {
         throw "Failed to export schema version information."
     }
 
+    if ($BackupType -eq "PreUpgrade") {
+        $BackupReason = "Upgrade safety backup before an upgrade-sensitive operation."
+    }
+    else {
+        $BackupReason = "Manual OrchidApp backup."
+    }
+
     Write-Log "Uploads file count: $UploadsFileCount"
 
     $Manifest = [ordered]@{
         backupName = $BackupName
+        backupType = $BackupType
+        backupReason = $BackupReason
         createdAt = (Get-Date).ToString("o")
         appRoot = $AppRoot.Path
         database = "orchids"
@@ -288,6 +358,10 @@ try {
         schemaVersionFile = "schemaversion.txt"
         mariaDbPort = $MariaDbPort
         backupsToKeep = $BackupsToKeep
+        backupsRoot = $BackupsRoot
+        mariaDbDataRoot = $MariaDbDataRoot
+        uploadsRoot = $UploadsRoot
+        launcherSettingsPath = $LauncherSettingsPath
     }
 
     $ManifestPath = Join-Path $BackupWorkingRoot "manifest.json"
@@ -327,27 +401,33 @@ try {
 
     Write-Host "Temporary backup files removed." -ForegroundColor Green
 
-    Write-Step "Removing old backups"
+    if ($PruneOldBackups) {
+        Write-Step "Removing old backups"
 
-    $OldBackups = Get-ChildItem `
-        -Path $BackupsRoot `
-        -Filter "OrchidAppBackup_*.zip" `
-        -File `
-        -ErrorAction SilentlyContinue |
-        Sort-Object LastWriteTime -Descending |
-        Select-Object -Skip $BackupsToKeep
+        $OldBackups = Get-ChildItem `
+            -Path $BackupsRoot `
+            -Filter "OrchidAppBackup_*.zip" `
+            -File `
+            -ErrorAction SilentlyContinue |
+            Sort-Object LastWriteTime -Descending |
+            Select-Object -Skip $BackupsToKeep
 
-    if ($OldBackups) {
-        foreach ($OldBackup in $OldBackups) {
-            Remove-Item `
-                -Path $OldBackup.FullName `
-                -Force
+        if ($OldBackups) {
+            foreach ($OldBackup in $OldBackups) {
+                Remove-Item `
+                    -Path $OldBackup.FullName `
+                    -Force
 
-            Write-Host "Removed old backup: $($OldBackup.Name)" -ForegroundColor Yellow
+                Write-Host "Removed old backup: $($OldBackup.Name)" -ForegroundColor Yellow
+            }
+        }
+        else {
+            Write-Host "No old backups to remove." -ForegroundColor Green
         }
     }
     else {
-        Write-Host "No old backups to remove." -ForegroundColor Green
+        Write-Step "Skipping old backup pruning"
+        Write-Host "Old backup pruning disabled for this backup run." -ForegroundColor Green
     }
 }
 catch {

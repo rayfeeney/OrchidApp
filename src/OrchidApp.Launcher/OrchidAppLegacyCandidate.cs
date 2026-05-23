@@ -26,6 +26,8 @@ public sealed class OrchidAppLegacyCandidate
 
     public required string DiscoverySource { get; init; }
 
+    public required bool HasOrchidsDatabase { get; init; }
+
     public bool IsDataBearingLegacyCandidate =>
-        HasMariaDbData;
+        HasOrchidsDatabase;
 }

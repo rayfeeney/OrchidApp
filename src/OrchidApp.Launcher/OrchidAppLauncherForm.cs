@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Reflection;
 using MySqlConnector;
+using OrchidApp.Launcher.Infrastructure;
 
 namespace OrchidApp.Launcher;
 
@@ -47,7 +48,7 @@ public partial class OrchidAppLauncherForm : Form
     private Button restoreButton = new Button();
     private Button configureCloudBackupButton = new Button();
     private bool _closeConfirmed = false;
-
+    private bool _preUpgradeBackupCompletedThisStartup;
     private static readonly TimeSpan AutomaticBackupAgeThreshold = TimeSpan.FromHours(168);
     private const string CloudBackupFileName = "OrchidAppDataBackup.zip";
     private bool _backupInProgress = false;
@@ -171,6 +172,13 @@ public partial class OrchidAppLauncherForm : Form
         {
             SetLauncherStatus(LauncherStatus.Red);
 
+            var programDataPaths = new WindowsProgramDataPaths();
+
+            var programDataDirectoryService =
+                new WindowsProgramDataDirectoryService(programDataPaths, AppendLog);
+
+            programDataDirectoryService.EnsureRequiredDirectoriesExist();
+
             var layout = OrchidAppLayoutResolver.Resolve(AppContext.BaseDirectory);
             LogLayoutState(layout);
 
@@ -185,6 +193,28 @@ public partial class OrchidAppLauncherForm : Form
                 statusLabel.Text = "Startup stopped: conflicting data layouts detected.";
 
                 return;
+            }
+
+            if (layout.Status == OrchidAppLayoutStatus.OldLayoutRequiresMigration)
+            {
+                AppendLog("Existing legacy OrchidApp layout detected. Mandatory pre-upgrade backup is required.");
+
+                var preUpgradeBackupSucceeded = await RunPreUpgradeBackupAsync();
+
+                if (!preUpgradeBackupSucceeded)
+                {
+                    AppendLog("Pre-upgrade backup failed. Startup stopped for safety.");
+                    AppendLog("The existing legacy OrchidApp layout has not been changed.");
+
+                    SetLauncherStatus(LauncherStatus.Red);
+                    SetWindowTitle("Backup failed");
+                    statusLabel.Text = "Startup stopped: pre-upgrade backup failed.";
+
+                    return;
+                }
+
+                _preUpgradeBackupCompletedThisStartup = true;
+                AppendLog("Pre-upgrade backup succeeded. Startup may continue.");
             }
 
             StartMariaDb();
@@ -594,6 +624,12 @@ public partial class OrchidAppLauncherForm : Form
 
     private async Task RunAutomaticBackupIfDueAsync()
     {
+        if (_preUpgradeBackupCompletedThisStartup)
+        {
+            AppendLog("Pre-upgrade backup was completed during this startup. Skipping automatic safety backup.");
+            return;
+        }
+
         if (!IsAutomaticBackupDue())
         {
             AppendLog("Automatic backup not required.");
@@ -605,6 +641,92 @@ public partial class OrchidAppLauncherForm : Form
         await RunBackupAsync(showSuccessMessage: false);
 
         AppendLog("Automatic safety backup completed.");
+    }
+
+
+
+    private async Task<bool> RunPreUpgradeBackupAsync()
+    {
+        AppendLog("Starting mandatory pre-upgrade backup...");
+
+        var baseDir = AppContext.BaseDirectory;
+
+        var backupScript = Path.Combine(
+            baseDir,
+            "tools",
+            "backup-orchidapp.ps1"
+        );
+
+        if (!File.Exists(backupScript))
+        {
+            AppendLog($"PRE-UPGRADE BACKUP ERROR: Backup script not found: {backupScript}");
+            return false;
+        }
+
+        var programDataPaths = new WindowsProgramDataPaths();
+
+        var preUpgradeBackupsRoot = programDataPaths.PreUpgradeBackups;
+
+        var arguments =
+            "-NoProfile -ExecutionPolicy Bypass " +
+            $"-File \"{backupScript}\" " +
+            "-BackupType PreUpgrade " +
+            $"-BackupsRoot \"{preUpgradeBackupsRoot}\" " +
+            "-PruneOldBackups 0";
+
+        var process = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = "powershell.exe",
+                Arguments = arguments,
+                WorkingDirectory = baseDir,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true
+            }
+        };
+
+        process.OutputDataReceived += (s, e) =>
+        {
+            if (!string.IsNullOrWhiteSpace(e.Data))
+            {
+                AppendLog("PRE-UPGRADE BACKUP: " + e.Data);
+            }
+        };
+
+        process.ErrorDataReceived += (s, e) =>
+        {
+            if (!string.IsNullOrWhiteSpace(e.Data))
+            {
+                AppendLog("PRE-UPGRADE BACKUP ERR: " + e.Data);
+            }
+        };
+
+        try
+        {
+            process.Start();
+
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+
+            await process.WaitForExitAsync();
+
+            if (process.ExitCode != 0)
+            {
+                AppendLog($"PRE-UPGRADE BACKUP ERROR: Backup failed. ExitCode={process.ExitCode}");
+                return false;
+            }
+
+            AppendLog("Mandatory pre-upgrade backup completed successfully.");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            AppendLog("PRE-UPGRADE BACKUP ERROR: " + ex.Message);
+            return false;
+        }
     }
 
     private async Task RunBackupAsync(bool showSuccessMessage = true)
@@ -1020,7 +1142,7 @@ public partial class OrchidAppLauncherForm : Form
         {
             AppendLog($"  Legacy candidate: {candidate.RootPath}");
             AppendLog($"    Source: {candidate.DiscoverySource}");
-            AppendLog($"    Has MariaDB data: {candidate.HasMariaDbData}");
+            AppendLog($"    Has orchids database: {candidate.HasOrchidsDatabase}");
             AppendLog($"    Has uploads: {candidate.HasUploads}");
             AppendLog($"    Has backups: {candidate.HasBackups}");
             AppendLog($"    Has logs: {candidate.HasLogs}");
@@ -1048,7 +1170,7 @@ public partial class OrchidAppLauncherForm : Form
         AppendLog($"  ProgramData uploads: {layout.ProgramDataUploadsPath}");
         AppendLog($"  ProgramData backups: {layout.ProgramDataBackupsPath}");
         AppendLog($"  ProgramData logs: {layout.ProgramDataLogsPath}");
-        AppendLog($"  ProgramData settings: {layout.ProgramDataLauncherSettingsPath}");
+        AppendLog($"  ProgramData launcher settings: {layout.ProgramDataLauncherSettingsPath}");
     }
 
     private void AppendLog(string text)
