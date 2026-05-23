@@ -61,6 +61,8 @@ public partial class OrchidAppLauncherForm : Form
     private readonly object _logLock = new object();
     
     private readonly WindowsProgramDataPaths _programDataPaths = new();
+
+    private string? _lastPreUpgradeBackupPath;
     
     private readonly string _logFilePath =
         Path.Combine(AppContext.BaseDirectory, "launcher.log");
@@ -231,7 +233,7 @@ public partial class OrchidAppLauncherForm : Form
                     TargetProgramDataRootPath = _programDataPaths.Root,
                     ApplicationProductVersion = AppVersion.ProductVersion,
                     ApplicationInformationalVersion = AppVersion.InformationalVersion,
-                    PreUpgradeBackupPath = null,
+                    PreUpgradeBackupPath = _lastPreUpgradeBackupPath,
                     MigratedMariaDbData = false,
                     MigratedUploads = false,
                     MigratedLauncherSettings = false
@@ -718,7 +720,7 @@ public partial class OrchidAppLauncherForm : Form
 
     private async Task<bool> RunPreUpgradeBackupAsync()
     {
-        string? backupPath = null;
+        _lastPreUpgradeBackupPath = null;
         bool nextOutputLineIsBackupPath = false;
 
         AppendLog("Starting mandatory pre-upgrade backup...");
@@ -775,7 +777,7 @@ public partial class OrchidAppLauncherForm : Form
 
             if (nextOutputLineIsBackupPath)
             {
-                backupPath = line;
+                _lastPreUpgradeBackupPath = line;
                 nextOutputLineIsBackupPath = false;
                 return;
             }
