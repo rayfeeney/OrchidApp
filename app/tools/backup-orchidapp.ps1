@@ -110,10 +110,25 @@ $MariaDbClient = Join-Path $MariaDbBin "mariadb.exe"
 $MariaDbDump = Join-Path $MariaDbBin "mariadb-dump.exe"
 $MariaDbAdmin = Join-Path $MariaDbBin "mariadb-admin.exe"
 
-$MariaDbData = Join-Path $AppRoot "data\mariadb"
-$UploadsRoot = Join-Path $AppRoot "wwwroot\uploads"
-if ([string]::IsNullOrWhiteSpace($BackupsRoot)) {
-    $BackupsRoot = Join-Path $AppRoot "backups"
+$ProgramDataRoot = Join-Path $env:ProgramData "OrchidApp"
+
+if ($BackupType -eq "PreUpgrade") {
+    $MariaDbData = Join-Path $AppRoot "data\mariadb"
+    $UploadsRoot = Join-Path $AppRoot "wwwroot\uploads"
+    $LauncherSettingsPath = Join-Path $AppRoot "launcher-settings.json"
+
+    if ([string]::IsNullOrWhiteSpace($BackupsRoot)) {
+        $BackupsRoot = Join-Path $ProgramDataRoot "backups\pre-upgrade"
+    }
+}
+else {
+    $MariaDbData = Join-Path $ProgramDataRoot "data\mariadb"
+    $UploadsRoot = Join-Path $ProgramDataRoot "uploads"
+    $LauncherSettingsPath = Join-Path $ProgramDataRoot "launcher-settings.json"
+
+    if ([string]::IsNullOrWhiteSpace($BackupsRoot)) {
+        $BackupsRoot = Join-Path $ProgramDataRoot "backups"
+    }
 }
 if ($BackupType -eq "PreUpgrade") {
     $ResolvedBackupsRootParent = Split-Path -Parent $BackupsRoot
@@ -300,7 +315,6 @@ try {
 
     Write-Step "Backing up launcher settings"
 
-    $LauncherSettingsPath = Join-Path $AppRoot "launcher-settings.json"
     $LauncherSettingsBackupPath = Join-Path $BackupWorkingRoot "launcher-settings"
 
     New-Item `
