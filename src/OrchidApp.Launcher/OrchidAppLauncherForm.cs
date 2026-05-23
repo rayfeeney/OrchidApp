@@ -293,6 +293,8 @@ public partial class OrchidAppLauncherForm : Form
 
             StartMariaDb();
 
+            await BootstrapOrchidDatabaseIfRequiredAsync();
+
             await WaitForMariaDbAsync(
                 "server=127.0.0.1;port=3308;user=orchid;password=orchid;"
             );
@@ -317,6 +319,89 @@ public partial class OrchidAppLauncherForm : Form
         }
     }
 
+    private void InitialiseMariaDbDataDirectoryIfRequired(string dataDir)
+    {
+        if (MariaDbSystemDatabaseExists(dataDir))
+        {
+            AppendLog("MariaDB system database already exists.");
+            return;
+        }
+
+        AppendLog($"MariaDB system database not found. Initialising data directory: {dataDir}");
+
+        var baseDir = AppContext.BaseDirectory;
+
+        var installDbExe = Path.Combine(
+            baseDir,
+            "runtime",
+            "mariadb",
+            "win-x64",
+            "bin",
+            "mariadb-install-db.exe"
+        );
+
+        if (!File.Exists(installDbExe))
+        {
+            AppendLog($"ERROR: MariaDB install tool was not found: {installDbExe}");
+
+            MessageBox.Show(
+                "The OrchidApp database initialisation tool could not be found. OrchidApp cannot start.",
+                "OrchidApp startup error",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+
+            return;
+        }
+
+        var process = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = installDbExe,
+                Arguments = $"--datadir=\"{dataDir}\"",
+                WorkingDirectory = baseDir,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true
+            }
+        };
+
+        process.OutputDataReceived += (s, e) =>
+        {
+            if (e.Data != null)
+                AppendLog("DB INIT: " + e.Data);
+        };
+
+        process.ErrorDataReceived += (s, e) =>
+        {
+            if (e.Data != null)
+                AppendLog("DB INIT ERR: " + e.Data);
+        };
+
+        process.Start();
+
+        process.BeginOutputReadLine();
+        process.BeginErrorReadLine();
+
+        process.WaitForExit();
+
+        if (process.ExitCode != 0)
+        {
+            AppendLog($"ERROR: MariaDB data directory initialisation failed. ExitCode={process.ExitCode}");
+
+            MessageBox.Show(
+                "The OrchidApp database could not be initialised. OrchidApp cannot start.",
+                "OrchidApp startup error",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+
+            return;
+        }
+
+        AppendLog("MariaDB data directory initialised.");
+    }
+
     private void StartMariaDb()
     {
         var baseDir = AppContext.BaseDirectory;
@@ -330,11 +415,35 @@ public partial class OrchidAppLauncherForm : Form
             "mariadbd.exe"
         );
 
-        var dataDir = Path.Combine(
-            baseDir,
-            "data",
-            "mariadb"
-        );
+        if (!File.Exists(mariaDbExe))
+        {
+            AppendLog($"ERROR: MariaDB executable was not found: {mariaDbExe}");
+
+            MessageBox.Show(
+                "The OrchidApp database engine could not be found. OrchidApp cannot start.",
+                "OrchidApp startup error",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+
+            return;
+        }
+
+        var dataDir = _programDataPaths.MariaDbData;
+
+        if (!Directory.Exists(dataDir))
+        {
+            AppendLog($"ERROR: MariaDB data directory was not found: {dataDir}");
+
+            MessageBox.Show(
+                "The OrchidApp database folder could not be found. OrchidApp cannot start.",
+                "OrchidApp startup error",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+
+            return;
+        }
+
+        InitialiseMariaDbDataDirectoryIfRequired(dataDir);
 
         AppendLog($"MariaDB EXE: {mariaDbExe}");
         AppendLog($"MariaDB DataDir: {dataDir}");
@@ -417,6 +526,42 @@ public partial class OrchidAppLauncherForm : Form
         }
 
         throw new Exception("MariaDB did not start in time.");
+    }
+
+    private async Task BootstrapOrchidDatabaseIfRequiredAsync()
+    {
+        var rootConnectionString =
+            "server=127.0.0.1;port=3308;user=root;password=;";
+
+        AppendLog("Checking OrchidApp database bootstrap...");
+
+        using var conn = new MySqlConnection(rootConnectionString);
+        await conn.OpenAsync();
+
+        var sql = @"
+CREATE DATABASE IF NOT EXISTS orchids
+CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
+
+CREATE USER IF NOT EXISTS 'orchid'@'localhost' IDENTIFIED BY 'orchid';
+CREATE USER IF NOT EXISTS 'orchid'@'127.0.0.1' IDENTIFIED BY 'orchid';
+
+GRANT ALL PRIVILEGES ON orchids.* TO 'orchid'@'localhost';
+GRANT ALL PRIVILEGES ON orchids.* TO 'orchid'@'127.0.0.1';
+
+CREATE USER IF NOT EXISTS 'orchid_shutdown'@'localhost' IDENTIFIED BY 'orchid_shutdown';
+CREATE USER IF NOT EXISTS 'orchid_shutdown'@'127.0.0.1' IDENTIFIED BY 'orchid_shutdown';
+
+GRANT SHUTDOWN ON *.* TO 'orchid_shutdown'@'localhost';
+GRANT SHUTDOWN ON *.* TO 'orchid_shutdown'@'127.0.0.1';
+
+FLUSH PRIVILEGES;
+";
+
+        using var cmd = new MySqlCommand(sql, conn);
+        await cmd.ExecuteNonQueryAsync();
+
+        AppendLog("OrchidApp database bootstrap completed.");
     }
 
     private void StopMariaDbGracefully()
@@ -1295,6 +1440,11 @@ public partial class OrchidAppLauncherForm : Form
 
             logBox.AppendText(line + Environment.NewLine);
         }
+    }
+
+    private bool MariaDbSystemDatabaseExists(string dataDir)
+    {
+        return Directory.Exists(Path.Combine(dataDir, "mysql"));
     }
 
     private void SetWindowTitle(string status)
