@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Reflection;
 using MySqlConnector;
+using OrchidApp.Launcher.Infrastructure;
 
 namespace OrchidApp.Launcher;
 
@@ -170,6 +171,13 @@ public partial class OrchidAppLauncherForm : Form
         try
         {
             SetLauncherStatus(LauncherStatus.Red);
+
+            var programDataPaths = new WindowsProgramDataPaths();
+
+            var programDataDirectoryService =
+                new WindowsProgramDataDirectoryService(programDataPaths, AppendLog);
+
+            programDataDirectoryService.EnsureRequiredDirectoriesExist();
 
             var layout = OrchidAppLayoutResolver.Resolve(AppContext.BaseDirectory);
             LogLayoutState(layout);
@@ -655,12 +663,9 @@ public partial class OrchidAppLauncherForm : Form
             return false;
         }
 
-        var preUpgradeBackupsRoot = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
-            "OrchidApp",
-            "Backups",
-            "PreUpgrade"
-        );
+        var programDataPaths = new WindowsProgramDataPaths();
+
+        var preUpgradeBackupsRoot = programDataPaths.PreUpgradeBackups;
 
         var arguments =
             "-NoProfile -ExecutionPolicy Bypass " +
@@ -1137,7 +1142,7 @@ public partial class OrchidAppLauncherForm : Form
         {
             AppendLog($"  Legacy candidate: {candidate.RootPath}");
             AppendLog($"    Source: {candidate.DiscoverySource}");
-            AppendLog($"    Has MariaDB data: {candidate.HasMariaDbData}");
+            AppendLog($"    Has orchids database: {candidate.HasOrchidsDatabase}");
             AppendLog($"    Has uploads: {candidate.HasUploads}");
             AppendLog($"    Has backups: {candidate.HasBackups}");
             AppendLog($"    Has logs: {candidate.HasLogs}");
@@ -1165,7 +1170,7 @@ public partial class OrchidAppLauncherForm : Form
         AppendLog($"  ProgramData uploads: {layout.ProgramDataUploadsPath}");
         AppendLog($"  ProgramData backups: {layout.ProgramDataBackupsPath}");
         AppendLog($"  ProgramData logs: {layout.ProgramDataLogsPath}");
-        AppendLog($"  ProgramData settings: {layout.ProgramDataLauncherSettingsPath}");
+        AppendLog($"  ProgramData launcher settings: {layout.ProgramDataLauncherSettingsPath}");
     }
 
     private void AppendLog(string text)

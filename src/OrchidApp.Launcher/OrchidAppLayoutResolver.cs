@@ -1,3 +1,5 @@
+using OrchidApp.Launcher.Infrastructure;
+
 namespace OrchidApp.Launcher;
 
 public static class OrchidAppLayoutResolver
@@ -6,9 +8,9 @@ public static class OrchidAppLayoutResolver
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(appRoot);
 
-        var programDataRootPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
-            "OrchidApp");
+        var programDataPaths = new WindowsProgramDataPaths();
+
+        var programDataRootPath = programDataPaths.Root;
 
         var currentAppLegacyCandidate = InspectLegacyCandidate(
             appRoot,
@@ -60,11 +62,11 @@ public static class OrchidAppLayoutResolver
             .Select(group => group.First())
             .ToList();
 
-        var programDataMariaDbDataPath = Path.Combine(programDataRootPath, "data", "mariadb");
-        var programDataUploadsPath = Path.Combine(programDataRootPath, "uploads");
-        var programDataBackupsPath = Path.Combine(programDataRootPath, "backups");
-        var programDataLogsPath = Path.Combine(programDataRootPath, "logs");
-        var programDataLauncherSettingsPath = Path.Combine(programDataRootPath, "launcher-settings.json");
+        var programDataMariaDbDataPath = programDataPaths.MariaDbData;
+        var programDataUploadsPath = programDataPaths.Uploads;
+        var programDataBackupsPath = programDataPaths.Backups;
+        var programDataLogsPath = programDataPaths.Logs;
+        var programDataLauncherSettingsPath = programDataPaths.LauncherSettingsFile;
 
         var dataBearingLegacyCandidates = legacyCandidates
             .Where(candidate => candidate.IsDataBearingLegacyCandidate)
@@ -74,7 +76,7 @@ public static class OrchidAppLayoutResolver
             dataBearingLegacyCandidates.Count > 0;
 
         var programDataLayoutExists =
-            Directory.Exists(programDataMariaDbDataPath);
+            ContainsOrchidsDatabase(programDataMariaDbDataPath);
 
         var programDataUploadsExists =
             Directory.Exists(programDataUploadsPath);
@@ -329,19 +331,20 @@ public static class OrchidAppLayoutResolver
         return new OrchidAppLegacyCandidate
         {
             RootPath = rootPath,
-
             MariaDbDataPath = mariaDbDataPath,
             UploadsPath = uploadsPath,
             BackupsPath = backupsPath,
             LogsPath = logsPath,
             LauncherSettingsPath = launcherSettingsPath,
-            DiscoverySource = discoverySource,
 
-            HasMariaDbData = Directory.Exists(mariaDbDataPath),
+            HasMariaDbData = ContainsMariaDbData(mariaDbDataPath),
+            HasOrchidsDatabase = ContainsOrchidsDatabase(mariaDbDataPath),
             HasUploads = Directory.Exists(uploadsPath),
             HasBackups = Directory.Exists(backupsPath),
             HasLogs = Directory.Exists(logsPath),
-            HasLauncherSettings = File.Exists(launcherSettingsPath)
+            HasLauncherSettings = File.Exists(launcherSettingsPath),
+
+            DiscoverySource = discoverySource
         };
     }
 
@@ -377,6 +380,24 @@ public static class OrchidAppLayoutResolver
             normalisedCandidate,
             allUsersAlias,
             StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool ContainsMariaDbData(string mariaDbDataPath)
+    {
+        if (!Directory.Exists(mariaDbDataPath))
+        {
+            return false;
+        }
+
+        return Directory.EnumerateFileSystemEntries(mariaDbDataPath).Any();
+    }
+
+    private static bool ContainsOrchidsDatabase(string mariaDbDataPath)
+    {
+        var orchidsDatabasePath = Path.Combine(mariaDbDataPath, "orchids");
+
+        return Directory.Exists(orchidsDatabasePath)
+            && Directory.EnumerateFileSystemEntries(orchidsDatabasePath).Any();
     }
 
     private static OrchidAppLayoutStatus ResolveStatus(
