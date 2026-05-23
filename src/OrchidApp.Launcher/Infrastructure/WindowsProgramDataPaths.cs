@@ -3,7 +3,7 @@ using System.IO;
 
 namespace OrchidApp.Launcher.Infrastructure;
 
-internal sealed class WindowsProgramDataPaths
+public sealed class WindowsProgramDataPaths
 {
     public WindowsProgramDataPaths()
         : this(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData))
@@ -42,6 +42,8 @@ internal sealed class WindowsProgramDataPaths
     public string Logs { get; }
 
     public string LauncherSettingsFile { get; }
+
+    public string MigrationStateFile => Path.Combine(Root, "migration-state.json");
 
     public string[] RequiredDirectories => new[]
     {

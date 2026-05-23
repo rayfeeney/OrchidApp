@@ -217,15 +217,76 @@ public partial class OrchidAppLauncherForm : Form
 
                 _preUpgradeBackupCompletedThisStartup = true;
                 AppendLog("Pre-upgrade backup succeeded. Startup may continue.");
-            
-                AppendLog("Starting legacy data migration to ProgramData...");
 
                 var legacyCandidate = layout.LegacyCandidates.Single(candidate => candidate.HasOrchidsDatabase);
 
-                var migrationService = new LegacyDataMigrationService(_programDataPaths);
-                migrationService.MigrateFromLegacyRoot(legacyCandidate.RootPath);
+                var migrationStateService = new MigrationStateService(_programDataPaths);
 
-                AppendLog("Legacy data migration to ProgramData completed.");
+                var migrationState = new MigrationState
+                {
+                    SchemaVersion = 1,
+                    MigrationStatus = MigrationStatus.Started,
+                    MigrationStartedAtUtc = DateTime.UtcNow,
+                    SourceLegacyRootPath = legacyCandidate.RootPath,
+                    TargetProgramDataRootPath = _programDataPaths.Root,
+                    ApplicationProductVersion = AppVersion.ProductVersion,
+                    ApplicationInformationalVersion = AppVersion.InformationalVersion,
+                    PreUpgradeBackupPath = null,
+                    MigratedMariaDbData = false,
+                    MigratedUploads = false,
+                    MigratedLauncherSettings = false
+                };
+
+                migrationStateService.Save(migrationState);
+                AppendLog($"Migration state written: {MigrationStatus.Started}");
+
+                try
+                {
+                    AppendLog("Starting legacy data migration to ProgramData...");
+
+                    var migrationService = new LegacyDataMigrationService(_programDataPaths);
+                    migrationService.MigrateFromLegacyRoot(legacyCandidate.RootPath);
+
+                    var legacyLauncherSettingsFile = Path.Combine(
+                        legacyCandidate.RootPath,
+                        "launcher-settings.json");
+
+                    var legacyUploadsFolder = Path.Combine(
+                        legacyCandidate.RootPath,
+                        "wwwroot",
+                        "uploads");
+
+                    migrationState.MigrationStatus = MigrationStatus.Completed;
+                    migrationState.MigrationCompletedAtUtc = DateTime.UtcNow;
+                    migrationState.MigratedMariaDbData = true;
+                    migrationState.MigratedUploads =
+                        Directory.Exists(legacyUploadsFolder) &&
+                        Directory.EnumerateFileSystemEntries(legacyUploadsFolder).Any();
+                    migrationState.MigratedLauncherSettings = File.Exists(legacyLauncherSettingsFile);
+
+                    migrationStateService.Save(migrationState);
+
+                    AppendLog("Legacy data migration to ProgramData completed.");
+                    AppendLog($"Migration state written: {MigrationStatus.Completed}");
+                }
+                catch (Exception ex)
+                {
+                    migrationState.MigrationStatus = MigrationStatus.Failed;
+                    migrationState.FailedAtUtc = DateTime.UtcNow;
+                    migrationState.ErrorMessage = ex.Message;
+
+                    migrationStateService.Save(migrationState);
+
+                    AppendLog("Legacy data migration to ProgramData failed.");
+                    AppendLog($"Migration state written: {MigrationStatus.Failed}");
+                    AppendLog(ex.Message);
+
+                    SetLauncherStatus(LauncherStatus.Red);
+                    SetWindowTitle("Migration failed");
+                    statusLabel.Text = "Startup stopped: legacy data migration failed.";
+
+                    return;
+                }
             }
 
             StartMariaDb();
@@ -655,9 +716,11 @@ public partial class OrchidAppLauncherForm : Form
     }
 
 
-
     private async Task<bool> RunPreUpgradeBackupAsync()
     {
+        string? backupPath = null;
+        bool nextOutputLineIsBackupPath = false;
+
         AppendLog("Starting mandatory pre-upgrade backup...");
 
         var baseDir = AppContext.BaseDirectory;
@@ -701,9 +764,25 @@ public partial class OrchidAppLauncherForm : Form
 
         process.OutputDataReceived += (s, e) =>
         {
-            if (!string.IsNullOrWhiteSpace(e.Data))
+            if (string.IsNullOrWhiteSpace(e.Data))
             {
-                AppendLog("PRE-UPGRADE BACKUP: " + e.Data);
+                return;
+            }
+
+            var line = e.Data.Trim();
+
+            AppendLog("PRE-UPGRADE BACKUP: " + line);
+
+            if (nextOutputLineIsBackupPath)
+            {
+                backupPath = line;
+                nextOutputLineIsBackupPath = false;
+                return;
+            }
+
+            if (line.Equals("Backup created:", StringComparison.OrdinalIgnoreCase))
+            {
+                nextOutputLineIsBackupPath = true;
             }
         };
 
