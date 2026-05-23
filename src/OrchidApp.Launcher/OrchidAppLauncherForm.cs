@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Drawing;
 using System.Reflection;
+using System.Linq;
 using MySqlConnector;
 using OrchidApp.Launcher.Infrastructure;
 
@@ -58,7 +59,9 @@ public partial class OrchidAppLauncherForm : Form
     private string? _webAppStartupError;
 
     private readonly object _logLock = new object();
-
+    
+    private readonly WindowsProgramDataPaths _programDataPaths = new();
+    
     private readonly string _logFilePath =
         Path.Combine(AppContext.BaseDirectory, "launcher.log");
 
@@ -172,10 +175,9 @@ public partial class OrchidAppLauncherForm : Form
         {
             SetLauncherStatus(LauncherStatus.Red);
 
-            var programDataPaths = new WindowsProgramDataPaths();
-
-            var programDataDirectoryService =
-                new WindowsProgramDataDirectoryService(programDataPaths, AppendLog);
+            var programDataDirectoryService = new WindowsProgramDataDirectoryService(
+                _programDataPaths,
+                AppendLog);
 
             programDataDirectoryService.EnsureRequiredDirectoriesExist();
 
@@ -215,6 +217,15 @@ public partial class OrchidAppLauncherForm : Form
 
                 _preUpgradeBackupCompletedThisStartup = true;
                 AppendLog("Pre-upgrade backup succeeded. Startup may continue.");
+            
+                AppendLog("Starting legacy data migration to ProgramData...");
+
+                var legacyCandidate = layout.LegacyCandidates.Single(candidate => candidate.HasOrchidsDatabase);
+
+                var migrationService = new LegacyDataMigrationService(_programDataPaths);
+                migrationService.MigrateFromLegacyRoot(legacyCandidate.RootPath);
+
+                AppendLog("Legacy data migration to ProgramData completed.");
             }
 
             StartMariaDb();
