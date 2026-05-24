@@ -59,13 +59,12 @@ public partial class OrchidAppLauncherForm : Form
     private string? _webAppStartupError;
 
     private readonly object _logLock = new object();
+
+    private readonly object _logFileLock = new();
     
     private readonly WindowsProgramDataPaths _programDataPaths = new();
 
     private string? _lastPreUpgradeBackupPath;
-    
-    private readonly string _logFilePath =
-        Path.Combine(AppContext.BaseDirectory, "launcher.log");
 
     private enum LauncherStatus
     {
@@ -92,15 +91,6 @@ public partial class OrchidAppLauncherForm : Form
         SetWindowTitle("Starting");
         Width = 900;
         Height = 460;
-
-        try
-        {
-            File.WriteAllText(_logFilePath, string.Empty);
-        }
-        catch
-        {
-            // ignore log reset errors
-        }
 
         AppendLog("OrchidApp launcher starting.");
         AppendLog($"Product version:       {AppVersion.ProductVersion}");
@@ -169,6 +159,53 @@ public partial class OrchidAppLauncherForm : Form
         Controls.Add(configureCloudBackupButton);
     }
 
+    private void InitialiseLauncherLogFile()
+    {
+        try
+        {
+            Directory.CreateDirectory(_programDataPaths.Logs);
+
+            if (!File.Exists(_programDataPaths.LauncherLogFile))
+            {
+                return;
+            }
+
+            var logFileInfo = new FileInfo(_programDataPaths.LauncherLogFile);
+
+            if (logFileInfo.Length <= 1_048_576)
+            {
+                return;
+            }
+
+            if (File.Exists(_programDataPaths.PreviousLauncherLogFile))
+            {
+                File.Delete(_programDataPaths.PreviousLauncherLogFile);
+            }
+
+            File.Move(_programDataPaths.LauncherLogFile, _programDataPaths.PreviousLauncherLogFile);
+        }
+        catch
+        {
+            // Logging must never stop the launcher from starting.
+        }
+    }
+
+    private void WriteLauncherLogFileLine(string line)
+    {
+        try
+        {
+            lock (_logFileLock)
+            {
+                Directory.CreateDirectory(_programDataPaths.Logs);
+                File.AppendAllText(_programDataPaths.LauncherLogFile, line + Environment.NewLine);
+            }
+        }
+        catch
+        {
+            // Logging must never stop the launcher from starting.
+        }
+    }
+
     protected override async void OnLoad(EventArgs e)
     {
         base.OnLoad(e);
@@ -182,6 +219,10 @@ public partial class OrchidAppLauncherForm : Form
                 AppendLog);
 
             programDataDirectoryService.EnsureRequiredDirectoriesExist();
+
+            InitialiseLauncherLogFile();
+
+            AppendLog($"Launcher log file: {_programDataPaths.LauncherLogFile}");
 
             var layout = OrchidAppLayoutResolver.Resolve(AppContext.BaseDirectory);
             LogLayoutState(layout);
@@ -1424,24 +1465,10 @@ FLUSH PRIVILEGES;
 
         var line = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {text}";
 
+        WriteLauncherLogFileLine(line);
+
         lock (_logLock)
         {
-            try
-            {
-                using var stream = new FileStream(
-                    _logFilePath,
-                    FileMode.Append,
-                    FileAccess.Write,
-                    FileShare.ReadWrite);
-
-                using var writer = new StreamWriter(stream);
-                writer.WriteLine(line);
-            }
-            catch
-            {
-                // ignore file logging errors
-            }
-
             logBox.AppendText(line + Environment.NewLine);
         }
     }

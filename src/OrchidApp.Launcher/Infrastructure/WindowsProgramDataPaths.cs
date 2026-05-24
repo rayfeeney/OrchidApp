@@ -43,6 +43,10 @@ public sealed class WindowsProgramDataPaths
 
     public string LauncherSettingsFile { get; }
 
+    public string LauncherLogFile => Path.Combine(Logs, "launcher.log");
+
+    public string PreviousLauncherLogFile => Path.Combine(Logs, "launcher.previous.log");
+
     public string MigrationStateFile => Path.Combine(Root, "migration-state.json");
 
     public string[] RequiredDirectories => new[]

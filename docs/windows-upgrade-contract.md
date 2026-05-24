@@ -2,7 +2,47 @@
 
 This document defines the Windows upgrade contract for OrchidApp.
 
-It exists to prevent data loss when moving from the current v1.1.0-style ZIP-based layout to a future installer-led Windows layout.
+It describes the implemented installer-led Windows model delivered through Issues 1-10.
+
+The purpose of this contract is to prevent data loss when moving from the older ZIP-era Windows layout to the installer-led Windows layout.
+
+---
+
+- [Windows upgrade contract](#windows-upgrade-contract)
+  - [Purpose](#purpose)
+  - [Core contract](#core-contract)
+  - [Implemented Windows layout](#implemented-windows-layout)
+  - [Existing ZIP-era Windows layouts](#existing-zip-era-windows-layouts)
+  - [Installer responsibilities](#installer-responsibilities)
+  - [Installer package exclusions](#installer-package-exclusions)
+  - [Launcher responsibilities](#launcher-responsibilities)
+  - [Application responsibilities](#application-responsibilities)
+  - [Database responsibilities](#database-responsibilities)
+  - [Layout decision model](#layout-decision-model)
+    - [Clean first install](#clean-first-install)
+    - [Existing ProgramData layout](#existing-programdata-layout)
+    - [Legacy layout requiring migration](#legacy-layout-requiring-migration)
+    - [Multiple legacy layouts](#multiple-legacy-layouts)
+    - [Legacy and ProgramData both found](#legacy-and-programdata-both-found)
+  - [Mandatory pre-upgrade backup for legacy migration](#mandatory-pre-upgrade-backup-for-legacy-migration)
+  - [Backup contents](#backup-contents)
+  - [Legacy migration flow](#legacy-migration-flow)
+  - [Migration copy behaviour](#migration-copy-behaviour)
+  - [Migration state](#migration-state)
+  - [Normal post-migration startup](#normal-post-migration-startup)
+  - [Normal backup behaviour](#normal-backup-behaviour)
+  - [Launcher settings](#launcher-settings)
+  - [Launcher logging](#launcher-logging)
+  - [Safe-stop conditions](#safe-stop-conditions)
+  - [Uninstall behaviour](#uninstall-behaviour)
+  - [Unsigned installer limitation](#unsigned-installer-limitation)
+  - [ZIP/package output](#zippackage-output)
+  - [Documentation responsibilities](#documentation-responsibilities)
+  - [Post-v1.2 follow-ups](#post-v12-follow-ups)
+    - [ProgramData-to-ProgramData upgrade backup gate](#programdata-to-programdata-upgrade-backup-gate)
+    - [Post-copy MariaDB verification before marking migration complete](#post-copy-mariadb-verification-before-marking-migration-complete)
+    - [Stronger ProgramData authority model](#stronger-programdata-authority-model)
+  - [Final rule](#final-rule)
 
 ---
 
@@ -42,121 +82,92 @@ User data is not.
 
 ---
 
-## Canonical Windows data root
+## Implemented Windows layout
 
-The future canonical Windows data root is:
+The implemented Windows application install location is:
+
+```text
+C:\Program Files\OrchidApp
+```
+
+This folder contains replaceable application files, including:
+
+- launcher files
+- web application files
+- bundled runtime files
+- MariaDB binaries
+- libvips binaries
+- database setup scripts
+- static application content
+
+The implemented Windows user-data root is:
 
 ```text
 C:\ProgramData\OrchidApp
 ```
 
-This root is intended to hold durable machine-level OrchidApp data, including:
+This folder contains durable user-owned data and operational state.
 
-- MariaDB data
-- uploaded plant photos
-- launcher settings
-- migration state
-- backup and restore metadata where required
-
-Application installation folders must not be treated as the long-term home for user data under the installer-led model.
-
----
-
-## Existing v1.1.0-style layouts
-
-Existing v1.1.0-style Windows layouts will contain live user data under the extracted application folder.
-
-This is expected and valid for v1.1.0.
-
-v1.1.0 cannot function with its data relocated elsewhere.
-
-Therefore, legacy app-root layouts are valid v1.1.0 runtime layouts.
-
-Under the installer-led model, those same layouts become migration sources only.
-
-They must not remain the canonical data location after a successful installer-led migration.
-
----
-
-## ProgramData precedence
-
-A valid ProgramData layout takes precedence over legacy app-root layouts.
-
-If `C:\ProgramData\OrchidApp` contains a valid authoritative layout, the launcher must:
-
-- treat ProgramData as the runtime data root
-- start MariaDB from ProgramData
-- start OrchidApp using ProgramData-backed configuration
-- ignore legacy app-root layouts for normal runtime resolution
-- not attempt migration from legacy layouts
-
-The presence of legacy app-root layouts after a valid ProgramData migration is not, by itself, an error.
-
-Legacy layouts discovered after ProgramData has become authoritative may be logged for diagnostics, but they must not affect startup.
-
-Once ProgramData authority has been established, later Windows upgrades should be normal application upgrades. They should not rerun the first-time legacy migration flow.
-
----
-
-## Invalid or incomplete ProgramData layouts
-
-If ProgramData exists but is incomplete, invalid or lacks valid migration state, the launcher must stop safely.
-
-The launcher must not:
-
-- guess between ProgramData and a legacy app-root layout
-- fall back automatically to legacy data
-- overwrite ProgramData with legacy data
-- make an empty or partial ProgramData layout authoritative
-- start OrchidApp against an unverified data layout
-
-A valid legacy layout may still exist in this situation, but the presence of both an invalid ProgramData layout and a legacy layout is unsafe.
-
-That state requires a safe stop and clear support wording.
-
----
-
-## Layout decision model
-
-The launcher should resolve layout state using this model:
+Implemented ProgramData paths are:
 
 ```text
-1. Detect ProgramData layout.
-
-2. If ProgramData layout is valid:
-   - treat ProgramData as authoritative
-   - ignore legacy app-root layouts for runtime purposes
-   - start MariaDB from ProgramData
-   - start OrchidApp
-   - do not attempt migration
-
-3. If ProgramData layout is missing:
-   - inspect legacy app-root layouts
-   - if exactly one valid legacy layout exists, migration may proceed
-   - if zero valid legacy layouts exist, handle as a clean first install
-   - if multiple valid legacy layouts exist, stop safely
-
-4. If ProgramData layout exists but is invalid or incomplete:
-   - stop safely
-   - do not fall back automatically to legacy data
-   - do not overwrite or recreate ProgramData automatically
+C:\ProgramData\OrchidApp\data\mariadb
+C:\ProgramData\OrchidApp\uploads
+C:\ProgramData\OrchidApp\backups
+C:\ProgramData\OrchidApp\backups\pre-upgrade
+C:\ProgramData\OrchidApp\logs
+C:\ProgramData\OrchidApp\launcher-settings.json
+C:\ProgramData\OrchidApp\migration-state.json
 ```
 
-The distinction is important:
+The launcher support log is written to:
 
 ```text
-Valid ProgramData + old legacy folder exists
-= already migrated, start normally.
-
-Invalid or incomplete ProgramData + legacy folder exists
-= unsafe, stop safely.
-
-No ProgramData + one valid legacy folder exists
-= migration candidate.
-
-No ProgramData + multiple valid legacy folders exist
-= ambiguous, stop safely.
+C:\ProgramData\OrchidApp\logs\launcher.log
 ```
+
+Log rotation keeps at most:
+
+```text
+launcher.log
+launcher.previous.log
+```
+
+When `launcher.log` exceeds 1 MB at launcher startup, it is moved to `launcher.previous.log` and a fresh `launcher.log` is started.
+
+---
+
+## Existing ZIP-era Windows layouts
+
+Older ZIP-era Windows layouts contain live user data under the extracted application folder.
+
+This is expected and valid for those older releases.
+
+The older layout may contain:
+
+```text
+<legacy-root>\data\mariadb
+<legacy-root>\wwwroot\uploads
+<legacy-root>\backups
+<legacy-root>\launcher-settings.json
+<legacy-root>\launcher.log
+```
+
+Under the installer-led model, these layouts are migration sources only.
+
+They must not remain the canonical runtime data location after a successful move to ProgramData.
+
+Legacy data is detected from the data layout itself, not from application version metadata.
+
+A data-bearing legacy layout is one where the actual MariaDB `orchids` database folder exists and contains data:
+
+```text
+<legacy-root>\data\mariadb\orchids
+```
+
+The mere existence of `data\mariadb` is diagnostic only. It does not make a layout upgrade-sensitive.
+
+This supports unversioned legacy installs and avoids relying on old package metadata.
 
 ---
 
@@ -166,48 +177,75 @@ The installer owns application files only.
 
 The installer is responsible for:
 
-- installing the OrchidApp application files
+- installing OrchidApp application files
 - replacing application binaries during upgrades
-- creating shortcuts where required
-- installing launcher files
-- installing static application content
-- avoiding unsafe ZIP-overwrite upgrade patterns
+- creating Start Menu shortcuts
+- optionally creating a Desktop shortcut
+- optionally launching OrchidApp after install
+- avoiding ZIP-overwrite upgrade patterns
 - not deleting, replacing or resetting user data
 - not making an empty data folder authoritative
 - not attempting to infer which legacy data layout is correct
 
 The installer must not directly migrate user data.
 
-The installer must not copy MariaDB data, uploaded photos or launcher settings unless that action is explicitly delegated to a launcher-controlled migration flow.
+The installer must not copy MariaDB data, uploaded photos, backups, logs or launcher settings.
+
+The installer must not create or modify:
+
+```text
+C:\ProgramData\OrchidApp
+```
+
+ProgramData is created and managed by the launcher.
+
+---
+
+## Installer package exclusions
+
+The Windows installer package must exclude mutable runtime data from the application source folder.
+
+The installer must not include:
+
+```text
+data
+uploads
+wwwroot\uploads
+backups
+logs
+launcher.log
+launcher-settings.json
+migration-state.json
+```
+
+This prevents stale development, test or legacy user data from being installed as application files.
 
 ---
 
 ## Launcher responsibilities
 
-The Windows launcher owns layout detection, unsafe-state handling and upgrade migration orchestration.
+The Windows launcher owns layout detection, unsafe-state handling, migration orchestration and runtime data-path resolution.
 
 The launcher is responsible for:
 
+- creating the ProgramData folder structure when needed
 - detecting the current launcher location
 - discovering possible legacy app-root layouts
-- discovering possible ProgramData layouts
+- discovering ProgramData state
 - de-duplicating candidate locations
 - counting data-bearing legacy layouts
 - detecting ambiguous layout states
-- recognising when ProgramData is already authoritative
-- starting normally from a valid ProgramData layout
-- stopping safely when more than one plausible live data layout exists and ProgramData is not already authoritative
-- creating a mandatory pre-upgrade backup before migration
-- creating the ProgramData folder structure only as part of a controlled migration or clean first install
-- copying or migrating legacy data into ProgramData
-- verifying the migrated database before use
-- writing `migration-state.json` only after successful migration
-- starting MariaDB from the resolved canonical data path
-- starting OrchidApp only after data layout resolution succeeds
+- creating a mandatory pre-upgrade backup before legacy migration
+- copying legacy data into ProgramData
+- writing migration state
+- starting MariaDB from ProgramData
+- passing the upload root to the web application
+- logging layout and startup decisions
+- stopping safely rather than guessing
 
 The launcher must not guess which data layout is correct when multiple candidate data layouts exist.
 
-Ambiguity must stop the upgrade safely.
+Ambiguity must stop startup safely.
 
 ---
 
@@ -215,17 +253,31 @@ Ambiguity must stop the upgrade safely.
 
 The OrchidApp web application is responsible for normal application behaviour after the launcher has resolved the runtime layout.
 
-The application is responsible for:
+The web application is responsible for:
 
-- using the configured database connection provided by the runtime environment
-- using the configured upload path provided by the runtime environment
+- using the database connection supplied by the runtime environment
+- using the upload path supplied by the runtime environment
 - displaying application version information
-- preserving existing database invariants
-- preserving existing photo and upload behaviour
-- not deciding Windows upgrade layout state
-- not performing launcher-level migration decisions
+- preserving database invariants
+- preserving photo and upload behaviour
+- running first-use database setup where required
+- running database update checks where required
 
-The application must not assume that user data is located beside the application binaries.
+The web application must not decide Windows upgrade layout state.
+
+The web application must not assume that user data is located beside the application binaries.
+
+On packaged Windows, the launcher passes the upload root to the web application using:
+
+```text
+ORCHIDAPP_UPLOAD_ROOT
+```
+
+The expected upload root is:
+
+```text
+C:\ProgramData\OrchidApp\uploads
+```
 
 ---
 
@@ -235,15 +287,430 @@ The database remains authoritative for data integrity and lifecycle invariants.
 
 The database is responsible for:
 
-- preserving existing schema constraints
+- preserving schema constraints
 - preserving stored procedure behaviour
 - preserving migration history
 - remaining restorable from backup
-- being verifiable after copy or migration
 
-Database verification must happen before a migrated ProgramData layout is treated as authoritative.
+On Windows, MariaDB binaries are installed with the application files.
 
-A copied database that cannot be started or verified must not become the active runtime database.
+MariaDB data is stored under ProgramData:
+
+```text
+C:\ProgramData\OrchidApp\data\mariadb
+```
+
+The launcher starts MariaDB using:
+
+- the MariaDB executable from the installed application folder
+- the MariaDB data directory under ProgramData
+
+This separates replaceable runtime binaries from durable user data.
+
+---
+
+## Layout decision model
+
+The implemented launcher layout model is conservative.
+
+The launcher classifies layouts using statuses including:
+
+```text
+NewInstall
+ProgramDataLayoutInPlace
+OldLayoutRequiresMigration
+MultipleLegacyLayoutsFound
+LegacyAndProgramDataFound
+```
+
+### Clean first install
+
+If no valid ProgramData layout exists and no data-bearing legacy layout exists, the launcher treats the system as a new install.
+
+The launcher then:
+
+1. Creates the ProgramData folder structure.
+2. Initialises MariaDB data under ProgramData.
+3. Creates the `orchids` database.
+4. Starts OrchidApp using ProgramData paths.
+
+### Existing ProgramData layout
+
+If ProgramData already contains a valid OrchidApp database and no conflicting data-bearing legacy layout is detected, the launcher treats ProgramData as the runtime data root.
+
+The launcher then:
+
+1. Starts MariaDB from ProgramData.
+2. Starts OrchidApp.
+3. Passes the ProgramData upload root to the web application.
+
+### Legacy layout requiring migration
+
+If exactly one data-bearing legacy layout exists and ProgramData is not already authoritative, the launcher treats the legacy layout as a migration source.
+
+The launcher then follows the legacy migration flow.
+
+### Multiple legacy layouts
+
+If more than one data-bearing legacy layout exists, the launcher stops safely.
+
+It must not guess which layout is correct.
+
+### Legacy and ProgramData both found
+
+For the implemented v1.2 safety model, if both a data-bearing legacy layout and a ProgramData layout are detected, the launcher stops safely.
+
+This conservative behaviour prevents accidental use of the wrong data layout.
+
+A future version may relax this once ProgramData authority tracking is strengthened, but the current implemented behaviour is safe stop.
+
+---
+
+## Mandatory pre-upgrade backup for legacy migration
+
+No legacy migration may proceed without a successful pre-upgrade backup.
+
+The backup is controlled by the launcher, not the installer.
+
+For legacy migration, the backup source is the detected legacy app-root layout.
+
+The backup destination is:
+
+```text
+C:\ProgramData\OrchidApp\backups\pre-upgrade
+```
+
+If backup creation fails:
+
+- migration does not run
+- ProgramData is not made authoritative
+- existing legacy data remains untouched
+- startup stops safely
+- the failure is logged
+
+This is the core migration safety rule:
+
+```text
+No successful pre-upgrade backup, no legacy migration.
+```
+
+A mandatory ProgramData-to-ProgramData pre-upgrade backup gate for future application upgrades is not part of the current implemented v1.2 model. That is a post-v1.2 follow-up.
+
+---
+
+## Backup contents
+
+A Windows pre-upgrade backup protects the currently authoritative source layout for the operation being performed.
+
+For legacy migration, the backup includes:
+
+- MariaDB database backup
+- the resolved uploads folder and everything beneath it
+- launcher settings where present
+- a backup manifest
+
+The uploads backup must include the whole uploads tree.
+
+It must not assume there is only one upload subfolder.
+
+Legacy uploads may include folders such as:
+
+```text
+plants
+taxa
+```
+
+and future upload categories may be added.
+
+---
+
+## Legacy migration flow
+
+The implemented first-time legacy migration flow is:
+
+1. Detect layout.
+2. Confirm exactly one data-bearing legacy source layout.
+3. Create mandatory pre-upgrade backup.
+4. Stop safely if backup fails.
+5. Copy legacy MariaDB data into ProgramData.
+6. Copy the full legacy uploads tree into ProgramData.
+7. Copy legacy launcher settings into ProgramData, if present.
+8. Write migration state.
+9. Start MariaDB from ProgramData.
+10. Start OrchidApp using ProgramData paths.
+
+The migration copies data.
+
+It does not move, delete or rename the old legacy data.
+
+This means the legacy source remains available after migration as a historical safety copy.
+
+---
+
+## Migration copy behaviour
+
+Legacy MariaDB data is copied from:
+
+```text
+<legacy-root>\data\mariadb
+```
+
+to:
+
+```text
+C:\ProgramData\OrchidApp\data\mariadb
+```
+
+Legacy uploads are copied from:
+
+```text
+<legacy-root>\wwwroot\uploads
+```
+
+to:
+
+```text
+C:\ProgramData\OrchidApp\uploads
+```
+
+Legacy launcher settings are copied from:
+
+```text
+<legacy-root>\launcher-settings.json
+```
+
+to:
+
+```text
+C:\ProgramData\OrchidApp\launcher-settings.json
+```
+
+if the legacy settings file exists.
+
+Migration is blocked if ProgramData already contains any of the following:
+
+```text
+C:\ProgramData\OrchidApp\data\mariadb\orchids
+C:\ProgramData\OrchidApp\uploads
+C:\ProgramData\OrchidApp\launcher-settings.json
+```
+
+where those paths indicate existing user data or settings that could be overwritten.
+
+---
+
+## Migration state
+
+Migration state is written to:
+
+```text
+C:\ProgramData\OrchidApp\migration-state.json
+```
+
+The implemented migration state records:
+
+- schemaVersion
+- migrationStatus
+- migrationStartedAtUtc
+- migrationCompletedAtUtc
+- failedAtUtc
+- sourceLegacyRootPath
+- targetProgramDataRootPath
+- applicationProductVersion
+- applicationInformationalVersion
+- preUpgradeBackupPath
+- migratedMariaDbData
+- migratedUploads
+- migratedLauncherSettings
+- errorMessage
+
+Clean first install does not write migration state.
+
+Legacy migration writes `Started` only after the mandatory pre-upgrade backup succeeds.
+
+Legacy migration writes `Completed` after the legacy data copy succeeds.
+
+Legacy migration writes `Failed` and stops startup if migration throws.
+
+The current v1.2 implementation does not wait until post-copy MariaDB startup verification before writing `Completed`.
+
+That stricter behaviour is a post-v1.2 follow-up. The current safety model remains acceptable because migration is copy-only and the legacy data remains untouched.
+
+---
+
+## Normal post-migration startup
+
+After ProgramData is in use, normal startup uses ProgramData paths.
+
+The launcher:
+
+1. Verifies the ProgramData folder structure.
+2. Detects the layout.
+3. Starts MariaDB from ProgramData.
+4. Passes the ProgramData upload root to the web application.
+5. Starts OrchidApp.
+
+Expected paths include:
+
+```text
+MariaDB DataDir: C:\ProgramData\OrchidApp\data\mariadb
+Web upload root: C:\ProgramData\OrchidApp\uploads
+Desktop UploadRoot: C:\ProgramData\OrchidApp\uploads Source: Environment
+```
+
+The application folder remains replaceable application code.
+
+---
+
+## Normal backup behaviour
+
+Normal Windows backups use ProgramData as the data source.
+
+Normal backup source paths include:
+
+```text
+C:\ProgramData\OrchidApp\data\mariadb
+C:\ProgramData\OrchidApp\uploads
+C:\ProgramData\OrchidApp\launcher-settings.json
+```
+
+Normal backup ZIPs are written to:
+
+```text
+C:\ProgramData\OrchidApp\backups
+```
+
+Pre-upgrade backup ZIPs are written to:
+
+```text
+C:\ProgramData\OrchidApp\backups\pre-upgrade
+```
+
+The optional cloud-folder copy writes the latest backup as:
+
+```text
+OrchidAppDataBackup.zip
+```
+
+in the user-configured cloud-synchronised folder.
+
+Cloud backup copy failure is logged as a warning and does not invalidate a successful local backup.
+
+---
+
+## Launcher settings
+
+Launcher settings are stored at:
+
+```text
+C:\ProgramData\OrchidApp\launcher-settings.json
+```
+
+They are not stored beside the application binaries.
+
+This includes the configured cloud backup folder path.
+
+---
+
+## Launcher logging
+
+The launcher writes persistent support logs to:
+
+```text
+C:\ProgramData\OrchidApp\logs\launcher.log
+```
+
+The log records startup, layout detection, backup, migration, MariaDB startup and web application launch decisions.
+
+If `launcher.log` exceeds 1 MB at launcher startup, it is moved to:
+
+```text
+C:\ProgramData\OrchidApp\logs\launcher.previous.log
+```
+
+A fresh `launcher.log` is then started.
+
+Only these two launcher log files are retained.
+
+The launcher must not write `launcher.log` to the installed application folder.
+
+---
+
+## Safe-stop conditions
+
+The launcher must stop safely when it detects an unsafe or ambiguous layout state.
+
+Safe-stop conditions include:
+
+- more than one data-bearing legacy layout
+- both a data-bearing legacy layout and a ProgramData layout
+- failed mandatory pre-upgrade backup
+- failed legacy data copy
+- failed migration-state write
+- missing required runtime dependencies
+- failed MariaDB startup
+- missing or unusable ProgramData MariaDB data after migration
+
+A safe stop must not delete, rename or overwrite the legacy layout.
+
+A safe stop must not make an empty or partial ProgramData layout authoritative.
+
+A safe stop must produce clear logs for support diagnosis.
+
+---
+
+## Uninstall behaviour
+
+Uninstall removes application files and shortcuts.
+
+Uninstall must not delete:
+
+```text
+C:\ProgramData\OrchidApp
+```
+
+Therefore uninstall preserves:
+
+- plant database
+- uploaded photos
+- backups
+- launcher settings
+- migration state
+- launcher logs
+
+The installer uninstall prompt must tell users that their plant data, uploaded photos, backups and settings are preserved.
+
+---
+
+## Unsigned installer limitation
+
+The Windows installer is currently unsigned.
+
+Windows may therefore show:
+
+```text
+Publisher: Unknown
+```
+
+when the installer is run.
+
+This is an accepted limitation.
+
+Code signing requires a paid certificate or paid signing service and is not cost-effective for OrchidApp at this stage.
+
+This does not affect the data layout, backup behaviour, migration safety or ProgramData preservation model.
+
+---
+
+## ZIP/package output
+
+ZIP-style or folder-based Windows package output may remain for development and testing.
+
+It is not the public Windows upgrade route.
+
+Public Windows upgrades must use the installer.
+
+Users must not upgrade by extracting a new ZIP or package folder over an existing OrchidApp folder.
 
 ---
 
@@ -251,137 +718,66 @@ A copied database that cannot be started or verified must not become the active 
 
 Documentation must explain the Windows upgrade model in user-safe language.
 
-Documentation is responsible for:
+Documentation must state that:
 
-- warning users not to upgrade by extracting a ZIP over an existing installation
-- explaining that Windows upgrades are installer-led
-- explaining that user data is kept separate from application files
-- documenting the canonical Windows data root
-- explaining what happens on first launch after installing an upgrade
-- explaining what happens on later launches after ProgramData is already authoritative
-- explaining what to do if the launcher reports multiple possible data locations
-- documenting recovery from backup
+- public Windows upgrades use the installer
+- users must not upgrade by extracting a ZIP over an existing OrchidApp folder
+- user data is stored separately from application files
+- ProgramData is the Windows mutable data root
+- uninstall preserves user data
+- the launcher log is available for support
+- the installer may show Unknown publisher because it is unsigned
 
 User documentation must not require users to manually inspect MariaDB folders unless they are following a support or recovery procedure.
 
 ---
 
-## Mandatory pre-upgrade backup
+## Post-v1.2 follow-ups
 
-No migration may proceed without a successful pre-upgrade backup.
+The following items are not part of the implemented Issues 1-10 model and are intentionally deferred.
 
-The backup must be created before any legacy data is copied, moved or made inactive.
+### ProgramData-to-ProgramData upgrade backup gate
 
-If backup creation fails, migration must stop.
+Future upgrades should add a mandatory pre-upgrade backup gate when ProgramData is already authoritative and the application version changes.
 
-A failed backup must leave the existing v1.1.0-style layout untouched and usable.
+This will require launcher state tracking such as:
 
-A backup is required for migration from a legacy app-root layout into ProgramData.
+```text
+C:\ProgramData\OrchidApp\launcher-state.json
+```
 
-A backup is not part of normal startup when ProgramData is already authoritative.
+The future state may record:
 
----
+- lastSuccessfulProductVersion
+- lastSuccessfulInformationalVersion
+- lastSuccessfulStartupAtUtc
 
-## High-level first-time migration order
+The launcher should then create a pre-upgrade backup before allowing upgrade-sensitive startup under a changed application version.
 
-The first-time installer-led migration flow must follow this order:
+### Post-copy MariaDB verification before marking migration complete
 
-1. Detect layout.
-2. Confirm that ProgramData is not already authoritative.
-3. Identify exactly one valid legacy source layout.
-4. Create mandatory pre-upgrade backup.
-5. Create ProgramData structure.
-6. Copy or migrate legacy data.
-7. Verify migrated database.
-8. Write `migration-state.json`.
-9. Start MariaDB from ProgramData.
-10. Start OrchidApp.
+Future migration hardening may delay `migration-state.json` status `Completed` until the copied ProgramData MariaDB data has started successfully and the database has been verified.
 
-The order is significant.
+The current implementation records migration completion after successful copy.
 
-ProgramData must not be treated as authoritative until migration and verification have completed successfully.
+This is accepted for v1.2 because legacy migration is copy-only and old data remains untouched.
 
----
+### Stronger ProgramData authority model
 
-## Normal post-migration startup order
+A future version may allow valid ProgramData to take precedence over leftover legacy app-root data without safe-stopping.
 
-After ProgramData has become authoritative, startup should follow the normal runtime path:
+That requires stronger authority tracking and support wording.
 
-1. Detect ProgramData layout.
-2. Validate ProgramData authority.
-3. Start MariaDB from ProgramData.
-4. Start OrchidApp.
-
-Legacy app-root layouts must not trigger a new migration during normal post-migration startup.
+The current v1.2 implementation uses a conservative safe stop when both data-bearing legacy and ProgramData layouts are detected.
 
 ---
 
-## Safe-stop conditions
+## Final rule
 
-Failed or ambiguous upgrades must stop safely.
+The installer owns application files.
 
-The launcher must stop without starting OrchidApp when it detects:
+The launcher owns user-data safety.
 
-- more than one data-bearing legacy layout and no authoritative ProgramData layout
-- both an invalid or incomplete ProgramData layout and one or more legacy data layouts
-- a failed mandatory backup
-- a failed copy or migration
-- a failed database verification
-- an incomplete or invalid `migration-state.json`
-- a partially created ProgramData layout that has not been verified
+The database owns invariants.
 
-A safe stop must not destroy or overwrite the existing legacy layout.
-
-A safe stop must not make an empty or partial ProgramData layout authoritative.
-
-A safe stop must produce clear logs and user-facing support wording.
-
----
-
-## ProgramData authority
-
-`C:\ProgramData\OrchidApp` becomes authoritative only after all of the following are true:
-
-- the legacy source layout has been identified unambiguously, where migration is required
-- a mandatory pre-upgrade backup has completed successfully, where migration is required
-- required ProgramData folders have been created
-- legacy data has been copied or migrated successfully, where migration is required
-- the MariaDB database in ProgramData has been started and verified
-- required uploads and settings have been copied or created safely
-- `migration-state.json` has been written successfully, where migration has occurred
-
-Until these conditions are met, ProgramData is not authoritative.
-
-Once ProgramData has become authoritative, subsequent launches and upgrades resolve runtime data from ProgramData first.
-
-Legacy app-root layouts are no longer migration candidates during normal startup after ProgramData authority has been established.
-
----
-
-## Legacy layout handling after migration
-
-A successful migration does not require the legacy app-root layout to be immediately deleted.
-
-The legacy layout may remain on disk as a historical source or fallback reference.
-
-However, after successful migration, the launcher must resolve runtime data from ProgramData, not from the legacy app-root layout.
-
-Any later detection of legacy layouts may be logged for diagnostics.
-
-It must not cause migration to rerun while ProgramData remains valid and authoritative.
-
----
-
-## Non-goals for this contract
-
-This contract does not define the final installer technology.
-
-This contract does not define exact folder names below ProgramData.
-
-This contract does not define the detailed backup file format.
-
-This contract does not define the exact schema of `migration-state.json`.
-
-Those details belong to later implementation issues.
-
-This contract defines the safety boundary and responsibility split that those later issues must follow.
+User data must survive upgrade failure.
