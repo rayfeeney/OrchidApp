@@ -669,18 +669,24 @@ FLUSH PRIVILEGES;
 
         var exePath = Path.Combine(baseDir, "OrchidApp.Web.exe");
 
+        var webAppStartInfo = new ProcessStartInfo
+        {
+            FileName = exePath,
+            Arguments = "--urls=http://localhost:5285",
+            WorkingDirectory = baseDir,
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true
+        };
+
+        webAppStartInfo.Environment["ORCHIDAPP_UPLOAD_ROOT"] = _programDataPaths.Uploads;
+
+        AppendLog($"Web upload root: {_programDataPaths.Uploads}");
+
         _webAppProcess = new Process
         {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = exePath,
-                Arguments = "--urls=http://localhost:5285",
-                WorkingDirectory = baseDir,
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                CreateNoWindow = true
-            }
+            StartInfo = webAppStartInfo
         };
 
         _webAppProcess.EnableRaisingEvents = true;
@@ -1228,13 +1234,11 @@ FLUSH PRIVILEGES;
 
     private FileInfo? GetLatestBackupFile()
     {
-        var backupsDir = Path.Combine(
-            AppContext.BaseDirectory,
-            "backups"
-        );
+        var backupsDir = _programDataPaths.Backups;
 
         if (!Directory.Exists(backupsDir))
         {
+            AppendLog($"Backup folder does not exist: {backupsDir}");
             return null;
         }
 
@@ -1246,7 +1250,7 @@ FLUSH PRIVILEGES;
 
     private void CopyLatestBackupToCloudFolder()
     {
-        var settingsService = new LauncherSettingsService();
+        var settingsService = new LauncherSettingsService(_programDataPaths.LauncherSettingsFile);
         var settings = settingsService.Load();
 
         if (string.IsNullOrWhiteSpace(settings.CloudBackupFolderPath))
@@ -1311,7 +1315,7 @@ FLUSH PRIVILEGES;
 
     private void ConfigureCloudBackupButton_Click(object? sender, EventArgs e)
     {
-        var settingsService = new LauncherSettingsService();
+        var settingsService = new LauncherSettingsService(_programDataPaths.LauncherSettingsFile);
         var settings = settingsService.Load();
 
         using var dialog = new FolderBrowserDialog

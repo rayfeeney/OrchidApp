@@ -162,7 +162,7 @@ $BackupLogPath = Join-Path $BackupWorkingRoot "backup.log"
 $MariaDbServerLogPath = Join-Path $BackupWorkingRoot "mariadb-server.log"
 $MariaDbServerErrorLogPath = Join-Path $BackupWorkingRoot "mariadb-server-error.log"
 $BackupZip = Join-Path $BackupsRoot "$BackupName.zip"
-$MariaDbDataRoot = Join-Path $AppRoot "data\mariadb"
+$MariaDbDataRoot = $MariaDbData
 
 $StartedMariaDb = $false
 $MariaDbProcess = $null
