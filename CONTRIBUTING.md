@@ -12,7 +12,7 @@
     - [5. Application Layer Changes](#5-application-layer-changes)
     - [6. Temporal Behaviour](#6-temporal-behaviour)
     - [7. UI and Navigation Contract](#7-ui-and-navigation-contract)
-    - [8. Packaged App and Upgrade Safety](#8-packaged-app-and-upgrade-safety)
+    - [8. Windows Installer and Upgrade Safety](#8-windows-installer-and-upgrade-safety)
     - [9. Backup and Restore Behaviour](#9-backup-and-restore-behaviour)
     - [10. User Documentation](#10-user-documentation)
   - [Commits and Hooks](#commits-and-hooks)
@@ -259,22 +259,26 @@ UI consistency is part of the product contract.
 
 ---
 
-### 8. Packaged App and Upgrade Safety
+### 8. Windows Installer and Upgrade Safety
 
-The Windows packaged app is now part of the project’s supported delivery model.
+The Windows installer-led app is part of the project’s supported delivery model.
 
-Changes affecting packaging, startup, launcher behaviour, local settings, bundled components or data folders must preserve upgrade safety.
+Changes affecting packaging, installer behaviour, launcher behaviour, local settings, bundled components or data folders must preserve upgrade safety.
 
 Rules:
 
-* User data must not be deleted during package replacement or upgrade
+* Public Windows upgrades must use the installer, not ZIP overwrite
+* User data must not be deleted during install, uninstall, package replacement or upgrade
 * Database files and uploaded images must be treated as persistent state
 * Application files must be treated as replaceable
-* Upgrade workflows should take or require a backup before making destructive or structural changes
-* Data-folder moves must be version-aware and documented
+* The installer owns application files only
+* The launcher owns layout detection, backup, migration and runtime data-path resolution
+* Upgrade workflows must take or require a backup before migration or destructive/structural changes
+* Data-folder moves must be layout-aware and documented
 * Failure during upgrade must not leave the user without a recoverable path
+* Windows ProgramData paths must remain consistent with `docs/windows-upgrade-contract.md`
 
-Any change that affects packaged layout must consider future installer-based distribution.
+Any change that affects packaged layout must consider the implemented installer-led distribution model.
 
 ---
 
@@ -419,6 +423,7 @@ The following are strictly disallowed:
 * Deleting or overwriting user data during upgrade
 * Treating packaged application files and user data as the same kind of state
 * Shipping user-facing workflow changes without updating documentation
+* Recommending ZIP-overwrite as the public Windows upgrade route
 
 ---
 

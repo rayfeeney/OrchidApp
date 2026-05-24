@@ -401,22 +401,25 @@ Example:
 ```
 1.2.0
 ```
-The internal packaged build version uses four numbers:
+The internal packaged build version may include build metadata for diagnostics and support.
 
-```
-Major.Minor.Patch.Build
-```
-Example:
-```
-1.2.0.17
-```
-Only the public product version is shown to users in normal UI, release notes and documentation. The internal build number is used for diagnostics, logs, backup manifests, migration manifests and support investigation.
+Only the public product version is shown to users in normal UI, release notes and documentation.
 
-The launcher version is authoritative for upgrade, migration and operational decisions.
+Internal build and informational version metadata may be used in:
 
-The web application carries the same product and build version for display and diagnostics only. Web application version metadata must not drive upgrade logic.
+* launcher logs
+* support diagnostics
+* migration state
+* installer/package diagnostics
+* operational troubleshooting
 
-Version metadata is baked into the application at build/package time. Runtime user data must not be used as the source of application version information.
+The launcher version is authoritative for Windows packaging, migration and operational decisions.
+
+The web application carries matching version metadata for display and diagnostics only. Web application version metadata must not drive Windows upgrade layout logic.
+
+Version metadata is baked into the application at build/package time.
+
+Runtime user data must not be used as the source of application version information.
 
 The packaging process is responsible for updating version metadata before building release artefacts.
 
@@ -428,19 +431,11 @@ Skipped internal build numbers are acceptable and expected. They may represent f
 
 Release artefacts, release notes and user documentation identify the public product version.
 
-Operational artefacts may also record the full internal build version.
+The Windows installer receives the packaged app public product version and uses it for installer identity and output filename.
 
-Pre-upgrade backup manifests and migration-state records must include both the public product version and the internal build version.
+Migration state records the public product version and informational version involved in migration.
 
-Example operational version metadata:
-
-```
-{
-  "productVersion": "1.2.0",
-  "buildVersion": "1.2.0.17",
-  "informationalVersion": "1.2.0+build.17"
-}
-```
+Backup manifests are not currently required to record application version metadata.
 
 ---
 
@@ -448,15 +443,108 @@ Example operational version metadata:
 
 Windows upgrades are governed by an installer-led upgrade contract.
 
-The installer owns application files only and must never overwrite user data. Durable Windows user data is migrated to, and then resolved from, `C:\ProgramData\OrchidApp`.
+Public Windows upgrades must use the installer.
 
-Existing v1.1.0-style Windows layouts are valid runtime layouts for v1.1.0 and will contain live user data under the extracted application folder. Under the installer-led model, these layouts are migration sources only.
+Public Windows upgrades must not be performed by extracting a ZIP or package folder over an existing OrchidApp folder.
 
-The Windows launcher owns layout detection, ambiguity handling, mandatory pre-upgrade backup, controlled migration, database verification and runtime data-path resolution. It must stop safely rather than guess when multiple plausible data layouts exist.
+The installer owns application files only.
 
-A ProgramData layout becomes authoritative only after successful backup, migration, database verification and migration-state recording where migration is required.
+The launcher owns user-data safety.
 
-Once ProgramData is valid and authoritative, it takes precedence over legacy app-root layouts. Later launches and upgrades start from ProgramData directly and must not rerun the legacy migration flow.
+The installer may install, replace or remove application files, but must never overwrite user data.
+
+The implemented Windows application install location is:
+
+```text
+C:\Program Files\OrchidApp
+```
+
+This folder contains replaceable application files, including:
+
+* launcher files
+* web application files
+* bundled runtime files
+* MariaDB binaries
+* libvips binaries
+* database setup scripts
+* static application content
+
+The implemented Windows user-data root is:
+
+```
+C:\ProgramData\OrchidApp
+```
+
+Implemented ProgramData paths are:
+
+```
+C:\ProgramData\OrchidApp\data\mariadb
+C:\ProgramData\OrchidApp\uploads
+C:\ProgramData\OrchidApp\backups
+C:\ProgramData\OrchidApp\backups\pre-upgrade
+C:\ProgramData\OrchidApp\logs
+C:\ProgramData\OrchidApp\launcher-settings.json
+C:\ProgramData\OrchidApp\migration-state.json
+```
+
+The launcher support log is written to:
+
+```
+C:\ProgramData\OrchidApp\logs\launcher.log
+```
+
+Log rotation keeps at most:
+
+```
+launcher.log
+launcher.previous.log
+```
+
+Existing ZIP-era Windows layouts may contain live user data under the extracted application folder.
+
+Under the installer-led model, those layouts are migration sources only.
+
+A data-bearing legacy layout is one where the actual MariaDB orchids database folder exists and contains data:
+
+```
+<legacy-root>\data\mariadb\orchids
+```
+
+The mere existence of data\mariadb is diagnostic only and does not make a layout upgrade-sensitive.
+
+The Windows launcher owns:
+
+* ProgramData folder creation
+* layout detection
+* unsafe-state handling
+* mandatory pre-upgrade backup before legacy migration
+* copy-only legacy migration
+* migration-state recording
+* MariaDB startup from ProgramData
+* upload-root resolution
+* persistent launcher logging
+* safe stops when layout ambiguity is detected
+
+For the implemented v1.2 safety model, if both a data-bearing legacy layout and a ProgramData layout are detected, the launcher stops safely.
+
+This conservative behaviour prevents accidental use of the wrong data layout.
+
+Legacy migration is copy-only.
+
+The launcher does not delete, move or rename the old legacy data.
+
+Migration state is written to:
+
+```
+C:\ProgramData\OrchidApp\migration-state.json
+```
+
+The current implementation records migration completion after successful legacy data copy.
+
+Post-copy MariaDB startup verification before marking migration complete is a post-v1.2 hardening follow-up.
+
+A mandatory ProgramData-to-ProgramData pre-upgrade backup gate for future upgrades is also a post-v1.2 follow-up.
+
 
 ---
 
@@ -480,7 +568,7 @@ For packaged desktop deployments, the application must:
 
 ## 12A. Packaged Application Model
 
-OrchidApp also supports a packaged Windows deployment model.
+OrchidApp supports a packaged Windows deployment model.
 
 In this model:
 
@@ -489,11 +577,42 @@ In this model:
 * Database files and uploaded images are canonical state
 * Local launcher/application settings are runtime configuration
 * Upgrades must preserve user data
-* Upgrade workflows must take or require a backup before structural or destructive changes
+* The installer owns application files only
+* The launcher owns user-data safety
 
-The packaged app model must be designed so it can evolve towards an installer-based distribution without changing the core state model.
+On Windows, replaceable application files are installed under:
+
+```
+C:\Program Files\OrchidApp
+```
+
+Durable user data is stored under:
+
+```
+C:\ProgramData\OrchidApp
+```
 
 Application binaries, runtime files and generated package contents must never be treated as equivalent to user data.
+
+The packaged Windows application must not assume that user data is located beside the application binaries.
+
+The launcher must pass resolved runtime paths to the web application where required.
+
+For uploads, the packaged Windows launcher provides:
+
+```
+ORCHIDAPP_UPLOAD_ROOT
+```
+
+with the value:
+
+```
+C:\ProgramData\OrchidApp\uploads
+```
+
+ZIP-style or folder-based package output may remain for development and testing.
+
+It is not the public Windows upgrade route.
 
 ---
 
@@ -528,31 +647,27 @@ Local validation scripts may exist for developer convenience, but they are not c
 
 # 14. Operations Layer - State Protection
 
-Stateful components:
+Windows packaged deployments support local backup creation, mandatory pre-upgrade backup before legacy migration and optional copy of the latest backup to a user-configured cloud-synchronised folder.
 
-* MariaDB database
-* Uploads directory
-* Runtime user settings required for backup/location behaviour
+Normal Windows backups use:
 
-Application binaries, package files and generated release contents are not canonical state.
+```
+C:\ProgramData\OrchidApp\data\mariadb
+C:\ProgramData\OrchidApp\uploads
+C:\ProgramData\OrchidApp\launcher-settings.json
+```
 
-The backup model differs by deployment type.
+Normal Windows backup ZIPs are written to:
 
-Raspberry Pi/Linux deployments support encrypted scheduled backups and upload mirroring.
+```
+C:\ProgramData\OrchidApp\backups
+```
 
-Windows packaged deployments support local backup creation and optional copy of the latest backup to a user-configured cloud-synchronised folder.
+Legacy migration pre-upgrade backups are written to:
 
-In all deployment models:
-
-* Database state must be backed up
-* Uploaded images must be backed up
-* Restore must be documented and tested
-* Backup success must be logged or visible
-* Backup failure must not be silent
-
-**Backup execution, monitoring and validation are the responsibility of the deployment operator.**
-
-Backups are only valid if restores succeed.
+```
+C:\ProgramData\OrchidApp\backups\pre-upgrade
+```
 
 ## Upgrade Safety Requirement
 
@@ -568,6 +683,12 @@ A valid upgrade must ensure:
 * Failure during upgrade must leave a recoverable path
 
 Upgrade safety is part of the operational contract.
+
+For the implemented Windows v1.2 model, mandatory pre-upgrade backup is enforced before legacy app-root to ProgramData migration.
+
+A mandatory ProgramData-to-ProgramData pre-upgrade backup gate for later application upgrades is a post-v1.2 follow-up.
+
+Post-copy MariaDB startup verification before marking migration state as complete is also a post-v1.2 follow-up.
 
 ---
 

@@ -7,19 +7,36 @@ It defines how the system is designed, how it behaves, and how it is operated.
 This is not reference material.
 This is the **operational and architectural contract** of the system.
 
+- [OrchidApp Documentation](#orchidapp-documentation)
+- [How to Use This Documentation](#how-to-use-this-documentation)
+- [Documentation Structure](#documentation-structure)
+  - [Architecture - System Contract](#architecture---system-contract)
+  - [Temporal Design - Domain Behaviour](#temporal-design---domain-behaviour)
+  - [Windows Upgrade Contract - Installer-Led Safety](#windows-upgrade-contract---installer-led-safety)
+  - [Installation \& Upgrade - Execution Model](#installation--upgrade---execution-model)
+  - [Contributing - Change Control](#contributing---change-control)
+  - [Backup \& Restore - Operational Safety](#backup--restore---operational-safety)
+- [System Model Summary](#system-model-summary)
+- [Core Principles](#core-principles)
+- [Deterministic System Guarantee](#deterministic-system-guarantee)
+- [Final Principle](#final-principle)
+
 ---
 
 # How to Use This Documentation
 
 Start with the document that matches your intent:
 
-| If you want to…                         | Read this                                         |
-| --------------------------------------- | ------------------------------------------------- |
-| Understand how the system is designed   | `architecture.md`                                 |
-| Understand time, lifecycle and ordering | `temporal-design.md`                              |
-| Install or upgrade the system           | `user-guides/linux/installation-upgrade.md`                         |
-| Contribute safely to the project        | `../CONTRIBUTING.md`                              |
-| Operate backups and recovery            | `user-guides/linux/OrchidApp-MariaDB-Backup-and-Restore-Runbook.md` |
+| If you want to…                         | Read this                                                                  |
+| --------------------------------------- | -------------------------------------------------------------------------- |
+| Understand how the system is designed   | `architecture.md`                                                          |
+| Understand time, lifecycle and ordering | `temporal-design.md`                                                       |
+| Understand Windows upgrade safety       | `windows-upgrade-contract.md`                                              |
+| Install or upgrade on Linux             | `user-guides/linux/installation-upgrade.md`                                |
+| Install or upgrade on Windows           | `user-guides/windows/`                                                     |
+| Contribute safely to the project        | `../CONTRIBUTING.md`                                                       |
+| Operate Linux backups and recovery      | `user-guides/linux/OrchidApp-MariaDB-Backup-and-Restore-Runbook.md`        |
+| Use Windows backup and recovery docs    | `user-guides/windows/`                                                     |
 
 Each document is authoritative within its domain.
 
@@ -67,19 +84,47 @@ Temporal behaviour is part of the core system contract.
 
 ---
 
-## Installation & Upgrade - Execution Model
+## Windows Upgrade Contract - Installer-Led Safety
 
-```text
-installation-upgrade.md
+```
+windows-upgrade-contract.md
 ```
 
 Defines:
 
-* How to install the system from scratch
-* How to upgrade safely using migrations
-* The deterministic deployment model
+* Installer-owned application files
+* ProgramData-owned user data
+* Legacy ZIP-era migration behaviour
+* Mandatory pre-upgrade backup before legacy migration
+* Safe-stop conditions
+* Windows launcher responsibilities
+* Windows installer responsibilities
 
-This is the **only valid procedure** for deployment.
+This is the source of truth for Windows installer-led upgrade safety.
+
+---
+
+## Installation & Upgrade - Execution Model
+
+Linux installation and upgrade behaviour is defined in:
+
+```
+user-guides/linux/installation-upgrade.md
+```
+
+Windows installer-led upgrade behaviour is defined in:
+
+```
+windows-upgrade-contract.md
+```
+
+Windows user-facing installation, backup and recovery documents live under:
+
+```
+user-guides/windows/
+```
+
+Public Windows upgrades must use the installer. They must not be performed by extracting a ZIP or package folder over an existing OrchidApp folder.
 
 ---
 
@@ -101,17 +146,25 @@ This protects the architectural contract.
 
 ## Backup & Restore - Operational Safety
 
-```text
-OrchidApp-MariaDB-Backup-and-Restore-Runbook.md
+Linux backup and restore behaviour is defined in:
+
+```
+user-guides/linux/OrchidApp-MariaDB-Backup-and-Restore-Runbook.md
 ```
 
-Defines:
+Windows backup, restore and recovery documentation lives under:
 
-* Backup architecture
-* Restore procedures
-* Disaster recovery
+```
+user-guides/windows/
+```
 
-This protects system state.
+Backups protect:
+
+* MariaDB database state
+* Uploaded plant images
+* Runtime user settings required for recovery
+
+Backups are only valid if restore succeeds.
 
 ---
 

@@ -46,7 +46,6 @@
   - [Third-Party Licences](#third-party-licences)
   - [Architectural Principle](#architectural-principle)
 
-
 ---
 
 <p align="center">
@@ -87,13 +86,13 @@ OrchidApp is production-ready for personal/self-hosted use.
 It currently supports:
 
 * Raspberry Pi deployment using MariaDB and systemd
-* Windows ZIP-based release with bundled application runtime components
+* Windows installer-led release with bundled application runtime components
 * Local database and upload storage
 * User-controlled backup configuration
 * Recovery from a backup on a new or rebuilt machine
 * User documentation for installation, backup and recovery
 
-The next packaging direction is to make Windows upgrades safer and prepare for an installer-based distribution model. This includes separating application files from user data where practical and ensuring backups are taken before upgrade work begins.
+Windows public upgrades are now installer-led. Application files are installed separately from user data, and the Windows launcher owns layout detection, pre-upgrade backup, legacy data migration and runtime path resolution.
 
 ---
 
@@ -168,7 +167,7 @@ It is designed for environments where reliability matters more than flexibility.
 | Platform | Status | Notes |
 | -------- | ------ | ----- |
 | Raspberry Pi / Linux | Production-ready | Primary self-hosted deployment model |
-| Windows | Available | ZIP-based release, moving towards safer upgrade mechanics |
+| Windows | Available | Installer-led release; application files are separate from ProgramData user data |
 | macOS | Future candidate | Not currently released |
 
 ---
@@ -346,11 +345,21 @@ Uploaded plant images are part of the canonical dataset.
 
 On Raspberry Pi/Linux deployments, uploads are stored under:
 
-```text
+```
 /opt/orchidapp/uploads
 ```
 
-On packaged Windows deployments, uploads are stored locally with the application data until the upgrade-safe folder model is formalised.
+On packaged Windows deployments, uploads are stored under:
+
+```
+C:\ProgramData\OrchidApp\uploads
+```
+
+The Windows launcher passes this path to the web application using:
+
+```
+ORCHIDAPP_UPLOAD_ROOT
+```
 
 Requirements:
 
@@ -400,12 +409,13 @@ An upgrade evolves an existing installation by:
 * Restarting the application
 * Preserving user data and uploads
 
-The Windows release is currently ZIP-based. Future work is directed towards safer upgrade mechanics and installer-style distribution.
+Public Windows upgrades are installer-led. Users must not upgrade by extracting a new ZIP or package folder over an existing OrchidApp folder.
 
 The full installation and upgrade contract is defined in:
 
 ```text
 docs/user-guides/linux/installation-upgrade.md
+docs/windows-upgrade-contract.md
 ```
 
 ---
@@ -462,15 +472,55 @@ docs/user-guides/windows
 
 ## Windows upgrades
 
-Public Windows upgrades are installer-led. Do not upgrade OrchidApp by extracting a new ZIP over an existing installation.
+Public Windows upgrades are installer-led.
 
-The installer owns application files only. User data, including the MariaDB database, uploaded plant photos and launcher settings, is protected separately.
+Do not upgrade OrchidApp by extracting a new ZIP or package folder over an existing installation.
 
-The future canonical Windows data root is `C:\ProgramData\OrchidApp`. Existing v1.1.0-style ZIP layouts keep live data under the extracted application folder and are treated as migration sources during the first installer-led migration.
+The installer owns application files only. User data, including the MariaDB database, uploaded plant photos, backups, launcher settings, migration state and launcher logs, is protected separately.
+
+The implemented Windows application install location is:
+
+```
+C:\Program Files\OrchidApp
+```
+
+The implemented Windows user-data root is:
+
+```
+C:\ProgramData\OrchidApp
+```
+
+Important Windows user-data paths are:
+
+```
+C:\ProgramData\OrchidApp\data\mariadb
+C:\ProgramData\OrchidApp\uploads
+C:\ProgramData\OrchidApp\backups
+C:\ProgramData\OrchidApp\backups\pre-upgrade
+C:\ProgramData\OrchidApp\logs
+C:\ProgramData\OrchidApp\launcher-settings.json
+C:\ProgramData\OrchidApp\migration-state.json
+```
+
+The launcher support log is written to:
+
+```
+C:\ProgramData\OrchidApp\logs\launcher.log
+```
+
+Older ZIP-era Windows layouts may contain live user data under the extracted application folder. Under the installer-led model, those layouts are treated as migration sources.
 
 Before any legacy-to-ProgramData migration, OrchidApp must create a successful pre-upgrade backup. If the launcher detects an ambiguous or unsafe layout, it stops safely rather than guessing.
 
-After ProgramData has become authoritative, later Windows upgrades start from ProgramData directly and do not rerun the legacy migration flow.
+After ProgramData is in use, later launches use ProgramData directly.
+
+The Windows upgrade contract is defined in:
+
+```
+docs/windows-upgrade-contract.md
+```
+
+The Windows installer is currently unsigned, so Windows may show Publisher: Unknown. This is an accepted limitation and does not affect the data-safety model.
 
 ---
 
@@ -527,6 +577,7 @@ Users should include relevant information when requesting help, such as:
 * Operating system
 * Whether the issue affects startup, backup, restore, photos or data entry
 * Any visible error message
+* Windows launcher log, if relevant: `C:\ProgramData\OrchidApp\logs\launcher.log`
 
 ---
 
