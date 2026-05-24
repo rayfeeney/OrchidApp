@@ -4,8 +4,6 @@ namespace OrchidApp.Launcher;
 
 public sealed class LauncherSettingsService
 {
-    private const string SettingsFileName = "launcher-settings.json";
-
     private readonly JsonSerializerOptions _jsonOptions = new()
     {
         WriteIndented = true
@@ -13,11 +11,14 @@ public sealed class LauncherSettingsService
 
     public string SettingsFilePath { get; }
 
-    public LauncherSettingsService()
+    public LauncherSettingsService(string settingsFilePath)
     {
-        SettingsFilePath = Path.Combine(
-            AppContext.BaseDirectory,
-            SettingsFileName);
+        if (string.IsNullOrWhiteSpace(settingsFilePath))
+        {
+            throw new ArgumentException("Settings file path must be provided.", nameof(settingsFilePath));
+        }
+
+        SettingsFilePath = settingsFilePath;
     }
 
     public LauncherSettings Load()
@@ -40,6 +41,13 @@ public sealed class LauncherSettingsService
 
     public void Save(LauncherSettings settings)
     {
+        var settingsDirectory = Path.GetDirectoryName(SettingsFilePath);
+
+        if (!string.IsNullOrWhiteSpace(settingsDirectory))
+        {
+            Directory.CreateDirectory(settingsDirectory);
+        }
+
         var json = JsonSerializer.Serialize(settings, _jsonOptions);
 
         File.WriteAllText(SettingsFilePath, json);

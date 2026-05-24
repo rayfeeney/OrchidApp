@@ -18,17 +18,26 @@ Console.WriteLine($"ENV: {builder.Environment.EnvironmentName}");
 
 if (builder.Environment.IsEnvironment("Desktop"))
 {
-    var desktopUploadsRoot = Path.Combine(
-        AppContext.BaseDirectory,
-        "wwwroot",
-        "uploads"
-    );
+    var uploadRootFromEnvironment =
+        Environment.GetEnvironmentVariable("ORCHIDAPP_UPLOAD_ROOT");
+
+    var desktopUploadsRoot = !string.IsNullOrWhiteSpace(uploadRootFromEnvironment)
+        ? uploadRootFromEnvironment
+        : Path.Combine(
+            AppContext.BaseDirectory,
+            "wwwroot",
+            "uploads"
+        );
 
     Directory.CreateDirectory(desktopUploadsRoot);
 
     builder.Configuration["Storage:UploadRoot"] = desktopUploadsRoot;
 
-    Console.WriteLine($"Desktop UploadRoot: {desktopUploadsRoot}");
+    Console.WriteLine(
+        !string.IsNullOrWhiteSpace(uploadRootFromEnvironment)
+            ? $"Desktop UploadRoot: {desktopUploadsRoot} Source: Environment"
+            : $"Desktop UploadRoot: {desktopUploadsRoot} Source: AppContext fallback"
+    );
 }
 
 // Add services to the container.
