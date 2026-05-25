@@ -94,12 +94,24 @@ $MariaDbServer = Join-Path $MariaDbBin "mariadbd.exe"
 $MariaDbClient = Join-Path $MariaDbBin "mariadb.exe"
 $MariaDbAdmin = Join-Path $MariaDbBin "mariadb-admin.exe"
 
-$MariaDbData = Join-Path $AppRoot "data\mariadb"
-$UploadsRoot = Join-Path $AppRoot "wwwroot\uploads"
-$RestoreRoot = Join-Path $AppRoot "restore-temp"
+$ProgramDataRoot = Join-Path $env:ProgramData "OrchidApp"
 
-$MariaDbServerLogPath = Join-Path $AppRoot "restore-mariadb-server.log"
-$MariaDbServerErrorLogPath = Join-Path $AppRoot "restore-mariadb-server-error.log"
+$ProgramDataDataRoot = Join-Path $ProgramDataRoot "data"
+$MariaDbData = Join-Path $ProgramDataDataRoot "mariadb"
+$UploadsRoot = Join-Path $ProgramDataRoot "uploads"
+$RestoreRoot = Join-Path $ProgramDataRoot "restore-temp"
+
+$LogsRoot = Join-Path $ProgramDataRoot "logs"
+$LauncherSettingsPath = Join-Path $ProgramDataRoot "launcher-settings.json"
+
+$MariaDbServerLogPath = Join-Path $LogsRoot "restore-mariadb-server.log"
+$MariaDbServerErrorLogPath = Join-Path $LogsRoot "restore-mariadb-server-error.log"
+
+New-Item -ItemType Directory -Path $ProgramDataRoot -Force | Out-Null
+New-Item -ItemType Directory -Path $ProgramDataDataRoot -Force | Out-Null
+New-Item -ItemType Directory -Path $MariaDbData -Force | Out-Null
+New-Item -ItemType Directory -Path $LogsRoot -Force | Out-Null
+New-Item -ItemType Directory -Path $UploadsRoot -Force | Out-Null
 
 $StartedMariaDb = $false
 $MariaDbProcess = $null
@@ -145,6 +157,7 @@ try {
     $ManifestPath = Join-Path $RestoreRoot "manifest.json"
     $DatabaseBackupPath = Join-Path $RestoreRoot "orchids.sql"
     $UploadsBackupPath = Join-Path $RestoreRoot "uploads"
+    $LauncherSettingsBackupPath = Join-Path $RestoreRoot "launcher-settings.json"
 
     if (-not (Test-Path $ManifestPath)) {
         throw "Backup is invalid. manifest.json was not found."
@@ -238,6 +251,21 @@ try {
     }
 
     Write-Step "Restore complete"
+
+    Write-Step "Restoring launcher settings"
+
+    if (Test-Path $LauncherSettingsBackupPath) {
+        Copy-Item `
+            -Path $LauncherSettingsBackupPath `
+            -Destination $LauncherSettingsPath `
+            -Force
+
+        Write-Host "OK: Launcher settings restored." -ForegroundColor Green
+    }
+    else {
+        Write-Host "No launcher settings file was present in the backup." -ForegroundColor Yellow
+        Write-Host "This is valid if no launcher settings had been configured." -ForegroundColor Yellow
+    }
 
     Write-Host "Restore completed successfully." -ForegroundColor Green
     Write-Host "Start OrchidApp again to use the restored data." -ForegroundColor Green
