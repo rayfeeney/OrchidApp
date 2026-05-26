@@ -48,6 +48,7 @@ public partial class OrchidAppLauncherForm : Form
     private Button backupButton = new Button();
     private Button restoreButton = new Button();
     private Button configureCloudBackupButton = new Button();
+    private Button closeAppButton = new Button();
     private bool _closeConfirmed = false;
     private bool _preUpgradeBackupCompletedThisStartup;
     private static readonly TimeSpan AutomaticBackupAgeThreshold = TimeSpan.FromHours(168);
@@ -150,6 +151,14 @@ public partial class OrchidAppLauncherForm : Form
         configureCloudBackupButton.Enabled = true;
         configureCloudBackupButton.Click += ConfigureCloudBackupButton_Click;
 
+        closeAppButton.Text = "Close OrchidApp";
+        closeAppButton.Left = 20;
+        closeAppButton.Top = 380;
+        closeAppButton.Width = 160;
+        closeAppButton.Height = 35;
+        closeAppButton.Enabled = true;
+        closeAppButton.Click += (s, e) => Close();
+
         Controls.Add(statusLabel);
         Controls.Add(statusLight);
         Controls.Add(logBox);
@@ -157,6 +166,7 @@ public partial class OrchidAppLauncherForm : Form
         Controls.Add(backupButton);
         Controls.Add(restoreButton);
         Controls.Add(configureCloudBackupButton);
+        Controls.Add(closeAppButton);
     }
 
     private void InitialiseLauncherLogFile()
@@ -206,6 +216,13 @@ public partial class OrchidAppLauncherForm : Form
         }
     }
 
+    private void AppendSupportInstructions()
+    {
+        AppendLog("Your OrchidApp plant database, photos, backups and settings have not been deleted by this startup failure.");
+        AppendLog("Please contact support at OrchidApp@proton.me and include this log file:");
+        AppendLog(_programDataPaths.LauncherLogFile);
+    }
+
     protected override async void OnLoad(EventArgs e)
     {
         base.OnLoad(e);
@@ -231,11 +248,15 @@ public partial class OrchidAppLauncherForm : Form
                 layout.Status == OrchidAppLayoutStatus.MultipleLegacyLayoutsFound)
             {
                 AppendLog($"Startup stopped because layout status is {layout.Status}.");
-                AppendLog("Please resolve the conflicting OrchidApp data folders before starting OrchidApp.");
+                AppendLog("OrchidApp found more than one possible data location and stopped to avoid using or migrating the wrong data.");
+                AppendLog("Do not delete or move OrchidApp folders manually unless instructed.");
+                AppendSupportInstructions();
 
                 SetLauncherStatus(LauncherStatus.Red);
                 SetWindowTitle("Error");
-                statusLabel.Text = "Startup stopped: conflicting data layouts detected.";
+                statusLabel.Text =
+                    "Startup stopped: OrchidApp found more than one possible data location. " +
+                    "Do not delete or move OrchidApp folders manually. Contact support.";
 
                 return;
             }
@@ -249,11 +270,15 @@ public partial class OrchidAppLauncherForm : Form
                 if (!preUpgradeBackupSucceeded)
                 {
                     AppendLog("Pre-upgrade backup failed. Startup stopped for safety.");
+                    AppendLog("The required legacy migration has not been started.");
                     AppendLog("The existing legacy OrchidApp layout has not been changed.");
+                    AppendSupportInstructions();
 
                     SetLauncherStatus(LauncherStatus.Red);
                     SetWindowTitle("Backup failed");
-                    statusLabel.Text = "Startup stopped: pre-upgrade backup failed.";
+                    statusLabel.Text =
+                        "Startup stopped: OrchidApp could not create the required safety backup. " +
+                        "Your existing data has not been changed. Contact support.";
 
                     return;
                 }
@@ -310,6 +335,7 @@ public partial class OrchidAppLauncherForm : Form
                     migrationStateService.Save(migrationState);
 
                     AppendLog("Legacy data migration to ProgramData completed.");
+                    AppendLog("Migration state marks the copy operation as completed. Post-copy MariaDB/database verification is deferred beyond v1.2.0.");
                     AppendLog($"Migration state written: {MigrationStatus.Completed}");
                 }
                 catch (Exception ex)
@@ -322,11 +348,15 @@ public partial class OrchidAppLauncherForm : Form
 
                     AppendLog("Legacy data migration to ProgramData failed.");
                     AppendLog($"Migration state written: {MigrationStatus.Failed}");
-                    AppendLog(ex.Message);
+                    AppendLog(ex.ToString());
+                    AppendSupportInstructions();
 
                     SetLauncherStatus(LauncherStatus.Red);
                     SetWindowTitle("Migration failed");
-                    statusLabel.Text = "Startup stopped: legacy data migration failed.";
+
+                    statusLabel.Text =
+                        "Startup stopped: OrchidApp could not complete the required data migration. " +
+                        "Your original legacy data has not been deleted, moved or renamed. Contact support.";
 
                     return;
                 }
@@ -349,10 +379,15 @@ public partial class OrchidAppLauncherForm : Form
         {
             SetLauncherStatus(LauncherStatus.Red);
             SetWindowTitle("Error");
-            AppendLog("STARTUP ERROR: " + ex.Message);
+            AppendLog("STARTUP ERROR:");
+            AppendLog(ex.ToString());
+            AppendSupportInstructions();
 
             MessageBox.Show(
-                ex.Message,
+                "OrchidApp could not start safely.\n\n" +
+                "Your OrchidApp plant database, photos, backups and settings have not been deleted by this startup failure.\n\n" +
+                "Please contact support at OrchidApp@proton.me and include this log file:\n\n" +
+                _programDataPaths.LauncherLogFile,
                 "OrchidApp could not start",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Warning
@@ -383,15 +418,9 @@ public partial class OrchidAppLauncherForm : Form
 
         if (!File.Exists(installDbExe))
         {
-            AppendLog($"ERROR: MariaDB install tool was not found: {installDbExe}");
-
-            MessageBox.Show(
-                "The OrchidApp database initialisation tool could not be found. OrchidApp cannot start.",
-                "OrchidApp startup error",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Error);
-
-            return;
+            var message = $"The OrchidApp database setup tool could not be found: {installDbExe}";
+            AppendLog("ERROR: " + message);
+            throw new FileNotFoundException(message, installDbExe);
         }
 
         var process = new Process
@@ -429,15 +458,9 @@ public partial class OrchidAppLauncherForm : Form
 
         if (process.ExitCode != 0)
         {
-            AppendLog($"ERROR: MariaDB data directory initialisation failed. ExitCode={process.ExitCode}");
-
-            MessageBox.Show(
-                "The OrchidApp database could not be initialised. OrchidApp cannot start.",
-                "OrchidApp startup error",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Error);
-
-            return;
+            var message = $"MariaDB data directory initialisation failed. ExitCode={process.ExitCode}";
+            AppendLog("ERROR: " + message);
+            throw new InvalidOperationException(message);
         }
 
         AppendLog("MariaDB data directory initialised.");
@@ -458,30 +481,18 @@ public partial class OrchidAppLauncherForm : Form
 
         if (!File.Exists(mariaDbExe))
         {
-            AppendLog($"ERROR: MariaDB executable was not found: {mariaDbExe}");
-
-            MessageBox.Show(
-                "The OrchidApp database engine could not be found. OrchidApp cannot start.",
-                "OrchidApp startup error",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Error);
-
-            return;
+            var message = $"The OrchidApp database engine could not be found: {mariaDbExe}";
+            AppendLog("ERROR: " + message);
+            throw new FileNotFoundException(message, mariaDbExe);
         }
 
         var dataDir = _programDataPaths.MariaDbData;
 
         if (!Directory.Exists(dataDir))
         {
-            AppendLog($"ERROR: MariaDB data directory was not found: {dataDir}");
-
-            MessageBox.Show(
-                "The OrchidApp database folder could not be found. OrchidApp cannot start.",
-                "OrchidApp startup error",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Error);
-
-            return;
+            var message = $"The OrchidApp database folder could not be found: {dataDir}";
+            AppendLog("ERROR: " + message);
+            throw new DirectoryNotFoundException(message);
         }
 
         InitialiseMariaDbDataDirectoryIfRequired(dataDir);
@@ -1537,6 +1548,7 @@ FLUSH PRIVILEGES;
             openAppButton.Enabled = false;
             backupButton.Enabled = false;
             restoreButton.Enabled = false;
+            closeAppButton.Enabled = false;
 
             if (_webAppProcess != null && !_webAppProcess.HasExited)
             {
