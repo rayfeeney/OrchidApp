@@ -23,7 +23,8 @@ WizardStyle=modern
 PrivilegesRequired=admin
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
-UninstallDisplayIcon={app}\{#MyAppExeName}
+UninstallDisplayName={#MyAppName} {#MyAppVersion}
+UninstallDisplayIcon={app}\OrchidApp.Launcher.exe
 CloseApplications=yes
 RestartApplications=no
 
