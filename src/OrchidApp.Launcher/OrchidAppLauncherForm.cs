@@ -90,7 +90,7 @@ public partial class OrchidAppLauncherForm : Form
         }
         
         SetWindowTitle("Starting");
-        Width = 900;
+        Width = 1040;
         Height = 460;
 
         AppendLog("OrchidApp launcher starting.");
@@ -103,7 +103,7 @@ public partial class OrchidAppLauncherForm : Form
         statusLabel.AutoSize = true;
         statusLabel.Left = 45;
         statusLabel.Top = 15;
-        statusLabel.MaximumSize = new Size(800, 0);
+        statusLabel.MaximumSize = new Size(940, 0);
 
         statusLight.Left = 20;
         statusLight.Top = 22;
@@ -116,7 +116,7 @@ public partial class OrchidAppLauncherForm : Form
         logBox.ScrollBars = ScrollBars.Vertical;
         logBox.Left = 20;
         logBox.Top = 95;
-        logBox.Width = 840;
+        logBox.Width = 980;
         logBox.Height = 235;
 
         openAppButton.Text = "Open OrchidApp";
@@ -152,9 +152,9 @@ public partial class OrchidAppLauncherForm : Form
         configureCloudBackupButton.Click += ConfigureCloudBackupButton_Click;
 
         closeAppButton.Text = "Close OrchidApp";
-        closeAppButton.Left = 20;
-        closeAppButton.Top = 380;
-        closeAppButton.Width = 160;
+        closeAppButton.Left = 780;
+        closeAppButton.Top = 335;
+        closeAppButton.Width = 180;
         closeAppButton.Height = 35;
         closeAppButton.Enabled = true;
         closeAppButton.Click += (s, e) => Close();

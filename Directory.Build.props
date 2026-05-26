@@ -7,9 +7,9 @@
     <AssemblyVersion>1.1.2.0</AssemblyVersion>
 
     <!-- Full internal packaged build version -->
-    <FileVersion>1.1.2.14</FileVersion>
+    <FileVersion>1.1.2.15</FileVersion>
 
     <!-- Public version plus internal build metadata -->
-    <InformationalVersion>1.1.2+build.14</InformationalVersion>
+    <InformationalVersion>1.1.2+build.15</InformationalVersion>
   </PropertyGroup>
 </Project>
