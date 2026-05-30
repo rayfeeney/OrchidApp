@@ -68,3 +68,5 @@ launcher-settings.json
 .runtime-downloads/
 
 *.csproj.lscache
+
+infrastructure/environment-importer/downloads/

@@ -1,0 +1,10 @@
+{
+  "imapHost": "imap.gmx.com",
+  "imapPort": 993,
+  "imapUser": "orchidappdata@gmx.co.uk",
+  "mailbox": "INBOX",
+  "processedMailbox": "OrchidAppProcessed",
+  "expectedSender": "no-reply@govee.com",
+  "expectedSubject": "Data",
+  "downloadDirectory": "/opt/orchidapp/imports/downloads"
+}
