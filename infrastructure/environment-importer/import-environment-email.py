@@ -1,10 +1,13 @@
 import argparse
+import csv
 import email
 import email.message
 import imaplib
 import json
 import logging
 import os
+import re
+from datetime import datetime
 from email.header import decode_header
 from getpass import getpass
 from pathlib import Path
@@ -66,6 +69,92 @@ def is_matching_sensor_email(
 
 def is_csv_attachment(filename: str) -> bool:
     return filename.lower().endswith(".csv")
+
+
+def parse_sensor_filename(filename: str) -> tuple[str, str]:
+    match = re.match(r"^(.+)_export_([0-9]{12})\.csv$", filename)
+
+    if not match:
+        raise ValueError(f"Unexpected sensor filename format: {filename}")
+
+    sensor_name = match.group(1).strip()
+    file_timestamp_text = match.group(2)
+
+    return sensor_name, file_timestamp_text
+
+
+def parse_reading_datetime(value: str) -> datetime:
+    value = value.strip()
+
+    supported_formats = [
+        "%Y-%m-%d %H:%M:%S",
+        "%Y-%m-%d %H:%M",
+        "%d/%m/%Y %H:%M:%S",
+        "%d/%m/%Y %H:%M",
+    ]
+
+    for date_format in supported_formats:
+        try:
+            return datetime.strptime(value, date_format)
+        except ValueError:
+            continue
+
+    raise ValueError(f"Unable to parse reading timestamp: {value}")
+
+
+def inspect_csv_file(csv_path: Path) -> None:
+    filename = csv_path.name
+    sensor_name, file_timestamp_text = parse_sensor_filename(filename)
+
+    row_count = 0
+    first_reading_datetime: datetime | None = None
+    last_reading_datetime: datetime | None = None
+
+    with csv_path.open("r", encoding="utf-8-sig", newline="") as csv_file:
+        reader = csv.reader(csv_file)
+
+        try:
+            header = next(reader)
+        except StopIteration:
+            raise ValueError(f"CSV file is empty: {csv_path}")
+
+        for row in reader:
+            if not row or all(not value.strip() for value in row):
+                continue
+
+            if len(row) < 3:
+                raise ValueError(
+                    f"CSV row has fewer than 3 columns in {csv_path}: {row}"
+                )
+
+            reading_datetime = parse_reading_datetime(row[0])
+
+            row_count += 1
+
+            if first_reading_datetime is None:
+                first_reading_datetime = reading_datetime
+            else:
+                first_reading_datetime = min(
+                    first_reading_datetime,
+                    reading_datetime
+                )
+
+            if last_reading_datetime is None:
+                last_reading_datetime = reading_datetime
+            else:
+                last_reading_datetime = max(
+                    last_reading_datetime,
+                    reading_datetime
+                )
+
+    logging.info("CSV metadata:")
+    logging.info("  File: %s", csv_path)
+    logging.info("  Sensor name: %s", sensor_name)
+    logging.info("  File timestamp text: %s", file_timestamp_text)
+    logging.info("  Header: %s", header)
+    logging.info("  Row count: %s", row_count)
+    logging.info("  First reading datetime: %s", first_reading_datetime)
+    logging.info("  Last reading datetime: %s", last_reading_datetime)
 
 
 def get_safe_download_path(download_directory: Path, filename: str) -> Path:
@@ -233,6 +322,7 @@ def main() -> None:
                 for downloaded_file in downloaded_files:
                     downloaded_count += 1
                     logging.info("Downloaded: %s", downloaded_file)
+                    inspect_csv_file(downloaded_file)
 
                 move_message_to_processed(
                     mail,
