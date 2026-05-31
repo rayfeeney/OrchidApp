@@ -8,4 +8,4 @@ Type=oneshot
 User=raymond-23
 Group=raymond-23
 EnvironmentFile=/etc/orchidapp/environment-importer.env
-ExecStart=/usr/bin/python3 /opt/orchidapp/infrastructure/environment-importer/import-environment-email.py --config /etc/orchidapp/environment-importer.json
+ExecStart=/opt/orchidapp/infrastructure/environment-importer/.venv/bin/python /opt/orchidapp/infrastructure/environment-importer/import-environment-email.py --config /etc/orchidapp/environment-importer.json

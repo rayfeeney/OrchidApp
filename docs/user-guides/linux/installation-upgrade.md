@@ -27,6 +27,33 @@ Rules:
 * Secrets are never committed to Git
 * All runtime configuration is externally supplied
 
+##### needed to get Govee data in
+GRANT SELECT, INSERT, UPDATE, EXECUTE
+ON `orchids`.*
+TO `orchidapp`@`localhost`;
+
+GRANT DELETE
+ON `orchids`.`environmentimportrow`
+TO `orchidapp`@`localhost`;
+
+FLUSH PRIVILEGES;
+
+sudo apt install -y python3-venv libmariadb-dev build-essential
+
+python3 -m venv /opt/orchidapp/infrastructure/environment-importer/.venv
+
+/opt/orchidapp/infrastructure/environment-importer/.venv/bin/pip install mariadb
+
+/opt/orchidapp/infrastructure/environment-importer/.venv/bin/python -c "import mariadb; print('mariadb connector ok')"
+
+
+The systemd service must use the virtual environment Python:
+
+/opt/orchidapp/infrastructure/environment-importer/.venv/bin/python
+
+Do not install the MariaDB Python connector into the system Python environment.
+
+
 ---
 
 ## 3. Installation Strategies (Critical)
