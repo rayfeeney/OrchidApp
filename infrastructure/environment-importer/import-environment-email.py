@@ -7,6 +7,8 @@ import json
 import logging
 import os
 import re
+import mariadb
+import hashlib
 from datetime import datetime
 from email.header import decode_header
 from getpass import getpass
@@ -14,8 +16,8 @@ from pathlib import Path
 from typing import Any
 
 
-PASSWORD_ENVIRONMENT_VARIABLE = "ORCHIDAPP_IMAP_PASSWORD"
-
+IMAP_PASSWORD_ENVIRONMENT_VARIABLE = "ORCHIDAPP_IMAP_PASSWORD"
+DATABASE_PASSWORD_ENVIRONMENT_VARIABLE = "ORCHIDAPP_DATABASE_PASSWORD"
 
 def decode_mime_header(value: str | None) -> str:
     if not value:
@@ -102,7 +104,7 @@ def parse_reading_datetime(value: str) -> datetime:
     raise ValueError(f"Unable to parse reading timestamp: {value}")
 
 
-def inspect_csv_file(csv_path: Path) -> None:
+def inspect_csv_file(csv_path: Path) -> dict[str, Any]:
     filename = csv_path.name
     sensor_name, file_timestamp_text = parse_sensor_filename(filename)
 
@@ -155,6 +157,15 @@ def inspect_csv_file(csv_path: Path) -> None:
     logging.info("  Row count: %s", row_count)
     logging.info("  First reading datetime: %s", first_reading_datetime)
     logging.info("  Last reading datetime: %s", last_reading_datetime)
+
+    return {
+        "fileSensorName": sensor_name,
+        "fileTimestampText": file_timestamp_text,
+        "firstReadingDateTime": first_reading_datetime,
+        "lastReadingDateTime": last_reading_datetime,
+        "rowCount": row_count,
+        "header": header,
+    }
 
 
 def get_safe_download_path(download_directory: Path, filename: str) -> Path:
@@ -213,14 +224,208 @@ def move_message_to_processed(
     logging.info("Message queued to move to %s.", processed_mailbox)
 
 
+def calculate_file_hash(file_path: Path) -> str:
+    sha256 = hashlib.sha256()
+
+    with file_path.open("rb") as file:
+        for chunk in iter(lambda: file.read(1024 * 1024), b""):
+            sha256.update(chunk)
+
+    return sha256.hexdigest().upper()
+
+
 def get_imap_password() -> str:
-    password = os.environ.get(PASSWORD_ENVIRONMENT_VARIABLE)
+    password = os.environ.get(IMAP_PASSWORD_ENVIRONMENT_VARIABLE)
 
     if password:
         return password
 
     # Dev fallback only. The Pi/systemd service should use the environment file.
     return getpass("GMX password: ")
+
+
+def get_database_password() -> str:
+    password = os.environ.get(DATABASE_PASSWORD_ENVIRONMENT_VARIABLE)
+
+    if password:
+        return password
+
+    # Dev fallback only. The Pi/systemd service should use the environment file.
+    return getpass("MariaDB password: ")
+
+
+def test_database_connection(config: dict[str, Any]) -> None:
+    database_password = get_database_password()
+
+    connection = mariadb.connect(
+        host=get_required_config_value(config, "databaseHost"),
+        port=int(get_required_config_value(config, "databasePort")),
+        user=get_required_config_value(config, "databaseUser"),
+        password=database_password,
+        database=get_required_config_value(config, "databaseName"),
+    )
+
+    try:
+        cursor = connection.cursor()
+        cursor.execute("SELECT 1")
+        cursor.fetchone()
+        logging.info("Database connection successful.")
+    finally:
+        connection.close()
+
+
+def create_database_connection(config: dict[str, Any]) -> mariadb.Connection:
+    database_password = get_database_password()
+
+    return mariadb.connect(
+        host=get_required_config_value(config, "databaseHost"),
+        port=int(get_required_config_value(config, "databasePort")),
+        user=get_required_config_value(config, "databaseUser"),
+        password=database_password,
+        database=get_required_config_value(config, "databaseName"),
+    )
+
+
+def clear_environment_import_rows(connection: mariadb.Connection) -> None:
+    cursor = connection.cursor()
+    cursor.execute("DELETE FROM environmentimportrow")
+    logging.info("Cleared environmentimportrow.")
+
+
+def insert_environment_import_file(
+    connection: mariadb.Connection,
+    file_path: Path,
+    file_hash: str,
+    file_sensor_name: str,
+    file_timestamp_text: str,
+    first_reading_datetime: datetime | None,
+    last_reading_datetime: datetime | None,
+    row_count: int,
+) -> int:
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO environmentimportfile (
+            fileName,
+            filePath,
+            fileHash,
+            fileSensorName,
+            fileTimestampText,
+            firstReadingDateTime,
+            lastReadingDateTime,
+            rowCount,
+            status,
+            importStartedAt,
+            importCompletedAt
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+        """,
+        (
+            file_path.name,
+            str(file_path),
+            file_hash,
+            file_sensor_name,
+            file_timestamp_text,
+            first_reading_datetime,
+            last_reading_datetime,
+            row_count,
+            "LoadedToImportFile",
+        ),
+    )
+
+    environment_import_file_id = cursor.lastrowid
+
+    logging.info(
+        "Inserted environmentimportfile row with ID %s.",
+        environment_import_file_id,
+    )
+
+    return environment_import_file_id
+
+
+def insert_environment_import_rows(
+    connection: mariadb.Connection,
+    environment_import_file_id: int,
+    csv_path: Path,
+) -> int:
+    inserted_rows = 0
+
+    with csv_path.open("r", encoding="utf-8-sig", newline="") as csv_file:
+        reader = csv.reader(csv_file)
+
+        try:
+            next(reader)  # header row
+        except StopIteration:
+            raise ValueError(f"CSV file is empty: {csv_path}")
+
+        rows_to_insert = []
+
+        for source_row_number, row in enumerate(reader, start=2):
+            if not row or all(not value.strip() for value in row):
+                continue
+
+            if len(row) < 3:
+                raise ValueError(
+                    f"CSV row has fewer than 3 columns in {csv_path} "
+                    f"at source row {source_row_number}: {row}"
+                )
+
+            raw_timestamp_text = row[0].strip()
+            raw_temperature_text = row[1].strip()
+            raw_humidity_text = row[2].strip()
+
+            reading_datetime = parse_reading_datetime(raw_timestamp_text)
+            temperature_celsius = float(raw_temperature_text)
+            relative_humidity = float(raw_humidity_text)
+
+            rows_to_insert.append(
+                (
+                    environment_import_file_id,
+                    source_row_number,
+                    raw_timestamp_text,
+                    raw_temperature_text,
+                    raw_humidity_text,
+                    reading_datetime,
+                    temperature_celsius,
+                    relative_humidity,
+                )
+            )
+
+        if rows_to_insert:
+            cursor = connection.cursor()
+            cursor.executemany(
+                """
+                INSERT INTO environmentimportrow (
+                    environmentImportFileId,
+                    sourceRowNumber,
+                    rawTimestampText,
+                    rawTemperatureText,
+                    rawHumidityText,
+                    readingDateTime,
+                    temperatureCelsius,
+                    relativeHumidity
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                rows_to_insert,
+            )
+
+            inserted_rows = len(rows_to_insert)
+
+    logging.info(
+        "Inserted %s rows into environmentimportrow.",
+        inserted_rows,
+    )
+
+    return inserted_rows
+
+
+def upsert_environment_readings(connection: mariadb.Connection) -> None:
+    cursor = connection.cursor()
+    cursor.execute("CALL spUpsertEnvironmentReadings()")
+
+    logging.info("Upserted environment readings.")
 
 
 def parse_args() -> argparse.Namespace:
@@ -260,6 +465,7 @@ def main() -> None:
     )
 
     password = get_imap_password()
+    test_database_connection(config)
 
     download_directory.mkdir(parents=True, exist_ok=True)
 
@@ -322,7 +528,37 @@ def main() -> None:
                 for downloaded_file in downloaded_files:
                     downloaded_count += 1
                     logging.info("Downloaded: %s", downloaded_file)
-                    inspect_csv_file(downloaded_file)
+
+                    csv_metadata = inspect_csv_file(downloaded_file)
+                    file_hash = calculate_file_hash(downloaded_file)
+
+                    database_connection = create_database_connection(config)
+
+                    try:
+                        clear_environment_import_rows(database_connection)
+
+                        environment_import_file_id = insert_environment_import_file(
+                            database_connection,
+                            downloaded_file,
+                            file_hash,
+                            csv_metadata["fileSensorName"],
+                            csv_metadata["fileTimestampText"],
+                            csv_metadata["firstReadingDateTime"],
+                            csv_metadata["lastReadingDateTime"],
+                            csv_metadata["rowCount"],
+                        )
+
+                        insert_environment_import_rows(
+                            database_connection,
+                            environment_import_file_id,
+                            downloaded_file,
+                        )
+
+                        upsert_environment_readings(database_connection)
+
+                        database_connection.commit()
+                    finally:
+                        database_connection.close()
 
                 move_message_to_processed(
                     mail,
