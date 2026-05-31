@@ -1,0 +1,11 @@
+[Unit]
+Description=OrchidApp environment email importer
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=raymond-23
+Group=raymond-23
+EnvironmentFile=/etc/orchidapp/environment-importer.env
+ExecStart=/usr/bin/python3 /opt/orchidapp/infrastructure/environment-importer/import-environment-email.py --config /etc/orchidapp/environment-importer.json

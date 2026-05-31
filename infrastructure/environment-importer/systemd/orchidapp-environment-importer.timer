@@ -1,0 +1,9 @@
+[Unit]
+Description=Run OrchidApp environment email importer at 06:00 and 18:00
+
+[Timer]
+OnCalendar=*-*-* 06,18:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
