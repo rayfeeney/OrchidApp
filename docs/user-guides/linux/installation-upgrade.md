@@ -38,6 +38,7 @@ TO `orchidapp`@`localhost`;
 
 FLUSH PRIVILEGES;
 
+
 sudo apt install -y python3-venv libmariadb-dev build-essential
 
 python3 -m venv /opt/orchidapp/infrastructure/environment-importer/.venv
