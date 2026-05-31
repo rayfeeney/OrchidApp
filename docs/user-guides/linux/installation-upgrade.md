@@ -318,7 +318,8 @@ Upgrade must not proceed without a successful backup.
 cd /opt/orchidapp
 git status
 git pull
-./database/scripts/apply-migrations.sh
+source /etc/orchidapp/orchidapp-migrations.env
+pwsh ./database/scripts/Apply-Migrations.ps1
 ```
 
 Rules:
