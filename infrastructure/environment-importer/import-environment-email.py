@@ -89,6 +89,7 @@ def parse_reading_datetime(value: str) -> datetime:
     value = value.strip()
 
     supported_formats = [
+        "%Y-%m-%d %H:%M:%S.%f",
         "%Y-%m-%d %H:%M:%S",
         "%Y-%m-%d %H:%M",
         "%d/%m/%Y %H:%M:%S",
