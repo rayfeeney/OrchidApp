@@ -421,11 +421,106 @@ def insert_environment_import_rows(
     return inserted_rows
 
 
-def upsert_environment_readings(connection: mariadb.Connection) -> None:
+def upsert_environment_readings(
+    connection: mariadb.Connection,
+    environment_import_file_id: int,
+) -> None:
     cursor = connection.cursor()
-    cursor.execute("CALL spUpsertEnvironmentReadings()")
+    cursor.execute(
+        "CALL spUpsertEnvironmentReadings(?)",
+        (environment_import_file_id,),
+    )
 
-    logging.info("Upserted environment readings.")
+    logging.info(
+        "Upserted environment readings for environmentImportFileId %s.",
+        environment_import_file_id,
+    )
+
+
+def import_csv_file(
+    config: dict[str, Any],
+    csv_path: Path,
+) -> int:
+    logging.info("Importing CSV file: %s", csv_path)
+
+    csv_metadata = inspect_csv_file(csv_path)
+    file_hash = calculate_file_hash(csv_path)
+
+    database_connection = create_database_connection(config)
+
+    try:
+        clear_environment_import_rows(database_connection)
+
+        environment_import_file_id = insert_environment_import_file(
+            database_connection,
+            csv_path,
+            file_hash,
+            csv_metadata["fileSensorName"],
+            csv_metadata["fileTimestampText"],
+            csv_metadata["firstReadingDateTime"],
+            csv_metadata["lastReadingDateTime"],
+            csv_metadata["rowCount"],
+        )
+
+        insert_environment_import_rows(
+            database_connection,
+            environment_import_file_id,
+            csv_path,
+        )
+
+        upsert_environment_readings(
+            database_connection,
+            environment_import_file_id,
+        )
+
+        database_connection.commit()
+
+        logging.info(
+            "Completed CSV import for environmentImportFileId %s.",
+            environment_import_file_id,
+        )
+
+        return environment_import_file_id
+
+    except Exception:
+        database_connection.rollback()
+        raise
+
+    finally:
+        database_connection.close()
+
+
+def import_existing_csv_files(
+    config: dict[str, Any],
+    download_directory: Path,
+) -> int:
+    imported_file_count = 0
+
+    csv_files = sorted(download_directory.glob("*.csv"))
+
+    if not csv_files:
+        logging.info(
+            "No existing CSV files found in download directory: %s",
+            download_directory,
+        )
+        return imported_file_count
+
+    logging.info(
+        "Existing CSV files found in download directory: %s",
+        len(csv_files),
+    )
+
+    for csv_path in csv_files:
+        logging.info("Processing existing CSV file: %s", csv_path)
+        import_csv_file(config, csv_path)
+        imported_file_count += 1
+
+    logging.info(
+        "Existing CSV files imported: %s",
+        imported_file_count,
+    )
+
+    return imported_file_count
 
 
 def parse_args() -> argparse.Namespace:
@@ -468,6 +563,8 @@ def main() -> None:
     test_database_connection(config)
 
     download_directory.mkdir(parents=True, exist_ok=True)
+
+    import_existing_csv_files(config, download_directory)
 
     logging.info("Connecting to IMAP server %s:%s...", imap_host, imap_port)
 
@@ -529,36 +626,7 @@ def main() -> None:
                     downloaded_count += 1
                     logging.info("Downloaded: %s", downloaded_file)
 
-                    csv_metadata = inspect_csv_file(downloaded_file)
-                    file_hash = calculate_file_hash(downloaded_file)
-
-                    database_connection = create_database_connection(config)
-
-                    try:
-                        clear_environment_import_rows(database_connection)
-
-                        environment_import_file_id = insert_environment_import_file(
-                            database_connection,
-                            downloaded_file,
-                            file_hash,
-                            csv_metadata["fileSensorName"],
-                            csv_metadata["fileTimestampText"],
-                            csv_metadata["firstReadingDateTime"],
-                            csv_metadata["lastReadingDateTime"],
-                            csv_metadata["rowCount"],
-                        )
-
-                        insert_environment_import_rows(
-                            database_connection,
-                            environment_import_file_id,
-                            downloaded_file,
-                        )
-
-                        upsert_environment_readings(database_connection)
-
-                        database_connection.commit()
-                    finally:
-                        database_connection.close()
+                    import_csv_file(config, downloaded_file)
 
                 move_message_to_processed(
                     mail,
