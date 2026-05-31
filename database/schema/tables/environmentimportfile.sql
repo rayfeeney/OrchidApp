@@ -1,0 +1,27 @@
+CREATE TABLE IF NOT EXISTS `environmentimportfile` (
+  `environmentImportFileId` bigint(20) NOT NULL AUTO_INCREMENT,
+  `fileName` varchar(500) NOT NULL,
+  `filePath` varchar(1000) NOT NULL,
+  `fileHash` char(64) NOT NULL,
+  `fileSensorName` varchar(255) NOT NULL,
+  `fileTimestampText` varchar(12) DEFAULT NULL,
+  `firstReadingDateTime` datetime DEFAULT NULL,
+  `lastReadingDateTime` datetime DEFAULT NULL,
+  `rowCount` int(11) NOT NULL DEFAULT 0,
+  `insertedRowCount` int(11) DEFAULT NULL,
+  `updatedRowCount` int(11) DEFAULT NULL,
+  `unchangedRowCount` int(11) DEFAULT NULL,
+  `status` varchar(50) NOT NULL,
+  `errorMessage` text DEFAULT NULL,
+  `importStartedAt` datetime NOT NULL,
+  `importCompletedAt` datetime DEFAULT NULL,
+  `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`environmentImportFileId`),
+  KEY `ixEnvironmentImportFile_FileName` (`fileName`),
+  KEY `ixEnvironmentImportFile_FileSensorName` (`fileSensorName`),
+  KEY `ixEnvironmentImportFile_FileHash` (`fileHash`),
+  KEY `ixEnvironmentImportFile_Status` (`status`),
+  KEY `ixEnvironmentImportFile_FirstReadingDateTime` (`firstReadingDateTime`),
+  KEY `ixEnvironmentImportFile_LastReadingDateTime` (`lastReadingDateTime`)
+) ENGINE=InnoDB  ;
+
