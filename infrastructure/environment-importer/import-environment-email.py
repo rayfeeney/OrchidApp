@@ -421,11 +421,20 @@ def insert_environment_import_rows(
     return inserted_rows
 
 
-def upsert_environment_readings(connection: mariadb.Connection) -> None:
+def upsert_environment_readings(
+    connection: mariadb.Connection,
+    environment_import_file_id: int,
+) -> None:
     cursor = connection.cursor()
-    cursor.execute("CALL spUpsertEnvironmentReadings()")
+    cursor.execute(
+        "CALL spUpsertEnvironmentReadings(?)",
+        (environment_import_file_id,),
+    )
 
-    logging.info("Upserted environment readings.")
+    logging.info(
+        "Upserted environment readings for environmentImportFileId %s.",
+        environment_import_file_id,
+    )
 
 
 def parse_args() -> argparse.Namespace:
@@ -554,7 +563,10 @@ def main() -> None:
                             downloaded_file,
                         )
 
-                        upsert_environment_readings(database_connection)
+                        upsert_environment_readings(
+                            database_connection,
+                            environment_import_file_id,
+                        )
 
                         database_connection.commit()
                     finally:
