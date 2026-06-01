@@ -9,6 +9,7 @@ import os
 import re
 import mariadb
 import hashlib
+import shutil
 from datetime import datetime
 from email.header import decode_header
 from getpass import getpass
@@ -173,6 +174,37 @@ def get_safe_download_path(download_directory: Path, filename: str) -> Path:
     # Keep only the final filename component to prevent path traversal.
     safe_filename = Path(filename).name
     return download_directory / safe_filename
+
+
+def get_unique_destination_path(destination_directory: Path, source_path: Path) -> Path:
+    destination_path = destination_directory / source_path.name
+
+    if not destination_path.exists():
+        return destination_path
+
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    return destination_directory / (
+        f"{source_path.stem}_{timestamp}{source_path.suffix}"
+    )
+
+
+def move_csv_file(source_path: Path, destination_directory: Path) -> Path:
+    destination_directory.mkdir(parents=True, exist_ok=True)
+
+    destination_path = get_unique_destination_path(
+        destination_directory,
+        source_path,
+    )
+
+    shutil.move(str(source_path), str(destination_path))
+
+    logging.info(
+        "Moved CSV file from %s to %s.",
+        source_path,
+        destination_path,
+    )
+
+    return destination_path
 
 
 def download_attachments(
@@ -500,6 +532,8 @@ def import_csv_file(
 def import_existing_csv_files(
     config: dict[str, Any],
     download_directory: Path,
+    processed_directory: Path,
+    failed_directory: Path,
 ) -> int:
     imported_file_count = 0
 
@@ -519,8 +553,25 @@ def import_existing_csv_files(
 
     for csv_path in csv_files:
         logging.info("Processing existing CSV file: %s", csv_path)
-        import_csv_file(config, csv_path)
-        imported_file_count += 1
+
+        try:
+            import_csv_file(config, csv_path)
+            move_csv_file(csv_path, processed_directory)
+            imported_file_count += 1
+
+        except Exception:
+            logging.exception(
+                "Failed to import existing CSV file: %s",
+                csv_path,
+            )
+
+            try:
+                move_csv_file(csv_path, failed_directory)
+            except Exception:
+                logging.exception(
+                    "Failed to move CSV file to failed directory: %s",
+                    csv_path,
+                )
 
     logging.info(
         "Existing CSV files imported: %s",
@@ -565,13 +616,24 @@ def main() -> None:
     download_directory = Path(
         get_required_config_value(config, "downloadDirectory")
     )
+    processed_directory = Path(
+        get_required_config_value(config, "processedDirectory")
+    )
+    failed_directory = Path(
+        get_required_config_value(config, "failedDirectory")
+    )
 
     password = get_imap_password()
     test_database_connection(config)
 
     download_directory.mkdir(parents=True, exist_ok=True)
 
-    import_existing_csv_files(config, download_directory)
+    import_existing_csv_files(
+        config,
+        download_directory,
+        processed_directory,
+        failed_directory,
+    )
 
     logging.info("Connecting to IMAP server %s:%s...", imap_host, imap_port)
 
