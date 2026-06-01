@@ -14,7 +14,7 @@ from email.header import decode_header
 from getpass import getpass
 from pathlib import Path
 from typing import Any
-
+batch_size = 1000
 
 IMAP_PASSWORD_ENVIRONMENT_VARIABLE = "ORCHIDAPP_IMAP_PASSWORD"
 DATABASE_PASSWORD_ENVIRONMENT_VARIABLE = "ORCHIDAPP_DATABASE_PASSWORD"
@@ -395,8 +395,8 @@ def insert_environment_import_rows(
 
         if rows_to_insert:
             cursor = connection.cursor()
-            cursor.executemany(
-                """
+
+            insert_sql = """
                 INSERT INTO environmentimportrow (
                     environmentImportFileId,
                     sourceRowNumber,
@@ -408,11 +408,17 @@ def insert_environment_import_rows(
                     relativeHumidity
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                rows_to_insert,
-            )
+            """
 
-            inserted_rows = len(rows_to_insert)
+            for start_index in range(0, len(rows_to_insert), batch_size):
+                batch = rows_to_insert[start_index:start_index + batch_size]
+                cursor.executemany(insert_sql, batch)
+                inserted_rows += len(batch)
+
+                logging.info(
+                    "Inserted environmentimportrow batch: %s rows total so far.",
+                    inserted_rows,
+                )
 
     logging.info(
         "Inserted %s rows into environmentimportrow.",
