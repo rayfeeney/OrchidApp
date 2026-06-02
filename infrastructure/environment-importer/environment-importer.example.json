@@ -6,5 +6,11 @@
   "processedMailbox": "OrchidAppProcessed",
   "expectedSender": "no-reply@govee.com",
   "expectedSubject": "Data",
-  "downloadDirectory": "/opt/orchidapp/imports/downloads"
+  "downloadDirectory": "/opt/orchidapp/imports/downloads",
+  "processedDirectory": "/opt/orchidapp/imports/processed",
+  "failedDirectory": "/opt/orchidapp/imports/failed",
+  "databaseHost": "127.0.0.1",
+  "databasePort": 3306,
+  "databaseName": "orchids",
+  "databaseUser": "orchidapp"
 }
