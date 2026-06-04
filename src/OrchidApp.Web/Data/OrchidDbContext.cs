@@ -28,6 +28,7 @@ public class OrchidDbContext : DbContext
     public DbSet<GrowthMedium> GrowthMedia =>                               Set<GrowthMedium>();
     public DbSet<Repotting> Repotting =>                                    Set<Repotting>();
     public DbSet<PlantCurrentGrowthMedium> PlantCurrentGrowthMedium =>      Set<PlantCurrentGrowthMedium>();
+    public DbSet<EnvironmentLastSevenDaysSummary> EnvironmentLastSevenDaysSummaries { get; set; }
     public DbSet<Location> Locations { get; set; } = null!;
     public DbSet<PlantPhoto> PlantPhotos { get; set; }
     public DbSet<ObservationType> ObservationTypes { get; set; }
@@ -420,6 +421,40 @@ public class OrchidDbContext : DbContext
         modelBuilder.Entity<AddPlantResult>().HasNoKey();
         modelBuilder.Entity<PropagationTypeLookup>().HasNoKey();
         modelBuilder.Entity<PlantChildLink>().HasNoKey();
-        
+        modelBuilder.Entity<EnvironmentLastSevenDaysSummary>(entity =>
+        {
+            entity.HasNoKey();
+            entity.ToView("venvironmentlastsevendayssummary");
+
+            entity.Property(e => e.LocationName)
+                .HasColumnName("locationName");
+
+            entity.Property(e => e.AverageDayTemperatureCelsius)
+                .HasColumnName("averageDayTemperatureCelsius");
+
+            entity.Property(e => e.ExpectedDayTemperatureCelsius)
+                .HasColumnName("expectedDayTemperatureCelsius");
+
+            entity.Property(e => e.AverageNightTemperatureCelsius)
+                .HasColumnName("averageNightTemperatureCelsius");
+
+            entity.Property(e => e.ExpectedNightTemperatureCelsius)
+                .HasColumnName("expectedNightTemperatureCelsius");
+
+            entity.Property(e => e.AverageRelativeHumidity)
+                .HasColumnName("averageRelativeHumidity");
+
+            entity.Property(e => e.ExpectedRelativeHumidity)
+                .HasColumnName("expectedRelativeHumidity");
+
+            entity.Property(e => e.ReadingCount)
+                .HasColumnName("readingCount");
+
+            entity.Property(e => e.FirstReadingDateTime)
+                .HasColumnName("firstReadingDateTime");
+
+            entity.Property(e => e.LastReadingDateTime)
+                .HasColumnName("lastReadingDateTime");
+        });
     }
 }

@@ -7,6 +7,68 @@
     Manage your orchid collection and care history.
 </p>
 
+@if (Model.EnvironmentSummaries.Any())
+{
+    <section class="mb-4">
+        <h2 class="h5 fw-bold mb-3">Environment - last 7 days</h2>
+
+        <div class="row g-3">
+            @foreach (var summary in Model.EnvironmentSummaries)
+            {
+                <div class="col-12 col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h3 class="h6 fw-bold mb-3">@summary.LocationName</h3>
+
+                            <dl class="row mb-0">
+                                <dt class="col-7">Day temperature</dt>
+                                <dd class="col-5 text-end">
+                                    @FormatValue(summary.AverageDayTemperatureCelsius, "°C")
+                                    <span class="text-muted">
+                                        / @summary.ExpectedDayTemperatureCelsius.ToString("0.0")°C
+                                    </span>
+                                </dd>
+
+                                <dt class="col-7">Night temperature</dt>
+                                <dd class="col-5 text-end">
+                                    @FormatValue(summary.AverageNightTemperatureCelsius, "°C")
+                                    <span class="text-muted">
+                                        / @summary.ExpectedNightTemperatureCelsius.ToString("0.0")°C
+                                    </span>
+                                </dd>
+
+                                <dt class="col-7">Humidity</dt>
+                                <dd class="col-5 text-end">
+                                    @FormatValue(summary.AverageRelativeHumidity, "%")
+                                    <span class="text-muted">
+                                        / @summary.ExpectedRelativeHumidity.ToString("0.0")%
+                                    </span>
+                                </dd>
+                            </dl>
+
+                            @if (summary.LastReadingDateTime.HasValue)
+                            {
+                                <p class="small text-muted mb-0 mt-3">
+                                    Last reading: @summary.LastReadingDateTime.Value.ToString("dd MMM yyyy HH:mm")
+                                </p>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+}
+
+@functions {
+    private static string FormatValue(decimal? value, string suffix)
+    {
+        return value.HasValue
+            ? $"{value.Value:0.0}{suffix}"
+            : "-";
+    }
+}
+
 <div class="d-grid gap-3 mt-4">
 
     <a asp-page="/Plants/Index"
