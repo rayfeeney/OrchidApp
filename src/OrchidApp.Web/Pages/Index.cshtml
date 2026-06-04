@@ -10,7 +10,12 @@
 @if (Model.EnvironmentSummaries.Any())
 {
     <section class="mb-4">
-        <h2 class="h5 fw-bold mb-3">Environment - last 7 days</h2>
+        <h2 class="h5 fw-bold mb-2">Environment - last 7 days</h2>
+
+        <p class="small text-muted mb-3">
+            Values are shown as <strong class="text-body">Actual</strong>
+            <span class="text-muted">/ Target</span>
+        </p>
 
         <div class="row g-3">
             @foreach (var summary in Model.EnvironmentSummaries)
