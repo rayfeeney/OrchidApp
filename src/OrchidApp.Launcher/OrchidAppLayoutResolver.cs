@@ -289,11 +289,20 @@ public static class OrchidAppLayoutResolver
             yield break;
         }
 
+        var enumerationOptions = new EnumerationOptions
+        {
+            RecurseSubdirectories = false,
+            IgnoreInaccessible = true
+        };
+
         IEnumerable<string> childDirectories;
 
         try
         {
-            childDirectories = Directory.EnumerateDirectories(rootPath);
+            childDirectories = Directory.EnumerateDirectories(
+                rootPath,
+                "*",
+                enumerationOptions);
         }
         catch
         {
@@ -317,7 +326,9 @@ public static class OrchidAppLayoutResolver
                 continue;
             }
 
-            foreach (var match in FindOrchidAppFolders(childDirectory, maxDepth - 1))
+            foreach (var match in FindOrchidAppFolders(
+                        childDirectory,
+                        maxDepth - 1))
             {
                 yield return match;
             }
@@ -395,15 +406,41 @@ public static class OrchidAppLayoutResolver
             return false;
         }
 
-        return Directory.EnumerateFileSystemEntries(mariaDbDataPath).Any();
+        try
+        {
+            return Directory
+                .EnumerateFileSystemEntries(mariaDbDataPath)
+                .Any();
+        }
+        catch
+        {
+            // Inaccessible or unreadable legacy data should not stop discovery.
+            return false;
+        }
     }
 
     private static bool ContainsOrchidsDatabase(string mariaDbDataPath)
     {
-        var orchidsDatabasePath = Path.Combine(mariaDbDataPath, "orchids");
+        var orchidsDatabasePath = Path.Combine(
+            mariaDbDataPath,
+            "orchids");
 
-        return Directory.Exists(orchidsDatabasePath)
-            && Directory.EnumerateFileSystemEntries(orchidsDatabasePath).Any();
+        if (!Directory.Exists(orchidsDatabasePath))
+        {
+            return false;
+        }
+
+        try
+        {
+            return Directory
+                .EnumerateFileSystemEntries(orchidsDatabasePath)
+                .Any();
+        }
+        catch
+        {
+            // Inaccessible or unreadable legacy database should not stop discovery.
+            return false;
+        }
     }
 
     private static OrchidAppLayoutStatus ResolveStatus(
