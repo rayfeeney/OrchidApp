@@ -23,20 +23,29 @@ public sealed class LauncherSettingsService
 
     public LauncherSettings Load()
     {
-        if (!File.Exists(SettingsFilePath))
+        try
+        {
+            if (!File.Exists(SettingsFilePath))
+            {
+                return new LauncherSettings();
+            }
+
+            var json = File.ReadAllText(SettingsFilePath);
+
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return new LauncherSettings();
+            }
+
+            return JsonSerializer.Deserialize<LauncherSettings>(
+                    json,
+                    _jsonOptions)
+                ?? new LauncherSettings();
+        }
+        catch
         {
             return new LauncherSettings();
         }
-
-        var json = File.ReadAllText(SettingsFilePath);
-
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            return new LauncherSettings();
-        }
-
-        return JsonSerializer.Deserialize<LauncherSettings>(json, _jsonOptions)
-            ?? new LauncherSettings();
     }
 
     public void Save(LauncherSettings settings)

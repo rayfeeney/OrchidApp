@@ -1294,10 +1294,21 @@ FLUSH PRIVILEGES;
             return null;
         }
 
-        return new DirectoryInfo(backupsDir)
-            .GetFiles("OrchidAppBackup_*.zip")
-            .OrderByDescending(file => file.LastWriteTimeUtc)
-            .FirstOrDefault();
+        try
+        {
+            return new DirectoryInfo(backupsDir)
+                .GetFiles("OrchidAppBackup_*.zip")
+                .OrderByDescending(file => file.LastWriteTimeUtc)
+                .FirstOrDefault();
+        }
+        catch (Exception ex)
+        {
+            AppendLog($"BACKUP ERROR: Unable to read backup folder: {ex.Message}");
+            throw new InvalidOperationException(
+                $"OrchidApp could not access the backup folder:\n{backupsDir}\n\n" +
+                "A safety backup could not be created.",
+                ex);
+        }
     }
 
     private void CopyLatestBackupToCloudFolder()
