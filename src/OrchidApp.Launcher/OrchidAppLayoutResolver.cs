@@ -179,10 +179,16 @@ public static class OrchidAppLayoutResolver
             return;
         }
 
+        var enumerationOptions = new EnumerationOptions
+        {
+            RecurseSubdirectories = true,
+            IgnoreInaccessible = true
+        };
+
         foreach (var shortcutPath in Directory.EnumerateFiles(
             shortcutSearchRoot,
             "*.lnk",
-            SearchOption.AllDirectories))
+            enumerationOptions))
         {
             try
             {
