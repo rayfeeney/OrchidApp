@@ -116,7 +116,27 @@ jobs:
 
       - name: Apply views
         run: |
+          # Environment views have dependencies and must be applied first
+          # in dependency order.
+          for f in \
+            database/schema/views/venvironmentreadingperiod.sql \
+            database/schema/views/venvironmentdailyperiodsummary.sql \
+            database/schema/views/venvironmentlastsevendayssummary.sql
+          do
+            echo "Applying $f"
+            mysql --default-character-set=utf8mb4 -h 127.0.0.1 -uroot -proot orchids < "$f" || exit 1
+          done
+
+          # Apply all remaining independent views alphabetically.
           for f in $(ls database/schema/views/*.sql | sort); do
+            case "$f" in
+              database/schema/views/venvironmentreadingperiod.sql|\
+              database/schema/views/venvironmentdailyperiodsummary.sql|\
+              database/schema/views/venvironmentlastsevendayssummary.sql)
+                continue
+                ;;
+            esac
+
             echo "Applying $f"
             mysql --default-character-set=utf8mb4 -h 127.0.0.1 -uroot -proot orchids < "$f" || exit 1
           done
