@@ -188,7 +188,12 @@ Console.WriteLine($"MariaDB EXE: {mariadbExe}");
 
             // Order matters
             RunFolderWithMariaDb(Path.Combine(dbFolder, "schema", "tables"), mariadbExe);
-            RunFolderWithMariaDb(Path.Combine(dbFolder, "schema", "views"), mariadbExe);
+            RunFolderWithMariaDb(Path.Combine(dbFolder, "schema", "views"), mariadbExe,  new[]
+                    {
+                        "venvironmentreadingperiod.sql",
+                        "venvironmentdailyperiodsummary.sql",
+                        "venvironmentlastsevendayssummary.sql"
+                    });
             RunFolderWithMariaDb(Path.Combine(dbFolder, "schema", "routines"), mariadbExe);
             RunFolderWithMariaDb(Path.Combine(dbFolder, "schema", "triggers"), mariadbExe);
             RunFolderWithMariaDb(Path.Combine(dbFolder, "schema", "constraints"), mariadbExe);
@@ -287,7 +292,10 @@ app.MapRazorPages();
 
 app.Run();
 
-static void RunFolderWithMariaDb(string folderPath, string mariadbExe)
+static void RunFolderWithMariaDb(
+    string folderPath,
+    string mariadbExe,
+    IEnumerable<string>? preferredOrder = null)
 {
     if (!Directory.Exists(folderPath))
     {
@@ -298,6 +306,28 @@ static void RunFolderWithMariaDb(string folderPath, string mariadbExe)
     var files = Directory.GetFiles(folderPath, "*.sql")
                          .OrderBy(f => f)
                          .ToList();
+
+    if (preferredOrder != null)
+    {
+        var preferredFileNames = preferredOrder.ToList();
+
+        files = files
+            .OrderBy(file =>
+            {
+                var fileName = Path.GetFileName(file);
+                var index = preferredFileNames.FindIndex(
+                    name => string.Equals(
+                        name,
+                        fileName,
+                        StringComparison.OrdinalIgnoreCase));
+
+                return index >= 0
+                    ? index
+                    : int.MaxValue;
+            })
+            .ThenBy(file => file)
+            .ToList();
+    }
 
     foreach (var file in files)
     {
