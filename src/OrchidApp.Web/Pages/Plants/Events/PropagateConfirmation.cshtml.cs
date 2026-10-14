@@ -8,6 +8,8 @@ namespace OrchidApp.Web.Pages.Plants.Events;
 
 public class PropagateConfirmationModel : PageModel
 {
+    [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
     private readonly OrchidDbContext _db;
 
     public PropagateConfirmationModel(OrchidDbContext db)
@@ -34,7 +36,8 @@ public class PropagateConfirmationModel : PageModel
         var childTag = TempData["PropagationChildTag"] as string;
 
         if (string.IsNullOrWhiteSpace(childId) || string.IsNullOrWhiteSpace(childTag))
-            return RedirectToPage("/Plants/Details", new { plantId = PlantId });
+            return LocalRedirect(OrchidApp.Web.Services.AppNavigation.AfterSave(ReturnUrl,
+                Url.Page("/Plants/Details", new { plantId = PlantId })!, Url.Page("/Plants/Index")!));
 
         Children.Add(new SplitChildResult
         {
@@ -53,8 +56,10 @@ public class PropagateConfirmationModel : PageModel
         var childId = TempData["PropagationChildId"] as string;
 
         if (string.IsNullOrWhiteSpace(childId))
-            return RedirectToPage("/Plants/Details", new { plantId = PlantId });
+            return LocalRedirect(OrchidApp.Web.Services.AppNavigation.AfterSave(ReturnUrl,
+                Url.Page("/Plants/Details", new { plantId = PlantId })!, Url.Page("/Plants/Index")!));
 
-        return RedirectToPage("/Plants/Details", new { plantId = int.Parse(childId) });
+        return LocalRedirect(OrchidApp.Web.Services.AppNavigation.AfterSave(ReturnUrl,
+            Url.Page("/Plants/Details", new { plantId = int.Parse(childId) })!, Url.Page("/Plants/Index")!));
     }
 }

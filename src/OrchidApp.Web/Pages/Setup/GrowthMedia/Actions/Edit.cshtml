@@ -24,6 +24,7 @@
 <form method="post"
       asp-route-growthMediumId="@Model.GrowthMediumId"
       asp-route-returnUrl="@Model.ReturnUrl">
+    <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
 
     <div class="mb-3">
         <label asp-for="Input.Name" class="fw-bold"></label>

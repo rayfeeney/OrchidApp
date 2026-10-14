@@ -18,6 +18,9 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string? PlantTag { get; set; }
 
+    [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
+
     public async Task<IActionResult> OnGetAsync()
     {
         // 1. Normalise
@@ -50,6 +53,6 @@ public class IndexModel : PageModel
         }
 
         // 4. Redirect to canonical route
-        return RedirectToPage("/Plants/Details", new { plantId });
+        return RedirectToPage("/Plants/Details", new { plantId, returnUrl = ReturnUrl });
     }
 }

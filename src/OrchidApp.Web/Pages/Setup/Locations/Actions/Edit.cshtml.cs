@@ -102,9 +102,8 @@ public class EditModel : PageModel
             throw;
         }
 
-        return RedirectToPage(
-            "../Details",
-            new { locationId = LocationId, returnUrl = ReturnUrl }
-        );
+        return LocalRedirect(OrchidApp.Web.Services.AppNavigation.AfterSave(ReturnUrl,
+            Url.Page("/Setup/Locations/Details", new { locationId = LocationId })!,
+            Url.Page("/Setup/Locations/Index")!));
     }
 }

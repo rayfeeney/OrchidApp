@@ -1,4 +1,4 @@
-@model (string Message, List<string> Tags, string ButtonText)
+@model (string Message, List<string> Tags, string ButtonText, string? ReturnUrl)
 
 <div class="card mt-3">
     <div class="card-body">
@@ -20,6 +20,7 @@
         }
 
         <form method="post" asp-page-handler="Continue" class="mt-4">
+            <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
             <button type="submit" class="btn btn-primary">
                 @Model.ButtonText
             </button>

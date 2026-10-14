@@ -15,7 +15,8 @@
     var propagateConfirmationModel = (
         Message: "A new plant has been created from this propagation.",
         Tags: Model.Children.Select(c => c.ChildPlantTag).ToList(),
-        ButtonText: "Continue to new plant"
+        ButtonText: "Continue to new plant",
+        ReturnUrl: Model.ReturnUrl
     );
 }
 

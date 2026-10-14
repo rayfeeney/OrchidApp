@@ -62,6 +62,7 @@
             <form method="post"
                   asp-page-handler="SetHero"
                   class="mt-3">
+    <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
 
                 <input type="hidden" name="plantId" value="@Model.PlantId" />
                 <input type="hidden" name="photoId" value="@Model.FocusPhoto.PlantPhotoId" />

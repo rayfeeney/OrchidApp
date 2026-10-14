@@ -24,6 +24,7 @@ Each genus only needs to be added once.
     </div>
 
     <form method="post">
+    <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
 
         <div class="mb-3">
             <label asp-for="GenusName" class="fw-bold"></label>

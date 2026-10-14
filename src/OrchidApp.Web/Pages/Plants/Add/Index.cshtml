@@ -26,7 +26,7 @@ You’ll enter the plant’s details next.
         {
             <a asp-page="/Plants/Add/Create"
                asp-route-taxonId="@taxon.TaxonId"
-               asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+               asp-route-returnUrl="@(Request.PathBase + Request.Path + Request.QueryString)"
                class="btn btn-outline-primary btn-lg text-start d-flex">
                <div class="d-flex align-items-center gap-3">
 

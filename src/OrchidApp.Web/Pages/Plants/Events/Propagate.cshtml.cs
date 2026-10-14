@@ -203,7 +203,7 @@ public class PropagateModel : PageModel
 
             return RedirectToPage(
                 "/Plants/Events/PropagateConfirmation",
-                new { plantId = PlantId }
+                new { plantId = PlantId, returnUrl = ReturnUrl }
             );
         }
         catch (Exception ex)

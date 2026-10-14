@@ -163,7 +163,8 @@ if (Photo != null && Photo.Length > 0)
     await _db.SaveChangesAsync();
 }
 
-        return Redirect(ReturnUrl ?? Url.Page("/Setup/Taxa/Details", new { id })!);
+        return LocalRedirect(AppNavigation.AfterSave(ReturnUrl,
+            Url.Page("/Setup/Taxa/Details", new { id })!, Url.Page("/Setup/Taxa/Index")!));
     }
 
     private string? PrepareNotes(string? value, string key)
@@ -180,6 +181,7 @@ if (Photo != null && Photo.Length > 0)
             return value;
         }
     }
+
 
     private async Task ReloadGenusNameAsync(int taxonId)
     {

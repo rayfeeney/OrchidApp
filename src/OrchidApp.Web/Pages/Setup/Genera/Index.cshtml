@@ -15,6 +15,7 @@ Each genus only needs to be added once.
 
 <div class="d-grid gap-2 mb-4">
     <a asp-page="/Setup/Genera/Actions/Add"
+       asp-route-returnUrl="@(Request.PathBase + Request.Path + Request.QueryString)"
        class="btn btn-primary btn-lg">
         Add genus
     </a>
@@ -31,7 +32,7 @@ Each genus only needs to be added once.
 
     <a asp-page="/Setup/Genera/Details"
        asp-route-id="@genus.GenusId"
-       asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+       asp-route-returnUrl="@(Request.PathBase + Request.Path + Request.QueryString)"
        class="btn btn-lg text-start @(isInactive ? "btn-outline-secondary text-muted" : "btn-outline-primary")">
 
         @genus.Name

@@ -185,10 +185,9 @@ public class AddModel : PageModel
                 await _db.SaveChangesAsync();
             }
 
-            return RedirectToPage(
-                "/Setup/Taxa/Details",
-                new { id = result.TaxonId }
-            );
+            return LocalRedirect(AppNavigation.AfterSave(ReturnUrl,
+                Url.Page("/Setup/Taxa/Details", new { id = result.TaxonId })!,
+                Url.Page("/Setup/Taxa/Index")!));
         }
         catch (Exception ex)
         {
