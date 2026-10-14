@@ -1,5 +1,8 @@
 @page "{id:int}"
 @model OrchidApp.Web.Pages.Setup.Taxa.Actions.EditModel
+@using OrchidApp.Web.Services
+<link rel="stylesheet" href="~/lib/quill/quill.snow.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/rich-notes.css" asp-append-version="true" />
 
 <h1 class="page-title fw-bold @(Model.IsInactive ? "text-muted" : "")">
     Edit species / hybrid
@@ -60,19 +63,23 @@
 
     <div class="mb-3">
         <label asp-for="Taxon.GrowthNotes" class="fw-bold"></label>
-        <small class="text-muted d-block fw-normal">
-            Optional notes about growth characteristics.
+        <small id="growth-notes-help" class="text-muted d-block fw-normal">
+            Optional notes about growth characteristics. Up to 10,000 characters; bold, italic, underline and lists are supported.
         </small>
-        <textarea asp-for="Taxon.GrowthNotes" class="form-control"></textarea>
+        <textarea asp-for="Taxon.GrowthNotes" class="form-control" rows="6" data-rich-notes
+                  data-label="Growth notes" aria-describedby="growth-notes-help"
+                  data-editor-html="@RichNotes.EditorHtml(Model.Taxon.GrowthNotes)"></textarea>
         <span asp-validation-for="Taxon.GrowthNotes" class="text-danger"></span>
     </div>
 
     <div class="mb-3">
         <label asp-for="Taxon.TaxonNotes" class="fw-bold"></label>
-        <small class="text-muted d-block fw-normal">
-            Optional notes about this species or hybrid.
+        <small id="taxon-notes-help" class="text-muted d-block fw-normal">
+            Optional notes about this species or hybrid. Up to 10,000 characters; bold, italic, underline and lists are supported.
         </small>
-        <textarea asp-for="Taxon.TaxonNotes" class="form-control"></textarea>
+        <textarea asp-for="Taxon.TaxonNotes" class="form-control" rows="6" data-rich-notes
+                  data-label="Taxon notes" aria-describedby="taxon-notes-help"
+                  data-editor-html="@RichNotes.EditorHtml(Model.Taxon.TaxonNotes)"></textarea>
         <span asp-validation-for="Taxon.TaxonNotes" class="text-danger"></span>
     </div>
 
@@ -103,3 +110,5 @@
     </div>
 
 </form>
+<script src="~/lib/quill/quill.js" asp-append-version="true"></script>
+<script src="~/js/rich-notes.js" asp-append-version="true"></script>

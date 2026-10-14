@@ -4,6 +4,7 @@ using OrchidApp.Web.Data;
 using OrchidApp.Web.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using OrchidApp.Web.Services;
 
 namespace OrchidApp.Web.Pages.Setup.Genera.Actions;
 
@@ -49,6 +50,17 @@ public class EditModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
+        await ReloadInactiveStateAsync(Genus.GenusId);
+        try
+        {
+            Genus.Notes = RichNotes.PrepareForSave(Genus.Notes);
+            // Render the sanitised value after validation/database errors, not raw posted HTML.
+            ModelState.Remove("Genus.Notes");
+        }
+        catch (ArgumentException ex)
+        {
+            ModelState.AddModelError("Genus.Notes", ex.Message);
+        }
         if (!ModelState.IsValid)
             return Page();
 

@@ -1,5 +1,7 @@
 @page "{id:int}"
 @model OrchidApp.Web.Pages.Setup.Genera.DetailsModel
+@using OrchidApp.Web.Services
+<link rel="stylesheet" href="~/css/rich-notes.css" asp-append-version="true" />
 
 @{
     var isInactive = !Model.Genus!.IsActive;
@@ -29,8 +31,8 @@ Genus details
             <dd class="col-sm-9">@Model.Genus.Name</dd>
 
             <dt class="col-sm-3 fw-bold">@Html.DisplayNameFor(m => m.Genus!.Notes)</dt>
-            <dd class="col-sm-9">
-                @(string.IsNullOrWhiteSpace(Model.Genus.Notes) ? "—" : Model.Genus.Notes)
+            <dd class="col-sm-9 rich-note">
+                @RichNotes.Display(Model.Genus.Notes)
             </dd>
 
         </dl>
