@@ -1,7 +1,7 @@
 # Genus notes formatting proof of concept
 
-Applies to `/Setup/Genera/Actions/Edit/{id}` and the corresponding Genus details
-display. The Add genus form and every other notes field remain plain text.
+Applies to `/Setup/Genera/Actions/Add`, `/Setup/Genera/Actions/Edit/{id}` and the
+corresponding Genus details display. Every other notes field remains plain text.
 
 ## Apply
 
@@ -45,9 +45,10 @@ editing those notes in the fallback field.
 ## Verification completed here
 
 - Release build: zero warnings/errors.
-- 18 automated C# checks: legacy text and line breaks, literal angle brackets,
+- 22 automated C# checks: legacy text and line breaks, literal angle brackets,
   formatting/lists, repeated saves, unsafe HTML/attributes, pasted spans,
-  Unicode/emoji, empty notes, and visible/raw/storage limits.
+  Unicode/emoji, empty notes, and visible/raw/storage limits; plus Add-page
+  sanitised procedure parameters, redirect, validation redisplay and size rejection.
 - Headless desktop Edge browser checks: literal historical text, semantic HTML,
   both list types after reopening, oversized save prevention, 375px layout, and
   no browser script errors. These exercise the actual browser editor files in an

@@ -1,6 +1,10 @@
 using System.Text;
 using AngleSharp.Html.Parser;
 using OrchidApp.Web.Services;
+using OrchidApp.Web.Infrastructure;
+using OrchidApp.Web.Pages.Setup.Genera.Actions;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 
 var passed = 0;
 void Check(string name, bool result) { if (!result) throw new Exception(name); Console.WriteLine("PASS " + name); passed++; }
@@ -31,4 +35,29 @@ Reject("Raw paste limit", new string('x', RichNotes.MaxInputLength + 1));
 Reject("UTF8 storage limit", RichNotes.Marker + string.Concat(Enumerable.Repeat("<p>x</p>", 8000)));
 Check("HTML-encoded attacks remain text", Save("<p>&lt;img src=x onerror=alert(1)&gt;</p>").Contains("&lt;img"));
 Check("Stored byte budget includes marker", Encoding.UTF8.GetByteCount(rich) < RichNotes.MaxStorageBytes);
+var executor = new RecordingExecutor();
+var add = new AddModel(executor) { GenusName = "Cattleya", GenusNotes = RichNotes.Marker + "<p><strong>Floração</strong><img src=x onerror=alert(1)></p>" };
+var result = await add.OnPostAsync();
+Check("Add page sends sanitised HTML to spAddGenus", executor.Procedure == "spAddGenus" && executor.Notes == RichNotes.Marker + "<p><strong>Floração</strong></p>");
+Check("Add page redirects to genus details", result is RedirectToPageResult redirect && redirect.PageName == "/Setup/Genera/Details");
+var invalidExecutor = new RecordingExecutor();
+var invalidAdd = new AddModel(invalidExecutor) { GenusNotes = rich };
+invalidAdd.ModelState.AddModelError("GenusName", "Genus name is required.");
+Check("Add validation failure retains formatting without saving", await invalidAdd.OnPostAsync() is PageResult && invalidExecutor.Procedure == null && invalidAdd.GenusNotes == rich);
+var longExecutor = new RecordingExecutor();
+var longAdd = new AddModel(longExecutor) { GenusName = "Cattleya", GenusNotes = new string('x', 10001) };
+Check("Add page rejects oversized notes without saving", await longAdd.OnPostAsync() is PageResult && !longAdd.ModelState.IsValid && longExecutor.Procedure == null);
 Console.WriteLine($"{passed} checks passed.");
+
+sealed class RecordingExecutor : IStoredProcedureExecutor
+{
+    public string? Procedure { get; private set; }
+    public string? Notes { get; private set; }
+    public Task<T> QuerySingleAsync<T>(string procedureName, params StoredProcedureParameter[] parameters) where T : new()
+    {
+        Procedure = procedureName;
+        Notes = parameters.Single(p => p.Name == "@pGenusNotes").Value as string;
+        return Task.FromResult(new T());
+    }
+    public Task<List<T>> QueryListAsync<T>(string procedureName, params StoredProcedureParameter[] parameters) where T : new() => throw new NotSupportedException();
+}

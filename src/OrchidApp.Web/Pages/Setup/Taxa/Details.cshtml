@@ -1,5 +1,7 @@
 @page "{id:int}"
 @model OrchidApp.Web.Pages.Setup.Taxa.DetailsModel
+@using OrchidApp.Web.Services
+<link rel="stylesheet" href="~/css/rich-notes.css" asp-append-version="true" />
 
 @{
     var isInactive = !Model.Taxon!.GenusIsActive || !Model.Taxon.TaxonIsActive;
@@ -54,14 +56,14 @@ Species / hybrid details
                         @Html.DisplayNameFor(m => m.Taxon!.GrowthNotes)
                     </dt>
                     <dd class="col-sm-9">
-                        @(string.IsNullOrWhiteSpace(Model.Taxon.GrowthNotes) ? "—" : Model.Taxon.GrowthNotes)
+                        <div class="rich-note">@RichNotes.Display(Model.Taxon.GrowthNotes)</div>
                     </dd>
 
                     <dt class="col-sm-3 fw-bold">
                         @Html.DisplayNameFor(m => m.Taxon!.TaxonNotes)
                     </dt>
                     <dd class="col-sm-9">
-                        @(string.IsNullOrWhiteSpace(Model.Taxon.TaxonNotes) ? "—" : Model.Taxon.TaxonNotes)
+                        <div class="rich-note">@RichNotes.Display(Model.Taxon.TaxonNotes)</div>
                     </dd>
 
                 </dl>

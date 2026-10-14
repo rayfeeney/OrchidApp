@@ -77,6 +77,8 @@ public class EditModel : PageModel
 
     public async Task<IActionResult> OnPostAsync(int id)
     {
+        Taxon.GrowthNotes = PrepareNotes(Taxon.GrowthNotes, "Taxon.GrowthNotes");
+        Taxon.TaxonNotes = PrepareNotes(Taxon.TaxonNotes, "Taxon.TaxonNotes");
         if (!ModelState.IsValid)
         {
             await ReloadGenusNameAsync(id);
@@ -125,7 +127,7 @@ if (Photo != null && Photo.Length > 0)
         ModelState.AddModelError(string.Empty,
             "The image could not be processed. Please try another file.");
 
-        await OnGetAsync(id);
+        await ReloadGenusNameAsync(id);
         return Page();
     }
 
@@ -162,6 +164,21 @@ if (Photo != null && Photo.Length > 0)
 }
 
         return Redirect(ReturnUrl ?? Url.Page("/Setup/Taxa/Details", new { id })!);
+    }
+
+    private string? PrepareNotes(string? value, string key)
+    {
+        try
+        {
+            var clean = RichNotes.PrepareForSave(value);
+            ModelState.Remove(key);
+            return clean;
+        }
+        catch (ArgumentException ex)
+        {
+            ModelState.AddModelError(key, ex.Message);
+            return value;
+        }
     }
 
     private async Task ReloadGenusNameAsync(int taxonId)

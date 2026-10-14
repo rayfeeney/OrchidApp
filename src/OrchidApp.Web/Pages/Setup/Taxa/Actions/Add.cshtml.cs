@@ -75,8 +75,8 @@ public class AddModel : PageModel
     {
         SpeciesName = string.IsNullOrWhiteSpace(SpeciesName) ? null : SpeciesName.Trim();
         HybridName = string.IsNullOrWhiteSpace(HybridName) ? null : HybridName.Trim();
-        GrowthNotes = string.IsNullOrWhiteSpace(GrowthNotes) ? null : GrowthNotes.Trim();
-        TaxonNotes = string.IsNullOrWhiteSpace(TaxonNotes) ? null : TaxonNotes.Trim();
+        GrowthNotes = PrepareNotes(GrowthNotes, nameof(GrowthNotes));
+        TaxonNotes = PrepareNotes(TaxonNotes, nameof(TaxonNotes));
 
         if (SpeciesName is null && HybridName is null)
         {
@@ -202,6 +202,21 @@ public class AddModel : PageModel
             throw;
         }
 
+    }
+
+    private string? PrepareNotes(string? value, string key)
+    {
+        try
+        {
+            var clean = RichNotes.PrepareForSave(value);
+            ModelState.Remove(key);
+            return clean;
+        }
+        catch (ArgumentException ex)
+        {
+            ModelState.AddModelError(key, ex.Message);
+            return value;
+        }
     }
 
     public class GenusLookup

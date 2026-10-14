@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.ComponentModel.DataAnnotations;
 using OrchidApp.Web.Infrastructure;
 using OrchidApp.Web.Models;
+using OrchidApp.Web.Services;
 
 namespace OrchidApp.Web.Pages.Setup.Genera.Actions;
 
@@ -33,6 +34,16 @@ public class AddModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
+        try
+        {
+            GenusNotes = RichNotes.PrepareForSave(GenusNotes);
+            ModelState.Remove(nameof(GenusNotes));
+        }
+        catch (ArgumentException ex)
+        {
+            ModelState.AddModelError(nameof(GenusNotes), ex.Message);
+        }
+
         if (!ModelState.IsValid)
             return Page();
 

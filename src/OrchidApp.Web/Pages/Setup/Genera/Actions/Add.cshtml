@@ -1,5 +1,9 @@
 @page
 @model OrchidApp.Web.Pages.Setup.Genera.Actions.AddModel
+@using OrchidApp.Web.Services
+
+<link rel="stylesheet" href="~/lib/quill/quill.snow.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/rich-notes.css" asp-append-version="true" />
 
 <h1 class="page-title fw-bold">Add genus</h1>
 
@@ -35,12 +39,14 @@ Each genus only needs to be added once.
 
         <div class="mb-3">
             <label asp-for="GenusNotes" class="fw-bold"></label>
-            <small class="text-muted d-block fw-normal">
-                Optional notes about this plant group.
+            <small id="genus-notes-help" class="text-muted d-block fw-normal">
+                Optional notes about this plant group. Up to 10,000 characters; bold, italic, underline and lists are supported.
             </small>
             <textarea asp-for="GenusNotes"
                       class="form-control"
-                      rows="3"></textarea>
+                      rows="6" data-rich-notes data-label="Genus notes"
+                      aria-describedby="genus-notes-help"
+                      data-editor-html="@RichNotes.EditorHtml(Model.GenusNotes)"></textarea>
             <span asp-validation-for="GenusNotes"
                   class="text-danger"></span>
         </div>
@@ -60,3 +66,5 @@ Each genus only needs to be added once.
     </form>
 
 </div>
+<script src="~/lib/quill/quill.js" asp-append-version="true"></script>
+<script src="~/js/rich-notes.js" asp-append-version="true"></script>
