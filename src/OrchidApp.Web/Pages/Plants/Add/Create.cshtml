@@ -26,6 +26,7 @@ This plant will be recorded under this species / hybrid. A permanent Plant Tag (
 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
 <form method="post">
+    <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
 
     <div class="mb-3">
         <label asp-for="Input.PlantName" class="fw-bold"></label>

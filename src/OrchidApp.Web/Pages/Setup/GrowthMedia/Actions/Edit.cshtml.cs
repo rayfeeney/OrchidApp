@@ -90,9 +90,8 @@ public class EditModel : PageModel
             throw;
         }
 
-        return RedirectToPage(
-            "../Details",
-            new { growthMediumId = GrowthMediumId, returnUrl = ReturnUrl }
-        );
+        return LocalRedirect(OrchidApp.Web.Services.AppNavigation.AfterSave(ReturnUrl,
+            Url.Page("/Setup/GrowthMedia/Details", new { growthMediumId = GrowthMediumId })!,
+            Url.Page("/Setup/GrowthMedia/Index")!));
     }
 }

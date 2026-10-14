@@ -14,6 +14,7 @@ You can move plants between locations over time to reflect seasonal or environme
 
 <form method="post"
       asp-route-returnUrl="@Model.ReturnUrl">
+    <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
 
     <div class="mb-3">
         <label asp-for="Input.LocationName" class="fw-bold"></label>

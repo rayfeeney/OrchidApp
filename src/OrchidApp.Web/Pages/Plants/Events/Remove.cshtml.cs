@@ -224,7 +224,8 @@ public class RemoveModel : PageModel
                 return NotFound();
         }
 
-        return RedirectToPage("/Plants/Details", new { plantId = PlantId });
+        return LocalRedirect(OrchidApp.Web.Services.AppNavigation.AfterSave(ReturnUrl,
+            Url.Page("/Plants/Details", new { plantId = PlantId })!, Url.Page("/Plants/Index")!));
     }
 
 }

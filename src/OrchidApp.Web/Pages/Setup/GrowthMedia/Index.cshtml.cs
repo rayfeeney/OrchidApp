@@ -17,7 +17,8 @@ public class IndexModel : PageModel
 
     public List<GrowthMedium> GrowthMedia { get; private set; } = new();
 
-    public string ReturnUrl { get; private set; } = "Index";
+    [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
     
     public async Task OnGetAsync()
     {

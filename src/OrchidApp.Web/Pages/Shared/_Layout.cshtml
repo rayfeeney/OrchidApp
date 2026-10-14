@@ -51,6 +51,7 @@
 
                         <!-- RIGHT: Quick Find -->
                         <form method="get" action="/Plants/Tag" class="d-flex" role="search">
+                            <input type="hidden" name="returnUrl" value="@(Context.Request.PathBase + Context.Request.Path + Context.Request.QueryString)" />
 
                             <input name="plantTag"
                                 class="form-control me-2"

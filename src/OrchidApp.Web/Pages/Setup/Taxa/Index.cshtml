@@ -14,7 +14,7 @@ These define the full botanical name of your plants.
 
 <div class="d-grid gap-2 mb-4">
     <a asp-page="/Setup/Taxa/Actions/Add"
-       asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+       asp-route-returnUrl="@(Request.PathBase + Request.Path + Request.QueryString)"
        class="btn btn-lg btn-primary">
         Add species / hybrid
     </a>
@@ -53,7 +53,7 @@ else
             <div id="taxon-@taxon.TaxonId">
                 <a asp-page="/Setup/Taxa/Details"
                     asp-route-id="@taxon.TaxonId"
-                    asp-route-returnUrl="@(Request.Path + "#taxon-" + taxon.TaxonId)"
+                    asp-route-returnUrl="@(Request.PathBase + Request.Path + Request.QueryString + "#taxon-" + taxon.TaxonId)"
                     class="btn btn-lg text-start d-flex @(taxon.IsSystemManaged ? "btn-outline-secondary" : "btn-outline-primary") @(isInactive ? "text-muted" : "")">
 
                 <div class="d-flex align-items-center gap-3">

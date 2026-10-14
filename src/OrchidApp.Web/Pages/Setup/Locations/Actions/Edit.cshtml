@@ -1,4 +1,4 @@
-﻿@page "{locationId:int}"
+@page "{locationId:int}"
 @model OrchidApp.Web.Pages.Setup.Locations.Actions.EditModel
 
 @{
@@ -21,6 +21,7 @@
 <form method="post"
       asp-route-locationId="@Model.LocationId"
       asp-route-returnUrl="@Model.ReturnUrl">
+    <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
 
     <div class="mb-3">
         <label asp-for="Input.LocationName" class="fw-bold"></label>

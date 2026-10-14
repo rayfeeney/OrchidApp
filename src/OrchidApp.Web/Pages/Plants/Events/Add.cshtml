@@ -65,6 +65,7 @@
      class="text-danger mb-3"></div>
 
 <form method="post" enctype="multipart/form-data">
+    <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
 
     <input type="hidden" asp-for="QuickObservationTypeCode" />
     
@@ -324,7 +325,7 @@
         <a href="@(Model.ReturnUrl 
                     ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }))"
         class="btn btn-outline-secondary">
-            Back
+            Cancel
         </a>
     </div>
 

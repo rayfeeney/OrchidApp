@@ -84,10 +84,9 @@ public class EditModel : PageModel
             throw;
         }
 
-        if (!string.IsNullOrWhiteSpace(ReturnUrl))
-            return LocalRedirect(ReturnUrl);
-
-        return RedirectToPage("/Setup/Genera/Details", new { id = Genus.GenusId });
+        return LocalRedirect(AppNavigation.AfterSave(ReturnUrl,
+            Url.Page("/Setup/Genera/Details", new { id = Genus.GenusId })!,
+            Url.Page("/Setup/Genera/Index")!));
     }
 
     private async Task ReloadInactiveStateAsync(int id)

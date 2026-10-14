@@ -77,6 +77,7 @@ This event will no longer appear in the plant’s history.
 </div>
 
 <form method="post">
+    <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
     <input type="hidden" asp-for="EventType" />
 
     <div class="d-grid gap-2 mt-3">
@@ -87,7 +88,7 @@ This event will no longer appear in the plant’s history.
         <a href="@(Model.ReturnUrl 
                     ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }))"
         class="btn btn-outline-secondary">
-            Back
+            Cancel
         </a>
     </div>
 

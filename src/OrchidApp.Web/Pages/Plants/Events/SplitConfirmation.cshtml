@@ -15,7 +15,8 @@
     var splitConfirmationModel = (
         Message: "The split has created the following new plants.",
         Tags: Model.Children.Select(c => c.ChildPlantTag).ToList(),
-        ButtonText: "Continue to first new plant"
+        ButtonText: "Continue to first new plant",
+        ReturnUrl: Model.ReturnUrl
     );
 }
 

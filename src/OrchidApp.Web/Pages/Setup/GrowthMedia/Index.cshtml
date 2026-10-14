@@ -15,7 +15,7 @@
 
 <div class="d-grid gap-2 mb-3">
     <a asp-page="Actions/Add"
-       asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+       asp-route-returnUrl="@(Request.PathBase + Request.Path + Request.QueryString)"
        class="btn btn-primary btn-lg">
         Add growth medium
     </a>
@@ -40,7 +40,7 @@ else
 
         <a asp-page="/Setup/GrowthMedia/Details"
         asp-route-growthMediumId="@medium.GrowthMediumId"
-        asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+        asp-route-returnUrl="@(Request.PathBase + Request.Path + Request.QueryString)"
         class="btn btn-lg text-start @(isInactive ? "btn-outline-secondary text-muted" : "btn-outline-primary")">
 
             @medium.Name

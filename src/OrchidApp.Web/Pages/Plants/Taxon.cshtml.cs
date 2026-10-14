@@ -20,15 +20,11 @@ public class TaxonModel : PageModel
 
     public string BuildPlantReturnUrl(int plantId)
     {
-        var query = QueryHelpers.ParseQuery(Request.QueryString.Value ?? "");
-
-        // overwrite or add selectedPlantId
-        query["selectedPlantId"] = plantId.ToString();
-
-        var queryString = string.Join("&",
-            query.Select(kvp => $"{kvp.Key}={kvp.Value}"));
-
-        return $"{Request.Path}?{queryString}#plant-{plantId}";
+        var query = QueryHelpers.ParseQuery(Request.QueryString.Value ?? "")
+            .Where(p => !p.Key.Equals("selectedPlantId", StringComparison.OrdinalIgnoreCase))
+            .ToDictionary(p => p.Key, p => p.Value);
+        var url = QueryHelpers.AddQueryString(Request.PathBase + Request.Path, query);
+        return QueryHelpers.AddQueryString(url, "selectedPlantId", plantId.ToString()) + $"#plant-{plantId}";
     }
 
     public TaxonModel(OrchidDbContext db, PhotoUrlService photoUrlService)

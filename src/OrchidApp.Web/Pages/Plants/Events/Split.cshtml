@@ -49,6 +49,7 @@
 else
 {
 <form method="post">
+    <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
 
     <input type="hidden" asp-for="PlantId" />
     <input type="hidden" asp-for="ChildCount" />

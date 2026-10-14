@@ -17,7 +17,7 @@ Select a species / hybrid to view its plants.
 
 <div class="d-grid gap-2 mb-4">
     <a asp-page="/Plants/Add/Index"
-       asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+       asp-route-returnUrl="@(Request.PathBase + Request.Path + Request.QueryString)"
        class="btn btn-primary btn-lg">
         Add plant
     </a>
@@ -42,7 +42,7 @@ Select a species / hybrid to view its plants.
         <div id="taxon-@taxon.TaxonId">
             <a asp-page="/Plants/Taxon"
             asp-route-taxonId="@taxon.TaxonId"
-            asp-route-returnUrl="@(Request.Path + "#taxon-" + taxon.TaxonId)"
+            asp-route-returnUrl="@(Request.PathBase + Request.Path + Request.QueryString + "#taxon-" + taxon.TaxonId)"
             class="btn btn-outline-primary btn-lg text-start d-flex justify-content-between align-items-center @(isInactive ? "text-muted" : "")">
 
                 <span>

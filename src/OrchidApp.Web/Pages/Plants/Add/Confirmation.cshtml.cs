@@ -8,6 +8,8 @@ namespace OrchidApp.Web.Pages.Plants.Add;
 
 public class ConfirmationModel : PageModel
 {
+    [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
     private readonly OrchidDbContext _db;
 
     public ConfirmationModel(OrchidDbContext db)

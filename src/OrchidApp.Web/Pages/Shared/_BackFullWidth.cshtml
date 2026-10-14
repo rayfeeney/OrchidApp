@@ -1,17 +1,13 @@
 @model string?
+@using OrchidApp.Web.Services
 
-@if (!string.IsNullOrEmpty(Model))
-{
-    <a href="@Model"
+@{
+    var page = ViewContext.RouteData.Values["page"]?.ToString() ?? "/Index";
+    var fallback = Context.Request.PathBase + AppNavigation.Fallback(page, ViewContext.RouteData.Values);
+    var back = AppNavigation.Back(Model, fallback, Context.Request.PathBase + Context.Request.Path);
+    var cancel = page.Contains("/Actions/") || page.Contains("/Edit/");
+}
+    <a href="@back"
        class="btn btn-outline-secondary btn-lg w-100 mt-3">
-        ← Back
+        @(cancel ? "Cancel" : "← " + AppNavigation.Label(back))
     </a>
-}
-else
-{
-    <button type="button"
-            class="btn btn-outline-secondary btn-lg w-100 mt-3"
-            onclick="history.back()">
-        ← Back
-    </button>
-}

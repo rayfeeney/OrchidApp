@@ -41,7 +41,7 @@ if (builder.Environment.IsEnvironment("Desktop"))
 }
 
 // Add services to the container.
-builder.Services.AddRazorPages();
+builder.Services.AddRazorPages(options => options.Conventions.ConfigureFilter(new NavigationPageFilter()));
 
 builder.Services.AddDbContext<OrchidDbContext>(options =>
 {

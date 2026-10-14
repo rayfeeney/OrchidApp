@@ -8,7 +8,8 @@ namespace OrchidApp.Web.Pages.Setup.Locations;
 
 public class IndexModel : PageModel
 {
-    public string ReturnUrl { get; private set; } = "Index";
+    [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
 
     private readonly OrchidDbContext _db;
 

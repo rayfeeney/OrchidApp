@@ -107,7 +107,7 @@ public class CreateModel : PageModel
 
         return RedirectToPage(
             "/Plants/Add/Confirmation",
-            new { plantId }
+            new { plantId, returnUrl = ReturnUrl }
         );
     }
 }

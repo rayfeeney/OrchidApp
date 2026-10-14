@@ -93,7 +93,7 @@ Species / hybrid details
 
         <a asp-page="/Setup/Taxa/Actions/Edit"
            asp-route-id="@Model.Taxon.TaxonId"
-           asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+           asp-route-returnUrl="@(Request.PathBase + Request.Path + Request.QueryString)"
            class="btn btn-primary btn-lg">
             Edit species / hybrid
         </a>

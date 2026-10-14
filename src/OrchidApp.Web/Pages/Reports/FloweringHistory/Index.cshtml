@@ -50,6 +50,7 @@ else
 
         <a asp-page="/Plants/Details"
            asp-route-plantId="@plant.PlantId"
+           asp-route-returnUrl="@(Request.PathBase + Request.Path + Request.QueryString)"
            class="@cssClass">
 
             <div class="fw-bold">
