@@ -255,7 +255,7 @@ public class SplitModel : PageModel
 
             return RedirectToPage(
                 "/Plants/Events/SplitConfirmation",
-                new { plantId = PlantId }
+                new { plantId = PlantId, returnUrl = ReturnUrl }
             );
         }
         catch (Exception ex)

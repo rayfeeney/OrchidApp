@@ -5,6 +5,8 @@ using OrchidApp.Web.Infrastructure;
 using OrchidApp.Web.Pages.Setup.Genera.Actions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Routing;
+using Microsoft.AspNetCore.Routing;
 
 var passed = 0;
 void Check(string name, bool result) { if (!result) throw new Exception(name); Console.WriteLine("PASS " + name); passed++; }
@@ -36,10 +38,10 @@ Reject("UTF8 storage limit", RichNotes.Marker + string.Concat(Enumerable.Repeat(
 Check("HTML-encoded attacks remain text", Save("<p>&lt;img src=x onerror=alert(1)&gt;</p>").Contains("&lt;img"));
 Check("Stored byte budget includes marker", Encoding.UTF8.GetByteCount(rich) < RichNotes.MaxStorageBytes);
 var executor = new RecordingExecutor();
-var add = new AddModel(executor) { GenusName = "Cattleya", GenusNotes = RichNotes.Marker + "<p><strong>Floração</strong><img src=x onerror=alert(1)></p>" };
+var add = new AddModel(executor) { Url = new TestUrlHelper(), GenusName = "Cattleya", GenusNotes = RichNotes.Marker + "<p><strong>Floração</strong><img src=x onerror=alert(1)></p>" };
 var result = await add.OnPostAsync();
 Check("Add page sends sanitised HTML to spAddGenus", executor.Procedure == "spAddGenus" && executor.Notes == RichNotes.Marker + "<p><strong>Floração</strong></p>");
-Check("Add page redirects to genus details", result is RedirectToPageResult redirect && redirect.PageName == "/Setup/Genera/Details");
+Check("Add page redirects to genus details", result is LocalRedirectResult redirect && redirect.Url.StartsWith("/Setup/Genera/Details/"));
 var invalidExecutor = new RecordingExecutor();
 var invalidAdd = new AddModel(invalidExecutor) { GenusNotes = rich };
 invalidAdd.ModelState.AddModelError("GenusName", "Genus name is required.");
@@ -60,4 +62,19 @@ sealed class RecordingExecutor : IStoredProcedureExecutor
         return Task.FromResult(new T());
     }
     public Task<List<T>> QueryListAsync<T>(string procedureName, params StoredProcedureParameter[] parameters) where T : new() => throw new NotSupportedException();
+}
+
+sealed class TestUrlHelper : IUrlHelper
+{
+    public ActionContext ActionContext { get; } = new() { RouteData = new RouteData() };
+    public string? Action(UrlActionContext context) => null;
+    public string? Content(string? path) => path;
+    public bool IsLocalUrl(string? url) => AppNavigation.IsLocal(url);
+    public string? Link(string? routeName, object? values) => null;
+    public string? RouteUrl(UrlRouteContext context)
+    {
+        var values = new RouteValueDictionary(context.Values);
+        var page = values["page"]?.ToString() ?? "/";
+        return page.EndsWith("/Index") ? page[..^6] : page + "/" + values["id"];
+    }
 }

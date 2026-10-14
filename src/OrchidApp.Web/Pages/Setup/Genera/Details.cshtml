@@ -44,7 +44,7 @@ Genus details
 
     <a asp-page="/Setup/Genera/Actions/Edit"
        asp-route-id="@Model.Genus!.GenusId"
-       asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+       asp-route-returnUrl="@(Request.PathBase + Request.Path + Request.QueryString)"
        class="btn btn-primary btn-lg">
         Edit genus
     </a>
@@ -52,6 +52,7 @@ Genus details
     <form method="post"
           asp-route-id="@Model.Genus!.GenusId"
           class="d-grid">
+    <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
         <button type="submit"
                 asp-page-handler="ToggleActive"
                 class="btn btn-lg @(Model.Genus.IsActive ? "btn-outline-danger" : "btn-outline-success")"

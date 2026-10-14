@@ -53,9 +53,8 @@ public class AddModel : PageModel
             new StoredProcedureParameter("pGenusNotes", GenusNotes)
         );
 
-        if (!string.IsNullOrWhiteSpace(ReturnUrl))
-            return LocalRedirect(ReturnUrl);
-
-        return RedirectToPage("/Setup/Genera/Details", new { id = result.GenusId });
+        return LocalRedirect(AppNavigation.AfterSave(ReturnUrl,
+            Url.Page("/Setup/Genera/Details", new { id = result.GenusId })!,
+            Url.Page("/Setup/Genera/Index")!));
     }
 }

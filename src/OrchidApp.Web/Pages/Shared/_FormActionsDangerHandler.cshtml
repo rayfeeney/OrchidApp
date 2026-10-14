@@ -1,15 +1,18 @@
 @model (string backUrl, string handler, string saveText, string? confirmationMessage)
+@using OrchidApp.Web.Services
 
 @{
+    var page = ViewContext.RouteData.Values["page"]?.ToString() ?? "/Index";
+    var cancelUrl = AppNavigation.Back(Model.backUrl, Context.Request.PathBase + AppNavigation.Fallback(page, ViewContext.RouteData.Values), Context.Request.PathBase + Context.Request.Path);
     var confirmAttr = string.IsNullOrEmpty(Model.confirmationMessage)
         ? null
         : $"return confirm('{Model.confirmationMessage.Replace("'", "\\'")}');";
 }
 
 <div class="d-flex justify-content-between align-items-stretch mt-4">
-    <a href="@Model.backUrl"
+    <a href="@cancelUrl"
        class="btn btn-outline-secondary">
-        ← Back
+        Cancel
     </a>
 
     <button type="submit"

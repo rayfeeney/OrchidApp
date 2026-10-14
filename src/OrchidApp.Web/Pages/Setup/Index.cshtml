@@ -17,24 +17,25 @@ as well as the locations where you keep them.
 <div class="d-grid gap-3 mt-4">
 
     <a asp-page="/Setup/Genera/Index"
-       asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+       asp-route-returnUrl="@(Request.PathBase + Request.Path + Request.QueryString)"
        class="btn btn-lg btn-outline-primary">
         Plant groups (Genera)
     </a>
 
     <a asp-page="/Setup/Taxa/Index"
+       asp-route-returnUrl="@(Request.PathBase + Request.Path + Request.QueryString)"
        class="btn btn-lg btn-outline-primary">
         Species / Hybrids (varieties)
     </a>
 
     <a asp-page="/Setup/Locations/Index"
-       asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+       asp-route-returnUrl="@(Request.PathBase + Request.Path + Request.QueryString)"
        class="btn btn-lg btn-outline-primary">
         Growing locations (Greenhouse, garden, etc.)
     </a>
 
     <a asp-page="/Setup/GrowthMedia/Index"
-       asp-route-returnUrl="@(Request.Path + Request.QueryString)"
+       asp-route-returnUrl="@(Request.PathBase + Request.Path + Request.QueryString)"
        class="btn btn-lg btn-outline-primary">
         Growth media (soil, bark, etc.)
     </a>

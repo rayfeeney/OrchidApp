@@ -9,6 +9,8 @@ namespace OrchidApp.Web.Pages.Plants.Events;
 
 public class SplitConfirmationModel : PageModel
 {
+    [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
     private readonly OrchidDbContext _db;
 
     public SplitConfirmationModel(OrchidDbContext db)
@@ -35,7 +37,8 @@ public class SplitConfirmationModel : PageModel
         var childTagsJson = TempData["SplitChildTagsJson"] as string;
 
         if (string.IsNullOrWhiteSpace(childIdsJson) || string.IsNullOrWhiteSpace(childTagsJson))
-            return RedirectToPage("/Plants/Details", new { plantId = PlantId });
+            return LocalRedirect(OrchidApp.Web.Services.AppNavigation.AfterSave(ReturnUrl,
+                Url.Page("/Plants/Details", new { plantId = PlantId })!, Url.Page("/Plants/Index")!));
 
         var ids = JsonSerializer.Deserialize<List<int>>(childIdsJson) ?? new();
         var tags = JsonSerializer.Deserialize<List<string>>(childTagsJson) ?? new();
@@ -60,13 +63,16 @@ public class SplitConfirmationModel : PageModel
         var childIdsJson = TempData["SplitChildIdsJson"] as string;
 
         if (string.IsNullOrWhiteSpace(childIdsJson))
-            return RedirectToPage("/Plants/Details", new { plantId = PlantId });
+            return LocalRedirect(OrchidApp.Web.Services.AppNavigation.AfterSave(ReturnUrl,
+                Url.Page("/Plants/Details", new { plantId = PlantId })!, Url.Page("/Plants/Index")!));
 
         var ids = JsonSerializer.Deserialize<List<int>>(childIdsJson) ?? new();
 
         if (ids.Count == 0)
-            return RedirectToPage("/Plants/Details", new { plantId = PlantId });
+            return LocalRedirect(OrchidApp.Web.Services.AppNavigation.AfterSave(ReturnUrl,
+                Url.Page("/Plants/Details", new { plantId = PlantId })!, Url.Page("/Plants/Index")!));
 
-        return RedirectToPage("/Plants/Details", new { plantId = ids[0] });
+        return LocalRedirect(OrchidApp.Web.Services.AppNavigation.AfterSave(ReturnUrl,
+            Url.Page("/Plants/Details", new { plantId = ids[0] })!, Url.Page("/Plants/Index")!));
     }
 }

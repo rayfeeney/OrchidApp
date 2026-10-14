@@ -45,8 +45,7 @@
 </div>
 
 <div class="mt-3">
-    <a asp-page="/Plants/Details"
-       asp-route-plantId="@Model.Plant!.PlantId"
+    <a href="@OrchidApp.Web.Services.AppNavigation.AfterSave(Model.ReturnUrl, Url.Page("/Plants/Details", new { plantId = Model.Plant!.PlantId })!, Url.Page("/Plants/Index")!)"
        class="btn btn-primary">
         Continue
     </a>

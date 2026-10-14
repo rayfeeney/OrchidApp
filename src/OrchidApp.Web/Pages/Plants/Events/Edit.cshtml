@@ -63,6 +63,7 @@
      class="text-danger mb-3"></div>
 
 <form method="post">
+    <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
     <input type="hidden" asp-for="EventType" />
 
     @if (Model.EventType == "Observation")
@@ -240,7 +241,7 @@
         <a href="@(Model.ReturnUrl 
                     ?? Url.Page("/Plants/Details", new { plantId = Model.PlantId }))"
         class="btn btn-outline-secondary">
-            Back
+            Cancel
         </a>
     </div>
 
