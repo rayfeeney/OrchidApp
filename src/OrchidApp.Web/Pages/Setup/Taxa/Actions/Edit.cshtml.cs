@@ -182,20 +182,6 @@ if (Photo != null && Photo.Length > 0)
         }
     }
 
-    private string? PrepareNotes(string? value, string key)
-    {
-        try
-        {
-            var clean = RichNotes.PrepareForSave(value);
-            ModelState.Remove(key);
-            return clean;
-        }
-        catch (ArgumentException ex)
-        {
-            ModelState.AddModelError(key, ex.Message);
-            return value;
-        }
-    }
 
     private async Task ReloadGenusNameAsync(int taxonId)
     {
