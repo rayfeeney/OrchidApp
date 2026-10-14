@@ -1,0 +1,6 @@
+.orchid-rich-editor .ql-editor { min-height: 10rem; max-height: 24rem; overflow-y: auto; font: inherit; overflow-wrap: anywhere; }
+.orchid-rich-editor .ql-toolbar { display: flex; flex-wrap: wrap; }
+.orchid-rich-editor .ql-toolbar button { min-width: 36px; min-height: 36px; }
+.orchid-rich-editor .ql-container { font: inherit; }
+.rich-note { overflow-wrap: anywhere; }
+.rich-note p:last-child, .rich-note ul:last-child, .rich-note ol:last-child { margin-bottom: 0; }

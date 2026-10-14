@@ -11,6 +11,7 @@ public class LicenceModel : PageModel
     public string MariaDbLicenceText { get; private set; } = string.Empty;
     public string MariaDbThirdPartyText { get; private set; } = string.Empty;
     public string LibVipsLicenceText { get; private set; } = string.Empty;
+    public Dictionary<string, string> RichNotesLicences { get; } = new();
 
     public LicenceModel(IWebHostEnvironment env)
     {
@@ -24,6 +25,10 @@ public class LicenceModel : PageModel
         MariaDbLicenceText = ReadLegalFile(Path.Combine("mariadb", "COPYING"));
         MariaDbThirdPartyText = ReadLegalFile(Path.Combine("mariadb", "THIRDPARTY"));
         LibVipsLicenceText = ReadLegalFile(Path.Combine("libvips", "LICENSE"));
+        var richNotesPath = Path.Combine(_env.ContentRootPath, "Legal", "rich-notes");
+        if (Directory.Exists(richNotesPath))
+            foreach (var file in Directory.GetFiles(richNotesPath, "*.txt").OrderBy(f => f))
+                RichNotesLicences[Path.GetFileNameWithoutExtension(file)] = System.IO.File.ReadAllText(file);
     }
 
     private string ReadLegalFile(string relativePath)

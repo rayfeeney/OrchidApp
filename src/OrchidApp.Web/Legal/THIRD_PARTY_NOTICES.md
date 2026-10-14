@@ -7,6 +7,17 @@ This software includes third-party open source components.
 These components are used as dependencies of the OrchidApp system.
 Their licences apply to the respective components.
 
+Formatted notes (Genus edit proof of concept):
+- Quill 2.0.3: BSD-3-Clause, https://quilljs.com/
+- HtmlSanitizer 9.2.1039: MIT, https://github.com/mganss/HtmlSanitizer
+- AngleSharp 1.7.2 and AngleSharp.Css 1.0.2: MIT, https://anglesharp.github.io/
+- Quill's bundled dependencies include EventEmitter3, lodash-es, Parchment,
+  quill-delta, fast-diff, lodash.clonedeep and lodash.isequal (MIT).
+Copyright notices, licence conditions and disclaimers are included in
+src/OrchidApp.Web/Legal/rich-notes/ (Legal/rich-notes/ in published builds)
+and displayed on the Licences page. These components are redistributed locally;
+the formatted-notes feature does not require an external service or subscription.
+
 OrchidApp itself is licensed separately under the GNU Affero General Public
 License version 3.
 

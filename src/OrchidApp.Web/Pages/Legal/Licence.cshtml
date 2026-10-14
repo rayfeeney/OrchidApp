@@ -26,3 +26,10 @@
 
 <h2 class="h5 fw-bold mb-3">libvips</h2>
 <pre class="small">@Model.LibVipsLicenceText</pre>
+
+<h2 class="h5 fw-bold mb-3">Formatted notes components</h2>
+@foreach (var licence in Model.RichNotesLicences)
+{
+    <h3 class="h6 fw-bold">@licence.Key</h3>
+    <pre class="small">@licence.Value</pre>
+}
