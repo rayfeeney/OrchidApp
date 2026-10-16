@@ -98,6 +98,7 @@ public static class AppNavigation
         "/Setup/Locations" => "Back to locations",
         "/Setup/GrowthMedia" => "Back to growth media",
         "/Plants" => "Back to plants",
+        "/Search" => "Back to search results",
         "/Plants/Add" => "Back to plant selection",
         "/Reports" => "Back to reports",
         "/Reports/Repotting" => "Back to repotting report",

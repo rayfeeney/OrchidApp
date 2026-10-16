@@ -1,0 +1,73 @@
+@page "/Search"
+@model OrchidApp.Web.Pages.Search.IndexModel
+@using OrchidApp.Web.Services
+@{
+    ViewData["Title"] = "Search names";
+}
+
+<h1 class="page-title fw-bold">Search names</h1>
+<p class="text-muted" id="name-search-help">
+    Enter all or part of a genus, species or hybrid name. For example, Cattleya or Cattleya mossiae.
+    Inactive entries are included and labelled.
+</p>
+
+<form method="get" asp-page="/Search/Index" role="search" aria-label="Search botanical names" class="mb-4">
+    <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
+    <label for="name-search-text" class="fw-bold">Name</label>
+    <div class="d-flex flex-column flex-sm-row gap-2 mt-1">
+        <input id="name-search-text" name="q" value="@Model.SearchText" type="search"
+               class="form-control" maxlength="100" aria-describedby="name-search-help name-search-error"
+               placeholder="Genus, species or hybrid" />
+        <button type="submit" class="btn btn-primary">Search</button>
+    </div>
+    <div asp-validation-summary="All" id="name-search-error" class="text-danger mt-1"></div>
+</form>
+
+@if (Model.HasQuery && ViewData.ModelState.IsValid)
+{
+    @if (Model.Results.Count == 0)
+    {
+        <p role="status">No names found for “@Model.SearchText”. Try a shorter name or different spelling.</p>
+        @if (Model.ResultsPage > 1)
+        {
+            <a asp-page="/Search/Index" asp-route-q="@Model.SearchText" asp-route-returnUrl="@Model.ReturnUrl">Return to the first results page</a>
+        }
+    }
+    else
+    {
+        <p role="status" class="text-muted">Results for “@Model.SearchText” · Page @Model.ResultsPage</p>
+        <div class="d-grid gap-2">
+            @foreach (var result in Model.Results)
+            {
+                var resultId = $"result-{result.Kind}-{result.Id}";
+                <a id="@resultId" asp-page="@result.DetailsPage" asp-route-id="@result.Id"
+                   asp-route-returnUrl="@(Request.PathBase + Request.Path + Request.QueryString + "#" + resultId)"
+                   class="btn btn-lg text-start @(result.IsInactive ? "btn-outline-secondary" : "btn-outline-primary")">
+                    <span class="d-block fw-bold">@result.Name</span>
+                    <span class="small">@result.Label</span>
+                    @if (result.IsInactive)
+                    {
+                        <span class="badge bg-secondary ms-2">Inactive</span>
+                    }
+                </a>
+            }
+        </div>
+        @if (Model.ResultsPage > 1 || Model.HasMore)
+        {
+            <nav aria-label="Search result pages" class="d-flex flex-wrap gap-2 mt-3">
+                @if (Model.ResultsPage > 1)
+                {
+                    <a asp-page="/Search/Index" asp-route-q="@Model.SearchText" asp-route-resultsPage="@(Model.ResultsPage - 1)"
+                       asp-route-returnUrl="@Model.ReturnUrl" class="btn btn-outline-primary">Previous results</a>
+                }
+                @if (Model.HasMore)
+                {
+                    <a asp-page="/Search/Index" asp-route-q="@Model.SearchText" asp-route-resultsPage="@(Model.ResultsPage + 1)"
+                       asp-route-returnUrl="@Model.ReturnUrl" class="btn btn-outline-primary">Next results</a>
+                }
+            </nav>
+        }
+    }
+}
+
+<partial name="_BackFullWidth" model="Model.ReturnUrl" />

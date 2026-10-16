@@ -7,7 +7,7 @@
     Manage your orchid collection and care history.
 </p>
 
-@if (Model.EnvironmentSummaries.Any())
+@if (Model.EnvironmentSummaryEnabled && Model.EnvironmentSummaries.Any())
 {
     <section class="mb-4">
         <h2 class="h5 fw-bold mb-2">Environment - last 7 days</h2>

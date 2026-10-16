@@ -38,10 +38,10 @@ Reject("UTF8 storage limit", RichNotes.Marker + string.Concat(Enumerable.Repeat(
 Check("HTML-encoded attacks remain text", Save("<p>&lt;img src=x onerror=alert(1)&gt;</p>").Contains("&lt;img"));
 Check("Stored byte budget includes marker", Encoding.UTF8.GetByteCount(rich) < RichNotes.MaxStorageBytes);
 var executor = new RecordingExecutor();
-var add = new AddModel(executor) { GenusName = "Cattleya", GenusNotes = RichNotes.Marker + "<p><strong>Floração</strong><img src=x onerror=alert(1)></p>" };
+var add = new AddModel(executor) { Url = new TestUrlHelper(), GenusName = "Cattleya", GenusNotes = RichNotes.Marker + "<p><strong>Floração</strong><img src=x onerror=alert(1)></p>" };
 var result = await add.OnPostAsync();
 Check("Add page sends sanitised HTML to spAddGenus", executor.Procedure == "spAddGenus" && executor.Notes == RichNotes.Marker + "<p><strong>Floração</strong></p>");
-Check("Add page redirects to genus details", result is RedirectToPageResult redirect && redirect.PageName == "/Setup/Genera/Details");
+Check("Add page redirects to genus details", result is LocalRedirectResult redirect && redirect.Url.StartsWith("/Setup/Genera/Details/"));
 var invalidExecutor = new RecordingExecutor();
 var invalidAdd = new AddModel(invalidExecutor) { GenusNotes = rich };
 invalidAdd.ModelState.AddModelError("GenusName", "Genus name is required.");

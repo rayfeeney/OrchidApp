@@ -70,6 +70,7 @@ builder.Services.Configure<StorageSettings>(
 builder.Services.AddScoped<StoragePathService>();
 
 builder.Services.AddScoped<PhotoUrlService>();
+builder.Services.AddScoped<IBotanicalNameSearch, BotanicalNameSearch>();
     
 builder.Services.AddScoped<ObservationTypeResolver>();
 
