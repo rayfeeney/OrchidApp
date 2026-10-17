@@ -1,5 +1,9 @@
 # OrchidApp - Installation & Upgrade Guide
 
+MariaDB is the supported database engine. On Raspberry Pi OS, MariaDB uses
+the distribution path `/etc/mysql/` and accepts the `[mysqld]` option group;
+these names are expected and do not indicate a MySQL server installation.
+
 ## 1. Purpose
 
 This document defines the **deterministic procedures** for:
@@ -177,7 +181,7 @@ Add:
 
 ```env
 ConnectionStrings__OrchidDb=Server=127.0.0.1;Port=3306;Database=orchids;User=orchidapp;Password=STRONG_PASSWORD
-StorageSettings__UploadRoot=/opt/orchidapp/uploads
+Storage__UploadRoot=/opt/orchidapp/uploads
 ```
 
 Secure:
@@ -316,9 +320,10 @@ crontab -e
 
 ### 4.12 Validate Restore (Required)
 
-```bash
-mysql -u root -p orchids_test < backup.sql
-```
+Follow the [backup and restore runbook](OrchidApp-MariaDB-Backup-and-Restore-Runbook.md)
+in an isolated test environment. A dump containing `CREATE DATABASE` or `USE`
+statements can select its original database even when a different database name
+is supplied to the client. Never test a restore against production.
 
 Backups are only valid if restore succeeds.
 
@@ -332,48 +337,63 @@ This procedure uses the **Migration strategy**.
 
 ### 5.0 Pre-Upgrade Backup (Mandatory)
 
-```bash
-/opt/orchidapp/infrastructure/backups/backup_orchids.sh
-```
+Complete the [full pre-upgrade backup](Full-App-Backup-Pre-Upgrade.md), including
+application files, photos, database, external configuration and service settings.
+Verify an off-device copy before proceeding. Leave the app and any importer stopped.
 
-Upgrade must not proceed without a successful backup.
-
----
-
-### 5.1 Apply Database Changes (Migrations)
+### 5.1 Update Source and Apply Migrations
 
 ```bash
 cd /opt/orchidapp
-git status
-git pull
-source /etc/orchidapp/orchidapp-migrations.env
-pwsh ./database/scripts/Apply-Migrations.ps1
+git status --short --branch
+git log -1 --format="%h %s"
+git pull --ff-only
 ```
 
-Rules:
+Tracked files must have no local changes. Preserve local `publish/`, `uploads/`
+and `imports/` directories; never run a cleanup that deletes them. If Git reports
+a conflict or an untracked file would be overwritten, stop and investigate.
 
-* Working tree must be clean
-* Migrations must succeed without manual intervention
-* Failures must be resolved before re-running
-
-The system does not attempt automatic rollback.
-
----
-
-### 5.2 Upgrade Application
+Load migration credentials without displaying them and export them to PowerShell:
 
 ```bash
-sudo systemctl stop orchidapp
-
-dotnet publish src/OrchidApp.Web/OrchidApp.Web.csproj -c Release -o /opt/orchidapp/publish
-
-sudo systemctl restart orchidapp
+(
+  set -a
+  source <(sudo cat /etc/orchidapp/orchidapp-migrations.env)
+  set +a
+  pwsh ./database/scripts/Apply-Migrations.ps1
+)
+echo "Migration exit code: $?"
 ```
 
-Rules:
+Require exit code `0`. Resolve any failure before continuing or re-running.
+Use migrations for an existing database; never run the fresh-install rebuild.
+The system does not attempt automatic rollback.
 
-* Do not manually modify files in `publish/`
-* Do not copy binaries manually
+### 5.2 Publish and Start the Application
+
+```bash
+dotnet publish src/OrchidApp.Web/OrchidApp.Web.csproj -c Release -o /opt/orchidapp/publish
+echo "Publish exit code: $?"
+```
+
+Require exit code `0` before starting:
+
+```bash
+sudo systemctl start orchidapp.service
+systemctl is-active orchidapp.service
+sudo journalctl -u orchidapp.service --since "2 minutes ago" --no-pager -n 60
+```
+
+Verify the browser checks below, then resume the importer timer if it was running
+before the backup:
+
+```bash
+sudo systemctl start orchidapp-environment-importer.timer
+systemctl list-timers --all orchidapp-environment-importer.timer --no-pager
+```
+
+Do not manually replace published binaries or configuration files.
 
 ---
 
@@ -396,6 +416,9 @@ Then verify:
 * Pages load
 * Data is visible
 * Styling is present
+* Plant photos load
+* Botanical name search returns expected results
+* The environmental summary loads on the supported Raspberry Pi platform
 
 ---
 
@@ -433,14 +456,8 @@ Check:
 
 ---
 
-## 8. Deterministic Deployment Contract
+## 8. Deployment sequence
 
-A correct deployment consists only of:
-
-```bash
-git pull
-dotnet publish -c Release -o ./publish
-sudo systemctl restart orchidapp
-```
-
-If additional steps are required, the deployment model is broken and must be corrected.
+For an existing deployment, follow section 5 in order: full backup, source update,
+migrations, publish, startup verification and resumption of scheduled imports.
+Application data and external configuration must survive every upgrade.

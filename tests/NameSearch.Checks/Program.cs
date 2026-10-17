@@ -45,6 +45,11 @@ using var db = new OrchidDbContext(options);
 var query = BotanicalNameSearch.BuildQuery(db.Genera.AsNoTracking(), db.TaxonIdentities.AsNoTracking(), "Cattleya mossiae")
     .Skip(BotanicalNameSearch.PageSize).Take(BotanicalNameSearch.PageSize+1);
 var sql = query.ToQueryString();
+foreach (var kind in new[] { "genus", "taxon" })
+{
+    var categorySql = BotanicalNameSearch.BuildQuery(db.Genera, db.TaxonIdentities, "Cattleya").Where(r => r.Kind == kind).Skip(30).Take(31).ToQueryString();
+    Check($"{kind} category filter and paging translate", categorySql.Contains("LIMIT") && categorySql.Contains("OFFSET"));
+}
 Check("Both authoritative name sources in SQL", sql.Contains("`genus`") && sql.Contains("`vtaxonidentity`"));
 Check("Results merged server side", sql.Contains("UNION ALL"));
 Check("Explicit case/accent-insensitive collation", sql.Contains("COLLATE utf8mb4_unicode_ci"));
@@ -58,6 +63,25 @@ Check("Stable result ordering", sql.Contains("ORDER BY") && sql.Contains("`Kind`
 // Verify the empty service guard before it could query an unconfigured DB.
 using var unconfigured = new OrchidDbContext(new DbContextOptions<OrchidDbContext>());
 Check("Empty service input never opens database", (await new BotanicalNameSearch(unconfigured).SearchAsync(" ", 1, default)).Results.Count == 0);
+// Plant membership must depend on both soft deletion and lifecycle closure.
+var membership = BotanicalNameSearch.ActivePlants(new[] {
+    new OrchidApp.Web.Models.Plant { PlantId=1, IsActive=true },
+    new OrchidApp.Web.Models.Plant { PlantId=2, IsActive=true, EndDate=DateTime.Today },
+    new OrchidApp.Web.Models.Plant { PlantId=3, IsActive=false },
+    new OrchidApp.Web.Models.Plant { PlantId=4, IsActive=false, EndDate=DateTime.Today }
+}.AsQueryable()).Select(p => p.PlantId).ToList();
+Check("Only undeleted and unended plants included", membership.SequenceEqual(new[] { 1 }));
+var plant = new NameSearchResult { Kind="plant", Id=42 };
+Check("Plant result opens plant Details", plant.DetailsPage == "/Plants/Details" && plant.DetailsRouteValues["plantId"] == "42");
+Check("Taxon route retains id parameter", new NameSearchResult { Kind="taxon", Id=9 }.DetailsRouteValues["id"] == "9");
+var plantSql = BotanicalNameSearch.BuildPlantQuery(db.Plants, db.PlantActiveCurrentLocations, "Cattleya tag").Skip(30).Take(31).ToQueryString();
+Check("Plant search translates against existing identities", plantSql.Contains("`vplantactivecurrentlocation`") && plantSql.Contains("`plant`"));
+Check("Plant search excludes ended and deleted in SQL", plantSql.Contains("`endDate` IS NULL") && plantSql.Contains("`isActive`"));
+Check("Plant name and tag searchable", plantSql.Contains("`plantName`") && plantSql.Contains("`plantTag`"));
+Check("Plant results paged on server", plantSql.Contains("LIMIT") && plantSql.Contains("OFFSET"));
+Check("Plant search uses collation and all terms", plantSql.Contains("COLLATE utf8mb4_unicode_ci") && plantSql.Contains(" AND "));
+var plantReturn = "/Search?q=Cattleya&resultsPage=2#result-plant-42";
+Check("Plant Details preserves search return context", AppNavigation.Parent(AppNavigation.WithReturn("/Plants/Details/42", plantReturn)) == plantReturn);
 Console.WriteLine($"{count} name-search checks passed.");
 
 sealed class RecordingSearch : IBotanicalNameSearch

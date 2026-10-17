@@ -1,220 +1,158 @@
-Full App Backup Before High Risk Upgrade
+# Full Raspberry Pi backup before upgrading
 
-Recommended Pi rollback structure
+This procedure backs up `/opt/orchidapp` (including uploads/photos), the `orchids`
+database, `/etc/orchidapp` configuration and the effective systemd definitions.
+It assumes these are your deployment paths. Check any other upload paths,
+symlinks or external mounts separately: `rsync -a` preserves symlinks rather than
+copying their external targets.
 
-Create a dated backup folder:
+For routine encrypted cloud backups and database recovery, use the
+[backup and restore runbook](OrchidApp-MariaDB-Backup-and-Restore-Runbook.md).
+This full application backup complements that process.
 
-sudo mkdir -p /opt/orchidapp-rollbacks/2026-05-31
+Run Pi commands in the same Bash terminal so `backup_dir` remains available.
+Stop at any failed command. Never proceed to an upgrade with an incomplete backup.
 
-Then copy the current app exactly:
+## 1. Check paths and available space
 
-sudo rsync -aHAX --numeric-ids /opt/orchidapp/ /opt/orchidapp-rollbacks/2026-05-31/orchidapp/
-
-That backs up the deployed application files, including the web app, scripts and any bundled files under /opt/orchidapp.
-
-Step 1 — list OrchidApp-related services
-
-Run this first:
-
+```bash
 systemctl list-unit-files | grep -i orchid
+systemctl show orchidapp.service -p WorkingDirectory
+df -h /opt
+sudo du -sh /opt/orchidapp /opt/orchidapp/uploads
+sudo ls -ld /opt/orchidapp/uploads
+sudo readlink -f /opt/orchidapp/uploads
+```
+
+Allow room for both an uncompressed copy and its archive, plus the database dump
+and build output. Record which services and timers were active before stopping
+them. Include additional deployment-specific units if present.
+
+## 2. Stop application writes
+
+For a deployment with the environment importer:
+
+```bash
+sudo systemctl stop orchidapp-environment-importer.timer
+sudo systemctl stop orchidapp-environment-importer.service
+sudo systemctl stop orchidapp.service
+systemctl is-active orchidapp.service orchidapp-environment-importer.timer orchidapp-environment-importer.service
+```
+
+Expect three `inactive` results; `is-active` returns a nonzero status for inactive
+units. Omit importer commands if it is not installed. Leave MariaDB running for
+the logical database export. Stop any other writers to this database or uploads.
+
+## 3. Copy application, photos and configuration
+
+```bash
+backup_dir="/opt/orchidapp-rollbacks/$(date +%Y-%m-%d-%H%M%S)-pre-upgrade"
+sudo install -d -m 700 "$backup_dir"
+sudo mkdir -p "$backup_dir/orchidapp" "$backup_dir/systemd"
+echo "Backup folder: $backup_dir"
+
+sudo rsync -aHAX --numeric-ids /opt/orchidapp/ "$backup_dir/orchidapp/"
+sudo cp -a /etc/orchidapp "$backup_dir/etc-orchidapp"
+
+for unit in orchidapp.service orchidapp-environment-importer.service orchidapp-environment-importer.timer; do
+  systemctl cat "$unit" | sudo tee "$backup_dir/systemd/$unit.txt" >/dev/null
+done
+```
+
+Omit absent importer units. The text files record effective unit definitions,
+including drop-ins, for reference. Also preserve original locally maintained unit
+files and overrides for recovery:
+
+```bash
+sudo find /etc/systemd/system -maxdepth 1 -name 'orchidapp*' \
+  -exec cp -a -t "$backup_dir/systemd/" -- {} +
+```
+
+The configuration includes passwords; do not share its contents. Record the Git
+revision so the source version can be identified:
+
+```bash
+git -C /opt/orchidapp rev-parse HEAD | sudo tee "$backup_dir/source-revision.txt" >/dev/null
+```
+
+## 4. Export the database
+
+Use the MariaDB root password when prompted, not the Pi login password:
+
+```bash
+sudo bash -c 'umask 077; mariadb-dump --user=root --password --single-transaction --routines --triggers --events --hex-blob --databases orchids > "$1"' _ "$backup_dir/orchids.sql"
+echo "Database export exit code: $?"
+```
+
+Require exit code `0`. A failed export may leave an empty or partial file; it is
+not a usable backup. This exports the database, views, routines, triggers and
+events. It does not export MariaDB user accounts/grants or server configuration;
+retain those separately if rebuilding the entire machine. Single-transaction
+consistency applies to transactional tables; keep other writers and schema changes
+paused throughout this backup.
+
+## 5. Verify the copy and export
+
+```bash
+sudo ls -lh "$backup_dir/orchids.sql"
+sudo tail -n 5 "$backup_dir/orchids.sql"
+sudo rsync -aHAXnc --numeric-ids --itemize-changes /opt/orchidapp/ "$backup_dir/orchidapp/"
+echo "Backup comparison exit code: $?"
+sudo du -sh /opt/orchidapp "$backup_dir/orchidapp"
+```
+
+Expect a nonempty SQL file ending with `Dump completed`, no rsync changes and
+comparison exit code `0`. These are integrity checks, not a restore test. Validate
+restoration in an isolated database/server using the runbook before relying on
+the backup for recovery. The dump includes `CREATE DATABASE`/`USE orchids`; do not
+import it into a live server as a test or assume a different command-line database
+name redirects those statements.
+
+## 6. Archive and verify
+
+```bash
+sudo bash -c 'umask 077; tar -czpf "$1.tar.gz" -C "$(dirname "$1")" "$(basename "$1")"' _ "$backup_dir"
+echo "Archive creation exit code: $?"
+sudo tar -tzf "${backup_dir}.tar.gz" >/dev/null
+echo "Archive verification exit code: $?"
+sudo sha256sum "${backup_dir}.tar.gz"
+sudo ls -lh "${backup_dir}.tar.gz"
+```
 
-You will probably see something like:
+Require both archive exit codes to be `0`. Make the archive readable only by your
+Pi login account so it can be copied with SCP:
 
-orchidapp.service                          enabled
-orchidapp-environment-importer.service     enabled
+```bash
+sudo chown "$(id -un):$(id -gn)" "${backup_dir}.tar.gz"
+sudo chmod 600 "${backup_dir}.tar.gz"
+echo "${backup_dir}.tar.gz"
+```
 
-You may see fewer or slightly different names. Paste the output if you want me to sanity-check it.
+## 7. Copy off the Pi
 
-Step 2 — create a backup folder for service files
+In Windows PowerShell, replace the account, hostname and timestamp below with
+your values from the preceding output:
 
-Run:
+```powershell
+scp <pi-user>@<pi-host>:/opt/orchidapp-rollbacks/<timestamp>-pre-upgrade.tar.gz "$HOME\Downloads\"
+Get-FileHash "$HOME\Downloads\<timestamp>-pre-upgrade.tar.gz" -Algorithm SHA256
+```
 
-sudo mkdir -p /opt/orchidapp-rollbacks/2026-05-31/systemd
-Step 3 — copy the actual service files
+The Windows hash must match the Pi hash (letter case does not matter). Keep the
+archive private because it contains credentials and application data. A copy on
+the same SD card alone does not protect against SD-card failure.
 
-Run:
+## 8. Continue or resume service
 
-sudo cp -a /etc/systemd/system/orchid*.service \
-  /opt/orchidapp-rollbacks/2026-05-31/systemd/ 2>/dev/null || true
+For an immediate upgrade, leave the app and importer stopped and continue with
+the [upgrade procedure](installation-upgrade.md#5-upgrade-procedure).
+If postponing the upgrade, restart the units that were active before the backup:
 
-That copies any service file starting with orchid.
+```bash
+sudo systemctl start orchidapp.service
+sudo systemctl start orchidapp-environment-importer.timer
+systemctl list-timers --all orchidapp-environment-importer.timer --no-pager
+```
 
-3. Verify the copy exists
-sudo du -sh /opt/orchidapp
-sudo du -sh /opt/orchidapp-rollbacks/2026-05-31-pre-upgrade/orchidapp
-
-The sizes should be broadly similar.
-
-Then:
-
-ls -la /opt/orchidapp-rollbacks/2026-05-31-pre-upgrade/orchidapp
-
-You should see the current app files.
-
-4. Capture a quick file listing
-
-This gives you a readable record of what was present before the upgrade:
-
-sudo find /opt/orchidapp-rollbacks/2026-05-31-pre-upgrade/orchidapp \
-  -maxdepth 3 \
-  -type f \
-  | sort \
-  | sudo tee /opt/orchidapp-rollbacks/2026-05-31-pre-upgrade/orchidapp-file-list.txt
-
-Step 4 — save what systemd currently sees
-
-This is useful because systemd can include overrides or expanded definitions.
-
-Run:
-
-systemctl cat orchidapp.service \
-  | sudo tee /opt/orchidapp-rollbacks/2026-05-31-pre-upgrade/systemd/orchidapp.service.cat.txt
-
-If you have the environment importer service too, run:
-
-systemctl cat orchidapp-environment-importer.service \
-  | sudo tee /opt/orchidapp-rollbacks/2026-05-31-pre-upgrade/systemd/orchidapp-environment-importer.service.cat.txt
-
-If the second one says the service does not exist, that is fine.
-
-Step 5 — verify what was backed up
-
-Run:
-
-ls -la /opt/orchidapp-rollbacks/2026-05-31-pre-upgrade/systemd
-
-You want to see at least:
-
-orchidapp.service
-orchidapp.service.cat.txt
-
-And possibly:
-
-orchidapp-environment-importer.service
-orchidapp-environment-importer.service.cat.txt
-
-After this, the systemd service backup part is done.
-
-Next is to back up the currently working deployed application folder. That is the bit that lets you roll back the actual software if the upgrade breaks.
-
-Assuming the app is at:
-
-/opt/orchidapp
-1. Create the rollback folder
-sudo mkdir -p /opt/orchidapp-rollbacks/2026-05-31-pre-upgrade/orchidapp
-2. Copy the current app exactly
-sudo rsync -aHAX --numeric-ids \
-  /opt/orchidapp/ \
-  /opt/orchidapp-rollbacks/2026-05-31-pre-upgrade/orchidapp/
-
-The trailing slashes matter. This copies the contents of /opt/orchidapp into the rollback copy.
-
-3. Verify the copy exists
-sudo du -sh /opt/orchidapp
-sudo du -sh /opt/orchidapp-rollbacks/2026-05-31-pre-upgrade/orchidapp
-
-The sizes should be broadly similar.
-
-Then:
-
-ls -la /opt/orchidapp-rollbacks/2026-05-31-pre-upgrade/orchidapp
-
-You should see the current app files.
-
-4. Capture a quick file listing
-
-This gives you a readable record of what was present before the upgrade:
-
-sudo find /opt/orchidapp-rollbacks/2026-05-31-pre-upgrade/orchidapp \
-  -maxdepth 3 \
-  -type f \
-  | sort \
-  | sudo tee /opt/orchidapp-rollbacks/2026-05-31-pre-upgrade/orchidapp-file-list.txt
-5. Confirm the existing app still works
-
-Restart it cleanly:
-
-sudo systemctl restart orchidapp.service
-sudo systemctl status orchidapp.service --no-pager
-
-Then open OrchidApp in the browser and confirm it still loads.
-
-1. Save a Pi state report
-
-Run this as one block:
-
-{
-  echo "Date:"
-  date
-
-  echo
-  echo "Hostname:"
-  hostnamectl
-
-  echo
-  echo "Kernel:"
-  uname -a
-
-  echo
-  echo "OS release:"
-  cat /etc/os-release
-
-  echo
-  echo ".NET:"
-  dotnet --info 2>/dev/null || true
-
-  echo
-  echo "MariaDB:"
-  mariadb --version 2>/dev/null || mysql --version 2>/dev/null || true
-
-  echo
-  echo "OrchidApp service:"
-  systemctl status orchidapp.service --no-pager || true
-
-  echo
-  echo "Environment importer service:"
-  systemctl status orchidapp-environment-importer.service --no-pager || true
-
-  echo
-  echo "Orchid-related unit files:"
-  systemctl list-unit-files | grep -i orchid || true
-
-  echo
-  echo "Listening ports:"
-  ss -ltnp | grep -E '5000|5001|3306|3308' || true
-
-  echo
-  echo "Disk usage:"
-  df -h
-
-  echo
-  echo "App folder size:"
-  sudo du -sh /opt/orchidapp 2>/dev/null || true
-
-  echo
-  echo "Rollback folder size:"
-  sudo du -sh /opt/orchidapp-rollbacks/2026-05-31-pre-upgrade 2>/dev/null || true
-
-} | sudo tee /opt/orchidapp-rollbacks/2026-05-31/pi-state-report.txt
-
-Then check it exists:
-
-ls -lh /opt/orchidapp-rollbacks/2026-05-31/pi-state-report.txt
-
-2. Compress the rollback folder into one archive
-
-Run:
-
-cd /opt/orchidapp-rollbacks
-
-sudo tar -czpf 2026-05-31.tar.gz 2026-05-31
-
-Then verify the archive:
-
-ls -lh /opt/orchidapp-rollbacks/2026-05-31.tar.gz
-
-1. Optional but strongly recommended: test the archive can be read
-
-Run:
-
-sudo tar -tzf /opt/orchidapp-rollbacks/2026-05-31.tar.gz | head -50
+Only restart the importer timer if it was previously enabled/running. Do not
+manually start the importer service just to resume its schedule.

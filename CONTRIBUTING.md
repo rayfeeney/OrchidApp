@@ -1,444 +1,238 @@
 # Contributing to OrchidApp
 
-- [Contributing to OrchidApp](#contributing-to-orchidapp)
-  - [Architectural Authority](#architectural-authority)
-  - [Core Principles](#core-principles)
-  - [Mandatory Setup](#mandatory-setup)
-  - [Contribution Types](#contribution-types)
-    - [1. Database Structural Changes](#1-database-structural-changes)
-    - [2. Schema Export Generated Artefacts](#2-schema-export-generated-artefacts)
-    - [3. Lifecycle and Structural Writes](#3-lifecycle-and-structural-writes)
-    - [4. Stored Procedure Invocation Contract](#4-stored-procedure-invocation-contract)
-    - [5. Application Layer Changes](#5-application-layer-changes)
-    - [6. Temporal Behaviour](#6-temporal-behaviour)
-    - [7. UI and Navigation Contract](#7-ui-and-navigation-contract)
-    - [8. Windows Installer and Upgrade Safety](#8-windows-installer-and-upgrade-safety)
-    - [9. Backup and Restore Behaviour](#9-backup-and-restore-behaviour)
-    - [10. User Documentation](#10-user-documentation)
-  - [Commits and Hooks](#commits-and-hooks)
-  - [Database-Only Changes](#database-only-changes)
-  - [GitHub CI Validation](#github-ci-validation)
-  - [Pull Requests](#pull-requests)
-  - [Operational Awareness](#operational-awareness)
-  - [Not Permitted](#not-permitted)
-  - [Architectural Reminder](#architectural-reminder)
+This guide describes how to prepare a development checkout, make changes and
+validate them before opening a pull request. Run commands from the repository root.
+MariaDB is the supported database engine on all platforms. Use a development
+MariaDB database, never a production database, for development and tests.
 
----
+## Project references
 
-OrchidApp is a production-grade system governed by a strict architectural contract.
+- [Documentation index](docs/index.md): current operational and feature guides.
+- [Architecture](docs/architecture.md): system responsibilities and invariants.
+- [Temporal design](docs/temporal-design.md): lifecycle dates and ordering.
+- [Windows upgrade contract](docs/windows-upgrade-contract.md): installer ownership
+  and persistent data requirements.
 
-Automation is not advisory.  
-It is enforcement.
+These documents define the project rules. The validation sections below describe
+what the current tools actually check. A rule remains a requirement even where
+automation does not yet enforce it; do not assume a passing build proves compliance.
 
-All contributions must preserve:
+## Prepare a development checkout
 
-* Schema reproducibility
-* Migration integrity
-* Lifecycle invariants
-* Temporal correctness
-* Operational safety
-* Backup validity
-* Restore validity
-* Upgrade safety
-* User data preservation
-* CI determinism
+Install Git, PowerShell 7 or later and the .NET 8 SDK. Database work and the
+pre-commit hook also require a reachable development MariaDB database named
+`orchids`, with credentials permitted to export its schema.
 
-If a change weakens any of these, it will be rejected.
+The current setup script checks that MariaDB's legacy client aliases `mysql`
+and `mysqldump` are on PATH. These checks do not require or support a separate
+MySQL server. The
+exporter uses `mariadb` and `mariadb-dump` on Linux; on Windows it uses executables
+under `C:\Program Files\MariaDB 10.11\bin`. Check those paths before committing.
+The bundled Windows application database does not replace these developer tools.
 
----
+### Configure credentials and hooks
 
-## Architectural Authority
+Use your local secret-management method to supply credentials to the terminal
+and Git client running the hook. Do not commit credentials or place passwords in
+command-line arguments, screenshots or pull request output.
 
-The system is governed by:
+The scripts currently use different variable names:
 
-```text
-docs/architecture.md
-```
+| Script | Required credential variables |
+| --- | --- |
+| `scripts/DevSetup/setup.ps1` | `MYSQL_USER`, `MYSQL_PASSWORD` |
+| Schema exporter and migration runner | `MARIADB_USER`, `MARIADB_PASSWORD` |
 
-This document defines the non-negotiable rules for the project.
-
-Contributions must not reinterpret, duplicate or weaken these rules.
-
----
-
-## Core Principles
-
-All contributions must adhere to these principles:
-
-1. **Database invariants are authoritative**
-2. **Migrations control structural change**
-3. **Generated artefacts are never edited manually**
-4. **Local validation must mirror CI**
-5. **Production behaviour must be reproducible**
-6. **User data must survive upgrades**
-7. **Backups and restores are part of the system contract**
-
----
-
-## Mandatory Setup
-
-After cloning the repository:
+The `MYSQL_*` pair is a legacy setup-script compatibility requirement, not a
+second database configuration. Supply both pairs for the same development
+MariaDB account. If the `MARIADB_*`
+variables are already set, the setup compatibility variables can be assigned in
+the current PowerShell session without printing the password:
 
 ```powershell
-pwsh scripts/setup.ps1
+$env:MYSQL_USER = $env:MARIADB_USER
+$env:MYSQL_PASSWORD = $env:MARIADB_PASSWORD
+pwsh ./scripts/DevSetup/setup.ps1
+git config --local --get core.hooksPath
 ```
 
-This:
+The final command should return `.githooks`. Setup configures the hooks path; it
+does not install .NET, create a database or verify every export prerequisite.
+If using GitHub Desktop, restart it after changing its environment. Variables set
+in a terminal do not automatically become available to an already running app.
 
-* Verifies required tooling
-* Installs enforced Git hooks
-* Configures deterministic schema export
+For database scripts, set `MARIADB_HOST` and `MARIADB_PORT` when the development
+server differs from the defaults `localhost:3306`. The exporter always targets
+`orchids`; the migration runner also defaults to `orchids` and accepts
+`MARIADB_DATABASE`. Ensure both target the intended development database.
 
-Commits made without setup are invalid and will fail CI.
+Local hooks are required by project policy. CI does not verify that a contributor
+ran setup or has hooks installed.
 
----
+## Database changes
 
-## Contribution Types
+### Schema evolution and fresh installation
 
----
+For an existing database, put structural changes in a new SQL migration under
+`database/migrations/`, named `YYYYMMDDHHMM_Name.sql`. Use a unique timestamp and
+preserve user data. Never edit a migration that has already been applied.
 
-### 1. Database Structural Changes
+Fresh database creation uses the canonical schema; existing installations use
+migrations. Do not run a schema rebuild as an upgrade. Do not make ad hoc schema
+changes on production databases outside the reviewed migration process.
 
-Structural changes must be implemented via migration files in:
+Apply a new migration to the development database using the configured
+`MARIADB_*` environment variables:
 
-```text
-database/migrations/
+```powershell
+pwsh ./database/scripts/Apply-Migrations.ps1
 ```
 
-Migration files must:
-
-* Follow the naming format `YYYYMMDDHHMM_Name.sql`
-* Be applied exactly once
-* Never modify historical migrations
-* Preserve existing user data unless an intentional, documented migration says otherwise
-
-The system enforces:
-
-* SHA256 checksum validation
-* Ordering constraints
-* Duplicate timestamp prevention
-* Drift detection before execution
-
-Direct modification of any live database is prohibited.
-
----
-
-### 2. Schema Export Generated Artefacts
-
-Files under:
-
-```text
-database/schema/
-```
-
-are generated artefacts.
-
-They:
-
-* Must never be edited manually
-* Are regenerated during pre-commit
-* Are validated locally and in CI
-
-If you need to change the schema:
-
-> Create a migration. Do not edit generated SQL.
-
----
-
-### 3. Lifecycle and Structural Writes
-
-Structural domains enforce lifecycle invariants and must be written via stored procedures.
-
-Examples include:
-
-* `plantlocationhistory`
-* `plantsplit`
-* propagation records
-* structural taxonomy lifecycle changes
-
-Rules:
-
-* EF Core must not bypass structural invariants
-* Stored procedures must enforce all lifecycle rules
-* Invalid transitions must fail atomically
-* Structural changes must remain transactionally safe
-
-Atomic entities may be written via EF Core where this is already part of the project design.
-
-Examples include:
-
-* Observations
-* Repotting events
-* Flowering events
-
-If unsure, default to stored procedures and discuss the design before implementation.
-
----
-
-### 4. Stored Procedure Invocation Contract
-
-Stored procedures must be invoked using project-standard patterns.
-
-Command procedures with no result set:
-
-```csharp
-await Database.ExecuteSqlRawAsync(...);
-```
-
-Result-set procedures:
-
-```csharp
-await DbSet<TEntity>
-    .FromSqlRaw(...)
-    .ToListAsync();
-```
-
-Rules:
-
-* All calls must be asynchronous
-* Manual ADO.NET commands are not permitted in PageModels
-* Interpolated SQL execution patterns are not permitted
-* Try/catch is used only to translate database errors into user-facing validation messages
-* Database behaviour remains authoritative
-
-Exceptional output-parameter scenarios must use central infrastructure helpers only.
-
----
-
-### 5. Application Layer Changes
-
-The application layer:
-
-* Orchestrates workflows
-* Presents validation and error messages
-* Must treat the database as authoritative
-* Must not duplicate structural constraints as an alternative to database enforcement
-* Must not override lifecycle rules
-* Must not reinterpret temporal behaviour
-
-Application convenience must never override correctness.
-
----
-
-### 6. Temporal Behaviour
-
-Temporal behaviour is part of the system contract.
-
-Contributions must respect:
-
-* Date-only user input where established
-* Database `DATETIME` storage for ordering
-* System-assigned time components
-* Insertion-stable same-day ordering
-* Stored procedure ownership of structural temporal boundaries
-
-Do not introduce new temporal semantics without updating the formal temporal design documentation.
-
-See:
-
-```text
-docs/temporal-design.md
-```
-
----
-
-### 7. UI and Navigation Contract
-
-UI behaviour must comply with the established project patterns.
-
-Rules:
-
-* Use shared components under `/Pages/Shared/` where appropriate
-* Do not duplicate button layouts unnecessarily
-* Use the `returnUrl` pattern where navigation context matters
-* Follow established mobile-first page patterns
-* Keep operational UI terminology user-friendly
-* Do not expose internal database terminology where user-facing labels already exist
-
-UI consistency is part of the product contract.
-
----
-
-### 8. Windows Installer and Upgrade Safety
-
-The Windows installer-led app is part of the project’s supported delivery model.
-
-Changes affecting packaging, installer behaviour, launcher behaviour, local settings, bundled components or data folders must preserve upgrade safety.
-
-Rules:
-
-* Public Windows upgrades must use the installer, not ZIP overwrite
-* User data must not be deleted during install, uninstall, package replacement or upgrade
-* Database files and uploaded images must be treated as persistent state
-* Application files must be treated as replaceable
-* The installer owns application files only
-* The launcher owns layout detection, backup, migration and runtime data-path resolution
-* Upgrade workflows must take or require a backup before migration or destructive/structural changes
-* Data-folder moves must be layout-aware and documented
-* Failure during upgrade must not leave the user without a recoverable path
-* Windows ProgramData paths must remain consistent with `docs/windows-upgrade-contract.md`
-
-Any change that affects packaged layout must consider the implemented installer-led distribution model.
-
----
-
-### 9. Backup and Restore Behaviour
-
-Backup and restore are part of the system contract.
-
-Changes affecting any of the following must include corresponding validation and documentation updates:
-
-* Backup creation
-* Backup location selection
-* Cloud-folder copy behaviour
-* Restore process
-* Upload preservation
-* Database restore
-* Packaged app data layout
-
-Backups are only valid if restore succeeds.
-
-A backup feature that cannot be restored is not complete.
-
----
-
-### 10. User Documentation
-
-User-facing behaviour changes must update user-facing documentation where relevant.
-
-This includes changes to:
-
-* Installation
-* Upgrade
-* Backup configuration
-* Disaster recovery
-* About page information
-* Privacy statement
-* Support instructions
-* Release assets and packaged documents
-
-Developer-facing correctness is not enough if the user workflow changes.
-
----
-
-## Commits and Hooks
-
-Pre-commit hooks are enforced.
-
-They:
-
-* Regenerate schema exports
-* Stage generated artefacts
-* Fail on validation errors
-
-Bypassing hooks with `--no-verify` is not permitted.
-
----
-
-## Database-Only Changes
-
-If changes are database-only:
+Review the result before committing. Migration DDL is not automatically rolled
+back if a later statement fails; investigate failures before rerunning.
+
+### Generated schema and hook behaviour
+
+`database/schema/` and `database/checksums/schema.json` are generated artefacts.
+Do not edit them manually. The pre-commit hook runs
+`database/scripts/Export-MariaDBSchema.ps1` against the configured database and
+stages the generated schema and checksum files. It aborts if export fails.
+
+The hook runs for every commit, including documentation-only commits. Use a
+development database aligned with the intended changes so unrelated database
+changes are not exported into a commit. Review the resulting diff; if the hook
+introduces unexpected files, stop and correct the development environment.
+Do not bypass the hook with `--no-verify` or a disabled hooks path.
+
+For a database-only change, stage the new migration and commit normally:
 
 ```bash
-git commit --allow-empty
+git add database/migrations/YYYYMMDDHHMM_Name.sql
+git diff --cached
+git commit -m "Describe the database change"
 ```
 
-This triggers schema export through the pre-commit hook.
+Replace the example filename with the actual migration. An empty commit is not
+a substitute for recording a migration. The hook stages generated exports; review
+the complete commit after it finishes.
 
-Do not manually stage generated schema files.
+### Current migration enforcement limits
 
----
+The runner sorts SQL files by name, skips filenames already recorded in
+`schemaversion` and records a SHA256 checksum for each newly applied file.
+It currently does **not** compare recorded checksums for skipped files, enforce
+the filename format, reject duplicate timestamps or reject new files dated before
+already applied migrations. These remain review requirements for this runner. Desktop bootstrap and the
+separate developer runner have different checks; see the
+[architecture migration comparison](docs/architecture.md#implemented-migration-paths).
+Schema export
+checksums and CI schema drift checks do not establish migration-history integrity.
 
-## GitHub CI Validation
+## Application changes
 
-GitHub CI is the authoritative automated validation environment.
+- Keep database constraints and stored procedures authoritative for lifecycle and
+  structural writes, including plant location history, splitting and propagation.
+- Use the shared `IStoredProcedureExecutor` for the result-returning procedure
+  patterns it supports. Existing EF Core command and mapped result-set patterns
+  remain applicable where established. Keep exceptional database plumbing in
+  infrastructure rather than adding manual ADO.NET commands to PageModels.
+- Keep database I/O asynchronous. Parameterise values and use fixed, trusted
+  procedure identifiers; never build executable SQL from user input.
+- Translate expected validation or database errors into useful messages. Preserve
+  logging and appropriate handling of operational failures; do not hide unexpected
+  failures or treat them as successful writes.
+- Respect the established temporal model. Changes to date handling, same-day
+  ordering or lifecycle boundaries require corresponding design review.
 
-All pull requests must pass GitHub CI before merge.
+## User interface and documentation
 
-CI validates:
+Use shared Razor components under `src/OrchidApp.Web/Pages/Shared/`. Preserve local
+return destinations through forms, validation and successful saves, following
+[the navigation guide](docs/navigation.md). Check mobile layouts and use familiar
+user-facing labels.
 
-* Application build behaviour
-* Database schema consistency
-* Migration ordering
-* Migration checksum integrity
-* Generated artefact consistency
-* Packaging or release checks where applicable
+For formatted notes, reuse the shared editor, sanitisation and storage contract
+described in [the rich-notes guide](docs/rich-notes.md).
 
-A change is not considered valid until CI passes.
+Update existing documentation when user-facing behaviour changes, especially
+installation, upgrades, backups, recovery, privacy and support. Put platform
+instructions under `docs/user-guides/<platform>/` and feature references under
+`docs/`. Link them from the documentation index. Avoid duplicate patch readmes
+and changed-file inventories; use Git history and release notes for change history.
+Keep historical release snapshots and required third-party notices intact.
 
-Local scripts may be used for developer convenience, but they are not currently the authoritative validation mechanism.
+## Packaging, upgrades and recovery
 
----
+- Public Windows upgrades use the installer. Do not recommend ZIP overwrite.
+- Keep replaceable application files separate from persistent database files,
+  uploads and user settings. Preserve user data during install, upgrade and uninstall.
+- Follow the Windows upgrade contract for installer and launcher responsibilities,
+  ProgramData locations, legacy layout detection and migration.
+- Require recoverable backups before migrations or operations that could damage
+  data. Include external configuration and photos where applicable.
+- Validate backup restoration in an isolated environment. A completed archive,
+  matching hash or successful database dump alone does not prove recoverability.
+- Document and validate changes to backup locations, cloud copies, restore paths,
+  bundled runtimes or platform-specific services.
+- Preserve the project licence and bundled third-party licence obligations when
+  adding dependencies or changing release contents.
 
-## Pull Requests
+## Validate changes locally
 
-Each pull request must clearly state its scope:
+For application changes, build the web project:
 
-* Database-focused
-* Application-focused
-* UI-focused
-* Packaging-focused
-* Documentation-focused
-* Operational
-* Cross-cutting
+```bash
+dotnet build src/OrchidApp.Web/OrchidApp.Web.csproj --configuration Release
+```
 
-Structural, packaging, backup and restore changes receive heightened scrutiny.
+Run the relevant executable check projects; these use `dotnet run`:
 
-Pull requests that weaken invariants, bypass enforcement or risk user data loss will be rejected.
+```bash
+dotnet run --configuration Release --project tests/RichNotes.Checks/RichNotes.Checks.csproj
+dotnet run --configuration Release --project tests/Navigation.Checks/Navigation.Checks.csproj
+dotnet run --configuration Release --project tests/NameSearch.Checks/NameSearch.Checks.csproj
+dotnet run --configuration Release --project tests/EnvironmentSummary.Checks/EnvironmentSummary.Checks.csproj
+```
 
----
+Choose checks appropriate to the change. Documentation-only changes need link,
+command and formatting review rather than an application build. For database,
+packaging or operational changes, also validate the affected workflow using the
+relevant platform guide. Do not run destructive recovery tests on production.
 
-## Operational Awareness
+The executable checks include isolated handlers, substitute data and SQL translation
+checks. They do not replace live MariaDB save/reopen checks, actual installer tests,
+Raspberry Pi smoke checks or physical mobile-device testing where those matter.
 
-Changes affecting operational behaviour must include documentation and validation updates.
+Review `git diff --check` and the staged diff before committing, then inspect the
+completed commit because the hook may have staged generated files.
 
-This includes:
+## What CI currently validates
 
-* Migrations
-* Backup scripts
-* Restore procedures
-* Deployment behaviour
-* Windows packaging
-* Raspberry Pi deployment
-* Cloud-folder backup copy
-* Upgrade behaviour
-* Data-folder layout
+The checked-in [CI workflow](.github/workflows/ci.yml) runs on pull requests,
+pushes to `main` and manual dispatch. It currently:
 
-Operational changes must be safe, repeatable and recoverable.
+1. Restores, builds and publishes the web app for `linux-arm64` and checks that
+   the published DLL exists. This is cross-platform build validation, not a run
+   on Raspberry Pi hardware.
+2. Creates a disposable MariaDB 10.11 database from the committed schema, exports
+   it again and checks for schema drift.
+3. Restores Windows runtime dependencies and runs Windows package creation.
 
----
+It does not currently run the four executable feature-check projects, replay
+historical migrations, validate migration ordering/checksum integrity, build the
+Inno Setup installer or exercise installation and restoration on user machines.
+Do not describe these as enforced checks until the workflow implements them.
 
-## Not Permitted
+All required CI jobs must pass before merging. A passing run supplements code
+review and relevant local validation; it does not establish complete correctness.
 
-The following are strictly disallowed:
+## Pull requests
 
-* Editing generated schema files manually
-* Modifying historical migrations
-* Bypassing stored procedures for structural entities
-* Introducing undocumented manual steps
-* Applying schema changes directly to production
-* Weakening checksum enforcement
-* Weakening drift enforcement
-* Removing backup or restore safeguards without replacement
-* Deleting or overwriting user data during upgrade
-* Treating packaged application files and user data as the same kind of state
-* Shipping user-facing workflow changes without updating documentation
-* Recommending ZIP-overwrite as the public Windows upgrade route
+Describe the problem, the resulting behaviour and any material operational or
+compatibility effects. State the checks actually run, their results and relevant
+limits. Include manual validation for workflows that automated checks do not cover.
 
----
-
-## Architectural Reminder
-
-OrchidApp is not optimised for speed of development.
-
-It is optimised for:
-
-* Reproducibility
-* Determinism
-* Invariant safety
-* Upgrade safety
-* Restore confidence
-* Long-term maintainability
-
-If a workflow feels strict, that strictness is intentional.
-
+For schema changes, include the new migration and generated exports. For dependency
+or distribution changes, review licences and bundled notices. For user-facing
+changes, update the appropriate guides. Keep the scope focused and exclude
+credentials, private data, local uploads and unrelated generated changes.

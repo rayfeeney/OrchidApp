@@ -1,217 +1,50 @@
-# OrchidApp Documentation
-
-This directory contains the **authoritative documentation** for OrchidApp.
-
-It defines how the system is designed, how it behaves, and how it is operated.
-
-This is not reference material.
-This is the **operational and architectural contract** of the system.
-
-- [OrchidApp Documentation](#orchidapp-documentation)
-- [How to Use This Documentation](#how-to-use-this-documentation)
-- [Documentation Structure](#documentation-structure)
-  - [Architecture - System Contract](#architecture---system-contract)
-  - [Temporal Design - Domain Behaviour](#temporal-design---domain-behaviour)
-  - [Windows Upgrade Contract - Installer-Led Safety](#windows-upgrade-contract---installer-led-safety)
-  - [Installation \& Upgrade - Execution Model](#installation--upgrade---execution-model)
-  - [Contributing - Change Control](#contributing---change-control)
-  - [Backup \& Restore - Operational Safety](#backup--restore---operational-safety)
-- [System Model Summary](#system-model-summary)
-- [Core Principles](#core-principles)
-- [Deterministic System Guarantee](#deterministic-system-guarantee)
-- [Final Principle](#final-principle)
-
----
-
-# How to Use This Documentation
-
-Start with the document that matches your intent:
-
-| If you want to…                         | Read this                                                                  |
-| --------------------------------------- | -------------------------------------------------------------------------- |
-| Understand how the system is designed   | `architecture.md`                                                          |
-| Understand time, lifecycle and ordering | `temporal-design.md`                                                       |
-| Understand Windows upgrade safety       | `windows-upgrade-contract.md`                                              |
-| Install or upgrade on Linux             | `user-guides/linux/installation-upgrade.md`                                |
-| Install or upgrade on Windows           | `user-guides/windows/`                                                     |
-| Contribute safely to the project        | `../CONTRIBUTING.md`                                                       |
-| Operate Linux backups and recovery      | `user-guides/linux/OrchidApp-MariaDB-Backup-and-Restore-Runbook.md`        |
-| Use Windows backup and recovery docs    | `user-guides/windows/`                                                     |
-
-Each document is authoritative within its domain.
-
-They are designed to work together as a single system.
-
----
-
-# Documentation Structure
-
-The documentation is intentionally split by responsibility:
-
-## Architecture - System Contract
-
-```text
-architecture.md
-```
-
-Defines:
-
-* System invariants
-* Layer responsibilities
-* Enforcement boundaries
-* Non-negotiable rules
-
-This is the **source of truth** for how OrchidApp must behave.
-
-All other documents must align with it.
-
----
-
-## Temporal Design - Domain Behaviour
-
-```text
-temporal-design.md
-```
-
-Defines:
-
-* Narrative vs structural time
-* Lifecycle boundaries
-* Temporal ordering rules
-* Mutability constraints
-
-Temporal behaviour is part of the core system contract.
-
----
-
-## Windows Upgrade Contract - Installer-Led Safety
-
-```
-windows-upgrade-contract.md
-```
-
-Defines:
-
-* Installer-owned application files
-* ProgramData-owned user data
-* Legacy ZIP-era migration behaviour
-* Mandatory pre-upgrade backup before legacy migration
-* Safe-stop conditions
-* Windows launcher responsibilities
-* Windows installer responsibilities
-
-This is the source of truth for Windows installer-led upgrade safety.
-
----
-
-## Installation & Upgrade - Execution Model
-
-Linux installation and upgrade behaviour is defined in:
-
-```
-user-guides/linux/installation-upgrade.md
-```
-
-Windows installer-led upgrade behaviour is defined in:
-
-```
-windows-upgrade-contract.md
-```
-
-Windows user-facing installation, backup and recovery documents live under:
-
-```
-user-guides/windows/
-```
-
-Public Windows upgrades must use the installer. They must not be performed by extracting a ZIP or package folder over an existing OrchidApp folder.
-
----
-
-## Contributing - Change Control
-
-```text
-../CONTRIBUTING.md
-```
-
-Defines:
-
-* How changes must be made
-* What is permitted and not permitted
-* How enforcement (CI, hooks, migrations) works
-
-This protects the architectural contract.
-
----
-
-## Backup & Restore - Operational Safety
-
-Linux backup and restore behaviour is defined in:
-
-```
-user-guides/linux/OrchidApp-MariaDB-Backup-and-Restore-Runbook.md
-```
-
-Windows backup, restore and recovery documentation lives under:
-
-```
-user-guides/windows/
-```
-
-Backups protect:
-
-* MariaDB database state
-* Uploaded plant images
-* Runtime user settings required for recovery
-
-Backups are only valid if restore succeeds.
-
----
-
-# System Model Summary
-
-OrchidApp is built on a strict separation of responsibility:
-
-* **Database** - enforces invariants and lifecycle rules
-* **Application** - orchestrates valid behaviour
-* **Automation** - enforces reproducibility and correctness
-* **Operations** - protects and recovers system state
-
-No layer may weaken another.
-
----
-
-# Core Principles
-
-The entire system follows these rules:
-
-* The database is authoritative
-* Schema is treated as source code
-* Migrations control all structural change
-* Generated artefacts are never edited manually
-* Backups are only valid if restore succeeds
-* Production behaviour must be reproducible
-
-If a workflow conflicts with these principles, it is incorrect.
-
----
-
-# Deterministic System Guarantee
-
-At any point in time:
-
-* The database can be rebuilt from committed artefacts
-* The application can be redeployed from source
-* The system state can be restored from backups
-
-If this is not true, the system is in an invalid state.
-
----
-
-# Final Principle
-
-> Invariants live in the database.
-> Behaviour lives in the application.
-> Enforcement lives in automation.
-
-Everything in this documentation exists to uphold that principle.
+# OrchidApp documentation
+
+Start here to find the current instructions. User guides are grouped by platform;
+feature and design references live directly under `docs/`. MariaDB is the
+supported database engine on Windows and Raspberry Pi/Linux. Legacy client or
+environment-variable names in scripts are compatibility details, not support for
+a separate MySQL deployment.
+
+## Install, upgrade and recover
+
+| Task | Guide |
+| --- | --- |
+| Install or upgrade a Raspberry Pi | [Linux installation and upgrades](user-guides/linux/installation-upgrade.md) |
+| Back up the app, database, photos and configuration before a Pi upgrade | [Full pre-upgrade backup](user-guides/linux/Full-App-Backup-Pre-Upgrade.md) |
+| Configure routine Linux backups or restore data | [MariaDB backup and restore runbook](user-guides/linux/OrchidApp-MariaDB-Backup-and-Restore-Runbook.md) |
+| Install or upgrade Windows | [Windows installation guide](user-guides/windows/01-InstallOrUpgradeOrchidAppOnWindows.docx) |
+| Configure Windows cloud backups | [Windows backup guide](user-guides/windows/04-ConfigureCloudBackupFolderInOrchidAppForWindows.docx) |
+| Recover onto a replacement Windows PC | [Windows recovery guide](user-guides/windows/05-RecoverOrchidAppOnReplacementWindowsComputer.docx) |
+
+Additional illustrated first-use and plant-management guides are in
+[Linux user guides](user-guides/linux/) and [Windows user guides](user-guides/windows/).
+
+## Features
+
+- [Formatted genus and taxon notes](rich-notes.md)
+- [Back, Cancel and return navigation](navigation.md)
+- [Genus, species and hybrid name search](name-search.md)
+- [Environmental summary platform support](environment-summary-platform.md)
+
+## Development and design
+
+- [Project overview](../README.md)
+- [Contribution and validation requirements](../CONTRIBUTING.md)
+- [Architecture](architecture.md): system responsibilities and invariants.
+- [Temporal design](temporal-design.md): lifecycle dates and ordering.
+- [Windows upgrade contract](windows-upgrade-contract.md): installer and persistent data responsibilities.
+- [Release notes](../RELEASE_NOTES.md)
+- [Third-party notices](../THIRD_PARTY_NOTICES.md)
+
+## Maintaining documentation
+
+Update the existing guide when behaviour changes. Keep installation, upgrade,
+backup and recovery instructions in `user-guides/<platform>/`; keep implementation
+references under `docs/`. Avoid adding root-level patch readmes or lists of changed
+files: Git records file changes and the release notes record release history.
+
+Files under `release/` are historical release material, not current operating
+instructions. Keep those snapshots, third-party licences and bundled component
+readmes separate from current guides. Word guides remain alongside Markdown guides
+because they are also distributed with the application.

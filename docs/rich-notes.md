@@ -1,21 +1,14 @@
-# Genus notes formatting proof of concept
+# Formatted genus and taxon notes
 
-Applies to `/Setup/Genera/Actions/Edit/{id}` and the corresponding Genus details
-display. The Add genus form and every other notes field remain plain text.
+## Supported fields
 
-## Apply
+| Area | Add | Edit | Details |
+| --- | --- | --- | --- |
+| Genera | Genus notes | Genus notes | Formatted genus notes |
+| Taxa | Growth notes and Notes | Growth notes and Taxon notes | Both formatted notes |
 
-1. Back up or commit your current OrchidApp source and database.
-2. Copy the supplied changed files into the repository, preserving paths. This
-   patch was prepared against the uploaded OrchidApp 1.2.1+build.3 source. If your
-   checkout has moved on, review the files before replacing them.
-3. Restore/build `src/OrchidApp.Web/OrchidApp.Web.csproj`, then publish through your
-   normal process. Keep the new `wwwroot/lib/quill` and `Legal/rich-notes` files.
-4. No schema migration is included: genusNotes and spUpdateGenus already use TEXT.
-   Check the actual installed column's charset/collation with `SHOW FULL COLUMNS
-   FROM genus LIKE 'genusNotes';` before testing accented text and emoji. The source
-   creates new databases and configures connections as utf8mb4, but that does not
-   establish the charset of an existing installed column.
+Each field has its own toolbar. Failed form validation retains the submitted
+notes. Taxon Edit also retains them after an image-processing error.
 
 ## Behaviour and storage
 
@@ -30,7 +23,7 @@ emoji joining characters are retained.
 
 New formatted values carry the explicit `<!--orchid-rich-notes:v1-->` prefix.
 Unmarked historical values are treated as literal text, even if they resemble
-HTML. They are converted only when saved through this edit page. No bulk rewrite
+HTML. They are converted only when saved through a supported Add or Edit page. No bulk rewrite
 or schema change is performed. Database tools will show the marker and HTML.
 Search/export features added later must use a plain-text representation.
 
@@ -42,22 +35,33 @@ Blank formatted notes become NULL. If scripts fail, the textarea remains usable;
 already-formatted notes then appear as marked HTML, so restore scripts before
 editing those notes in the fallback field.
 
-## Verification completed here
+## Implementation and deployment
 
-- Release build: zero warnings/errors.
-- 18 automated C# checks: legacy text and line breaks, literal angle brackets,
-  formatting/lists, repeated saves, unsafe HTML/attributes, pasted spans,
-  Unicode/emoji, empty notes, and visible/raw/storage limits.
-- Headless desktop Edge browser checks: literal historical text, semantic HTML,
-  both list types after reopening, oversized save prevention, 375px layout, and
-  no browser script errors. These exercise the actual browser editor files in an
-  isolated form, rather than the database-backed page.
+The shared `RichNotes` service sanitises saved and displayed content. The editor
+uses `wwwroot/js/rich-notes.js`, `wwwroot/css/rich-notes.css` and locally bundled
+Quill assets. Page handlers validate notes before submitting procedure parameters.
+Genus and taxon notes already use TEXT columns and procedure parameters; formatting
+does not introduce a schema migration. Existing installations still need suitable
+utf8mb4 column character sets to store accented text and emoji.
 
-Run the server checks from the repository root:
+Build and deploy the complete application through the normal platform upgrade
+procedure; retain the bundled editor assets and `Legal/rich-notes` notices.
+Quill uses the BSD-3-Clause licence; HtmlSanitizer and its documented dependencies
+use MIT licences. See [third-party notices](../THIRD_PARTY_NOTICES.md).
 
-    dotnet run --project tests/RichNotes.Checks/RichNotes.Checks.csproj
+## Validation
 
-## Acceptance checks on your installation
+From the repository root:
+
+```bash
+dotnet run --configuration Release --project tests/RichNotes.Checks/RichNotes.Checks.csproj
+```
+
+Automated checks cover the shared sanitiser and Genus Add handler with a substitute
+database executor. They do not establish live MariaDB save/reopen behaviour or
+physical mobile-device support.
+
+## Acceptance checks
 
 - Edit an existing genus note with literal `<orchid>`, &, and multiple lines.
 - Apply each format, save, view Genus details, reopen, edit, and save again.
@@ -72,12 +76,13 @@ Run the server checks from the repository root:
   and Android Chrome. Phone-width desktop checks do not establish touch behaviour.
 - Check the Licences page and your published package's licence files.
 
-The running database, actual Razor Page request/save cycle and physical mobile
-devices have not been tested here. Do those checks before general rollout.
+Also create and edit a taxon with different formatting in both notes fields;
+check that each editor is independent and that clearing either field saves an
+empty value. Check both notes survive invalid taxon input.
 
 ## Rollback
 
 Revert the changed source files and rebuild. First restore any converted test notes
 from the backup or convert them to plain text: older application code would show
-the marker/HTML literally. This proof of concept does not perform that conversion
+the marker/HTML literally. The application does not perform that conversion
 automatically.
