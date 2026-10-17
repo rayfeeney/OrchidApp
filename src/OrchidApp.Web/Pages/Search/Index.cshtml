@@ -8,7 +8,7 @@
 <h1 class="page-title fw-bold">Search names</h1>
 <p class="text-muted" id="name-search-help">
     Enter all or part of a genus, species or hybrid name. For example, Cattleya or Cattleya mossiae.
-    Inactive entries are included and labelled.
+    Genus and taxon entries include inactive records, labelled below. Plants include only records that are not deleted and have no end date. You can also search by plant tag or plant name.
 </p>
 
 <form method="get" asp-page="/Search/Index" role="search" aria-label="Search botanical names" class="mb-4">
@@ -17,7 +17,7 @@
     <div class="d-flex flex-column flex-sm-row gap-2 mt-1">
         <input id="name-search-text" name="q" value="@Model.SearchText" type="search"
                class="form-control" maxlength="100" aria-describedby="name-search-help name-search-error"
-               placeholder="Genus, species or hybrid" />
+               placeholder="Botanical name, plant name or tag" />
         <button type="submit" class="btn btn-primary">Search</button>
     </div>
     <div asp-validation-summary="All" id="name-search-error" class="text-danger mt-1"></div>
@@ -27,7 +27,7 @@
 {
     @if (Model.Results.Count == 0)
     {
-        <p role="status">No names found for “@Model.SearchText”. Try a shorter name or different spelling.</p>
+        <p role="status">No matches found for “@Model.SearchText”. Try a shorter name or different spelling.</p>
         @if (Model.ResultsPage > 1)
         {
             <a asp-page="/Search/Index" asp-route-q="@Model.SearchText" asp-route-returnUrl="@Model.ReturnUrl">Return to the first results page</a>
@@ -36,22 +36,41 @@
     else
     {
         <p role="status" class="text-muted">Results for “@Model.SearchText” · Page @Model.ResultsPage</p>
-        <div class="d-grid gap-2">
-            @foreach (var result in Model.Results)
-            {
-                var resultId = $"result-{result.Kind}-{result.Id}";
-                <a id="@resultId" asp-page="@result.DetailsPage" asp-route-id="@result.Id"
-                   asp-route-returnUrl="@(Request.PathBase + Request.Path + Request.QueryString + "#" + resultId)"
-                   class="btn btn-lg text-start @(result.IsInactive ? "btn-outline-secondary" : "btn-outline-primary")">
-                    <span class="d-block fw-bold">@result.Name</span>
-                    <span class="small">@result.Label</span>
-                    @if (result.IsInactive)
+        @foreach (var group in new[] { (Kind: "genus", Title: "Genus"), (Kind: "taxon", Title: "Species / Hybrids"), (Kind: "plant", Title: "Plants") })
+        {
+            var matches = Model.Results.Where(r => r.Kind == group.Kind).ToList();
+            if (matches.Count == 0) { continue; }
+            <section class="mb-4" aria-labelledby="heading-@group.Kind">
+                <h2 id="heading-@group.Kind" class="h4 fw-bold">@group.Title</h2>
+                <div class="d-grid gap-2">
+                    @foreach (var result in matches)
                     {
-                        <span class="badge bg-secondary ms-2">Inactive</span>
+                        var resultId = $"result-{result.Kind}-{result.Id}";
+                        <a id="@resultId" asp-page="@result.DetailsPage" asp-all-route-data="@result.DetailsRouteValues"
+                           asp-route-returnUrl="@(Request.PathBase + Request.Path + Request.QueryString + "#" + resultId)"
+                           class="btn btn-lg text-start @(result.IsInactive ? "btn-outline-secondary" : "btn-outline-primary")">
+                            <span class="d-block fw-bold">@result.Name</span>
+                            @if (result.Kind == "plant")
+                            {
+                                <span class="small d-block">
+                                    @result.PlantTag
+                                    @if (!string.IsNullOrWhiteSpace(result.PlantName)) { <span> · @result.PlantName</span> }
+                                    @if (!string.IsNullOrWhiteSpace(result.LocationName)) { <span> · @result.LocationName</span> }
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="small">@result.Label</span>
+                            }
+                            @if (result.IsInactive)
+                            {
+                                <span class="badge bg-secondary ms-2">Inactive</span>
+                            }
+                        </a>
                     }
-                </a>
-            }
-        </div>
+                </div>
+            </section>
+        }
         @if (Model.ResultsPage > 1 || Model.HasMore)
         {
             <nav aria-label="Search result pages" class="d-flex flex-wrap gap-2 mt-3">

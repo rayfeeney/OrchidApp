@@ -4,7 +4,14 @@
 **Database:** MariaDB (`orchids`)
 **Uploads Path:** `/opt/orchidapp/uploads`
 **Cloud Target:** OneDrive (encrypted via rclone)
-**Status:** Production Ready
+**Database engine:** MariaDB on all supported platforms
+
+Commands below use `mariadb` and `mariadb-dump`. The current
+`infrastructure/backups/backup_orchids.sh` still invokes MariaDB's legacy
+`mysqldump` alias; ensure that alias is installed before running that script.
+This is a client compatibility name, not a requirement for a MySQL server.
+MariaDB configuration files can still use names such as `/etc/mysql/`,
+`[mysqld]` and `~/.my.cnf`.
 
 ---
 
@@ -36,7 +43,7 @@ A deployment without verified backups is considered **unsafe and incomplete**.
 ## Database (Snapshot Model)
 
 ```
-MariaDB → mysqldump → gzip → rclone crypt → OneDrive/db
+MariaDB → mariadb-dump → gzip → rclone crypt → OneDrive/db
 ```
 
 * Encrypted snapshots
@@ -132,7 +139,7 @@ Deployment location:
 
 The script must:
 
-1. Dump database (`mysqldump`)
+1. Dump database (`mariadb-dump`)
 2. Compress output
 3. Upload encrypted snapshot
 4. Enforce retention policy
@@ -199,12 +206,16 @@ sudo logrotate -d /etc/logrotate.d/orchid_backup
 
 # 9. Restore Procedure (Validation Test)
 
-Regular restore testing is mandatory.
+Regular restore testing is mandatory. Use an isolated MariaDB server for testing
+untrusted or full database dumps. A command-line database name does not override
+`CREATE DATABASE` or `USE` statements inside a dump. The test-database procedure
+below assumes a single-database dump without those statements, as produced by
+the routine backup script. Do not use it unchanged for the full pre-upgrade dump.
 
 ## Step 1 - Create Test Database
 
 ```bash id="x2n7kf"
-mysql -e "CREATE DATABASE orchids_restore_test;"
+mariadb -e "CREATE DATABASE orchids_restore_test;"
 ```
 
 ---
@@ -228,7 +239,7 @@ gunzip ~/restore_test/*.sql.gz
 ## Step 4 - Restore
 
 ```bash id="q4c7jh"
-mysql orchids_restore_test < ~/restore_test/*.sql
+mariadb orchids_restore_test < ~/restore_test/*.sql
 ```
 
 ---
@@ -236,7 +247,7 @@ mysql orchids_restore_test < ~/restore_test/*.sql
 ## Step 5 - Validate
 
 ```bash id="n8l2vb"
-mysql orchids_restore_test -e "SHOW TABLES;"
+mariadb orchids_restore_test -e "SHOW TABLES;"
 ```
 
 Validation must confirm:
@@ -250,7 +261,7 @@ Validation must confirm:
 ## Step 6 - Cleanup
 
 ```bash id="d3h6kf"
-mysql -e "DROP DATABASE orchids_restore_test;"
+mariadb -e "DROP DATABASE orchids_restore_test;"
 rm -rf ~/restore_test
 ```
 
@@ -270,7 +281,7 @@ rm -rf ~/restore_test
 ## Step 2 - Create Empty Database
 
 ```bash id="k9o3lp"
-mysql -e "CREATE DATABASE orchids;"
+mariadb -e "CREATE DATABASE orchids;"
 ```
 
 ---
@@ -294,7 +305,7 @@ gunzip backup.sql.gz
 ## Step 5 - Restore Database
 
 ```bash id="h5t1qw"
-mysql orchids < backup.sql
+mariadb orchids < backup.sql
 ```
 
 ---

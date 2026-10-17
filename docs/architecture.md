@@ -1,52 +1,15 @@
 # Architecture
 
-- [Architecture](#architecture)
-- [Architectural Summary](#architectural-summary)
-  - [Environment Configuration Requirement](#environment-configuration-requirement)
-  - [Application Health Requirement](#application-health-requirement)
-  - [Logging Requirement](#logging-requirement)
-  - [Security Model](#security-model)
-- [1. Database Layer - Invariant Core](#1-database-layer---invariant-core)
-    - [Authoritative Environment](#authoritative-environment)
-- [2. Migration System - Controlled Evolution](#2-migration-system---controlled-evolution)
-    - [Critical Rule - Database Creation vs Evolution](#critical-rule---database-creation-vs-evolution)
-    - [Critical Design Constraint](#critical-design-constraint)
-- [3. Schema Export - Deterministic Representation](#3-schema-export---deterministic-representation)
-- [4. Temporal Model - Contractual Behaviour](#4-temporal-model---contractual-behaviour)
-- [5. Lifecycle Model - Structural Rules](#5-lifecycle-model---structural-rules)
-  - [Split Semantics](#split-semantics)
-  - [Propagation Semantics](#propagation-semantics)
-  - [Location History](#location-history)
-- [6. Photo \& Hero Image Model](#6-photo--hero-image-model)
-- [6A. Canonical Photo Ingestion Architecture](#6a-canonical-photo-ingestion-architecture)
-    - [Processing Model](#processing-model)
-    - [Canonical Output](#canonical-output)
-    - [Operational Model](#operational-model)
-- [7. Write Strategy - Responsibility Separation](#7-write-strategy---responsibility-separation)
-  - [Atomic Entities](#atomic-entities)
-  - [Structural Entities](#structural-entities)
-- [8. Application Layer - Behavioural Orchestration](#8-application-layer---behavioural-orchestration)
-- [9. UI Architecture - Navigation Contract](#9-ui-architecture---navigation-contract)
-- [10. Versioning Contract](#10-versioning-contract)
-- [11. Windows installer-led upgrade safety](#11-windows-installer-led-upgrade-safety)
-- [12. Runtime Hosting Requirement](#12-runtime-hosting-requirement)
-  - [12A. Packaged Application Model](#12a-packaged-application-model)
-- [13. Automation Layer - Enforcement Mechanism](#13-automation-layer---enforcement-mechanism)
-- [14. Operations Layer - State Protection](#14-operations-layer---state-protection)
-  - [Upgrade Safety Requirement](#upgrade-safety-requirement)
-- [15. User Documentation Requirement](#15-user-documentation-requirement)
-- [16. Non-Goals](#16-non-goals)
-- [Final Principle](#final-principle)
-
----
-
 This document defines the **architectural contract** of OrchidApp.
 
 It specifies the structural boundaries, invariants, enforcement
 mechanisms and operational guarantees that govern the system.
 
-This is not a how-to guide.
-This is the non-negotiable design of the system.
+This reference describes the current .NET 8 Razor Pages web application and
+Windows launcher, reviewed against the v1.3.0 source configuration. It also states
+requirements for future changes. Requirements are distinguished from implemented
+checks and known gaps; they are not proof that every deployment satisfies them.
+For operating commands, use the [documentation index](index.md).
 
 ---
 
@@ -69,53 +32,64 @@ No layer may weaken another.
 
 ---
 
-## Environment Configuration Requirement
+## Environment configuration
 
-All runtime configuration must be provided externally via environment variables or configuration files (e.g. `.env`).
+The web application uses ASP.NET Core configuration, including `appsettings.json`,
+environment-specific settings, environment variables and command-line arguments.
+Production secrets and deployment-specific paths must be supplied externally.
+A systemd `EnvironmentFile` loads Pi settings; the web app does not itself parse
+arbitrary `.env` files.
 
-The application must not rely on hardcoded environment-specific values.
+- The EF Core context uses `ConnectionStrings:OrchidDb` with Pomelo's MariaDB
+  provider support and a collation interceptor. Provider names such as `UseMySql`
+  and `MySqlConnector` are API names, not a different supported database engine.
+- Desktop bootstrap separately reads `ConnectionStrings:DefaultConnection`.
+  Desktop SQL client invocations still contain fixed local connection arguments;
+  it is incorrect to claim that all runtime values are externally configurable.
+- Upload services bind `Storage:UploadRoot` (environment form `Storage__UploadRoot`).
+  In Desktop mode, `ORCHIDAPP_UPLOAD_ROOT` overrides this; otherwise the app creates
+  a fallback under its runtime `wwwroot/uploads` directory. The packaged launcher
+  supplies the ProgramData uploads path.
+- Media processing options bind from `MediaIngestion`.
 
-A valid deployment must ensure:
-
-* All required configuration values are explicitly provided
-* Missing or invalid configuration causes application startup failure
-* File system paths (e.g. UploadRoot) are validated before use
-* Database connection settings are externally configurable
-
-Configuration is part of the deployment contract and must be consistent across environments.
-
----
-
-## Application Health Requirement
-
-OrchidApp must validate its operational readiness at startup and expose a clear health signal.
-
-A valid deployment must ensure:
-
-* Database connectivity is verified at startup
-* Required filesystem paths (e.g. UploadRoot) are validated
-* Critical dependencies required for core functionality are checked
-* Startup must fail if required components are unavailable
-
-The application should expose a simple health endpoint or equivalent mechanism where the hosting model supports it.
+Production deployments must provide correct settings and writable storage. Current
+configuration does not use comprehensive startup options validation.
 
 ---
 
-## Logging Requirement
+## Application readiness
 
-OrchidApp must produce structured logs for all critical system operations.
+Readiness differs by host. In Desktop mode, bootstrap connects to MariaDB,
+initialises a fresh schema or checks/applies pending migrations before serving
+requests. The launcher starts the local database and web process and reports
+startup failures.
 
-A valid deployment must ensure:
+The ordinary Linux/Production web host does not run an explicit database readiness
+probe or comprehensive filesystem/native dependency validation before listening.
+EF Core checks the connection setting and detects the server version when its
+context configuration is resolved; a dependency failure can therefore surface on
+a request rather than at process startup. External uploads are served only if
+the configured directory exists at middleware setup.
 
-* Application startup events are logged
-* Configuration and dependency validation failures are logged
-* Database connectivity and operational errors are logged
-* File system operations (e.g. image ingestion) are logged
-* Backup and restore processes produce verifiable logs
+There is no dedicated health endpoint registered in `Program.cs`. A running
+systemd service or listening HTTP process alone does not prove database reads,
+photo processing or environmental-summary queries work. Deployment verification
+must exercise these workflows. Comprehensive fail-fast checks and a health
+endpoint remain improvements, not current guarantees.
 
-Logs must support diagnosis without exposing sensitive information.
+---
 
-Logging is a core operational capability.
+## Logging
+
+The web host uses a mixture of console startup/SQL-tool messages and
+`ILogger` logging, including structured photo-ingestion events. The Windows
+launcher writes a persistent support log with rotation; systemd captures Linux
+service output. Backup tooling also produces operational logs.
+
+All critical workflows should produce useful diagnostics without exposing secrets.
+The implementation does not guarantee uniform structured logging for every
+operation. Review messages, connection arguments and exception output when
+changing sensitive workflows.
 
 ---
 
@@ -162,54 +136,48 @@ MariaDB running on Linux is the authoritative validator for:
 * Stored procedure parsing
 * Trigger semantics
 
-Windows MySQL behaviour must not be relied upon.
+MariaDB is the supported database engine on both Windows and Linux.
+Linux MariaDB validation does not replace Windows runtime and packaging checks;
+do not infer compatibility from testing against a different database engine.
 
 ---
 
-# 2. Migration System - Controlled Evolution
+# 2. Schema creation and evolution
 
-Schema evolution for existing databases is controlled exclusively through deterministic migration files:
+The canonical assembled schema lives under `database/schema/`; reviewed changes
+for existing installations live under `database/migrations/`. New migrations must
+use unique `YYYYMMDDHHMM_Name.sql` filenames and must not modify applied history.
 
-```
-database/migrations/
-```
+Fresh installations use the current canonical schema rather than replaying every
+historical migration. Existing installations apply only pending migrations. A
+database created from the schema must have migration history aligned with that
+baseline before later upgrades; never replay historical DDL over a fresh schema.
+Desktop bootstrap records a baseline and the packaged migrations as already
+applied. Do not assume every rebuild script performs that same bookkeeping.
 
-Each migration:
+## Implemented migration paths
 
-* Follows naming format `YYYYMMDDHHMM_Name.sql`
-* Is applied exactly once
-* Is recorded in the `schemaversion` table
-* Has its SHA256 checksum stored and enforced
+| Path | Current behaviour |
+| --- | --- |
+| `database/scripts/Apply-Migrations.ps1`, used by the Linux upgrade guide | Sorts files by name, skips recorded filenames and records checksums for new files. It does not compare checksums for skipped files or enforce timestamp uniqueness/order. |
+| Desktop bootstrap in `src/OrchidApp.Web/Program.cs` | Checks recorded file checksums, collects pending migrations, requires a safety-backup script to succeed before applying them and verifies the new history records. |
+| `database/scripts/Apply-MariaDBMigrations.ps1` | Separate developer runner with filename, missing-history-file, checksum and applied-history-gap checks. It has different defaults and export assumptions; it is not the runner named in the Linux upgrade guide. |
 
-The system prevents:
+These paths are not interchangeable. The separate developer runner also expects
+every recorded script name to have a matching file, which is incompatible with
+Desktop's extra `baseline` history row without reconciliation. Its export script
+path casing differs from the checked-in filename, so Linux compatibility must be
+verified before adopting it.
 
-* Out-of-order execution
-* Duplicate timestamps
-* Silent historical modification
-* Schema drift prior to execution
+No universal duplicate-timestamp prevention or pre-execution live schema drift
+check is implemented across these paths. Review migration ordering and history
+explicitly. Schema export checksums serve a different purpose from migration
+file checksums.
 
-### Critical Rule - Database Creation vs Evolution
-
-A database must be managed using **one and only one** of the following strategies:
-
-* **Rebuild** - construct from canonical schema
-* **Migrations** - evolve an existing database
-
-These mechanisms must **never be combined on the same database**.
-
-### Critical Design Constraint
-
-Migrations are not a construction mechanism.
-
-Fresh installations and rebuilds use the canonical schema export:
-
-```
-database/schema/
-```
-
-Historical migrations must never be edited after application.
-
-The production database must never be modified outside this system.
+Successful files are recorded in `schemaversion`; failures can leave partially
+applied DDL because MariaDB DDL is not covered by an automatic rollback of the
+whole upgrade. Backups and controlled upgrade testing are required. Production
+schema changes must use the reviewed migration process.
 
 ---
 
@@ -259,16 +227,18 @@ This includes:
 * Mutability rules
 
 The application must not reinterpret temporal behaviour.
-All temporal invariants are database-enforced.
+Database constraints and stored procedures enforce structural lifecycle rules;
+application handlers also assign or normalise event timestamps. Do not assume
+every temporal rule is implemented solely by a database constraint.
 
 ---
 
 # 5. Lifecycle Model - Structural Rules
 
-A plant has a single immutable lifecycle:
+A plant has a lifecycle interval; supported structural operations may close it:
 
 ```
-startDateTime → endDateTime
+plant.acquisitionDate → plant.endDate
 ```
 
 ## Split Semantics
@@ -282,60 +252,59 @@ startDateTime → endDateTime
 
 * Propagation creates a new plant
 * Parent lifecycle continues unchanged
-* A plant may have at most one propagation record
+* Each child has at most one propagation origin (`plantpropagation.childPlantId`
+  is unique); a parent can produce multiple propagated children
 
 ## Location History
 
 * Enforces strict temporal adjacency
 * No overlaps permitted
 * Structural updates must be performed via stored procedures
-* UI remains dumb; SQL enforces invariants
+* Page handlers collect and validate input; stored procedures own structural updates
 
 These rules are database-enforced and non-negotiable.
 
 ---
 
-# 6. Photo & Hero Image Model
+# 6. Photos and image processing
 
-Photos are attached only via Observation events.
+Plant photos are represented by `plantphoto` metadata and linked to an Observation
+event (`plantEventId`). The dedicated plant Photos page creates a photo Observation
+when adding images. Image files live in the upload filesystem, not database blobs.
 
-Rules:
+The schema uses `isHero` and a unique generated key to permit at most one active
+hero per plant. When no active hero exists, upload handlers select the first
+uploaded image as hero automatically. Display uses the stored selection rather
+than inferring the newest photo on each request.
 
-* Stored in `plantphoto`
-* Each photo belongs to exactly one Observation
-* Hero image selection is explicit (`isHero`)
-* At most one active hero image per plant
-* No automatic “latest photo” inference
+Taxon Add/Edit supports separate `taxonphoto` records with a primary-image flag.
+These photos are not plant Observation attachments. Both use the shared pipeline.
 
----
+## Processing
 
-# 6A. Canonical Photo Ingestion Architecture
+`PhotoPipeline` uses NetVips/libvips, buffers uploads with a 10 MiB limit and
+rejects decoded images over 40 megapixels. It checks multi-page/animation metadata
+and rejects detected multi-frame inputs. Canonical output is JPEG, with default
+maximum dimension 3072 pixels and quality 90, configurable through
+`MediaIngestion`. Alpha is flattened onto white and smaller images are not enlarged.
 
-Image ingestion is a data integrity concern.
+It also produces a thumbnail with maximum dimension 300 pixels. If thumbnail
+generation fails, it logs the failure and uses the main image as the thumbnail.
+Files use generated names beneath `plants/<id>` or `taxa/<id>` in the upload root.
+Original uploads are not retained as separate files. Processing occurs within the
+request workflow, without a background job queue or image CDN.
 
-All images are normalised into a single canonical representation.
+## Metadata and consistency limits
 
-### Processing Model
+Although `MediaIngestionOptions` exposes `StripGpsMetadata`, the current pipeline
+does not read it or explicitly strip metadata in the JPEG saver. Metadata removal
+must not be presented as a verified privacy guarantee. The code also does not
+explicitly autorotate images from orientation metadata.
 
-* **libvips (NetVips)**
-
-### Canonical Output
-
-* Max dimension: 3072px
-* Format: JPEG
-* Quality: 90
-* Metadata removed
-* Alpha flattened
-* Multi-frame rejected
-
-Original uploads are not retained.
-
-### Operational Model
-
-* Local filesystem only
-* Included in backups
-* No CDN
-* No async pipelines
+Filesystem writes and database updates do not form one atomic transaction. A
+failed request can leave files or an Observation without the complete intended
+photo set. Backups must preserve both database metadata and the actual upload
+root. Validate native image dependencies and image behaviour on each platform.
 
 ---
 
@@ -368,22 +337,38 @@ The application:
 
 The application must not:
 
-* Duplicate constraints
+* Replace database enforcement with application-only checks
 * Override lifecycle rules
 * Reinterpret temporal behaviour
 
 ---
 
-# 9. UI Architecture - Navigation Contract
+# 9. Web interface and shared services
 
-UI follows strict patterns:
+The web interface uses ASP.NET Core Razor Pages and shared partials. Prefer a
+clear primary action and exit action, mobile-friendly layouts and consistent
+labels; these are design guidelines rather than a ban on every repeated control.
+For example, botanical search appears in both the header and results form.
 
-* One primary action per page
-* One exit action per page
-* No duplicated controls
-* Mobile-first layout
+`AppNavigation` validates local return destinations and supplies fallbacks and
+completion routes. `NavigationPageFilter` normalises page ReturnUrl values;
+links, forms and shared buttons preserve query/anchor context. Successful edits
+normally show Details while retaining the originating list/report. Browser Back
+remains browser-controlled. See [navigation](navigation.md).
 
-Navigation is enforced through shared components.
+Formatted genus and taxon notes use locally bundled Quill, a shared editor script
+and server-side HTML sanitisation. Marked HTML is distinguished from historical
+literal text, with input/storage limits. See [formatted notes](rich-notes.md).
+
+`BotanicalNameSearch` provides read-only, paged searches over genus names and
+combined taxon display names and undeleted plants without an end date using
+EF Core. Results are grouped by genus, taxa and plants; plant tags and optional
+plant names are searchable, while notes remain excluded. See [name search](name-search.md).
+
+The home-page environmental summary queries its database views only when the
+server runs Linux ARM/ARM64. Other platforms skip the query and section; the
+visiting browser's OS is irrelevant. Schema/bootstrap policy remains separate
+from this display/query guard. See [platform support](environment-summary-platform.md).
 
 ---
 
@@ -423,9 +408,11 @@ Runtime user data must not be used as the source of application version informat
 
 The packaging process is responsible for updating version metadata before building release artefacts.
 
-If the public product version is unchanged during packaging, the internal build number is incremented.
+If Enter is pressed at the packaging version prompt, the current public version
+is retained and the internal build number is incremented.
 
-If a new public product version is supplied during packaging, the internal build number resets to zero.
+If a version is explicitly entered at the prompt, the internal build number resets
+to zero, including when the entered version equals the previous public version.
 
 Skipped internal build numbers are acceptable and expected. They may represent failed, abandoned or test packaging runs.
 
@@ -525,7 +512,7 @@ The Windows launcher owns:
 * persistent launcher logging
 * safe stops when layout ambiguity is detected
 
-For the implemented v1.2 safety model, if both a data-bearing legacy layout and a ProgramData layout are detected, the launcher stops safely.
+In the current layout safety model, if both a data-bearing legacy layout and a ProgramData layout are detected, the launcher stops safely.
 
 This conservative behaviour prevents accidental use of the wrong data layout.
 
@@ -541,10 +528,12 @@ C:\ProgramData\OrchidApp\migration-state.json
 
 The current implementation records migration completion after successful legacy data copy.
 
-Post-copy MariaDB startup verification before marking migration complete is a post-v1.2 hardening follow-up.
+Migration completion currently describes file-copy completion, not verified
+post-copy MariaDB startup. This distinction still applies in the reviewed source.
 
-A mandatory ProgramData-to-ProgramData pre-upgrade backup gate for future upgrades is also a post-v1.2 follow-up.
-
+An unconditional backup gate for every ProgramData-to-ProgramData application
+upgrade is not implemented. Desktop database migrations separately require the
+safety-backup script before pending SQL is applied.
 
 ---
 
@@ -566,82 +555,36 @@ For packaged desktop deployments, the application must:
 * Preserve local user data between runs
 * Fail clearly if the database or required paths are unavailable
 
-## 12A. Packaged Application Model
-
-OrchidApp supports a packaged Windows deployment model.
-
-In this model:
-
-* Application files are replaceable
-* User data is persistent
-* Database files and uploaded images are canonical state
-* Local launcher/application settings are runtime configuration
-* Upgrades must preserve user data
-* The installer owns application files only
-* The launcher owns user-data safety
-
-On Windows, replaceable application files are installed under:
-
-```
-C:\Program Files\OrchidApp
-```
-
-Durable user data is stored under:
-
-```
-C:\ProgramData\OrchidApp
-```
-
-Application binaries, runtime files and generated package contents must never be treated as equivalent to user data.
-
-The packaged Windows application must not assume that user data is located beside the application binaries.
-
-The launcher must pass resolved runtime paths to the web application where required.
-
-For uploads, the packaged Windows launcher provides:
-
-```
-ORCHIDAPP_UPLOAD_ROOT
-```
-
-with the value:
-
-```
-C:\ProgramData\OrchidApp\uploads
-```
-
-ZIP-style or folder-based package output may remain for development and testing.
-
-It is not the public Windows upgrade route.
+The Windows launcher supplies `ORCHIDAPP_UPLOAD_ROOT` as the ProgramData uploads
+path. Durable settings and image/database state remain separate from replaceable
+package contents as described in section 11. ZIP/folder output is for development
+or packaging; it is not the public Windows upgrade procedure.
 
 ---
 
-# 13. Automation Layer - Enforcement Mechanism
+# 13. Automation and validation
 
-Automation enforces architectural guarantees through:
+The pre-commit hook exports the configured development database schema, stages
+the schema/checksum artefacts and aborts on export failure. Hook activation is a
+local setup requirement, not something CI can prove happened on a developer PC.
 
-* Pre-commit hooks
-* Deterministic schema export
-* SHA256 checksum enforcement
-* CI rebuild validation in a clean MariaDB environment
-* Application build and startup validation
+The current GitHub CI workflow:
 
-CI validates:
+- Builds and publishes the web app for `linux-arm64` and checks the DLL exists.
+- Reconstructs a disposable MariaDB 10.11 schema from committed artefacts,
+  re-exports it and detects schema drift.
+- Restores Windows runtime dependencies and creates a Windows package.
 
-* Schema can be rebuilt from committed artefacts
-* Application builds and runs against that schema
+It does not start the web app against that schema, replay historical migrations,
+run the four executable feature-check projects, build the Inno Setup installer or
+exercise backup/restore on deployed devices. Cross-publishing is not a hardware
+test. There is no universal migration checksum enforcement through CI.
 
-CI does not replay historical migrations on rebuilt schema.
-
-Migration correctness is validated through:
-
-* The migration runner
-* Checksum enforcement
-* Controlled upgrade testing
-
-GitHub CI is the authoritative automated validation environment.
-
-Local validation scripts may exist for developer convenience, but they are not currently part of the architectural enforcement contract unless explicitly documented as maintained and equivalent to CI.
+Local executable checks cover notes, navigation, name search and environmental
+platform policy. They supplement CI, with isolated/substitute-data limits described
+in the feature guides. Live database workflows, platform dependencies, installation
+and recovery require relevant integration/manual checks. See
+[CONTRIBUTING.md](../CONTRIBUTING.md) for commands and current enforcement limits.
 
 ---
 
@@ -649,7 +592,8 @@ Local validation scripts may exist for developer convenience, but they are not c
 
 Windows packaged deployments support local backup creation, mandatory pre-upgrade backup before legacy migration and optional copy of the latest backup to a user-configured cloud-synchronised folder.
 
-Normal Windows backups use:
+Normal Windows backups read the database and uploads from these runtime locations
+(and include launcher settings when present):
 
 ```
 C:\ProgramData\OrchidApp\data\mariadb
@@ -657,7 +601,9 @@ C:\ProgramData\OrchidApp\uploads
 C:\ProgramData\OrchidApp\launcher-settings.json
 ```
 
-Normal Windows backup ZIPs are written to:
+The backup script creates a logical `orchids.sql` dump, copies uploads and
+settings, and records schema-history/manifest details. It does not simply archive
+the running MariaDB data directory. Normal backup ZIPs are written to:
 
 ```
 C:\ProgramData\OrchidApp\backups
@@ -668,6 +614,16 @@ Legacy migration pre-upgrade backups are written to:
 ```
 C:\ProgramData\OrchidApp\backups\pre-upgrade
 ```
+
+Linux deployments use externally managed MariaDB, systemd hosting and optional
+environment-importer services/timers. Routine backups use the shell/rclone
+workflow; full pre-upgrade backups also preserve the deployed app, uploads,
+`/etc/orchidapp` and service configuration, with a verified off-device copy.
+See the [Linux backup guide](user-guides/linux/Full-App-Backup-Pre-Upgrade.md).
+
+Archive/hash verification detects copy corruption; it does not establish that a
+database and filesystem backup can be restored successfully. Validate recovery in
+an isolated environment before relying on a backup for production recovery.
 
 ## Upgrade Safety Requirement
 
@@ -684,11 +640,20 @@ A valid upgrade must ensure:
 
 Upgrade safety is part of the operational contract.
 
-For the implemented Windows v1.2 model, mandatory pre-upgrade backup is enforced before legacy app-root to ProgramData migration.
+The launcher requires the legacy pre-upgrade backup command to succeed before
+copying legacy app-root data to ProgramData. Its invocation still supplies
+`-PruneOldBackups 0`, while the script declares `SkipOldBackupPruning` and tests an
+undeclared `PruneOldBackups` variable internally. Backup retention controls are
+therefore inconsistent in the source and require correction/testing; do not claim
+that configured pruning is reliably enforced.
 
-A mandatory ProgramData-to-ProgramData pre-upgrade backup gate for later application upgrades is a post-v1.2 follow-up.
+There is no unconditional gate before every same-layout app update. Desktop
+startup separately invokes a safety backup when SQL migrations are pending; it
+aborts those migrations if the backup fails.
 
-Post-copy MariaDB startup verification before marking migration state as complete is also a post-v1.2 follow-up.
+Legacy migration state is still marked complete after copying, before later
+MariaDB startup validation. Do not interpret this record as a complete readiness
+or restore test.
 
 ---
 
@@ -722,3 +687,19 @@ OrchidApp is designed for:
 * Long-term maintainability
 
 Correctness is preferred over convenience.
+
+## Implementation references
+
+| Concern | Main implementation |
+| --- | --- |
+| Web host, configuration and Desktop bootstrap | `src/OrchidApp.Web/Program.cs` |
+| Database mappings and procedure execution | `src/OrchidApp.Web/Data/OrchidDbContext.cs`, `src/OrchidApp.Web/Infrastructure/StoredProcedureExecutor.cs` |
+| Image processing | `src/OrchidApp.Web/Services/PhotoPipeline.cs` |
+| Layout detection and legacy migration | `src/OrchidApp.Launcher/OrchidAppLayoutResolver.cs`, `src/OrchidApp.Launcher/OrchidAppLauncherForm.cs` |
+| Windows backup/restore | `app/tools/backup-orchidapp.ps1`, `app/tools/restore-orchidapp.ps1` |
+| Product/build version metadata | `Directory.Build.props`, `scripts/package-windows.ps1`, `scripts/package-linuxpi.ps1` |
+| CI coverage | `.github/workflows/ci.yml` |
+
+This review checks source consistency. It does not certify a previously built
+installer, production database or full device recovery. Recheck the affected
+sections whenever these implementations change.

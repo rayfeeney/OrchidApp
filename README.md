@@ -1,5 +1,10 @@
 # OrchidApp
 
+MariaDB is the supported database engine on Windows and Raspberry Pi/Linux.
+
+Start with the [documentation index](docs/index.md) for installation, upgrades,
+backups, user guides and feature references.
+
 ![Status](https://img.shields.io/badge/status-production--ready-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-raspberry--pi-blue)
 ![Platform](https://img.shields.io/badge/platform-windows-blue)
@@ -429,7 +434,7 @@ The backup model protects:
 * MariaDB database
 * Uploaded plant images
 
-Raspberry Pi/Linux deployments support automated encrypted backup using `mysqldump` and rclone.
+Raspberry Pi/Linux deployments support automated encrypted backup using MariaDB database dumps and rclone.
 
 Packaged Windows releases support local backup creation and an optional cloud-folder copy of the latest backup. The cloud folder can be a folder synchronised by OneDrive, Google Drive, Dropbox or a similar service.
 
@@ -638,4 +643,3 @@ Packaged releases include required third-party notices for bundled or redistribu
 > Enforcement lives in automation.
 
 Everything else follows from that.
-
