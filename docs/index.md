@@ -13,6 +13,8 @@ a separate MySQL deployment.
 | Install or upgrade a Raspberry Pi | [Linux installation and upgrades](user-guides/linux/installation-upgrade.md) |
 | Back up the app, database, photos and configuration before a Pi upgrade | [Full pre-upgrade backup](user-guides/linux/Full-App-Backup-Pre-Upgrade.md) |
 | Configure routine Linux backups or restore data | [MariaDB backup and restore runbook](user-guides/linux/OrchidApp-MariaDB-Backup-and-Restore-Runbook.md) |
+| Add OrchidApp to an iPhone or iPad Home Screen | [iPhone and iPad web app](user-guides/ios/home-screen-web-app.md) |
+| Install and validate a Safari Dock web app on Mac | [Safari Dock web app](user-guides/macos/safari-web-app.md) |
 | Install or upgrade Windows | [Windows installation guide](user-guides/windows/01-InstallOrUpgradeOrchidAppOnWindows.docx) |
 | Configure Windows cloud backups | [Windows backup guide](user-guides/windows/04-ConfigureCloudBackupFolderInOrchidAppForWindows.docx) |
 | Recover onto a replacement Windows PC | [Windows recovery guide](user-guides/windows/05-RecoverOrchidAppOnReplacementWindowsComputer.docx) |
