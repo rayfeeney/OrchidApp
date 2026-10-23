@@ -30,7 +30,7 @@
                                 <dd class="col-5 text-end">
                                     @FormatValue(summary.AverageDayTemperatureCelsius, "°C")
                                     <span class="text-muted">
-                                        / @summary.ExpectedDayTemperatureCelsius.ToString("0.0")°C
+                                        / @FormatValue(summary.ExpectedDayTemperatureCelsius, "°C")
                                     </span>
                                 </dd>
 
@@ -38,7 +38,7 @@
                                 <dd class="col-5 text-end">
                                     @FormatValue(summary.AverageNightTemperatureCelsius, "°C")
                                     <span class="text-muted">
-                                        / @summary.ExpectedNightTemperatureCelsius.ToString("0.0")°C
+                                        / @FormatValue(summary.ExpectedNightTemperatureCelsius, "°C")
                                     </span>
                                 </dd>
 
@@ -46,10 +46,19 @@
                                 <dd class="col-5 text-end">
                                     @FormatValue(summary.AverageRelativeHumidity, "%")
                                     <span class="text-muted">
-                                        / @summary.ExpectedRelativeHumidity.ToString("0.0")%
+                                        / @FormatValue(summary.ExpectedRelativeHumidity, "%")
                                     </span>
                                 </dd>
                             </dl>
+
+                            @if (Model.GreenhouseCharts.FirstOrDefault(c => c.LocationName == summary.LocationName) is { } chart)
+                            {
+                                <partial name="_GreenhouseChart" model="chart" />
+                            }
+                            else if (Model.ChartError is not null)
+                            {
+                                <p class="small text-muted mt-3" role="status">@Model.ChartError</p>
+                            }
 
                             @if (summary.LastReadingDateTime.HasValue)
                             {
@@ -96,3 +105,10 @@
     </a>
 
 </div>
+
+@if (Model.EnvironmentSummaryEnabled && Model.GreenhouseCharts.Any())
+{
+    <script src="~/lib/chartjs/chart.umd.min.js" asp-append-version="true"></script>
+    <script src="~/js/greenhouse-charts.js" asp-append-version="true"></script>
+}
+
