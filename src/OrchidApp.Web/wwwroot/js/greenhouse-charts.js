@@ -5,16 +5,16 @@
         try {
             const data = JSON.parse(container.querySelector('.greenhouse-data').textContent);
             const sets = [
-                { type: 'bar', label: 'Heater cost (£)', data: data.costs, yAxisID: 'cost',
+                { type: 'bar', label: 'Cost (£)', data: data.costs, yAxisID: 'cost',
                     backgroundColor: 'rgba(42, 117, 160, 0.5)', borderWidth: 0, barThickness: 'flex',
                     barPercentage: 1, categoryPercentage: 1, order: 3 },
-                { type: 'line', label: 'Hourly temperature (°C)', data: data.temperatures,
+                { type: 'line', label: 'Actual temperature (°C)', data: data.temperatures,
                     yAxisID: 'temperature', borderColor: '#c15418', pointRadius: 0,
                     borderWidth: 1.5, spanGaps: false, tension: 0, order: 2 }
             ];
             // Each period is an independent two-point dataset: never bridge gaps.
             data.periods.forEach(period => {
-                [['average', 'Period average, provisional (°C)', '#7040a0', []],
+                [['average', 'Average (°C)', '#7040a0', []],
                  ['target', 'Target (°C)', '#247244', [5, 4]]].forEach(([key, label, color, dash]) => {
                     if (period[key] === null) return;
                     sets.push({ type: 'line', label, data: [
@@ -35,7 +35,7 @@
                                 callback: value => data.labels[value]?.slice(0, 6) ?? '' },
                             title: { display: true, text: 'Europe/London' } },
                         cost: { type: 'linear', position: 'left', beginAtZero: true,
-                            title: { display: true, text: 'Heater cost (£ / hour)' } },
+                            title: { display: true, text: 'Cost (£ / hour)' } },
                         temperature: { type: 'linear', position: 'right',
                             grace: '5%',
                             grid: { drawOnChartArea: false }, title: { display: true, text: 'Temperature (°C)' } }
@@ -71,7 +71,8 @@
                 }
             });
         } catch (error) {
-            status.textContent = 'Chart could not be displayed. Use the chart data table below.';
+            status.hidden = false;
+            status.textContent = 'Chart could not be displayed.';
             console.error('Greenhouse chart unavailable', error);
         }
     });

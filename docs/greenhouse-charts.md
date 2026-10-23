@@ -1,5 +1,18 @@
 # Greenhouse home-page charts
 
+## Latest chart presentation update
+
+The charts now contain exactly 168 elapsed hours, ending after yesterday's
+21:00–22:00 Europe/London hour (22:00 exclusive). For a request on 23 October
+2026 the first hour starts 15 October at 22:00 and the last starts 22 October
+at 21:00. Across a clock change, 168 hours is retained; the first London wall-clock
+hour may shift. Existing summary calculations retain their previous boundaries.
+
+Legend labels are Average (°C), Actual temperature (°C), Target (°C), and Cost (£).
+Descriptive text and expandable data tables have been removed. Full period values
+and provisional status remain in tooltips. Only a rendering failure shows a message
+beneath a chart.
+
 ## Scope and installation
 
 This change adds two charts beneath the existing Cool side and Hot side summaries.
@@ -29,11 +42,11 @@ rather than silently included. Location names must match Cool side / Hot side
 
 ## Data definitions
 
-- Boundaries are computed once per request from the Europe/London calendar:
-  midnight seven days ago inclusive to tomorrow's midnight exclusive (eight dates).
-  The printed date range makes this explicit while retaining the existing heading.
+- Chart boundaries use yesterday at 22:00 Europe/London, exclusive, and a start
+  exactly 168 elapsed hours earlier. The printed range includes the first and last
+  hourly timestamps. Summary boundaries remain the existing eight calendar dates.
 - Summary SQL retains the existing reading-weighted calculation but uses the same
-  explicit London date as the charts, rather than depending on MariaDB CURDATE().
+  explicit London current date, rather than depending on MariaDB CURDATE().
   Missing or overlapping current target rules leave summary targets unavailable,
   instead of hiding/duplicating an entire location card. No stored view is changed.
 - Hourly temperatures average all underlying readings using the existing effective
@@ -54,7 +67,7 @@ rather than silently included. Location names must match Cool side / Hot side
 - Cost = EnergyWh / 1000 * historical ImportRatePencePerKWh / 100. Tariff start and
   end dates are inclusive, matching EnergyMonitoring's existing hourly view.
   The date is the London date of the hour. No standing charges or solar credits.
-  Current/future hour costs are withheld until the hour ends, matching the collector.
+  Only the completed historical hours in the chart window are displayed.
 - Full-interval effective device history is checked. Assignment changes during an
   hour, conflicting mappings, missing/negative energy, and missing/overlapping or
   negative tariffs yield gaps, not fabricated zeroes. An observed zero stays zero.
@@ -65,7 +78,7 @@ rather than silently included. Location names must match Cool side / Hot side
   status. Expected temperature sampling cadence is not configured, so no average
   is claimed complete. Ongoing/unobserved periods are also identified.
 - Read/query errors leave the summaries available with a chart-unavailable message.
-  Expandable tables provide the hourly values and per-period coverage without canvas.
+  Period coverage is available in chart tooltips; there are no data listings.
 
 ## Frontend dependency
 

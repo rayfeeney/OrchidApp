@@ -1,39 +1,9 @@
 @model OrchidApp.Web.Models.GreenhouseChart
 <div class="greenhouse-chart mt-3 border-top pt-3">
     <p class="small text-muted mb-2">@Model.RangeLabel</p>
-    <p class="small mb-2">Hourly heater cost (bars) and temperature (line). Horizontal segments show each period’s actual average and target.</p>
     <div style="height:340px; position:relative; min-width:0">
-        <canvas role="img" aria-label="@Model.LocationName hourly heater cost and temperature chart. Data is available in the table below."></canvas>
+        <canvas role="img" aria-label="@Model.LocationName cost and actual temperature, with separate average and target segments. Hover or tap for values and provisional coverage status."></canvas>
     </div>
-    <p class="small text-muted chart-status" role="status"></p>
-    @foreach (var notice in Model.Notices)
-    {
-        <p class="small text-muted mb-1">@notice</p>
-    }
-    <details class="mt-2 small">
-        <summary>Chart data and period coverage</summary>
-        <div class="table-responsive">
-            <table class="table table-sm">
-                <caption>Full-period averages and targets; all temperatures in °C</caption>
-                <thead><tr><th>Period</th><th>Average</th><th>Target</th><th>Readings</th><th>Coverage</th></tr></thead>
-                <tbody>
-                @foreach (var period in Model.Periods)
-                {
-                    <tr><td>@period.Label</td><td>@(period.Average?.ToString("0.0") ?? "Unavailable")</td><td>@(period.Target?.ToString("0.0") ?? "Unavailable")</td><td>@period.ReadingCount</td><td>@period.Status</td></tr>
-                }
-                </tbody>
-            </table>
-            <table class="table table-sm">
-                <caption>Hourly observations; unavailable values are not zero</caption>
-                <thead><tr><th>Hour starting (London)</th><th>Heater cost (£)</th><th>Temperature (°C)</th></tr></thead>
-                <tbody>
-                @for (var i = 0; i < Model.Labels.Count; i++)
-                {
-                    <tr><td>@Model.Labels[i]</td><td>@(Model.Costs[i].Y?.ToString("0.0000") ?? "Unavailable")</td><td>@(Model.Temperatures[i].Y?.ToString("0.00") ?? "Unavailable")</td></tr>
-                }
-                </tbody>
-            </table>
-        </div>
-    </details>
+    <p class="small text-muted chart-status" role="status" hidden></p>
     <script type="application/json" class="greenhouse-data">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }))</script>
 </div>
