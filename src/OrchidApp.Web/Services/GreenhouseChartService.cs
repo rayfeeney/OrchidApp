@@ -12,13 +12,15 @@ public sealed class GreenhouseChartService(OrchidDbContext db)
     public static (DateTime Start, DateTime End) Range(DateTime utcNow)
     {
         var today = Local(utcNow).Date;
-        return (today.AddDays(-7), today.AddDays(1));
+        // Include yesterday's 21:00–22:00 hour, with exactly 168 elapsed hours.
+        var end = today.AddDays(-1).AddHours(22);
+        return (Local(Utc(end).AddHours(-168)), end);
     }
 
     public async Task<IReadOnlyList<GreenhouseChart>> LoadAsync(IEnumerable<string> locations, DateTime now, CancellationToken ct)
     {
         var (start, end) = Range(now);
-        var from = start.AddDays(-1);
+        var from = start.Date.AddDays(-1);
         var until = end.AddDays(1);
         var localNow = Local(now);
         // Raw readings supply hourly temperatures outside configured periods too.
@@ -90,7 +92,7 @@ public sealed class GreenhouseChartService(OrchidDbContext db)
         double X(DateTime utc) => (utc - utcStart).TotalHours;
         bool Match(string name) => string.Equals(name, location, StringComparison.OrdinalIgnoreCase);
         var chart = new GreenhouseChart { LocationName = location,
-            RangeLabel = $"{start:dd MMM yyyy}–{end.AddDays(-1):dd MMM yyyy} · Europe/London" };
+            RangeLabel = $"{start:dd MMM yyyy HH:mm}–{end.AddHours(-1):dd MMM yyyy HH:mm} · Europe/London" };
         var warnings = new HashSet<string>();
         var localReadings = readings.Where(r => Match(r.LocationName)).ToList();
         var readingCounts = readings.GroupBy(r => r.Id).ToDictionary(g => g.Key, g => g.Count());
@@ -146,7 +148,7 @@ public sealed class GreenhouseChartService(OrchidDbContext db)
             }
             chart.Costs.Add(new(x + 0.5, cost));
         }
-        for (var date = start.AddDays(-1); date < end; date = date.AddDays(1))
+        for (var date = start.Date.AddDays(-1); date < end; date = date.AddDays(1))
         foreach (var group in rules.Where(r => date >= r.EffectiveFromDate &&
                      (r.EffectiveToDate is null || date < r.EffectiveToDate)).GroupBy(r => r.PeriodCode))
         {
