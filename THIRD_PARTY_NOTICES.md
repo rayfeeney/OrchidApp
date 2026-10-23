@@ -102,3 +102,9 @@ They are distributed WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the individual licence texts included with OrchidApp for full terms.
+
+Greenhouse charts:
+- Chart.js 4.5.1: MIT, https://www.chartjs.org/
+- Bundled @kurkle/color 0.3.2: MIT, https://github.com/kurkle/color
+Licence texts are included in src/OrchidApp.Web/Legal/chartjs/ and
+src/OrchidApp.Web/wwwroot/lib/chartjs/. All chart scripts are bundled locally.

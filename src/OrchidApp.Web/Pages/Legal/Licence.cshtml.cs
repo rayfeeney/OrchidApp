@@ -12,6 +12,7 @@ public class LicenceModel : PageModel
     public string MariaDbThirdPartyText { get; private set; } = string.Empty;
     public string LibVipsLicenceText { get; private set; } = string.Empty;
     public Dictionary<string, string> RichNotesLicences { get; } = new();
+    public Dictionary<string, string> ChartLicences { get; } = new();
 
     public LicenceModel(IWebHostEnvironment env)
     {
@@ -29,6 +30,10 @@ public class LicenceModel : PageModel
         if (Directory.Exists(richNotesPath))
             foreach (var file in Directory.GetFiles(richNotesPath, "*.txt").OrderBy(f => f))
                 RichNotesLicences[Path.GetFileNameWithoutExtension(file)] = System.IO.File.ReadAllText(file);
+        var chartsPath = Path.Combine(_env.ContentRootPath, "Legal", "chartjs");
+        if (Directory.Exists(chartsPath))
+            foreach (var file in Directory.GetFiles(chartsPath, "*.md").OrderBy(f => f))
+                ChartLicences[Path.GetFileNameWithoutExtension(file)] = System.IO.File.ReadAllText(file);
     }
 
     private string ReadLegalFile(string relativePath)
