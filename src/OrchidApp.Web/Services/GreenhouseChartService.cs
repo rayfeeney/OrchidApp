@@ -19,30 +19,65 @@ public sealed class GreenhouseChartService(OrchidDbContext db)
 
     public async Task<IReadOnlyList<GreenhouseChart>> LoadAsync(IEnumerable<string> locations, DateTime now, CancellationToken ct)
     {
+        var requested = locations.Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(n => n).ToArray();
+        if (requested.Length == 0) return [];
         var (start, end) = Range(now);
+        // Padding is only needed by periods crossing the display boundary. Hourly data
+        // uses exactly the displayed range; all date predicates remain indexable.
         var from = start.Date.AddDays(-1);
-        var until = end.AddDays(1);
+        var until = end.Date.AddDays(1);
         var localNow = Local(now);
-        // Raw readings supply hourly temperatures outside configured periods too.
-        var readings = await db.Database.SqlQuery<GreenhouseReading>($"""
-            SELECT er.environmentReadingId AS Id, es.locationName AS LocationName,
-                   er.readingDateTime AS At, er.temperatureCelsius AS Temperature
-            FROM environmentreading er JOIN environmentsensor es
-              ON es.sensorName = er.sensorName AND es.isActive = 1
-             AND DATE(er.readingDateTime) >= es.effectiveFromDate
-             AND (es.effectiveToDate IS NULL OR DATE(er.readingDateTime) < es.effectiveToDate)
-            WHERE er.readingDateTime >= {from} AND er.readingDateTime < {until}
-              AND er.readingDateTime <= {localNow} AND es.locationName IS NOT NULL
-            """).ToListAsync(ct);
-        // Preserve OrchidApp's classification, including its effective-date semantics.
-        var periodReadings = await db.Database.SqlQuery<GreenhousePeriodReading>($"""
-            SELECT environmentReadingId AS Id, locationName AS LocationName,
-                   readingDateTime AS At, periodCode AS PeriodCode, periodDate AS PeriodDate,
-                   temperatureCelsius AS Temperature
-            FROM venvironmentreadingperiod
-            WHERE readingDateTime >= {from} AND readingDateTime < {until}
-              AND readingDateTime <= {localNow}
-            """).ToListAsync(ct);
+        var hourlyArguments = new object[] { start, end, localNow }.Concat(requested.Cast<object>()).ToArray();
+        var periodArguments = new object[] { from, until, localNow }.Concat(requested.Cast<object>()).ToArray();
+        var locationParameters = string.Join(", ", requested.Select((_, i) => "{" + (i + 3) + "}"));
+        // The location filter is after the window function so conflicting assignments
+        // to another location cannot silently turn a duplicate reading into valid data.
+        // Start with the existing timestamp range index. Joining small configuration
+        // tables first can otherwise make MariaDB walk a sensor's entire history.
+        // For periods the bounded IDs drive the unchanged classification view by PK.
+        var hourlySql = """
+            WITH mapped AS (
+                SELECT er.environmentReadingId AS Id, es.locationName AS LocationName,
+                       er.readingDateTime AS At, er.temperatureCelsius AS Temperature,
+                       COUNT(*) OVER (PARTITION BY er.environmentReadingId) AS MappingCount
+                FROM environmentreading er FORCE INDEX (ixEnvironmentReading_ReadingDateTime)
+                STRAIGHT_JOIN environmentsensor es
+                  ON es.sensorName = er.sensorName AND es.isActive = 1
+                 AND DATE(er.readingDateTime) >= es.effectiveFromDate
+                 AND (es.effectiveToDate IS NULL OR DATE(er.readingDateTime) < es.effectiveToDate)
+                WHERE er.readingDateTime >= {0} AND er.readingDateTime < {1}
+                  AND er.readingDateTime <= {2} AND es.locationName IS NOT NULL
+            )
+            SELECT LocationName, CAST(DATE_FORMAT(At, '%Y-%m-%d %H:00:00') AS DATETIME) AS At,
+                   CASE WHEN MAX(MappingCount) = 1 THEN AVG(Temperature) END AS Average,
+                   COUNT(*) AS ReadingCount,
+                   CAST(SUM(CASE WHEN MappingCount > 1 THEN 1 ELSE 0 END) AS SIGNED) AS ConflictCount
+            FROM mapped WHERE LocationName IN (__LOCATIONS__)
+            GROUP BY LocationName, CAST(DATE_FORMAT(At, '%Y-%m-%d %H:00:00') AS DATETIME)
+            """;
+        var periodSql = """
+            WITH classified AS (
+                SELECT p.environmentReadingId AS Id, p.locationName AS LocationName,
+                       p.readingDateTime AS At, p.periodCode AS PeriodCode, p.periodDate AS PeriodDate,
+                       p.temperatureCelsius AS Temperature,
+                       COUNT(*) OVER (PARTITION BY p.environmentReadingId) AS ClassificationCount
+                FROM environmentreading bounded FORCE INDEX (ixEnvironmentReading_ReadingDateTime)
+                STRAIGHT_JOIN venvironmentreadingperiod p ON p.environmentReadingId = bounded.environmentReadingId
+                WHERE bounded.readingDateTime >= {0} AND bounded.readingDateTime < {1}
+                  AND bounded.readingDateTime <= {2}
+            )
+            SELECT LocationName, PeriodCode, PeriodDate, SUM(Temperature) AS TemperatureSum,
+                   COUNT(*) AS ReadingCount, MIN(At) AS FirstReading, MAX(At) AS LastReading,
+                   CAST(SUM(CASE WHEN ClassificationCount > 1 THEN 1 ELSE 0 END) AS SIGNED) AS ConflictCount
+            FROM classified WHERE LocationName IN (__LOCATIONS__)
+            GROUP BY LocationName, PeriodCode, PeriodDate
+            """;
+        var readings = await db.Database.SqlQuery<GreenhouseHour>(
+            System.Runtime.CompilerServices.FormattableStringFactory.Create(
+                hourlySql.Replace("__LOCATIONS__", locationParameters), hourlyArguments)).ToListAsync(ct);
+        var periodReadings = await db.Database.SqlQuery<GreenhousePeriodAggregate>(
+            System.Runtime.CompilerServices.FormattableStringFactory.Create(
+                periodSql.Replace("__LOCATIONS__", locationParameters), periodArguments)).ToListAsync(ct);
         var rules = await db.Database.SqlQueryRaw<GreenhousePeriodRule>("""
             SELECT periodCode AS PeriodCode, periodName AS PeriodName, startTime AS StartTime,
                    endTime AS EndTime, effectiveFromDate AS EffectiveFromDate,
@@ -77,11 +112,33 @@ public sealed class GreenhouseChartService(OrchidDbContext db)
             SELECT EffectiveFromDate, EffectiveToDate, ImportRatePencePerKWh AS RatePence
             FROM EnergyMonitoring.Tariff
             """).ToListAsync(ct);
-        return locations.Select(location => Build(location, now, readings, periodReadings, rules, targets, assignments, energy, tariffs)).ToList();
+        return requested.Select(location => BuildAggregated(location, now, readings, periodReadings, rules, targets, assignments, energy, tariffs)).ToList();
     }
 
     public static GreenhouseChart Build(string location, DateTime now,
         IReadOnlyList<GreenhouseReading> readings, IReadOnlyList<GreenhousePeriodReading> periodReadings,
+        IReadOnlyList<GreenhousePeriodRule> rules, IReadOnlyList<GreenhouseTarget> targets,
+        IReadOnlyList<GreenhouseAssignment> assignments, IReadOnlyList<GreenhouseEnergy> energy,
+        IReadOnlyList<GreenhouseTariff> tariffs)
+    {
+        // Reference adapter for calculation fixtures; production reads SQL aggregates.
+        var counts = readings.GroupBy(r => r.Id).ToDictionary(g => g.Key, g => g.Count());
+        var periodCounts = periodReadings.GroupBy(r => r.Id).ToDictionary(g => g.Key, g => g.Count());
+        var hours = readings.GroupBy(r => (r.LocationName, Hour: new DateTime(r.At.Year, r.At.Month, r.At.Day, r.At.Hour, 0, 0)))
+            .Select(g => new GreenhouseHour { LocationName = g.Key.LocationName, At = g.Key.Hour,
+                Average = g.Any(r => counts[r.Id] > 1) ? null : g.Average(r => r.Temperature),
+                ReadingCount = g.Count(), ConflictCount = g.Count(r => counts[r.Id] > 1) }).ToList();
+        var periods = periodReadings.GroupBy(r => (r.LocationName, r.PeriodCode, r.PeriodDate))
+            .Select(g => new GreenhousePeriodAggregate { LocationName = g.Key.LocationName,
+                PeriodCode = g.Key.PeriodCode, PeriodDate = g.Key.PeriodDate,
+                TemperatureSum = g.Sum(r => r.Temperature), ReadingCount = g.Count(),
+                FirstReading = g.Min(r => r.At), LastReading = g.Max(r => r.At),
+                ConflictCount = g.Count(r => periodCounts[r.Id] > 1) }).ToList();
+        return BuildAggregated(location, now, hours, periods, rules, targets, assignments, energy, tariffs);
+    }
+
+    public static GreenhouseChart BuildAggregated(string location, DateTime now,
+        IReadOnlyList<GreenhouseHour> readings, IReadOnlyList<GreenhousePeriodAggregate> periodReadings,
         IReadOnlyList<GreenhousePeriodRule> rules, IReadOnlyList<GreenhouseTarget> targets,
         IReadOnlyList<GreenhouseAssignment> assignments, IReadOnlyList<GreenhouseEnergy> energy,
         IReadOnlyList<GreenhouseTariff> tariffs)
@@ -95,18 +152,12 @@ public sealed class GreenhouseChartService(OrchidDbContext db)
             RangeLabel = $"{start:dd MMM yyyy HH:mm}–{end.AddHours(-1):dd MMM yyyy HH:mm} · Europe/London" };
         var warnings = new HashSet<string>();
         var localReadings = readings.Where(r => Match(r.LocationName)).ToList();
-        var readingCounts = readings.GroupBy(r => r.Id).ToDictionary(g => g.Key, g => g.Count());
-        var periodReadingCounts = periodReadings.GroupBy(r => r.Id).ToDictionary(g => g.Key, g => g.Count());
-        if (readingCounts.Values.Any(count => count > 1))
+        if (localReadings.Any(r => r.ConflictCount > 0))
             warnings.Add("Overlapping sensor mappings: affected hourly temperatures are unavailable.");
-        var validReadings = localReadings.Where(r => readingCounts[r.Id] == 1).ToList();
-        var hourly = validReadings.Where(r => !London.IsAmbiguousTime(r.At) && !London.IsInvalidTime(r.At))
-            .GroupBy(r => (long)Math.Floor((Utc(r.At) - utcStart).TotalHours))
-            .ToDictionary(g => g.Key, g => g.Average(r => r.Temperature));
-        foreach (var invalid in localReadings.Where(r => readingCounts[r.Id] > 1 &&
-                     !London.IsAmbiguousTime(r.At) && !London.IsInvalidTime(r.At)))
-            hourly.Remove((long)Math.Floor((Utc(invalid.At) - utcStart).TotalHours));
-        if (validReadings.Any(r => London.IsAmbiguousTime(r.At) || London.IsInvalidTime(r.At)))
+        var hourly = localReadings.Where(r => r.ConflictCount == 0 &&
+                    !London.IsAmbiguousTime(r.At) && !London.IsInvalidTime(r.At))
+            .ToDictionary(r => (long)Math.Floor((Utc(r.At) - utcStart).TotalHours), r => r.Average);
+        if (localReadings.Any(r => London.IsAmbiguousTime(r.At) || London.IsInvalidTime(r.At)))
             warnings.Add("Clock-change temperature timestamps lack offsets: affected hourly values are gaps; valid local readings remain in period averages.");
         var energyIndex = energy.GroupBy(e => (e.DeviceId, e.AtUtc)).ToDictionary(g => g.Key, g => g.ToList());
         var missingEnergy = 0; var missingTemperature = 0; var badTariff = 0; var badMapping = 0;
@@ -166,15 +217,15 @@ public sealed class GreenhouseChartService(OrchidDbContext db)
             decimal? target = matches.Count == 1 ? (rule.PeriodCode == "DAY" ? matches[0].DayTarget : matches[0].NightTarget) : null;
             if (target is null) warnings.Add("Missing or overlapping target rules: affected targets are gaps.");
             var rows = periodReadings.Where(r => Match(r.LocationName) && r.PeriodDate == date && r.PeriodCode == rule.PeriodCode).ToList();
-            var ambiguous = rows.Any(r => periodReadingCounts[r.Id] != 1) ||
-                rows.Any(r => r.At < periodStart || r.At >= periodEnd);
-            decimal? average = rows.Count > 0 && !ambiguous ? Math.Round(rows.Average(r => r.Temperature), 1, MidpointRounding.AwayFromZero) : null;
+            var count = rows.Sum(r => r.ReadingCount);
+            var ambiguous = rows.Any(r => r.ConflictCount > 0 || r.FirstReading < periodStart || r.LastReading >= periodEnd);
+            decimal? average = count > 0 && !ambiguous ? Math.Round(rows.Sum(r => r.TemperatureSum) / count, 1, MidpointRounding.AwayFromZero) : null;
             if (ambiguous) warnings.Add("Period rule/mapping conflicts: affected averages are unavailable.");
             var status = Utc(periodEnd) > now ? "Provisional — period in progress or upcoming" :
-                rows.Count == 0 ? "Provisional — no readings" : "Provisional — sampling coverage unverified";
+                count == 0 ? "Provisional — no readings" : "Provisional — sampling coverage unverified";
             chart.Periods.Add(new(X(Utc(periodStart < start ? start : periodStart)),
                 X(Utc(periodEnd > end ? end : periodEnd)), average, target,
-                $"{date:dd MMM} {rule.PeriodName} ({rule.StartTime:hh\\:mm}–{rule.EndTime:hh\\:mm})", rows.Count, status));
+                $"{date:dd MMM} {rule.PeriodName} ({rule.StartTime:hh\\:mm}–{rule.EndTime:hh\\:mm})", count, status));
         }
         if (missingEnergy > 0) warnings.Add($"{missingEnergy} completed hours lack heater readings.");
         if (badMapping > 0) warnings.Add($"{badMapping} completed hours lack one unambiguous heater assignment.");

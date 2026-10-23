@@ -94,6 +94,7 @@ Check("Duplicate classified reading does not bias mean", Build().Periods.Single(
 periods.RemoveAt(periods.Count - 1);
 
 // Optional disposable MariaDB integration. Never point this at an existing instance.
+await PerformanceChecks.CacheAsync(Check);
 if (Environment.GetEnvironmentVariable("GREENHOUSE_TEST_CONNECTION") is { Length: > 0 } connection)
 {
     var settings = new MySqlConnectionStringBuilder(connection);
@@ -124,6 +125,7 @@ if (Environment.GetEnvironmentVariable("GREENHOUSE_TEST_CONNECTION") is { Length
     Check("Missing targets retain the location summary", missingTarget.Count == 2 && missingTarget.Single(s => s.LocationName == "Cool side").ExpectedDayTemperatureCelsius is null);
     await using (var command = new MySqlCommand("UPDATE orchids.environmenttargetrule SET isActive=1 WHERE environmentTargetRuleId=1", sql))
         await command.ExecuteNonQueryAsync();
+    await PerformanceChecks.DatabaseAsync(connection, now, Check);
 }
 
 if (args.Length == 2 && args[0] == "--fixture-output")

@@ -70,6 +70,9 @@ builder.Services.Configure<StorageSettings>(
 builder.Services.AddScoped<StoragePathService>();
 
 builder.Services.AddScoped<PhotoUrlService>();
+builder.Services.AddMemoryCache();
+builder.Services.Configure<GreenhouseChartCacheOptions>(builder.Configuration.GetSection("GreenhouseCharts:Cache"));
+builder.Services.AddSingleton<GreenhouseChartCache>();
 builder.Services.AddScoped<IBotanicalNameSearch, BotanicalNameSearch>();
     
 builder.Services.AddScoped<ObservationTypeResolver>();
