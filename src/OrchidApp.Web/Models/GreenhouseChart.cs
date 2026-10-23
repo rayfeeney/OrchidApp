@@ -67,3 +67,23 @@ public sealed class GreenhouseAssignment
     public DateTime Start { get; set; }
     public DateTime? End { get; set; }
 }
+
+public sealed class GreenhouseHour
+{
+    public string LocationName { get; set; } = "";
+    public DateTime At { get; set; }
+    public decimal? Average { get; set; }
+    public long ReadingCount { get; set; }
+    public long ConflictCount { get; set; }
+}
+public sealed class GreenhousePeriodAggregate
+{
+    public string LocationName { get; set; } = "";
+    public string PeriodCode { get; set; } = "";
+    public DateTime PeriodDate { get; set; }
+    public decimal TemperatureSum { get; set; }
+    public long ReadingCount { get; set; }
+    public DateTime FirstReading { get; set; }
+    public DateTime LastReading { get; set; }
+    public long ConflictCount { get; set; }
+}

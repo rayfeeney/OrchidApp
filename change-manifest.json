@@ -1,131 +1,42 @@
-{
-  "scope": "OrchidApp only; no EnergyMonitoring changes or database migrations",
-  "files": [
-    {
-      "path": "docs/greenhouse-charts.md",
-      "status": "added",
-      "sha256": "005f52af517463ba385aeaae90bdb64ec61cc855ec27d243293d7bafca2a8879",
-      "originalSha256": null
-    },
-    {
-      "path": "src/OrchidApp.Web/Legal/chartjs/color-LICENSE.md",
-      "status": "added",
-      "sha256": "2859c50313bad2ba77b081410c477beaf92b60ca13a77a248d89859a6dd6ac81",
-      "originalSha256": null
-    },
-    {
-      "path": "src/OrchidApp.Web/Legal/chartjs/LICENSE.md",
-      "status": "added",
-      "sha256": "41a84aa2caba645f966a18d9c2056b73e6d3a81d80bc0046bc0011a2634d4cce",
-      "originalSha256": null
-    },
-    {
-      "path": "src/OrchidApp.Web/Legal/THIRD_PARTY_NOTICES.md",
-      "status": "modified",
-      "sha256": "1adcbd04bafdf4251a015b3108cca94c4d79fbc598aa2435ebc4835687a5501b",
-      "originalSha256": "843860fec5a396979302678af5afa64250cc507529062d456766619f4d15d245"
-    },
-    {
-      "path": "src/OrchidApp.Web/Models/EnvironmentLastSevenDaysSummary.cs",
-      "status": "modified",
-      "sha256": "113b0f37b5a18f3bb638705c16b85f1340af225c2a922a65550c1af5e8062476",
-      "originalSha256": "1081984f851b6a8d2dee6f4758b1dd8e470093c84dda0ab6485b59606508c073"
-    },
-    {
-      "path": "src/OrchidApp.Web/Models/GreenhouseChart.cs",
-      "status": "added",
-      "sha256": "5bac54155cc8e037b9ed2af8c3171805fc6ae3a92bdf8f43353c8798f4869271",
-      "originalSha256": null
-    },
-    {
-      "path": "src/OrchidApp.Web/Pages/Index.cshtml",
-      "status": "modified",
-      "sha256": "ba6d6848f022db175cd56daf7d10f09d3ccc50b52e9aa66bcce7d750f15d5001",
-      "originalSha256": "17eded8cece0e70f1ecb0c7888a0727115d9e542c32dc141d98b653838788cf0"
-    },
-    {
-      "path": "src/OrchidApp.Web/Pages/Index.cshtml.cs",
-      "status": "modified",
-      "sha256": "00de755e2bb2d43e4fb0fabb1f0a3eeb42d411ebef852e0b5940a888e6008c62",
-      "originalSha256": "a01d6e455c149a80bee602ffcf571812014c024016edbf8ae699ce662c46be7e"
-    },
-    {
-      "path": "src/OrchidApp.Web/Pages/Legal/Licence.cshtml",
-      "status": "modified",
-      "sha256": "2feae2fc7c476656106c1e10af8e3e986956584eda1ec510da126c0c7edb50f4",
-      "originalSha256": "7dbe0ef0c9a7e1bf1e8c1b770316ce2cab0c6809c5d246a1e68f934d6a9666b4"
-    },
-    {
-      "path": "src/OrchidApp.Web/Pages/Legal/Licence.cshtml.cs",
-      "status": "modified",
-      "sha256": "8f0b4f1fe24d59531e3ae132b4e79f8e4470ca58fff9b768fb81ab008823d063",
-      "originalSha256": "18fe9e25c0bd1e5e651dba002ba7927e01f180178e95a9169fffe02ff5dff2c9"
-    },
-    {
-      "path": "src/OrchidApp.Web/Pages/Shared/_GreenhouseChart.cshtml",
-      "status": "added",
-      "sha256": "43b52e0baa7c16fb0e018083a72b9ef63da7e9a81b86cb15ef17da5569bdff68",
-      "originalSha256": null
-    },
-    {
-      "path": "src/OrchidApp.Web/Services/EnvironmentSummarySql.cs",
-      "status": "added",
-      "sha256": "e71a9adf769a65d6172258eb2d60c9e2023debb2310e21354e0411a3874f4a64",
-      "originalSha256": null
-    },
-    {
-      "path": "src/OrchidApp.Web/Services/GreenhouseChartService.cs",
-      "status": "added",
-      "sha256": "cd558e465d91bfc929c95dc51e321ae8b3016539a2c29a029ac1d592c06d7ea1",
-      "originalSha256": null
-    },
-    {
-      "path": "src/OrchidApp.Web/wwwroot/js/greenhouse-charts.js",
-      "status": "added",
-      "sha256": "91b13a801c22ec2ca94862e86e2b0c2ca97340e584227d082f1f5d8e40189550",
-      "originalSha256": null
-    },
-    {
-      "path": "src/OrchidApp.Web/wwwroot/lib/chartjs/chart.umd.min.js",
-      "status": "added",
-      "sha256": "48444a82d4edcb5bec0f1965faacdde18d9c17db3063d042abada2f705c9f54a",
-      "originalSha256": null
-    },
-    {
-      "path": "src/OrchidApp.Web/wwwroot/lib/chartjs/color-LICENSE.md",
-      "status": "added",
-      "sha256": "2859c50313bad2ba77b081410c477beaf92b60ca13a77a248d89859a6dd6ac81",
-      "originalSha256": null
-    },
-    {
-      "path": "src/OrchidApp.Web/wwwroot/lib/chartjs/LICENSE.md",
-      "status": "added",
-      "sha256": "41a84aa2caba645f966a18d9c2056b73e6d3a81d80bc0046bc0011a2634d4cce",
-      "originalSha256": null
-    },
-    {
-      "path": "tests/GreenhouseCharts.Checks/Fixtures/setup.sql",
-      "status": "added",
-      "sha256": "89e9e62e2d90a322326350df421059805ebff4d542188a976b4802fd19b02686",
-      "originalSha256": null
-    },
-    {
-      "path": "tests/GreenhouseCharts.Checks/GreenhouseCharts.Checks.csproj",
-      "status": "added",
-      "sha256": "bbcd84c49b9ad9d3cae93afe284c5ab4babc7494da46ed3f113b3f2c4bb7186a",
-      "originalSha256": null
-    },
-    {
-      "path": "tests/GreenhouseCharts.Checks/Program.cs",
-      "status": "added",
-      "sha256": "d22353cf64d1185a024f73d5e8c0b47849b46c9d0edd55c5b292540fb1bf0dc7",
-      "originalSha256": null
-    },
-    {
-      "path": "THIRD_PARTY_NOTICES.md",
-      "status": "modified",
-      "sha256": "e72aa55936205f4383a62ec5aebab8e00f5fc8ec1655a1f53d0d36504924ff9e",
-      "originalSha256": "843860fec5a396979302678af5afa64250cc507529062d456766619f4d15d245"
-    }
-  ]
-}
+[
+  {
+    "path": "src/OrchidApp.Web/Models/GreenhouseChart.cs",
+    "sha256": "1985e27ea31cdde94774310db699c5fb81e5e5604941eb46b8e4e2c94da077b2",
+    "previousSha256": "5bac54155cc8e037b9ed2af8c3171805fc6ae3a92bdf8f43353c8798f4869271"
+  },
+  {
+    "path": "src/OrchidApp.Web/Services/GreenhouseChartService.cs",
+    "sha256": "41a2f7961a5510d010c349f195ef5de789d0d253436e7939366e1f73cd556318",
+    "previousSha256": "6c20ccf2c1d544e369fa32d823e310d75c9f87a4a779227037edce633c5cfef7"
+  },
+  {
+    "path": "src/OrchidApp.Web/Services/GreenhouseChartCache.cs",
+    "sha256": "6fb57bfaab9367bcf7f61d7cf68dfcd764abd78cdade622b63accf1bd2d08aab",
+    "previousSha256": null
+  },
+  {
+    "path": "src/OrchidApp.Web/Pages/Index.cshtml.cs",
+    "sha256": "4f5f3483b620a21315abdd2e0ff5a0c5a0a7907cdd02385f7607510325a7c346",
+    "previousSha256": "00de755e2bb2d43e4fb0fabb1f0a3eeb42d411ebef852e0b5940a888e6008c62"
+  },
+  {
+    "path": "src/OrchidApp.Web/Program.cs",
+    "sha256": "932b66756da0cad4ab99a59fbf36df2f717ea48ee014618d9d380479948ede89",
+    "previousSha256": "bdd928f7de092b39152dcccd030ce28a246769d54376428f31324cd01cd21793"
+  },
+  {
+    "path": "tests/GreenhouseCharts.Checks/Program.cs",
+    "sha256": "9d272289bdc9bb2dfe0693d0b58e820c68974a6a6f4cafbd1fb8f3e3a151b3e6",
+    "previousSha256": "4e59e6c3dfe1a1c19a79daa050b6c96a7e42baca8d611a8ca7fc6d85d756d015"
+  },
+  {
+    "path": "tests/GreenhouseCharts.Checks/PerformanceChecks.cs",
+    "sha256": "22c765ae54d3d8b01f27f481c50fb9181478d53939583883d47faa5081c084c9",
+    "previousSha256": null
+  },
+  {
+    "path": "docs/greenhouse-charts.md",
+    "sha256": "7d85218382c1af253ba92b98f39f3caf32b299f7554df5e14de5e24c18ec0a65",
+    "previousSha256": "3b1cf668270b5ca9e4850700b3b9861a895bcf17187a6acacbb69392d110034f"
+  }
+]

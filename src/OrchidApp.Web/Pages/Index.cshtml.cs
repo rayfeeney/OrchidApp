@@ -11,10 +11,12 @@ namespace OrchidApp.Web.Pages;
 public class IndexModel : PageModel
 {
     private readonly OrchidDbContext _context;
+    private readonly GreenhouseChartCache? _chartCache;
 
-    public IndexModel(OrchidDbContext context)
+    public IndexModel(OrchidDbContext context, GreenhouseChartCache? chartCache = null)
     {
         _context = context;
+        _chartCache = chartCache;
     }
 
     public IReadOnlyList<EnvironmentLastSevenDaysSummary> EnvironmentSummaries { get; private set; }
@@ -37,11 +39,15 @@ public class IndexModel : PageModel
             .ToListAsync();
         try
         {
-            GreenhouseCharts = await new GreenhouseChartService(_context).LoadAsync(
-                EnvironmentSummaries.Select(s => s.LocationName).Where(n =>
+            var locations = EnvironmentSummaries.Select(s => s.LocationName).Where(n =>
                     n.Equals("Cool side", StringComparison.OrdinalIgnoreCase) ||
-                    n.Equals("Hot side", StringComparison.OrdinalIgnoreCase)),
-                now, HttpContext.RequestAborted);
+                    n.Equals("Hot side", StringComparison.OrdinalIgnoreCase)).ToArray();
+            var service = new GreenhouseChartService(_context);
+            var connection = _context.Database.GetDbConnection();
+            var key = GreenhouseChartCache.Key(connection.DataSource + "/" + connection.Database, now, locations);
+            GreenhouseCharts = _chartCache is null
+                ? await service.LoadAsync(locations, now, HttpContext.RequestAborted)
+                : await _chartCache.GetAsync(key, ct => service.LoadAsync(locations, now, ct), HttpContext.RequestAborted);
         }
         catch (DbException error)
         {

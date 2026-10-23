@@ -1,0 +1,185 @@
+Synthetic benchmark: 1,140,000 historical rows plus 20,160 recent minute readings; uncached chart load 150 ms.
+Hourly query plan:
+{
+  "query_block": {
+    "select_id": 1,
+    "filesort": {
+      "sort_key": "mapped.LocationName, cast(date_format(mapped.`At`,'%Y-%m-%d %H:00:00') as datetime)",
+      "temporary_table": {
+        "nested_loop": [
+          {
+            "table": {
+              "table_name": "<derived2>",
+              "access_type": "ALL",
+              "rows": 78676,
+              "filtered": 100,
+              "attached_condition": "mapped.LocationName in ('Cool side','Hot side')",
+              "materialized": {
+                "query_block": {
+                  "select_id": 2,
+                  "window_functions_computation": {
+                    "sorts": [
+                      {
+                        "filesort": {
+                          "sort_key": "er.environmentReadingId"
+                        }
+                      }
+                    ],
+                    "temporary_table": {
+                      "nested_loop": [
+                        {
+                          "table": {
+                            "table_name": "er",
+                            "access_type": "range",
+                            "possible_keys": [
+                              "ixEnvironmentReading_ReadingDateTime"
+                            ],
+                            "key": "ixEnvironmentReading_ReadingDateTime",
+                            "key_length": "5",
+                            "used_key_parts": ["readingDateTime"],
+                            "rows": 39338,
+                            "filtered": 100,
+                            "index_condition": "er.readingDateTime >= <cache>(cast('2026-10-15 22:00:00.000000' as datetime(6))) and er.readingDateTime < <cache>(cast('2026-10-22 22:00:00.000000' as datetime(6))) and er.readingDateTime <= <cache>(cast('2026-10-23 13:00:00.000000' as datetime(6)))"
+                          }
+                        },
+                        {
+                          "block-nl-join": {
+                            "table": {
+                              "table_name": "es",
+                              "access_type": "ALL",
+                              "possible_keys": [
+                                "uxEnvironmentSensorNameFromDate",
+                                "ixEnvironmentSensorLookup"
+                              ],
+                              "rows": 2,
+                              "filtered": 100,
+                              "attached_condition": "es.isActive = 1 and es.locationName is not null"
+                            },
+                            "buffer_type": "flat",
+                            "buffer_size": "256Kb",
+                            "join_type": "BNL",
+                            "attached_condition": "es.sensorName = er.sensorName and cast(er.readingDateTime as date) >= es.effectiveFromDate and (es.effectiveToDate is null or cast(er.readingDateTime as date) < es.effectiveToDate)"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}
+Aggregate rows transferred: 336
+Period query plan:
+{
+  "query_block": {
+    "select_id": 1,
+    "filesort": {
+      "sort_key": "classified.LocationName, classified.PeriodCode, classified.PeriodDate",
+      "temporary_table": {
+        "nested_loop": [
+          {
+            "table": {
+              "table_name": "<derived2>",
+              "access_type": "ALL",
+              "rows": 157376,
+              "filtered": 100,
+              "attached_condition": "classified.LocationName in ('Cool side','Hot side')",
+              "materialized": {
+                "query_block": {
+                  "select_id": 2,
+                  "window_functions_computation": {
+                    "sorts": [
+                      {
+                        "filesort": {
+                          "sort_key": "er.environmentReadingId"
+                        }
+                      }
+                    ],
+                    "temporary_table": {
+                      "nested_loop": [
+                        {
+                          "table": {
+                            "table_name": "bounded",
+                            "access_type": "range",
+                            "possible_keys": [
+                              "ixEnvironmentReading_ReadingDateTime"
+                            ],
+                            "key": "ixEnvironmentReading_ReadingDateTime",
+                            "key_length": "5",
+                            "used_key_parts": ["readingDateTime"],
+                            "rows": 39344,
+                            "filtered": 100,
+                            "attached_condition": "bounded.readingDateTime >= <cache>(cast('2026-10-14 00:00:00.000000' as datetime(6))) and bounded.readingDateTime < <cache>(cast('2026-10-23 00:00:00.000000' as datetime(6))) and bounded.readingDateTime <= <cache>(cast('2026-10-23 13:00:00.000000' as datetime(6)))",
+                            "using_index": true
+                          }
+                        },
+                        {
+                          "table": {
+                            "table_name": "er",
+                            "access_type": "eq_ref",
+                            "possible_keys": [
+                              "PRIMARY",
+                              "uqEnvironmentReading_SensorName_ReadingDateTime",
+                              "ixEnvironmentReading_SensorName"
+                            ],
+                            "key": "PRIMARY",
+                            "key_length": "8",
+                            "used_key_parts": ["environmentReadingId"],
+                            "ref": ["orchids.bounded.environmentReadingId"],
+                            "rows": 1,
+                            "filtered": 100
+                          }
+                        },
+                        {
+                          "block-nl-join": {
+                            "table": {
+                              "table_name": "es",
+                              "access_type": "ALL",
+                              "possible_keys": [
+                                "uxEnvironmentSensorNameFromDate",
+                                "ixEnvironmentSensorLookup"
+                              ],
+                              "rows": 2,
+                              "filtered": 100,
+                              "attached_condition": "es.isActive = 1 and es.locationName is not null"
+                            },
+                            "buffer_type": "flat",
+                            "buffer_size": "256Kb",
+                            "join_type": "BNL",
+                            "attached_condition": "es.sensorName = er.sensorName and cast(er.readingDateTime as date) >= es.effectiveFromDate and (es.effectiveToDate is null or cast(er.readingDateTime as date) < es.effectiveToDate)"
+                          }
+                        },
+                        {
+                          "block-nl-join": {
+                            "table": {
+                              "table_name": "epr",
+                              "access_type": "ALL",
+                              "rows": 2,
+                              "filtered": 100,
+                              "attached_condition": "epr.isActive = 1 and (epr.endTime > epr.startTime or epr.endTime < epr.startTime)"
+                            },
+                            "buffer_type": "incremental",
+                            "buffer_size": "256Kb",
+                            "join_type": "BNL",
+                            "attached_condition": "cast(er.readingDateTime as date) >= epr.effectiveFromDate and (epr.effectiveToDate is null or cast(er.readingDateTime as date) < epr.effectiveToDate) and (epr.endTime > epr.startTime and cast(er.readingDateTime as time) >= epr.startTime and cast(er.readingDateTime as time) < epr.endTime or epr.endTime < epr.startTime and (cast(er.readingDateTime as time) >= epr.startTime or cast(er.readingDateTime as time) < epr.endTime))"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}
+Aggregate rows transferred: 29
+52 greenhouse chart checks passed.

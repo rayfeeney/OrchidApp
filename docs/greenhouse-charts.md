@@ -1,5 +1,48 @@
 # Greenhouse home-page charts
 
+## Performance update
+
+Chart temperature aggregation now runs in MariaDB. The hourly query returns one
+row per location/hour, and the period query returns exact temperature sums and
+reading counts per location/period/date. Period means are calculated from those
+sums/counts and rounded once; no averaging of hourly means is introduced.
+
+Both queries start with a bounded range scan using the existing
+ixEnvironmentReading_ReadingDateTime index. The period query drives the unchanged
+venvironmentreadingperiod view by the bounded reading IDs. This prevents an
+unfavourable sensor-first plan from walking the entire sensor history. Existing
+mapping/rule conflicts are still detected before the requested locations are
+filtered. No index, stored view, schema, permission or EnergyMonitoring changes.
+
+Prepared charts have a shared in-process cache, default 120 seconds. Concurrent
+misses coalesce into one refresh. Successful results only are cached; failures and
+cancelled loads are not cached. Cache keys include database identity, locations
+and the exact chart range, so London midnight immediately switches to a new key.
+Late imports and configuration/tariff corrections appear after at most the cache
+lifetime. Restarting OrchidApp clears this in-process cache.
+
+Optional configuration (defaults require no appsettings change):
+
+    "GreenhouseCharts": { "Cache": { "Seconds": 120 } }
+
+The equivalent environment setting is GreenhouseCharts__Cache__Seconds. Zero
+disables caching for diagnostics; the maximum accepted lifetime is 900 seconds.
+The original summary query still runs on each request, as it did before charts.
+
+Verified on isolated MariaDB 10.11.16: 1,140,000 generated older readings for the
+same sensors plus 20,160 recent minute readings. EXPLAIN confirmed timestamp-index
+range access for both aggregate queries, followed by primary-key lookup into the
+classification view. The queries returned 336 hourly rows and 29 period rows.
+The uncached chart load took approximately 150 ms on this test machine. This is
+not a timing guarantee for the deployed Raspberry Pi. A cache hit issued zero
+chart database commands. The generated readings were rolled back afterwards.
+
+Verification: 36 calculation/cache checks without a database; 49 checks including
+MariaDB integration; 52 with the optional million-row benchmark. All pass, along
+with the 25 existing platform-gate checks. The application builds successfully.
+To reproduce the optional benchmark, set GREENHOUSE_BENCHMARK=1 along with the
+disposable GREENHOUSE_TEST_CONNECTION described below. Never target a live DB.
+
 ## Latest chart presentation update
 
 The charts now contain exactly 168 elapsed hours, ending after yesterday's
@@ -49,8 +92,8 @@ rather than silently included. Location names must match Cool side / Hot side
   explicit London current date, rather than depending on MariaDB CURDATE().
   Missing or overlapping current target rules leave summary targets unavailable,
   instead of hiding/duplicating an entire location card. No stored view is changed.
-- Hourly temperatures average all underlying readings using the existing effective
-  sensor assignments, including readings outside configured day/night periods.
+- Hourly temperatures average all underlying readings in MariaDB using the existing
+  effective sensor assignments, including readings outside day/night periods.
 - Period averages aggregate every row classified by venvironmentreadingperiod,
   weighted by reading count, rounded once to one decimal as in the daily view.
   They are not averages of hourly averages. A full period is fetched even when its
@@ -96,7 +139,7 @@ Run from the OrchidApp repository root:
     dotnet run --project tests/EnvironmentSummary.Checks
     dotnet run --project tests/GreenhouseCharts.Checks
 
-The greenhouse check program has 28 deterministic calculation assertions. It covers
+The greenhouse check program has 28 deterministic calculation assertions plus eight cache checks. It covers
 reading weighting, gaps, tariff/mapping conflicts, configurable windows, month
 boundaries, full-night clipping and both daylight-saving transitions.
 
@@ -104,8 +147,8 @@ For integration verification use an EMPTY, disposable MariaDB instance bound to
 127.0.0.1:33317. The test creates orchids and EnergyMonitoring databases, reproduces
 the relevant supplied definitions and inserts deterministic fixtures. It must never
 be pointed at a deployed database. Set GREENHOUSE_TEST_CONNECTION to its connection
-string with Database=orchids, then run the greenhouse checks. Ten additional checks
-exercise the real EF Core/MariaDB queries. Clear the variable afterwards.
+string with Database=orchids, then run the greenhouse checks. Thirteen additional checks
+exercise the real EF Core/MariaDB queries and cached data-loading path. Clear the variable afterwards.
 
 An optional local preview renders the actual Razor chart partial with generated
 readings (not production data):
@@ -116,7 +159,7 @@ Open http://127.0.0.1:5318/. The preview does not bypass the production feature 
 
 Verified in this workspace:
 - .NET build succeeds; 25 existing platform checks pass.
-- 28 calculation checks plus 10 integration checks pass on MariaDB 10.11.16.
+- 28 calculation checks, eight cache checks and thirteen integration checks pass on MariaDB 10.11.16; three additional benchmark checks also pass.
 - Headless browser renders two actual Razor partials at 1400px and 390px widths,
   with no horizontal page overflow, no browser errors, distinct period segments,
   both value axes and a working grouped legend toggle.
