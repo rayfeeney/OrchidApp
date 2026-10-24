@@ -45,7 +45,7 @@ Recover the matching complete uploads into a separate test directory, never sync
 - Schema, required reference values, representative row counts and no import errors.
 - Plants, tags, taxonomy, events/lineage, actual plant/taxon photos and writable paths.
 - Correct settings, a successful restart and a new disposable save/reopen/photo operation.
-- No unexpected monitoring dependency on a general install; bespoke feeds only on the owner's configured installation after C03.
+- No unexpected monitoring dependency on a general install; bespoke feeds only on the owner's configured installation with explicit Monitoring:Enabled opt-in.
 
 SHOW TABLES, a nonempty dump, matching hash or process success is not a full restore test. Preserve evidence and the trusted input until acceptance is recorded. Dispose of isolated fixtures through your approved local process only after verification; no production cleanup command is part of this guide.
 

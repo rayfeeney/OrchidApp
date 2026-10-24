@@ -1,6 +1,6 @@
 # Raspberry Pi and Linux installation and upgrades
 
-This guide covers a general OrchidApp server using MariaDB and systemd. It does not install the owner's bespoke monitoring feeds/importer or EnergyMonitoring. [C03](../../code-change-backlog.md#c03) must isolate those queries by explicit opt-in; the current broad Linux ARM gate remains a general-installation blocker on Home until corrected.
+This guide covers a general OrchidApp server using MariaDB and systemd. It does not install the owner's bespoke monitoring feeds/importer or EnergyMonitoring. Monitoring defaults off; leave Monitoring:Enabled absent or false. See the [activation boundary](../../environment-summary-platform.md).
 
 Fresh database creation is from canonical schema and required seeds alone, never historical migration replay. Current fresh-creation automation has [C01/C02](../../code-change-backlog.md) blockers. This guide states the prerequisite rather than offering a broken copy-and-run rebuild command. Do not run migrations or a destructive rebuild against restored/live data to work around it.
 
@@ -62,7 +62,7 @@ systemctl is-active orchidapp.service
 sudo journalctl -u orchidapp.service --since '2 minutes ago' --no-pager -n 60
 ```
 
-Open the operator-provided URL (for the example listener, http://<pi-host>:5000). Service-active/listening status is not database/native readiness. Check lists, disposable test data, save/reopen, search, styling and photos. General installs must not provision the owner's monitoring objects to make Home work; report C03 instead.
+Open the operator-provided URL (for the example listener, http://<pi-host>:5000). Service-active/listening status is not database/native readiness. Check lists, disposable test data, save/reopen, search, styling and photos. General installs leave monitoring disabled and require none of the owner monitoring objects.
 
 ## Upgrade an existing correctly baselined database
 

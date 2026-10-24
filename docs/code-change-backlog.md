@@ -1,12 +1,23 @@
 # Code change backlog
 
-Documentation correction baseline: OrchidApp-clean.zip, reviewed 24 October 2026. **All items are open; no application, SQL, configuration, script or CI behaviour has been changed by the documentation work.** Priorities are proposed implementation order: P1 affects creation, data recovery or the agreed installation boundary; P2 is subsequent correctness, consistency or validation work. Investigation items need policy/design confirmation before behaviour changes.
+Documentation correction baseline: OrchidApp-clean.zip, reviewed 24 October 2026. The original documentation delivery left all items open. Subsequent implementation status is recorded below. Priorities are proposed implementation order: P1 affects creation, data recovery or the agreed installation boundary; P2 is subsequent correctness, consistency or validation work. Investigation items need policy/design confirmation before behaviour changes.
 
 The database must be creatable from schema and required seeds alone, with no migration SQL dependency. Bespoke environmental monitoring belongs only to the owner's local installation and must default off elsewhere. These owner requirements take precedence over earlier platform-wide descriptions.
 
 ## Work order
 
-Start with C01–C05 and C16 for new environments and installation scope; C06–C11 and C17 for data safety; then the approved C12–C15 and C18–C20 work. Independent work may be scheduled separately, but acceptance must cover interactions. Code fixes are a separate implementation phase, not included in the documentation delivery.
+Agreed order (20 issues in 18 steps):
+
+| Phase | Issues in order |
+| --- | --- |
+| 1 - Database foundations | C03, C01+C02, C04, C16, C05 |
+| 2 - Data protection | C06+C07, C08, C10, C09, C17 |
+| 3 - Plant lifecycle | C11, C12, C13, C14 |
+| 4 - Photos and readiness | C15, C19 |
+| 5 - Installation validation | C18 |
+| 6 - Testing and evidence | C20 |
+
+Record actual evidence at each step.
 
 | ID | Priority | Type | Change |
 | --- | --- | --- | --- |
@@ -57,7 +68,7 @@ Acceptance: Fresh creation succeeds with no migration directory; reintroduce his
 
 ## C03
 
-**Restrict bespoke monitoring to the owner’s installation** — P1; Agreed requirement; status: Open.
+**Restrict bespoke monitoring to the owner’s installation** — P1; Agreed requirement; status: Implemented locally; owner device acceptance pending.
 
 Affected files/areas: src/OrchidApp.Web/Configuration/PlatformFeatures.cs; Pages/Index.cshtml.cs; Program.cs; configuration; environment/chart tests.
 
@@ -66,6 +77,8 @@ Required work: Add an explicit installation-level opt-in defaulting off, retain 
 Dependencies: None.
 
 Acceptance: An ordinary Linux ARM installation without any monitoring objects/settings opens Home with zero monitoring queries. Owner opt-in works on the supported local host; unsupported hosts stay off. Upgrade default and explicit preservation of owner settings are tested.
+
+Implementation: Monitoring:Enabled defaults false and requires Linux ARM/ARM64. See [C03 evidence](maintenance/c03-monitoring-isolation.md).
 
 ## C04
 

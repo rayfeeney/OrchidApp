@@ -56,7 +56,7 @@ Metadata removal and autorotation are not explicitly implemented in the current 
 
 Use [return navigation](navigation.md), [rich notes](rich-notes.md) and [name search](name-search.md) contracts. Feature checks supplement live workflows; they do not prove device behaviour.
 
-Environmental summaries, greenhouse charts and net-cost reporting are bespoke to the owner's one local installation. General installations must not query or provision their tables, grants, feeds or importers. The current Linux ARM/ARM64 gate is too broad and is not installation identity. [C03](code-change-backlog.md#c03) requires explicit opt-in defaulting off. See [current scope](environment-summary-platform.md) and the [local guide](local-installation/greenhouse-monitoring.md).
+Environmental summaries, greenhouse charts and net-cost reporting are bespoke to the owner's one local installation. General installations must not query or provision their tables, grants, feeds or importers. Monitoring:Enabled defaults false and additionally requires Linux ARM/ARM64. Disabled Home skips monitoring queries and omits markup/scripts. See [current scope](environment-summary-platform.md) and the [local guide](local-installation/greenhouse-monitoring.md).
 
 ## Windows and Linux operations
 

@@ -4,7 +4,9 @@ This bespoke functionality is only for the owner's local OrchidApp installation.
 
 ## Activation boundary and prerequisites
 
-Current source gates by Linux ARM/ARM64, which is too broad. [C03](../code-change-backlog.md#c03) must add explicit installation opt-in defaulting off; no such setting name is implemented yet. All summary/chart/net-cost paths and assets need that gate. Until corrected, other Linux ARM installs can query the bespoke objects unexpectedly.
+Monitoring:Enabled defaults false, including when absent from older configuration. Explicit true additionally requires a Linux ARM/ARM64 server. Home skips all monitoring queries and omits monitoring markup and Chart.js/greenhouse script references when disabled. Browser architecture is irrelevant.
+
+Only on the owner host, set Monitoring__Enabled=true in the private service environment and restart. Preserve that private service setting across application upgrades, outside replaceable application files. General installations leave it absent or false. No importer, grant or external schema is installed by this switch.
 
 For the owner's configured host, verify actual connections, compatible table/view definitions, effective sensor/device/location mappings, period rules, tariffs and available readings. OrchidApp consumes EnergyMonitoring; its production collector/provisioning source was not supplied in this repo. Obtain that contract from its owner rather than using disposable test fixtures as production setup.
 

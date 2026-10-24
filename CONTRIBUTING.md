@@ -6,7 +6,7 @@ Start with [developer setup](docs/development-setup.md) and the [documentation o
 
 - MariaDB is the supported database engine. Validate case, collation and SQL behaviour on Linux as well as affected Windows packaging workflows.
 - A fresh database is created from schema and required reference seeds alone; migrations apply only after creation. See [database creation](docs/database-creation.md) for baseline requirements and current blockers.
-- Bespoke environment monitoring belongs only to the owner's local installation. General users/developers must not need those feeds, permissions or objects. Current installation isolation needs [C03](docs/code-change-backlog.md#c03).
+- Bespoke environment monitoring belongs only to the owner's local installation. General users/developers must not need those feeds, permissions or objects. Leave Monitoring:Enabled false; see the [activation boundary](docs/environment-summary-platform.md).
 - Respect [architecture](docs/architecture.md), [temporal behaviour](docs/temporal-design.md) and [Windows upgrade safety](docs/windows-upgrade-contract.md). Requirements are not claims that every current failure path is already enforced.
 
 ## Changes to the database

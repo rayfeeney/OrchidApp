@@ -11,25 +11,27 @@ namespace OrchidApp.Web.Pages;
 public class IndexModel : PageModel
 {
     private readonly OrchidDbContext _context;
+    private readonly PlatformFeatures _features;
     private readonly GreenhouseChartCache? _chartCache;
 
-    public IndexModel(OrchidDbContext context, GreenhouseChartCache? chartCache = null)
+    public IndexModel(OrchidDbContext context, PlatformFeatures features, GreenhouseChartCache? chartCache = null)
     {
         _context = context;
+        _features = features;
         _chartCache = chartCache;
     }
 
     public IReadOnlyList<EnvironmentLastSevenDaysSummary> EnvironmentSummaries { get; private set; }
         = [];
 
-    public bool EnvironmentSummaryEnabled => PlatformFeatures.EnvironmentSummaryEnabled;
+    public bool EnvironmentSummaryEnabled => _features.EnvironmentSummaryEnabled;
     public IReadOnlyList<GreenhouseChart> GreenhouseCharts { get; private set; } = [];
     public string? ChartError { get; private set; }
     public GreenhouseNetCosts GreenhouseCosts { get; private set; } = GreenhouseNetCosts.Unavailable("Not loaded.");
 
     public async Task OnGetAsync()
     {
-        // Environmental views/tables are required only on Linux ARM/ARM64 servers.
+        // Return before any monitoring access unless this installation explicitly opts in.
         if (!EnvironmentSummaryEnabled)
             return;
 

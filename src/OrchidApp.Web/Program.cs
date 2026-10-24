@@ -71,6 +71,8 @@ builder.Services.AddScoped<StoragePathService>();
 
 builder.Services.AddScoped<PhotoUrlService>();
 builder.Services.AddMemoryCache();
+builder.Services.AddSingleton(PlatformFeatures.FromConfiguration(builder.Configuration,
+    OperatingSystem.IsLinux(), RuntimeInformation.OSArchitecture));
 builder.Services.Configure<GreenhouseChartCacheOptions>(builder.Configuration.GetSection("GreenhouseCharts:Cache"));
 builder.Services.AddSingleton<GreenhouseChartCache>();
 builder.Services.AddScoped<IBotanicalNameSearch, BotanicalNameSearch>();

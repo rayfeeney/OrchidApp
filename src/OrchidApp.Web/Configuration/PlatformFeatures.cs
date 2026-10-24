@@ -1,13 +1,15 @@
 using System.Runtime.InteropServices;
+using Microsoft.Extensions.Configuration;
 
 namespace OrchidApp.Web.Configuration;
 
-public static class PlatformFeatures
+// Immutable installation policy, resolved once from the host configuration.
+public sealed record PlatformFeatures(bool EnvironmentSummaryEnabled)
 {
-    // Check the server hosting OrchidApp, not the browser accessing it.
-    // Environmental monitoring belongs to the Linux ARM Raspberry Pi deployment.
-    public static bool EnvironmentSummaryEnabled => SupportsEnvironmentSummary(
-        OperatingSystem.IsLinux(), RuntimeInformation.OSArchitecture);
+    public static PlatformFeatures FromConfiguration(IConfiguration configuration,
+        bool isLinux, Architecture osArchitecture) => new(
+            configuration.GetValue<bool>("Monitoring:Enabled") &&
+            SupportsEnvironmentSummary(isLinux, osArchitecture));
 
     public static bool SupportsEnvironmentSummary(bool isLinux, Architecture osArchitecture) =>
         isLinux && (osArchitecture is Architecture.Arm or Architecture.Arm64);

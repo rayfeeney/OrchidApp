@@ -61,7 +61,7 @@ dotnet build src/OrchidApp.Web/OrchidApp.Web.csproj --configuration Release
 dotnet run --project src/OrchidApp.Web/OrchidApp.Web.csproj --launch-profile http
 ```
 
-Open http://localhost:5285 yourself; the profile selects Development and does not open a browser. Check a database-backed list, add a disposable test plant, save/reopen notes, upload/reopen a test photo and check its storage location. Home alone is not full readiness. Other installations must not depend on the owner's monitoring feeds. Until [C03](code-change-backlog.md#c03) is implemented, the current Linux ARM guard is too broad; validate Home explicitly on a general Pi setup and do not provision bespoke feeds as a workaround.
+Open http://localhost:5285 yourself; the profile selects Development and does not open a browser. Check a database-backed list, add a disposable test plant, save/reopen notes, upload/reopen a test photo and check its storage location. Home alone is not full readiness. Other installations must not depend on the owner's monitoring feeds. Leave Monitoring:Enabled false or absent for general development and validate Home without bespoke feeds.
 
 ## Activate hooks and make changes
 

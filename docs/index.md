@@ -38,7 +38,7 @@ Use current guides below. For each procedure, check its stated implementation li
 
 ## Owner's installation only
 
-[Local greenhouse monitoring](local-installation/greenhouse-monitoring.md) covers bespoke data feeds, charts, costs and permissions for the owner's one installation. [Current platform guard versus required opt-in](environment-summary-platform.md) explains the pending isolation fix. No other installation should need these data objects, grants, importers or settings.
+[Local greenhouse monitoring](local-installation/greenhouse-monitoring.md) covers bespoke data feeds, charts, costs and permissions for the owner's one installation. [Monitoring activation](environment-summary-platform.md) explains the default-off installation policy. No other installation should need these data objects, grants, importers or settings.
 
 ## History
 
