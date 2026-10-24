@@ -52,6 +52,8 @@ function Read-SchemaManifest([string]$SchemaRoot) {
 
 function Get-DatabaseBaselineCutoff([hashtable]$History) {
     if ($History.Count -eq 0) { throw 'Database setup is incomplete: migration history is empty. Restore or recreate an explicitly disposable target.' }
+    $incomplete = @($History.Keys | Where-Object { $_.StartsWith('migration:', [StringComparison]::OrdinalIgnoreCase) })
+    if ($incomplete.Count) { throw "An incomplete or running migration requires review ($($incomplete[0]), checksum $($History[$incomplete[0]])). SQL may be partially applied. Do not automatically retry; inspect the earlier error and restore a verified pre-migration backup when needed." }
     $markers = @($History.Keys | Where-Object { $_ -like 'baseline*' })
     if ($markers.Count -gt 1) { throw 'Multiple database baseline markers require review.' }
     if ($markers.Count -eq 0) { return $null }

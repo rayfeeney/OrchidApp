@@ -6,6 +6,7 @@ Use current guides below. For each procedure, check its stated implementation li
 
 - [Developer machine and first run](development-setup.md)
 - [Contributing and validation](../CONTRIBUTING.md)
+- [Migration runners and incomplete-upgrade handling](migration-runners.md)
 - [Schema-only database creation and future migrations](database-creation.md), with [C01/C02 evidence](maintenance/c01-c02-schema-baseline.md)
 - [Architecture](architecture.md) and [temporal design](temporal-design.md)
 - [Windows upgrade contract](windows-upgrade-contract.md)

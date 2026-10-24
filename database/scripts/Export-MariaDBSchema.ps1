@@ -169,6 +169,18 @@ function Remove-DatabaseQualification {
   return $Sql
 }
 
+# Refuse an incomplete migration before exporting any object definitions.
+# CI schema reconstruction may have an empty history, which is valid for drift
+# comparison; only actual runners require a completed baseline/history.
+$earlyHistoryRows = @(Invoke-MariaDbQuery "SELECT scriptName, checksum FROM schemaversion ORDER BY scriptName;")
+$earlyHistory = @{}
+foreach ($row in $earlyHistoryRows) {
+    $parts = $row -split "`t"
+    if ($parts.Count -ne 2 -or $earlyHistory.ContainsKey($parts[0])) { throw 'Malformed or duplicate migration history row.' }
+    $earlyHistory[$parts[0]] = $parts[1]
+}
+if ($earlyHistory.Count) { $null = Get-DatabaseBaselineCutoff $earlyHistory }
+
 # --- LOAD EXISTING CHECKSUMS -------------------------------------------------
 $Checksums = @{}
 if (Test-Path $ChecksumFile) {

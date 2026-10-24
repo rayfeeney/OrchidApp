@@ -61,6 +61,12 @@ public sealed class SchemaBaseline
 
     public static Dictionary<string, string> ReadHistory(MySqlConnection connection)
     {
+        using (var engine = connection.CreateCommand())
+        {
+            engine.CommandText = "SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='schemaversion'";
+            if (!string.Equals(engine.ExecuteScalar() as string, "InnoDB", StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("schemaversion must use InnoDB and already exist; create from schema or review compatibility before upgrading.");
+        }
         using var cmd = connection.CreateCommand();
         cmd.CommandText = "SELECT scriptName, checksum FROM schemaversion ORDER BY scriptName";
         using var rows = cmd.ExecuteReader();
@@ -69,36 +75,7 @@ public sealed class SchemaBaseline
         return result;
     }
 
-    // Returns only changes later than a fresh database's own baseline. Legacy
-    // Desktop rows remain untouched and continue using their per-file checksums.
-    public static IReadOnlyList<string> Pending(IEnumerable<string> files, IReadOnlyDictionary<string, string> history)
-    {
-        if (history.Count == 0) throw new InvalidOperationException("Database setup is incomplete: migration history is empty. Restore or recreate an explicitly disposable target.");
-        var markers = history.Where(p => p.Key.StartsWith("baseline", StringComparison.OrdinalIgnoreCase)).ToArray();
-        if (markers.Length > 1) throw new InvalidOperationException("Multiple database baseline markers require review.");
-        string? cutoff = null;
-        if (markers.Length == 1)
-        {
-            var marker = markers[0];
-            if (marker.Key == "baseline" && marker.Value == "baseline") { /* Existing Desktop contract. */ }
-            else if (marker.Key.StartsWith("baseline:v1:", StringComparison.Ordinal) &&
-                IsTimestamp(marker.Key[12..]) && Regex.IsMatch(marker.Value, "^[a-fA-F0-9]{64}$")) cutoff = marker.Key[12..];
-            else throw new InvalidOperationException("Unrecognised database baseline marker.");
-        }
-        var pending = new List<string>();
-        foreach (var file in files.OrderBy(System.IO.Path.GetFileName, StringComparer.Ordinal))
-        {
-            var name = System.IO.Path.GetFileName(file);
-            if (!Regex.IsMatch(name, @"^[0-9]{12}_[A-Za-z0-9_]+\.sql$") || !IsTimestamp(name[..12]))
-                throw new InvalidOperationException("Invalid migration filename: " + name);
-            if (history.TryGetValue(name, out var recorded))
-            {
-                var checksum = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(file)));
-                if (!string.Equals(recorded, checksum, StringComparison.OrdinalIgnoreCase))
-                    throw new InvalidOperationException("Applied migration checksum changed: " + name);
-            }
-            else if (cutoff is null || string.CompareOrdinal(name[..12], cutoff) > 0) pending.Add(file);
-        }
-        return pending;
-    }
+    // Compatibility facade for the existing schema-baseline checks/callers.
+    public static IReadOnlyList<string> Pending(IEnumerable<string> files, IReadOnlyDictionary<string, string> history) =>
+        MigrationHistory.Plan(files, history).Select(file => file.Path).ToArray();
 }

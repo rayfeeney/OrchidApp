@@ -54,6 +54,9 @@ jobs:
             exit 1
           fi
 
+      - name: Check Desktop migration policy
+        run: dotnet run --configuration Release --project tests/MigrationHistory.Checks/MigrationHistory.Checks.csproj
+
 
   schema-contract:
     name: Schema contract validation
@@ -151,6 +154,19 @@ jobs:
       - name: Check MariaDB tool resolution
         shell: pwsh
         run: ./tests/SchemaBaseline.Checks/ToolResolution.Checks.ps1
+
+      - name: Check PowerShell migration policy
+        shell: pwsh
+        run: ./tests/MigrationHistory.Checks/Policy.Checks.ps1
+
+      - name: Check migration execution and failed-DDL handling
+        shell: pwsh
+        env:
+          MARIADB_HOST: 127.0.0.1
+          MARIADB_PORT: 3306
+          MARIADB_USER: root
+          MARIADB_PASSWORD: root
+        run: ./tests/MigrationHistory.Checks/Database.Checks.ps1
 
       - name: Run schema export
         env:
