@@ -100,6 +100,8 @@ if (app.Environment.IsEnvironment("Desktop"))
 
     var csBuilder = new MySqlConnector.MySqlConnectionStringBuilder(connectionString);
     var dbName = csBuilder.Database;
+    if (!System.Text.RegularExpressions.Regex.IsMatch(dbName, "^[A-Za-z0-9_]{1,64}$"))
+        throw new InvalidOperationException("Desktop bootstrap requires an explicit safe database identifier.");
 
     // Server-level connection (no DB)
     csBuilder.Database = "";
@@ -192,67 +194,26 @@ Console.WriteLine($"MariaDB EXE: {mariadbExe}");
 
             Console.WriteLine("Setting up OrchidApp for first use...");
 
-            // Order matters
-            RunFolderWithMariaDb(Path.Combine(dbFolder, "schema", "tables"), mariadbExe);
-            RunFolderWithMariaDb(Path.Combine(dbFolder, "schema", "views"), mariadbExe,  new[]
-                    {
-                        "venvironmentreadingperiod.sql",
-                        "venvironmentdailyperiodsummary.sql",
-                        "venvironmentlastsevendayssummary.sql"
-                    });
-            RunFolderWithMariaDb(Path.Combine(dbFolder, "schema", "routines"), mariadbExe);
-            RunFolderWithMariaDb(Path.Combine(dbFolder, "schema", "triggers"), mariadbExe);
-            RunFolderWithMariaDb(Path.Combine(dbFolder, "schema", "constraints"), mariadbExe);
-            RunFolderWithMariaDb(Path.Combine(dbFolder, "schema", "seeds"), mariadbExe);
-    
-            using var tx = dbConn.BeginTransaction();
-
-            try
+            var schemaRoot = Path.Combine(dbFolder, "schema");
+            var baseline = SchemaBaseline.Load(schemaRoot);
+            using (var emptyCheck = dbConn.CreateCommand())
             {
-                // 1. Record baseline
-                using (var cmd = dbConn.CreateCommand())
-                {
-                    cmd.Transaction = tx;
-                    cmd.CommandText = @"
-                        INSERT INTO schemaversion (scriptName, appliedAt, checksum)
-                        VALUES ('baseline', NOW(), 'baseline');";
-                    cmd.ExecuteNonQuery();
-                }
-
-                // 2. Mark ALL existing migrations as already applied
-                var baselineMigrationsFolder = Path.Combine(dbFolder, "migrations");
-
-                if (Directory.Exists(baselineMigrationsFolder))
-                {
-                    var files = Directory.GetFiles(baselineMigrationsFolder, "*.sql")
-                                        .OrderBy(f => f);
-
-                    foreach (var file in files)
-                    {
-                        var scriptName = Path.GetFileName(file);
-                        var checksum = ComputeChecksum(file);
-
-                        using var cmd = dbConn.CreateCommand();
-                        cmd.Transaction = tx;
-                        cmd.CommandText = @"
-                            INSERT IGNORE INTO schemaversion (scriptName, appliedAt, checksum)
-                            VALUES (@name, NOW(), @checksum);";
-
-                        cmd.Parameters.AddWithValue("@name", scriptName);
-                        cmd.Parameters.AddWithValue("@checksum", checksum);
-
-                        cmd.ExecuteNonQuery();
-                    }
-                }
-
-                tx.Commit();
-                Console.WriteLine("Finishing first-time setup...");
+                emptyCheck.CommandText = @"SELECT
+                    (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE()) +
+                    (SELECT COUNT(*) FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = DATABASE())";
+                if (Convert.ToInt32(emptyCheck.ExecuteScalar()) != 0)
+                    throw new InvalidOperationException("First-time setup requires an empty database. Existing or partial data must be reviewed, not overwritten.");
             }
-            catch
-            {
-                tx.Rollback();
-                throw;
-            }
+            foreach (var item in baseline.Files)
+                RunScriptWithMariaDb(Path.Combine(schemaRoot, item.Path), mariadbExe, connectionString);
+
+            // Written only after every object and required seed has succeeded.
+            using var recordBaseline = dbConn.CreateCommand();
+            recordBaseline.CommandText = "INSERT INTO schemaversion (scriptName, checksum) VALUES (@name, @checksum)";
+            recordBaseline.Parameters.AddWithValue("@name", baseline.Marker);
+            recordBaseline.Parameters.AddWithValue("@checksum", baseline.ManifestChecksum);
+            recordBaseline.ExecuteNonQuery();
+            Console.WriteLine("Finishing first-time setup...");
 
         }
 
@@ -264,7 +225,7 @@ Console.WriteLine($"MariaDB EXE: {mariadbExe}");
         }
         else
         {
-            RunMigrations(migrationsFolder, mariadbExe, dbConn, runtimeRoot);
+            RunMigrations(migrationsFolder, mariadbExe, dbConn, runtimeRoot, connectionString);
         }
     }
 
@@ -298,50 +259,7 @@ app.MapRazorPages();
 
 app.Run();
 
-static void RunFolderWithMariaDb(
-    string folderPath,
-    string mariadbExe,
-    IEnumerable<string>? preferredOrder = null)
-{
-    if (!Directory.Exists(folderPath))
-    {
-        Console.WriteLine($"Folder not found: {folderPath}");
-        return;
-    }
-
-    var files = Directory.GetFiles(folderPath, "*.sql")
-                         .OrderBy(f => f)
-                         .ToList();
-
-    if (preferredOrder != null)
-    {
-        var preferredFileNames = preferredOrder.ToList();
-
-        files = files
-            .OrderBy(file =>
-            {
-                var fileName = Path.GetFileName(file);
-                var index = preferredFileNames.FindIndex(
-                    name => string.Equals(
-                        name,
-                        fileName,
-                        StringComparison.OrdinalIgnoreCase));
-
-                return index >= 0
-                    ? index
-                    : int.MaxValue;
-            })
-            .ThenBy(file => file)
-            .ToList();
-    }
-
-    foreach (var file in files)
-    {
-        RunScriptWithMariaDb(file, mariadbExe);
-    }
-}
-
-static void RunScriptWithMariaDb(string scriptPath, string mariadbExe)
+static void RunScriptWithMariaDb(string scriptPath, string mariadbExe, string connectionString)
 {
     Console.WriteLine($"Setting up database item: {Path.GetFileName(scriptPath)}");
 
@@ -350,7 +268,6 @@ static void RunScriptWithMariaDb(string scriptPath, string mariadbExe)
         StartInfo = new ProcessStartInfo
         {
             FileName = mariadbExe,
-            Arguments = "-u orchid -porchid -P 3308 orchids",
             UseShellExecute = false,
             RedirectStandardInput = true,
             RedirectStandardOutput = true,
@@ -358,6 +275,14 @@ static void RunScriptWithMariaDb(string scriptPath, string mariadbExe)
             CreateNoWindow = true
         }
     };
+
+    var connection = new MySqlConnectionStringBuilder(connectionString);
+    foreach (var argument in new[] { "--protocol=TCP", "--host=" + connection.Server,
+        "--port=" + connection.Port, "--user=" + connection.UserID, "--database=" + connection.Database,
+        "--default-character-set=utf8mb4", "--connect-timeout=5", "--abort-source-on-error" })
+        process.StartInfo.ArgumentList.Add(argument);
+    process.StartInfo.Environment["MYSQL_PWD"] = connection.Password;
+    process.StartInfo.StandardInputEncoding = System.Text.Encoding.UTF8;
 
     process.OutputDataReceived += (s, e) =>
     {
@@ -377,7 +302,7 @@ static void RunScriptWithMariaDb(string scriptPath, string mariadbExe)
     process.BeginOutputReadLine();
     process.BeginErrorReadLine();
 
-    var sql = File.ReadAllText(scriptPath);
+    var sql = "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;\n" + File.ReadAllText(scriptPath) + "\n";
 
     process.StandardInput.Write(sql);
     process.StandardInput.Close();
@@ -458,53 +383,11 @@ static void RunPreMigrationBackup(string runtimeRoot)
     Console.WriteLine("Safety backup completed.");
 }
 
-static void RunMigrations(string folderPath, string mariadbExe, MySqlConnection dbConn, string runtimeRoot)
+static void RunMigrations(string folderPath, string mariadbExe, MySqlConnection dbConn, string runtimeRoot, string connectionString)
 {
-    if (!Directory.Exists(folderPath))
-    {
-        Console.WriteLine($"No migrations folder: {folderPath}");
-        return;
-    }
-
-    var pendingFiles = new List<string>();
-
-    Console.WriteLine("Checking for database updates...");
-
-    var files = Directory.GetFiles(folderPath, "*.sql")
-                         .OrderBy(f => f)
-                         .ToList();
-
-    foreach (var file in files)
-    {
-        var scriptName = Path.GetFileName(file);
-
-        var checksum = ComputeChecksum(file);
-
-        using var checkCmd = dbConn.CreateCommand();
-        checkCmd.CommandText = @"
-            SELECT checksum 
-            FROM schemaversion 
-            WHERE scriptName = @name";
-
-        checkCmd.Parameters.AddWithValue("@name", scriptName);
-
-        var existingChecksum = checkCmd.ExecuteScalar() as string;
-
-        if (existingChecksum != null)
-        {
-            if (!string.Equals(existingChecksum, checksum, StringComparison.OrdinalIgnoreCase))
-            {
-                throw new Exception(
-                    $"Database update check failed for '{scriptName}'. " +
-                    $"The update file has changed since it was first applied."
-                );
-            }
-
-            continue;
-        }
-
-        pendingFiles.Add(file);
-    }
+    var history = SchemaBaseline.ReadHistory(dbConn);
+    var files = Directory.Exists(folderPath) ? Directory.GetFiles(folderPath, "*.sql") : [];
+    var pendingFiles = SchemaBaseline.Pending(files, history);
 
     if (pendingFiles.Count > 0)
     {
@@ -519,7 +402,7 @@ static void RunMigrations(string folderPath, string mariadbExe, MySqlConnection 
 
         Console.WriteLine($"Applying database update: {scriptName}");
 
-        RunScriptWithMariaDb(file, mariadbExe);
+        RunScriptWithMariaDb(file, mariadbExe, connectionString);
 
         using var insertCmd = dbConn.CreateCommand();
         insertCmd.CommandText = @"

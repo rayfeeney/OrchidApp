@@ -1,6 +1,6 @@
 # Developer machine and first run
 
-Use an isolated development database and upload directory. Never aim setup, hooks, migrations or recovery experiments at the live collection. Commands below are run from the repository root. Schema-only creation has unresolved automation work; this guide identifies that stop point instead of substituting historical migration replay.
+Use an isolated development database and upload directory. Never aim setup, hooks, migrations or recovery experiments at the live collection. Commands below are run from the repository root. Schema-only creation is implemented locally; see the creation contract for remaining Linux/native-photo acceptance. Historical migrations are never a creation workaround.
 
 ## Tools and checkout
 
@@ -14,13 +14,17 @@ pwsh --version
 dotnet --list-sdks
 ```
 
-Current scripts are inconsistent: DevSetup checks mysql/mysqldump aliases on PATH; the exporter uses C:\Program Files\MariaDB 10.11\bin on Windows and mariadb/mariadb-dump on Linux. These are MariaDB client names, not support for a MySQL server. Verify both sets required by your chosen script. The bundled packaged-app database is not a replacement for developer client tools.
+DevSetup still checks mysql/mysqldump aliases on PATH. Creation/export resolve mariadb/mariadb-dump through explicit tool overrides, PATH and a Windows fallback. These client names do not imply MySQL server support. Native/developer tooling reconciliation remains C16.
 
 ## Database creation prerequisite
 
-Create the development database from the canonical schema and required reference seeds alone, following the [database creation contract](database-creation.md). Do not execute migrations to create it. The current rebuild is not yet a portable, correctly ordered baseline recipe; Desktop bootstrap also depends on historical migration files for history. Track [C01](code-change-backlog.md#c01) and [C02](code-change-backlog.md#c02).
+Use the [schema-only creation contract](database-creation.md). First supply the explicit target and credentials below, plus MARIADB_DATABASE, MARIADB_CHARSET=utf8mb4 and MARIADB_COLLATION=utf8mb4_unicode_ci. Then, from the repository root:
 
-**Stop here for a brand-new environment until the maintainer provides and validates the schema-only bootstrap.** Do not improvise production SQL, mark historical changes as applied by hand, or assume launching Development will create its schema. Once a reviewed schema-only database exists, continue below. Record its baseline identity and use a development account with the permissions needed for the chosen tasks. Runtime writes and schema administration have different privilege needs.
+```powershell
+pwsh ./database/scripts/rebuild.ps1 -ConfirmDatabase $env:MARIADB_DATABASE
+```
+
+This creates only an absent or empty target and records its baseline after all seeds succeed. It never drops existing data and refuses partial/nonempty targets. Development startup does not create the schema. Keep runtime and schema-administration permissions separate. See [local validation and remaining platform acceptance](maintenance/c01-c02-schema-baseline.md).
 
 ## Configure one explicit development target
 
@@ -30,10 +34,10 @@ Supply settings in the same terminal that starts the app and scripts; process-lo
 | --- | --- |
 | Web app | ConnectionStrings__OrchidDb (complete MariaDB connection string) |
 | Upload services | Storage__UploadRoot (isolated writable absolute path) |
-| Export/migration scripts | MARIADB_HOST, MARIADB_PORT, MARIADB_USER, MARIADB_PASSWORD; runner database target where supported |
+| Export/migration scripts | MARIADB_HOST, MARIADB_PORT, MARIADB_USER, MARIADB_PASSWORD and MARIADB_DATABASE |
 | Setup compatibility checks | MYSQL_USER and MYSQL_PASSWORD assigned from the MARIADB account |
 
-The exporter targets orchids. The documented migration runner accepts MARIADB_DATABASE; use orchids for a development workflow involving that exporter, on an isolated server/instance. Defaults conflict with the committed Development setting (port 3307) and script defaults (3306), so set the endpoint explicitly. MARIADB_* variables do not configure the app connection string. Environment variables override the committed machine-specific Development defaults. The web app and exporter/runner do not automatically load a repository .env file; the rebuild has its own loader.
+Creation requires an explicit MARIADB_DATABASE. The exporter and documented migration runner honour that target (default orchids for compatibility outside creation). Set endpoint values explicitly; committed Development settings and older wrapper defaults differ. MARIADB_* variables do not configure the app connection string. App/export/creation do not automatically load repository .env files.
 
 Use PowerShell to collect a password without echoing it, after supplying your explicit non-secret endpoint/account values:
 

@@ -44,7 +44,7 @@ Record actual evidence at each step.
 
 ## C01
 
-**Make fresh schema creation portable and dependency ordered** — P1; Confirmed defect / agreed requirement; status: Open.
+**Make fresh schema creation portable and dependency ordered** — P1; Confirmed defect / agreed requirement; status: Implemented locally; Linux/native-photo acceptance pending.
 
 Affected files/areas: database/scripts/rebuild.ps1; database/schema/; schema export tooling.
 
@@ -54,9 +54,11 @@ Dependencies: None.
 
 Acceptance: Create on Windows and Linux with database/migrations absent; required reference values and basic app workflows work; repeat safely only on an explicitly disposable target.
 
+Implementation and local validation: [C01/C02 evidence](maintenance/c01-c02-schema-baseline.md). The creation script no longer drops databases. Schema-contained manifest and completion marker replace historical bookkeeping scans; existing history is preserved.
+
 ## C02
 
-**Supply schema-contained baseline identity for future upgrades** — P1; Agreed requirement / current dependency gap; status: Open.
+**Supply schema-contained baseline identity for future upgrades** — P1; Agreed requirement / current dependency gap; status: Implemented locally; Linux/native-photo acceptance pending.
 
 Affected files/areas: src/OrchidApp.Web/Program.cs; database/scripts/Export-MariaDBSchema.ps1; rebuild and migration scripts; schema metadata.
 
@@ -65,6 +67,8 @@ Required work: Choose and implement a baseline/cutover contract carried with the
 Dependencies: C01 design coordination.
 
 Acceptance: Fresh creation succeeds with no migration directory; reintroduce historic and one later migration: only the later change applies once. Existing Desktop baseline rows remain compatible through a reviewed upgrade path.
+
+Implementation and local validation: [C01/C02 evidence](maintenance/c01-c02-schema-baseline.md). The creation script no longer drops databases. Schema-contained manifest and completion marker replace historical bookkeeping scans; existing history is preserved.
 
 ## C03
 

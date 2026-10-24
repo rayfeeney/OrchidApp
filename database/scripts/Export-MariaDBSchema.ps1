@@ -1,4 +1,5 @@
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "Schema-Baseline.ps1")
 
 try {
 
@@ -8,26 +9,13 @@ Set-Location $RepoRoot
 
 # --- TOOL PATHS (deterministic, no PATH dependency) --------------------------
 
-if ($IsWindows) {
-  $MariaDbExe = "C:\Program Files\MariaDB 10.11\bin\mariadb.exe"
-  $MariaDbDumpExe = "C:\Program Files\MariaDB 10.11\bin\mariadb-dump.exe"
-}
-else {
-  $MariaDbExe = "mariadb"
-  $MariaDbDumpExe = "mariadb-dump"
-}
-
-if (-not (Get-Command $MariaDbExe -ErrorAction SilentlyContinue)) {
-  throw "mariadb command not found: $MariaDbExe"
-}
-
-if (-not (Get-Command $MariaDbDumpExe -ErrorAction SilentlyContinue)) {
-  throw "mariadb-dump command not found: $MariaDbDumpExe"
-}
+$MariaDbExe = Resolve-MariaDbTool -Override $env:MARIADB_EXE
+$MariaDbDumpExe = Resolve-MariaDbTool -Name 'mariadb-dump' -Override $env:MARIADB_DUMP_EXE
 
 $MariaDbHost = $env:MARIADB_HOST ?? $env:MYSQL_HOST ?? "localhost"
 $MariaDbPort = $env:MARIADB_PORT ?? $env:MYSQL_PORT ?? 3306
-$Database = "orchids"
+$Database = $env:MARIADB_DATABASE ?? "orchids"
+if ($Database -cnotmatch "^[A-Za-z0-9_]{1,64}$") { throw "Invalid MARIADB_DATABASE identifier." }
 $User = $env:MARIADB_USER
 $Password = $env:MARIADB_PASSWORD
 
@@ -762,6 +750,34 @@ foreach ($dir in @("tables", "constraints", "views", "routines", "triggers")) {
     }
   }
 }
+
+# Advance the schema cut-off only from recorded DB history, never from files
+# merely present in migrations/. Existing baseline markers are preserved in DB.
+$historyRows = @(Invoke-MariaDbQuery "SELECT scriptName, checksum FROM schemaversion ORDER BY scriptName;")
+$history = @{}
+foreach ($row in $historyRows) {
+    $parts = $row -split "`t"
+    if ($parts.Count -ge 2) { $history[$parts[0]] = $parts[1] }
+}
+$candidates = @()
+if ($history.Count) {
+    $storedCutoff = Get-DatabaseBaselineCutoff $history
+    if ($storedCutoff) { $candidates += $storedCutoff }
+    foreach ($name in $history.Keys) {
+        if ($name -cmatch '^([0-9]{12})_[A-Za-z0-9_]+\.sql$') {
+            if (-not (Test-BaselineTimestamp $Matches[1])) { throw "Invalid recorded migration timestamp: $name" }
+            $candidates += $Matches[1]
+        }
+    }
+}
+if (-not $candidates.Count) {
+    # CI may reconstruct canonical objects without history. In that case an
+    # unchanged, validated schema manifest is the only acceptable cut-off source.
+    $prior = Read-SchemaManifest $SchemaRoot
+    $candidates = @($prior.throughMigration)
+}
+$cutoff = $candidates | Sort-Object -Descending | Select-Object -First 1
+& (Join-Path $PSScriptRoot 'New-SchemaManifest.ps1') -SchemaRoot $SchemaRoot -ThroughMigration $cutoff
 
 Write-Host "MariaDB schema export completed successfully."
 

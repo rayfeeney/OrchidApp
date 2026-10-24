@@ -1,24 +1,66 @@
 # Database creation and subsequent changes
 
-A new OrchidApp environment must be created from database/schema/ alone, including its required reference seeds. Historical migration SQL must not be needed, read or executed to create the database. Migrations apply only to schema changes after that database's creation. This is the owner's required contract; current automation does not yet meet it completely.
+Fresh databases are assembled from database/schema/ only, including reference seeds and bootstrap.json. Historical migration SQL is neither read nor executed for creation. Use the creation script for new databases and migration runners only for subsequent compatible changes.
 
-## Creation inputs
+## Schema manifest
 
-The canonical export contains tables, constraints, views, routines, triggers and required reference seeds. Import these in dependency order into an explicitly selected empty, isolated target using utf8mb4 and utf8mb4_unicode_ci. Views must be dependency ordered, not merely alphabetically sorted. Required initial reference values include observation types, phonetic prefixes and propagation types; user collection data is not seed data.
+The generated schema/bootstrap.json records formatVersion 1, an inclusive throughMigration timestamp (YYYYMMDDHHMM), and every schema SQL file in import order with its SHA-256 checksum. Hashes normalise CRLF/CR to LF so a Windows checkout and Linux checkout agree. The current snapshot includes history through 202606041820.
 
-Creation must work with database/migrations/ absent. Baseline identity and any metadata needed to decide which later changes are pending must be supplied with the schema export. Baseline bookkeeping must not depend on scanning or executing historic migration files. The baseline format/cutover mechanism is implementation work, not an operator task to invent.
+Import stages are tables, constraints, routines, dependency-ordered views, triggers and required reference seeds. The generator orders dependencies between quoted canonical view names and rejects cycles. Creation validates inventory, checksums, stage order, required seeds and safe relative paths before executing any SQL. Observation types, phonetic prefixes and propagation types are reference data; collection records are never seeded.
 
-A created database is not forbidden from receiving future migrations. It must reject historical changes already represented in its schema and accept only subsequent compatible changes. Keep a fresh-creation test and an existing-database upgrade test separate.
+Only after all imports succeed is a row written to the existing schemaversion table: scriptName baseline:v1:<throughMigration>, checksum equal to the normalised manifest digest. That row identifies the database's own cut-off. Updating application files or exporting a newer schema never rewrites it. No new database table or forward DDL migration is needed for this bookkeeping contract.
 
-## Current implementation limits
+## Explicit new target
 
-- database/scripts/rebuild.ps1 is destructive, Windows-path-specific, requires seven MARIADB_* settings and currently sorts dependent views alphabetically. It is not a supported copy-and-run Linux or fresh-developer recipe.
-- Desktop bootstrap in src/OrchidApp.Web/Program.cs imports schema but also enumerates packaged migration files to populate history. That creation dependency must be removed under the required schema-only contract.
-- Apply-Migrations.ps1 is for existing, correctly baselined databases. It skips recorded filenames and does not enforce all history integrity rules. It must not be used to initialise an empty environment.
-- CI assembles the schema but does not establish the complete seeded, migration-directory-independent application first run or future-upgrade baseline contract.
+Use PowerShell 7+ with MariaDB 10.11 client/server. Select an isolated target and securely supply all seven environment values in that terminal:
 
-Track fixes as [C01, C02, C04 and C05](code-change-backlog.md). Until they are implemented and tested, a fresh environment needs a reviewed schema-only bootstrap supplied/validated by its maintainer. Do not offer migration replay or the current rebuild script as a workaround. The [developer guide](development-setup.md) and [Linux guide](user-guides/linux/installation-upgrade.md) explicitly stop at this prerequisite.
+- MARIADB_HOST, MARIADB_PORT, MARIADB_USER and MARIADB_PASSWORD.
+- MARIADB_DATABASE: the exact intended database identifier.
+- MARIADB_CHARSET=utf8mb4 and MARIADB_COLLATION=utf8mb4_unicode_ci.
 
-## Acceptance
+The client is resolved from MARIADB_EXE when explicitly supplied, otherwise PATH, then the MariaDB 10.11 Program Files location on Windows. On Linux install mariadb on PATH. The script does not load .env files, change working directory or silently choose an endpoint.
 
-With the migrations directory unavailable, create a fresh database from the exported schema and metadata, load required seeds, open database-backed pages, create a test plant and save/reopen a photo. Verify generated schema consistency. Add a later migration and prove it applies once; prove historical DDL is not replayed. Run on supported Windows and Linux MariaDB targets using isolated data.
+From the repository root:
+
+```powershell
+pwsh ./database/scripts/rebuild.ps1 -ConfirmDatabase $env:MARIADB_DATABASE
+```
+
+Despite its retained legacy filename, rebuild.ps1 no longer drops databases. It creates an absent target, or imports into an existing completely empty target with the required collation. ConfirmDatabase must match the explicit target exactly. Any existing tables/views/routines cause refusal, including a partial previous import. Do not use it to upgrade, restore or repair collection data. DDL failures can leave partial objects; no completion marker is written after a failed import. Review/restore the target, or explicitly remove only a known disposable failed test database before retrying. Never erase an existing collection as a recovery shortcut.
+
+## Desktop first use
+
+Desktop startup loads the same schema manifest from the packaged database/schema directory. It requires an empty target for first import, uses the configured DefaultConnection endpoint/credentials for the MariaDB client, and records the completion marker last. It does not scan database/migrations for baseline bookkeeping. A schemaversion table with empty history is treated as incomplete setup rather than a valid upgraded database. The configured OrchidDb web connection must refer to the same application database; MARIADB_* variables alone do not set either app connection string.
+
+## Future changes and existing databases
+
+Desktop and both PowerShell migration runners recognise baseline:v1 markers. SQL files with timestamps at or before the database's recorded cut-off are already represented in that schema. Later files apply once and receive their ordinary per-file SHA-256 row. Recorded file checksums are checked before skipping. Missing or changed files and chronology beyond this baseline contract remain part of C04 runner reconciliation; do not infer a universal schema-drift or rollback guarantee.
+
+Older Desktop databases retain their literal baseline/baseline row and recorded migration rows unchanged. Those rows continue to use their existing per-file checksums; the latest packaged manifest is never used to invent an earlier database's baseline. A legacy marker alone does not authorise skipping unrecorded SQL. Review incomplete legacy history rather than filling it by hand. Existing databases created by recorded migrations without a baseline marker retain that per-file path.
+
+Create no empty database by running migrations. Do not manually delete, update or backfill applied history. Back up before upgrading; the Desktop backup gate remains in place. This change does not certify the separate backup/recovery paths.
+
+## Export and maintenance
+
+Export-MariaDBSchema.ps1 now honours MARIADB_DATABASE (default orchids for compatibility) and resolves mariadb/mariadb-dump from explicit MARIADB_EXE/MARIADB_DUMP_EXE or platform tools. It regenerates the manifest after schema export using the maximum recorded DB baseline/migration timestamp, never the newest file merely present in migrations/. An export with no usable history may retain the existing cut-off only if its manifest still validates the exported schema unchanged.
+
+Do not hand-edit the generated manifest or canonical schema/checksums. For this initial manifest the generator was run against the reviewed canonical snapshot with the known inclusive cut-off:
+
+```powershell
+pwsh ./database/scripts/New-SchemaManifest.ps1 -ThroughMigration 202606041820
+```
+
+This is a maintainer generation step for an audited snapshot, not an operator command to guess a cut-off or repair a database. Future SQL fixes still require forward migrations and regenerated exports. Commit hook staging already includes database/schema, so it includes bootstrap.json.
+
+## Checks and remaining acceptance
+
+From the repository root:
+
+```powershell
+dotnet run --configuration Release --project tests/SchemaBaseline.Checks/SchemaBaseline.Checks.csproj
+pwsh ./tests/SchemaBaseline.Checks/Database.Checks.ps1
+```
+
+The second command requires explicit credentials/endpoint for an isolated server with create/drop rights. It creates and drops only a generated orchids_contract_<guid> database and retains its small temporary fixture folder for inspection. Never point these checks at a live server.
+
+See [C01/C02 evidence](maintenance/c01-c02-schema-baseline.md). Windows/MariaDB creation, actual Desktop first use, view queries, plant creation, future-only migration, legacy rows and failed-import handling were checked locally. Linux/MariaDB and full native-photo save/reopen acceptance remain pending. C04 and C05 still own broader runner enforcement and CI acceptance.

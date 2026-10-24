@@ -17,7 +17,7 @@ For a compatible change after creation, add a new database/migrations/YYYYMMDDHH
 pwsh ./database/scripts/Apply-Migrations.ps1
 ```
 
-Supply explicit MARIADB_* credentials/endpoint; MARIADB_DATABASE is accepted by this runner. The exporter always targets orchids. DDL failures can leave partial state; investigate rather than blindly rerunning. This runner sorts filenames, skips recorded names and records new checksums, but does not enforce every chronology, format or skipped-file checksum rule. Desktop and the separate developer runner differ; see [migration paths](docs/architecture.md#implemented-migration-paths). [C02/C04](docs/code-change-backlog.md) track baseline and enforcement fixes.
+Supply explicit MARIADB_* credentials/endpoint; MARIADB_DATABASE is accepted by this runner. The exporter honours MARIADB_DATABASE (default orchids). DDL failures can leave partial state; investigate rather than blindly rerunning. This runner recognises schema baseline cut-offs and verifies recorded checksums; broader chronology and drift enforcement remains C04. Desktop and the separate developer runner differ; see [migration paths](docs/architecture.md#implemented-migration-paths). [C01/C02 evidence](docs/maintenance/c01-c02-schema-baseline.md) records the baseline implementation; C04 tracks broader runner enforcement.
 
 Schema and checksums are generated through database/scripts/Export-MariaDBSchema.ps1. Do not manually edit database/schema/ or database/checksums/schema.json. The pre-commit hook runs the exporter on every commit and stages generated changes; an export failure aborts. Review both the staged diff and finished commit so unrelated database changes cannot slip in. Use required hooks, not --no-verify. CI cannot prove local hook use.
 
@@ -49,7 +49,10 @@ dotnet run --configuration Release --project tests/Navigation.Checks/Navigation.
 dotnet run --configuration Release --project tests/NameSearch.Checks/NameSearch.Checks.csproj
 dotnet run --configuration Release --project tests/EnvironmentSummary.Checks/EnvironmentSummary.Checks.csproj
 dotnet run --configuration Release --project tests/GreenhouseCharts.Checks/GreenhouseCharts.Checks.csproj
+dotnet run --configuration Release --project tests/SchemaBaseline.Checks/SchemaBaseline.Checks.csproj
 ```
+
+Schema creation/baseline integration checks also use pwsh ./tests/SchemaBaseline.Checks/Database.Checks.ps1 with explicit credentials for an isolated MariaDB server; they create/drop only a generated test database. See the [creation contract](docs/database-creation.md).
 
 Default checks use isolated/substitute data and SQL translation where designed. Optional greenhouse DB/benchmark modes require a disposable instance, never the owner's production database; see the [local guide](docs/local-installation/greenhouse-monitoring.md). Passing these does not prove live save/reopen, native image processing, device behaviour, installer safety or restore completeness.
 
@@ -57,7 +60,7 @@ For docs-only work, check paths, links, commands, setting names, platform scope 
 
 ## Current CI limits
 
-The [workflow](.github/workflows/ci.yml) builds/publishes linux-arm64, reconstructs/exports a disposable MariaDB 10.11 schema to check drift, and creates a Windows package. It does not establish seeded schema-only first run independent of migrations, run all five executable check projects, replay and validate upgrade history, build the Inno Setup installer or exercise actual device install/recovery. [C05/C20](docs/code-change-backlog.md) track improved coverage. Cross-publishing is not Pi hardware validation.
+The [workflow](.github/workflows/ci.yml) builds/publishes linux-arm64, reconstructs/exports a disposable MariaDB 10.11 schema to check drift, and creates a Windows package. It does not establish seeded schema-only first run independent of migrations, run all executable check projects, replay and validate upgrade history, build the Inno Setup installer or exercise actual device install/recovery. [C05/C20](docs/code-change-backlog.md) track improved coverage. Cross-publishing is not Pi hardware validation.
 
 ## Pull requests
 
