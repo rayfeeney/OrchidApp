@@ -32,3 +32,11 @@ C01/C02 are implemented and locally verified, with Linux/native-photo acceptance
 ## Reproduce Desktop acceptance
 
 Stage the Release application and public web assets with database/schema and the bundled Windows MariaDB client/dependencies. Omit database/migrations. Supply isolated ConnectionStrings__DefaultConnection and ConnectionStrings__OrchidDb to the same new database, ASPNETCORE_ENVIRONMENT=Desktop, a workspace ORCHIDAPP_UPLOAD_ROOT and an unused loopback URL. Start the staged DLL; verify one baseline marker and HTTP success on / and /Plants. Restart against that same isolated database to verify it remains up to date. A later-migration test must keep the backup gate; synthetic backup fixtures are acceptable only in disposable tests and are not operational recovery evidence.
+
+## Follow-up: Linux CI executable resolution
+
+The subsequent Linux CI run failed during schema export because Get-Command returned both /usr/bin/mariadb and /bin/mariadb. Resolve-MariaDbTool emitted both paths, which the invocation treated as one invalid command. The initial Windows validation missed duplicate PATH entries.
+
+Resolution now selects the first application match for both normal lookup and explicit overrides. ToolResolution.Checks.ps1 reproduced the failure before the fix and passed all seven checks afterwards on Windows using two real executable fixtures on PATH. It also verifies execution from a path containing spaces, explicit override precedence and invalid override rejection. The schema-contract job now runs the same cross-platform test before schema export. Actual Linux CI export success remains dependent on rerunning CI; these local checks do not certify that full job.
+
+No database objects, baseline cut-offs, schema checksums or migration history changed for this correction.

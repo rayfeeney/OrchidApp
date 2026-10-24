@@ -18,7 +18,7 @@ Use PowerShell 7+ with MariaDB 10.11 client/server. Select an isolated target an
 - MARIADB_DATABASE: the exact intended database identifier.
 - MARIADB_CHARSET=utf8mb4 and MARIADB_COLLATION=utf8mb4_unicode_ci.
 
-The client is resolved from MARIADB_EXE when explicitly supplied, otherwise PATH, then the MariaDB 10.11 Program Files location on Windows. On Linux install mariadb on PATH. The script does not load .env files, change working directory or silently choose an endpoint.
+The client is resolved from MARIADB_EXE when explicitly supplied, otherwise PATH, then the MariaDB 10.11 Program Files location on Windows. Resolution selects one executable: the first application match in PATH order, even when both /usr/bin and /bin expose the command. Explicit overrides also resolve to a single executable. On Linux install mariadb on PATH. The script does not load .env files, change working directory or silently choose an endpoint.
 
 From the repository root:
 
@@ -58,9 +58,10 @@ From the repository root:
 
 ```powershell
 dotnet run --configuration Release --project tests/SchemaBaseline.Checks/SchemaBaseline.Checks.csproj
+pwsh ./tests/SchemaBaseline.Checks/ToolResolution.Checks.ps1
 pwsh ./tests/SchemaBaseline.Checks/Database.Checks.ps1
 ```
 
-The second command requires explicit credentials/endpoint for an isolated server with create/drop rights. It creates and drops only a generated orchids_contract_<guid> database and retains its small temporary fixture folder for inspection. Never point these checks at a live server.
+ToolResolution.Checks.ps1 needs no database. It tests duplicate PATH matches, executable invocation from paths containing spaces and override precedence; the Linux schema CI job runs it before export. Database.Checks.ps1 requires explicit credentials/endpoint for an isolated server with create/drop rights. It creates and drops only a generated orchids_contract_<guid> database and retains its small temporary fixture folder for inspection. Never point these checks at a live server.
 
 See [C01/C02 evidence](maintenance/c01-c02-schema-baseline.md). Windows/MariaDB creation, actual Desktop first use, view queries, plant creation, future-only migration, legacy rows and failed-import handling were checked locally. Linux/MariaDB and full native-photo save/reopen acceptance remain pending. C04 and C05 still own broader runner enforcement and CI acceptance.

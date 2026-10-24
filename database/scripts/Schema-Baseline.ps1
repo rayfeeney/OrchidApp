@@ -73,10 +73,12 @@ function Test-MigrationCovered([string]$Name, [string]$Cutoff) {
 
 function Resolve-MariaDbTool([string]$Name = 'mariadb', [string]$Override = '') {
     if ($Override) {
-        $tool = Get-Command $Override -CommandType Application -ErrorAction Stop
+        $tool = Get-Command $Override -CommandType Application -ErrorAction Stop | Select-Object -First 1
         return $tool.Source
     }
-    $tool = Get-Command $Name -CommandType Application -ErrorAction SilentlyContinue
+    # Get-Command can emit every application match (e.g. /usr/bin and /bin).
+    # Return one executable in PATH order, never an array of joined paths.
+    $tool = Get-Command $Name -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
     if ($tool) { return $tool.Source }
     if ($IsWindows) {
         $fallback = Join-Path $env:ProgramFiles "MariaDB 10.11/bin/$Name.exe"

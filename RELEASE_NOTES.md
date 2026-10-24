@@ -1,5 +1,9 @@
 # Release notes
 
+## C01+C02 follow-up - Linux CI tool lookup
+
+Corrected MariaDB tool lookup to return one executable when PATH exposes multiple matches such as /usr/bin and /bin. Added a duplicate-PATH regression check to the Linux schema CI job before export. Database schema and migration history are unchanged.
+
 ## C01+C02 - schema creation and baselines (local implementation)
 
 Fresh setup uses a generated, checksummed schema manifest and required seeds without historical migration files. The retained rebuild.ps1 script no longer drops databases: it requires explicit confirmation and an absent/empty target. Desktop and PowerShell runners recognise the recorded schema cut-off and preserve legacy history. Export regenerates baseline metadata from recorded DB state. See [creation instructions](docs/database-creation.md) and [validation/pending Linux and native-photo acceptance](docs/maintenance/c01-c02-schema-baseline.md).
