@@ -7,7 +7,7 @@ This software includes third-party open source components.
 These components are used as dependencies of the OrchidApp system.
 Their licences apply to the respective components.
 
-Formatted notes (Genus edit proof of concept):
+Formatted genus and taxon notes (Add and Edit):
 - Quill 2.0.3: BSD-3-Clause, https://quilljs.com/
 - HtmlSanitizer 9.2.1039: MIT, https://github.com/mganss/HtmlSanitizer
 - AngleSharp 1.7.2 and AngleSharp.Css 1.0.2: MIT, https://anglesharp.github.io/

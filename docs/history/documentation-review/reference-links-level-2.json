@@ -1,0 +1,298 @@
+[
+  {
+    "source": "docs/index.md",
+    "line": 13,
+    "target": "user-guides/linux/installation-upgrade.md",
+    "resolved": "docs/user-guides/linux/installation-upgrade.md",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/index.md",
+    "line": 14,
+    "target": "user-guides/linux/Full-App-Backup-Pre-Upgrade.md",
+    "resolved": "docs/user-guides/linux/Full-App-Backup-Pre-Upgrade.md",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/index.md",
+    "line": 15,
+    "target": "user-guides/linux/OrchidApp-MariaDB-Backup-and-Restore-Runbook.md",
+    "resolved": "docs/user-guides/linux/OrchidApp-MariaDB-Backup-and-Restore-Runbook.md",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/index.md",
+    "line": 16,
+    "target": "user-guides/ios/home-screen-web-app.md",
+    "resolved": "docs/user-guides/ios/home-screen-web-app.md",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/index.md",
+    "line": 17,
+    "target": "user-guides/macos/safari-web-app.md",
+    "resolved": "docs/user-guides/macos/safari-web-app.md",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/index.md",
+    "line": 18,
+    "target": "user-guides/windows/01-InstallOrUpgradeOrchidAppOnWindows.docx",
+    "resolved": "docs/user-guides/windows/01-InstallOrUpgradeOrchidAppOnWindows.docx",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/index.md",
+    "line": 19,
+    "target": "user-guides/windows/04-ConfigureCloudBackupFolderInOrchidAppForWindows.docx",
+    "resolved": "docs/user-guides/windows/04-ConfigureCloudBackupFolderInOrchidAppForWindows.docx",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/index.md",
+    "line": 20,
+    "target": "user-guides/windows/05-RecoverOrchidAppOnReplacementWindowsComputer.docx",
+    "resolved": "docs/user-guides/windows/05-RecoverOrchidAppOnReplacementWindowsComputer.docx",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/index.md",
+    "line": 23,
+    "target": "user-guides/linux/",
+    "resolved": "docs/user-guides/linux",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/index.md",
+    "line": 23,
+    "target": "user-guides/windows/",
+    "resolved": "docs/user-guides/windows",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/index.md",
+    "line": 27,
+    "target": "rich-notes.md",
+    "resolved": "docs/rich-notes.md",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/index.md",
+    "line": 28,
+    "target": "navigation.md",
+    "resolved": "docs/navigation.md",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/index.md",
+    "line": 29,
+    "target": "name-search.md",
+    "resolved": "docs/name-search.md",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/index.md",
+    "line": 30,
+    "target": "environment-summary-platform.md",
+    "resolved": "docs/environment-summary-platform.md",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/index.md",
+    "line": 34,
+    "target": "../README.md",
+    "resolved": "README.md",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/index.md",
+    "line": 35,
+    "target": "../CONTRIBUTING.md",
+    "resolved": "CONTRIBUTING.md",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/index.md",
+    "line": 36,
+    "target": "architecture.md",
+    "resolved": "docs/architecture.md",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/index.md",
+    "line": 37,
+    "target": "temporal-design.md",
+    "resolved": "docs/temporal-design.md",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/index.md",
+    "line": 38,
+    "target": "windows-upgrade-contract.md",
+    "resolved": "docs/windows-upgrade-contract.md",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/index.md",
+    "line": 39,
+    "target": "../RELEASE_NOTES.md",
+    "resolved": "RELEASE_NOTES.md",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/index.md",
+    "line": 40,
+    "target": "../THIRD_PARTY_NOTICES.md",
+    "resolved": "THIRD_PARTY_NOTICES.md",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/architecture.md",
+    "line": 12,
+    "target": "index.md",
+    "resolved": "docs/index.md",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/architecture.md",
+    "line": 357,
+    "target": "navigation.md",
+    "resolved": "docs/navigation.md",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/architecture.md",
+    "line": 361,
+    "target": "rich-notes.md",
+    "resolved": "docs/rich-notes.md",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/architecture.md",
+    "line": 366,
+    "target": "name-search.md",
+    "resolved": "docs/name-search.md",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/architecture.md",
+    "line": 371,
+    "target": "environment-summary-platform.md",
+    "resolved": "docs/environment-summary-platform.md",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/architecture.md",
+    "line": 587,
+    "target": "../CONTRIBUTING.md",
+    "resolved": "CONTRIBUTING.md",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/architecture.md",
+    "line": 622,
+    "target": "user-guides/linux/Full-App-Backup-Pre-Upgrade.md",
+    "resolved": "docs/user-guides/linux/Full-App-Backup-Pre-Upgrade.md",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/temporal-design.md",
+    "line": 8,
+    "target": "architecture.md",
+    "resolved": "docs/architecture.md",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/temporal-design.md",
+    "line": 9,
+    "target": "../CONTRIBUTING.md",
+    "resolved": "CONTRIBUTING.md",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/windows-upgrade-contract.md",
+    "line": 8,
+    "target": "architecture.md",
+    "resolved": "docs/architecture.md",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/windows-upgrade-contract.md",
+    "line": 8,
+    "target": "../CONTRIBUTING.md",
+    "resolved": "CONTRIBUTING.md",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/windows-upgrade-contract.md",
+    "line": 9,
+    "target": "user-guides/windows/",
+    "resolved": "docs/user-guides/windows",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/windows-upgrade-contract.md",
+    "line": 206,
+    "target": "architecture.md#implemented-migration-paths",
+    "resolved": "docs/architecture.md",
+    "exists": true,
+    "anchor_ok": true
+  },
+  {
+    "source": "docs/rich-notes.md",
+    "line": 50,
+    "target": "../THIRD_PARTY_NOTICES.md",
+    "resolved": "THIRD_PARTY_NOTICES.md",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/user-guides/linux/installation-upgrade.md",
+    "line": 323,
+    "target": "OrchidApp-MariaDB-Backup-and-Restore-Runbook.md",
+    "resolved": "docs/user-guides/linux/OrchidApp-MariaDB-Backup-and-Restore-Runbook.md",
+    "exists": true,
+    "anchor_ok": null
+  },
+  {
+    "source": "docs/user-guides/linux/installation-upgrade.md",
+    "line": 340,
+    "target": "Full-App-Backup-Pre-Upgrade.md",
+    "resolved": "docs/user-guides/linux/Full-App-Backup-Pre-Upgrade.md",
+    "exists": true,
+    "anchor_ok": null
+  }
+]

@@ -264,3 +264,7 @@ save/reopen, invalid-input, rollback and concurrent-update cases. Include equal
 timestamps, lifecycle boundary days, backdated splits, flowering edits, location
 edits/removal and failed multi-step operations. Never use production data for
 destructive validation.
+
+## Implementation follow-up
+
+[Code backlog C11–C14](code-change-backlog.md) tracks closure SQL, validation/ended-plant policy, structural rollback/concurrency and any agreed deterministic ordering work. No temporal code was changed by documentation cleanup. New databases use [schema-only creation](database-creation.md); later SQL corrections require forward migrations for existing databases and regenerated canonical schema.

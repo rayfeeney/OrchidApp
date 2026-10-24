@@ -1,0 +1,421 @@
+{
+  "markdown_links": [
+    {
+      "source": "docs/user-guides/linux/Full-App-Backup-Pre-Upgrade.md",
+      "line": 10,
+      "target": "OrchidApp-MariaDB-Backup-and-Restore-Runbook.md",
+      "kind": "local",
+      "resolved": "docs/user-guides/linux/OrchidApp-MariaDB-Backup-and-Restore-Runbook.md",
+      "exists": true
+    },
+    {
+      "source": "docs/user-guides/linux/Full-App-Backup-Pre-Upgrade.md",
+      "line": 148,
+      "target": "installation-upgrade.md#5-upgrade-procedure",
+      "kind": "local",
+      "resolved": "docs/user-guides/linux/installation-upgrade.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "docs/user-guides/ios/home-screen-web-app.md",
+      "line": 40,
+      "target": "https://webkit.org/blog/13878/",
+      "kind": "external"
+    },
+    {
+      "source": "docs/user-guides/ios/home-screen-web-app.md",
+      "line": 71,
+      "target": "../macos/safari-web-app.md",
+      "kind": "local",
+      "resolved": "docs/user-guides/macos/safari-web-app.md",
+      "exists": true
+    },
+    {
+      "source": "docs/user-guides/macos/safari-web-app.md",
+      "line": 11,
+      "target": "https://developer.apple.com/videos/play/wwdc2023/10120/",
+      "kind": "external"
+    },
+    {
+      "source": "docs/user-guides/macos/safari-web-app.md",
+      "line": 25,
+      "target": "../ios/home-screen-web-app.md",
+      "kind": "local",
+      "resolved": "docs/user-guides/ios/home-screen-web-app.md",
+      "exists": true
+    },
+    {
+      "source": "RELEASE_NOTES.md",
+      "line": 3,
+      "target": "#release-notes",
+      "kind": "local",
+      "resolved": "RELEASE_NOTES.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "RELEASE_NOTES.md",
+      "line": 4,
+      "target": "#v120--windows-installer-led-upgrade-safety-2026-05-24",
+      "kind": "local",
+      "resolved": "RELEASE_NOTES.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "RELEASE_NOTES.md",
+      "line": 5,
+      "target": "#summary",
+      "kind": "local",
+      "resolved": "RELEASE_NOTES.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "RELEASE_NOTES.md",
+      "line": 6,
+      "target": "#main-user-facing-change",
+      "kind": "local",
+      "resolved": "RELEASE_NOTES.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "RELEASE_NOTES.md",
+      "line": 7,
+      "target": "#implemented-layout",
+      "kind": "local",
+      "resolved": "RELEASE_NOTES.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "RELEASE_NOTES.md",
+      "line": 8,
+      "target": "#v110---windows-now-supported-2026-05-16",
+      "kind": "local",
+      "resolved": "RELEASE_NOTES.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "RELEASE_NOTES.md",
+      "line": 9,
+      "target": "#highlights",
+      "kind": "local",
+      "resolved": "RELEASE_NOTES.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "RELEASE_NOTES.md",
+      "line": 10,
+      "target": "#added",
+      "kind": "local",
+      "resolved": "RELEASE_NOTES.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "RELEASE_NOTES.md",
+      "line": 11,
+      "target": "#changed",
+      "kind": "local",
+      "resolved": "RELEASE_NOTES.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "RELEASE_NOTES.md",
+      "line": 12,
+      "target": "#fixed",
+      "kind": "local",
+      "resolved": "RELEASE_NOTES.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "RELEASE_NOTES.md",
+      "line": 13,
+      "target": "#known-notes",
+      "kind": "local",
+      "resolved": "RELEASE_NOTES.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "RELEASE_NOTES.md",
+      "line": 14,
+      "target": "#completed-upgrade-safety-work",
+      "kind": "local",
+      "resolved": "RELEASE_NOTES.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "RELEASE_NOTES.md",
+      "line": 15,
+      "target": "#installer-packaging",
+      "kind": "local",
+      "resolved": "RELEASE_NOTES.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "RELEASE_NOTES.md",
+      "line": 16,
+      "target": "#legacy-migration-behaviour",
+      "kind": "local",
+      "resolved": "RELEASE_NOTES.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "RELEASE_NOTES.md",
+      "line": 17,
+      "target": "#backup-behaviour",
+      "kind": "local",
+      "resolved": "RELEASE_NOTES.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "RELEASE_NOTES.md",
+      "line": 18,
+      "target": "#mariadb-runtime-behaviour",
+      "kind": "local",
+      "resolved": "RELEASE_NOTES.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "RELEASE_NOTES.md",
+      "line": 19,
+      "target": "#documentation",
+      "kind": "local",
+      "resolved": "RELEASE_NOTES.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "RELEASE_NOTES.md",
+      "line": 20,
+      "target": "#known-limitations-and-deferred-follow-ups",
+      "kind": "local",
+      "resolved": "RELEASE_NOTES.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "RELEASE_NOTES.md",
+      "line": 21,
+      "target": "#developer-notes",
+      "kind": "local",
+      "resolved": "RELEASE_NOTES.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "RELEASE_NOTES.md",
+      "line": 22,
+      "target": "#orchidapp-v100---general-availability",
+      "kind": "local",
+      "resolved": "RELEASE_NOTES.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "RELEASE_NOTES.md",
+      "line": 23,
+      "target": "#whats-included",
+      "kind": "local",
+      "resolved": "RELEASE_NOTES.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "RELEASE_NOTES.md",
+      "line": 24,
+      "target": "#lifecycle-model-complete",
+      "kind": "local",
+      "resolved": "RELEASE_NOTES.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "RELEASE_NOTES.md",
+      "line": 25,
+      "target": "#deterministic-database-system",
+      "kind": "local",
+      "resolved": "RELEASE_NOTES.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "RELEASE_NOTES.md",
+      "line": 26,
+      "target": "#temporal-model",
+      "kind": "local",
+      "resolved": "RELEASE_NOTES.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "RELEASE_NOTES.md",
+      "line": 27,
+      "target": "#photo--media-system",
+      "kind": "local",
+      "resolved": "RELEASE_NOTES.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "RELEASE_NOTES.md",
+      "line": 28,
+      "target": "#application-layer",
+      "kind": "local",
+      "resolved": "RELEASE_NOTES.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "RELEASE_NOTES.md",
+      "line": 29,
+      "target": "#backup--recovery",
+      "kind": "local",
+      "resolved": "RELEASE_NOTES.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "RELEASE_NOTES.md",
+      "line": 30,
+      "target": "#deployment-model",
+      "kind": "local",
+      "resolved": "RELEASE_NOTES.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "RELEASE_NOTES.md",
+      "line": 31,
+      "target": "#system-guarantees",
+      "kind": "local",
+      "resolved": "RELEASE_NOTES.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "RELEASE_NOTES.md",
+      "line": 32,
+      "target": "#architectural-contract",
+      "kind": "local",
+      "resolved": "RELEASE_NOTES.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "RELEASE_NOTES.md",
+      "line": 33,
+      "target": "#notes",
+      "kind": "local",
+      "resolved": "RELEASE_NOTES.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "RELEASE_NOTES.md",
+      "line": 34,
+      "target": "#status",
+      "kind": "local",
+      "resolved": "RELEASE_NOTES.md",
+      "exists": true,
+      "anchor_ok": true
+    },
+    {
+      "source": "docs/greenhouse-charts.md",
+      "line": 21,
+      "target": "https://developer-v4.enphase.com/docs/faq",
+      "kind": "external"
+    }
+  ],
+  "plain_references": [
+    {
+      "source": "docs/user-guides/linux/01-PrepareOrchidAppForFirstUseLinuxPi.docx",
+      "locator": "Next guide, paragraph 97",
+      "target": "03 - Add and Manage Plants in OrchidApp",
+      "resolved": "docs/user-guides/linux/02-AddAndManagePlantsInOrchidApp-LinuxPi.docx",
+      "status": "Exists by title; wrong platform numbering; no hyperlink",
+      "exists": true
+    },
+    {
+      "source": "docs/user-guides/windows/01-InstallOrUpgradeOrchidAppOnWindows.docx",
+      "locator": "Next guide, paragraphs 90 and 100",
+      "target": "02 - Prepare OrchidApp for First Use",
+      "resolved": "docs/user-guides/windows/02-PrepareOrchidAppForFirstUse.docx",
+      "status": "Exists; no hyperlink",
+      "exists": true
+    },
+    {
+      "source": "docs/user-guides/windows/02-PrepareOrchidAppForFirstUse.docx",
+      "locator": "Next guide, paragraph 98",
+      "target": "03 - Add and Manage Plants in OrchidApp",
+      "resolved": "docs/user-guides/windows/03-AddAndManagePlantsInOrchidApp.docx",
+      "status": "Exists; no hyperlink",
+      "exists": true
+    },
+    {
+      "source": "docs/user-guides/windows/04-ConfigureCloudBackupFolderInOrchidAppForWindows.docx",
+      "locator": "Recovery reference, paragraph 111",
+      "target": "05 - Recover OrchidApp on Replacement Machine",
+      "resolved": "docs/user-guides/windows/05-RecoverOrchidAppOnReplacementWindowsComputer.docx",
+      "status": "Exists by intended title; title differs; no hyperlink",
+      "exists": true
+    },
+    {
+      "source": "docs/user-guides/windows/05-RecoverOrchidAppOnReplacementWindowsComputer.docx",
+      "locator": "Start here / step 1",
+      "target": "01 - Install or Upgrade OrchidApp on Windows",
+      "resolved": "docs/user-guides/windows/01-InstallOrUpgradeOrchidAppOnWindows.docx",
+      "status": "Exists; no hyperlink",
+      "exists": true
+    },
+    {
+      "source": "docs/user-guides/windows/05-RecoverOrchidAppOnReplacementWindowsComputer.docx",
+      "locator": "Step 5",
+      "target": "04 - Configure Cloud Backup Folder in OrchidApp",
+      "resolved": "docs/user-guides/windows/04-ConfigureCloudBackupFolderInOrchidAppForWindows.docx",
+      "status": "Exists; shortened title; no hyperlink",
+      "exists": true
+    },
+    {
+      "source": "docs/greenhouse-charts.md",
+      "locator": "Additional read permission",
+      "target": "docs/grant-greenhouse-solar-read.sql",
+      "resolved": "docs/grant-greenhouse-solar-read.sql",
+      "status": "Exists",
+      "exists": true
+    },
+    {
+      "source": "docs/greenhouse-charts.md",
+      "locator": "Scope and installation",
+      "target": "accompanying updated-files archive",
+      "status": "No archive filename or stable link given; cannot resolve from this guide"
+    }
+  ],
+  "external_checks": [
+    {
+      "target": "https://webkit.org/blog/13878/",
+      "status": "Fetched official WebKit page; icon precedence passage supports statement"
+    },
+    {
+      "target": "https://developer.apple.com/videos/play/wwdc2023/10120/",
+      "status": "Fetched official Apple page/transcript; presentation request is not device acceptance evidence"
+    },
+    {
+      "target": "https://developer-v4.enphase.com/docs/faq",
+      "status": "Fetched official Enphase FAQ; supports 15-minute production_meter intervals, not proof of external collector configuration"
+    }
+  ]
+}

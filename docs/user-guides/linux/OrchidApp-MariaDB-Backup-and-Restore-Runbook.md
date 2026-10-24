@@ -1,378 +1,58 @@
-# OrchidApp - Backup & Restore Runbook
+# MariaDB and uploads backup and recovery
 
-**System:** Raspberry Pi
-**Database:** MariaDB (`orchids`)
-**Uploads Path:** `/opt/orchidapp/uploads`
-**Cloud Target:** OneDrive (encrypted via rclone)
-**Database engine:** MariaDB on all supported platforms
+This runbook covers Linux OrchidApp data backup and isolated recovery. Operators own scheduling, monitoring, credentials and restore verification. Application binaries are replaceable; the database, complete uploads, external configuration and required service/account settings must remain recoverable. Use the [full backup guide](Full-App-Backup-Pre-Upgrade.md) before upgrades.
 
-Commands below use `mariadb` and `mariadb-dump`. The current
-`infrastructure/backups/backup_orchids.sh` still invokes MariaDB's legacy
-`mysqldump` alias; ensure that alias is installed before running that script.
-This is a client compatibility name, not a requirement for a MySQL server.
-MariaDB configuration files can still use names such as `/etc/mysql/`,
-`[mysqld]` and `~/.my.cnf`.
+## Current routine backup and its limits
 
----
+infrastructure/backups/backup_orchids.sh dumps orchids through MariaDB's mysqldump alias with routines/triggers and a single-transaction snapshot, compresses it, copies it to orchidcrypt:, applies remote SQL retention of 14 days, syncs uploads to orchiduploadscrypt: and removes the successful local archive. It uses Bash pipefail/error handling. It does not implement continuous point-in-time log replay or versioned historical photo snapshots.
 
-# 1. Purpose
+The SQL snapshot and current uploads mirror are not an atomic common snapshot while writes continue. An older SQL dump may refer to files absent from the current mirror. Do not describe any retained DB snapshot as guaranteed full historical collection recovery. [C17](../../code-change-backlog.md#c17) requires portable configuration and a paired DB/filesystem strategy. For an upgrade, use the full stopped-writer backup rather than rely solely on the mirror.
 
-This document defines the **authoritative operational procedure** for:
+## Configure and test before scheduling
 
-* Backing up the MariaDB database
-* Backing up the uploads directory
-* Restoring the system in both test and disaster scenarios
+1. Choose the backup operator account and one installed script location. For consistency with the installation guide, the working example is /opt/orchidapp/infrastructure/backups/backup_orchids.sh; if installing a separate /usr/local/bin copy, record/update that copy and schedule explicitly.
+2. Inspect the script's current fixed /home/raymond-23 paths and replace/configure the intended backup/log directories through a separately reviewed code change (C17). Ensure those directories are writable before its first log call. The shipped personal defaults are not portable setup.
+3. Verify Bash, the MariaDB client/dump aliases, gzip and rclone. Configure DB credentials for the scheduling account using its protected client configuration or approved local secret mechanism; use mode 600 and the privileges required for the actual dump, not an assumed root account/password. Do not place secrets in command arguments/output.
+4. Configure and test the encrypted rclone remotes orchidcrypt: for SQL and orchiduploadscrypt: for uploads using the selected provider. Preserve the protected rclone config/encryption keys off-device. Remote names alone do not create/configure encryption or prove upload completion.
+5. Confirm the actual database endpoint/name and complete upload root. Test a backup, review exit/logs and verify the exact remote object. Test recovery in an isolated server before depending on it. Cron must run as the account whose credentials/config were tested.
 
-Backups are only valid if **restore succeeds**.
+**Do not schedule the unconfigured personal-path script.** Once those prerequisites and the reviewed script change are complete, a user crontab can invoke that exact installed script daily. Record its path/account and log destination, and monitor failures. No scheduled run exists merely because this guide contains an example. Configure rotation for the actual logs and permissions; do not blindly copy another user's home path.
 
----
+## Select one exact recovery object
 
-# 2. Operational Responsibility
+Use an isolated MariaDB instance/server for testing, not production. A dump can contain CREATE DATABASE/USE statements, routines and definers: a client database argument does not override SQL inside the dump. The routine script currently creates a single-database dump without --databases; the full pre-upgrade dump includes database-selection statements. Always inspect/trust the source and isolate the server regardless of format.
 
-Backup execution, monitoring and validation are the responsibility of the **deployment operator**.
+Choose one trusted filename from the remote. The routine script uses orchids_<date>_<time>.sql.gz, not backup.sql.gz. Substitute the exact object below; do not feed a wildcard of multiple backups into an import:
 
-The system provides tooling.
-It does not guarantee that backups are running or valid.
-
-A deployment without verified backups is considered **unsafe and incomplete**.
-
----
-
-# 3. Backup Architecture
-
-## Database (Snapshot Model)
-
-```
-MariaDB → mariadb-dump → gzip → rclone crypt → OneDrive/db
+```bash
+set -o pipefail
+restore_dir="$(mktemp -d)"
+chmod 700 "$restore_dir"
+backup_name='orchids_YYYY-MM-DD_HH-MM-SS.sql.gz'
+rclone copyto "orchidcrypt:${backup_name}" "$restore_dir/$backup_name"
+gzip -t "$restore_dir/$backup_name"
+gzip -dc "$restore_dir/$backup_name" > "$restore_dir/selected.sql"
 ```
 
-* Encrypted snapshots
-* 14-day retention
-* Point-in-time recovery
+Stop on every failed command; the filename above is a placeholder to replace, not a request to fetch all objects. Preserve the original archive. Verify its integrity/provenance and determine which upload snapshot matches it. A current mirror is not automatically the right match for an old DB snapshot.
 
----
+## Isolated restore and acceptance
 
-## Uploads (Mirror Model)
+Provision a disposable MariaDB target and protected client credentials that cannot reach the live instance. Create an empty recovery database with utf8mb4/utf8mb4_unicode_ci if the chosen dump does not create its own. Import exactly selected.sql using the isolated endpoint and intended database; if its SQL selects orchids, isolate the whole instance rather than assuming orchids_restore_test overrides it.
 
-```
-/opt/orchidapp/uploads → rclone sync → rclone crypt → OneDrive/uploads
-```
+Recover the matching complete uploads into a separate test directory, never sync over production as a test. Restore necessary account grants/configuration separately; database dumps do not generally include server accounts or OS services. Point an isolated compatible OrchidApp build at that data and check:
 
-* Encrypted mirror
-* No historical snapshots
-* Represents current filesystem state
+- Schema, required reference values, representative row counts and no import errors.
+- Plants, tags, taxonomy, events/lineage, actual plant/taxon photos and writable paths.
+- Correct settings, a successful restart and a new disposable save/reopen/photo operation.
+- No unexpected monitoring dependency on a general install; bespoke feeds only on the owner's configured installation after C03.
 
----
+SHOW TABLES, a nonempty dump, matching hash or process success is not a full restore test. Preserve evidence and the trusted input until acceptance is recorded. Dispose of isolated fixtures through your approved local process only after verification; no production cleanup command is part of this guide.
 
-## OneDrive Structure
+## Recovery onto a replacement Linux system
 
-```
-OrchidBackups/
-    db/        ← encrypted database snapshots
-    uploads/   ← encrypted uploads mirror
-    docs/      ← optional documentation
-```
+Use the [installation guide](installation-upgrade.md) only for tools, account/configuration, compatible app publication and service registration. **Do not run its fresh schema creation over restored data.** Restore one selected DB/upload pair and external configuration into the replacement environment, re-establish required grants/service permissions, then start the compatible app and run the acceptance checks above. A subsequent upgrade is a separate controlled operation after recoverability is proven.
 
----
+For a full pre-upgrade bundle, restore the app/config/service definitions appropriate to the captured revision in an isolated replacement environment, checking actual paths, ownership, service account and MariaDB grants. The bundle records effective units as text plus original local definitions; text output is reference material, not a drop-in service installer. Validate which metadata/symlink targets must be restored. Whole-machine recovery remains operational acceptance work, not an automated guarantee.
 
-# 4. rclone Configuration
-
-Configured remotes:
-
-```
-onedrive:
-orchidcrypt:           → onedrive:OrchidBackups/db
-orchiduploadscrypt:    → onedrive:OrchidBackups/uploads
-```
-
-### Critical Requirements
-
-* rclone configuration must be preserved
-* Remote names must remain consistent
-* Encryption keys must be retained securely
-
-If encryption configuration is lost, backups are unrecoverable.
-
----
-
-# 5. MariaDB Credentials
-
-Create:
-
-```bash id="1g6u2d"
-nano ~/.my.cnf
-```
-
-Add:
-
-```ini id="m0r1h2"
-[client]
-user=root
-password=YOUR_DATABASE_PASSWORD
-```
-
-Secure:
-
-```bash id="2m8kfd"
-chmod 600 ~/.my.cnf
-```
-
-Credentials must not be exposed or committed.
-
----
-
-# 6. Backup Script
-
-Canonical script location (repository):
-
-```
-/infrastructure/backups/backup_orchids.sh
-```
-
-Deployment location:
-
-```
-/usr/local/bin/backup_orchids.sh
-```
-
-### Script Responsibilities
-
-The script must:
-
-1. Dump database (`mariadb-dump`)
-2. Compress output
-3. Upload encrypted snapshot
-4. Enforce retention policy
-5. Sync uploads directory (encrypted mirror)
-6. Log execution
-7. Exit with correct error codes
-
-Failure at any stage must produce a non-zero exit code.
-
----
-
-# 7. Scheduling (Cron)
-
-Example user-level cron:
-
-```bash id="r9qk2h"
-0 2 * * * /usr/local/bin/backup_orchids.sh >> /home/<user>/orchid_backup_cron.log 2>&1
-```
-
-Verify:
-
-```bash id="v4o8j1"
-crontab -l
-```
-
-### Requirements
-
-* Backups must run daily
-* Failures must be visible in logs
-* Logs must be reviewed periodically
-
----
-
-# 8. Log Rotation
-
-Create:
-
-```bash id="2y4gfp"
-sudo nano /etc/logrotate.d/orchid_backup
-```
-
-Contents:
-
-```text id="5c9d1r"
-/home/<user>/orchid_backup.log
-/home/<user>/orchid_backup_cron.log
-{
-    monthly
-    rotate 6
-    compress
-    missingok
-    notifempty
-    create 644 <user> <user>
-}
-```
-
-Test:
-
-```bash id="7t1z6m"
-sudo logrotate -d /etc/logrotate.d/orchid_backup
-```
-
----
-
-# 9. Restore Procedure (Validation Test)
-
-Regular restore testing is mandatory. Use an isolated MariaDB server for testing
-untrusted or full database dumps. A command-line database name does not override
-`CREATE DATABASE` or `USE` statements inside a dump. The test-database procedure
-below assumes a single-database dump without those statements, as produced by
-the routine backup script. Do not use it unchanged for the full pre-upgrade dump.
-
-## Step 1 - Create Test Database
-
-```bash id="x2n7kf"
-mariadb -e "CREATE DATABASE orchids_restore_test;"
-```
-
----
-
-## Step 2 - Retrieve Backup
-
-```bash id="m6o9zt"
-rclone copy orchidcrypt: ~/restore_test
-```
-
----
-
-## Step 3 - Decompress
-
-```bash id="p1w8de"
-gunzip ~/restore_test/*.sql.gz
-```
-
----
-
-## Step 4 - Restore
-
-```bash id="q4c7jh"
-mariadb orchids_restore_test < ~/restore_test/*.sql
-```
-
----
-
-## Step 5 - Validate
-
-```bash id="n8l2vb"
-mariadb orchids_restore_test -e "SHOW TABLES;"
-```
-
-Validation must confirm:
-
-* Schema is complete
-* Tables exist
-* No restore errors occurred
-
----
-
-## Step 6 - Cleanup
-
-```bash id="d3h6kf"
-mariadb -e "DROP DATABASE orchids_restore_test;"
-rm -rf ~/restore_test
-```
-
----
-
-# 10. Disaster Recovery (New System)
-
-## Step 1 - Install Base System
-
-* Install MariaDB
-* Install rclone
-* Recreate rclone remotes
-* Ensure matching rclone version
-
----
-
-## Step 2 - Create Empty Database
-
-```bash id="k9o3lp"
-mariadb -e "CREATE DATABASE orchids;"
-```
-
----
-
-## Step 3 - Retrieve Backup
-
-```bash id="x8n4zc"
-rclone copy orchidcrypt: .
-```
-
----
-
-## Step 4 - Decompress
-
-```bash id="c2m7rf"
-gunzip backup.sql.gz
-```
-
----
-
-## Step 5 - Restore Database
-
-```bash id="h5t1qw"
-mariadb orchids < backup.sql
-```
-
----
-
-## Step 6 - Restore Uploads
-
-```bash id="z7k3ns"
-rclone sync orchiduploadscrypt: /opt/orchidapp/uploads
-```
-
----
-
-## Step 7 - Re-deploy Application
-
-Follow:
-
-```
-docs/installation-upgrade.md
-```
-
----
-
-# 11. Failure Modes
-
-## Encryption Key Loss
-
-* Backups cannot be decrypted
-* Data is permanently lost
-
-## rclone Misconfiguration
-
-* Backups may silently fail or upload incorrectly
-* Must be validated during restore testing
-
-## Credential Issues
-
-* Database dump may fail
-* Script must exit with error
-
-## Partial Backups
-
-* Must be treated as invalid
-* Restore validation will expose failure
-
----
-
-# 12. Operational Validation
-
-The following must be performed regularly:
-
-* Restore test (at least quarterly)
-* Validate schema and row counts
-* Confirm uploads restore correctly
-
-Backups are only real if restore succeeds.
-
----
-
-# 13. System Status Requirements
-
-A valid backup system must satisfy:
-
-* Encrypted database snapshots
-* Encrypted uploads mirror
-* Automated scheduled execution
-* Retention policy enforced
-* Restore tested successfully
-* Logs available and rotated
-
-If any of these conditions are not met, the backup system is not valid.
+Protect backups and keys, verify off-device availability, review logs and test recovery at least quarterly and after backup/restore changes. Investigate missing files or partial recovery before using the recovered collection or replacing the only trusted backup. See [C17/C19](../../code-change-backlog.md) for pending consistency/readiness work.

@@ -1,256 +1,48 @@
-# OrchidApp - Installation & Upgrade Guide
+# Raspberry Pi and Linux installation and upgrades
 
-MariaDB is the supported database engine. On Raspberry Pi OS, MariaDB uses
-the distribution path `/etc/mysql/` and accepts the `[mysqld]` option group;
-these names are expected and do not indicate a MySQL server installation.
+This guide covers a general OrchidApp server using MariaDB and systemd. It does not install the owner's bespoke monitoring feeds/importer or EnergyMonitoring. [C03](../../code-change-backlog.md#c03) must isolate those queries by explicit opt-in; the current broad Linux ARM gate remains a general-installation blocker on Home until corrected.
 
-## 1. Purpose
+Fresh database creation is from canonical schema and required seeds alone, never historical migration replay. Current fresh-creation automation has [C01/C02](../../code-change-backlog.md) blockers. This guide states the prerequisite rather than offering a broken copy-and-run rebuild command. Do not run migrations or a destructive rebuild against restored/live data to work around it.
 
-This document defines the **deterministic procedures** for:
+## Prerequisites and target
 
-* First-time installation on Raspberry Pi
-* Rebuilding the system from scratch
-* Performing safe application upgrades
+Use a maintainer-validated Raspberry Pi OS/Linux release and architecture, .NET 8 SDK for source publishing, MariaDB 10.11 server/client tools, PowerShell 7+, Git, native libvips image dependencies and systemd. Backups also need Bash, rsync, tar/gzip, rclone and an off-device copy route such as SCP. Package names/repositories differ by OS image; no universal apt list has been validated by this documentation cleanup. Track repeatable platform setup in [C16](../../code-change-backlog.md#c16).
 
-A correct execution of this guide must always result in a working system.
+Choose an application service account, app root (examples /opt/orchidapp), external configuration directory (/etc/orchidapp), MariaDB endpoint/account and uploads path. Use the same values throughout. Install/configure MariaDB with utf8mb4 and utf8mb4_unicode_ci; verify actual server/database settings with your administrative tools. Distribution paths such as /etc/mysql and option group mysqld are normal MariaDB compatibility names.
 
-If additional undocumented steps are required, the deployment model is considered broken.
+## Fresh environment
 
----
+1. Install and verify the tools above on the chosen image; enable MariaDB and verify the intended endpoint.
+2. Obtain the trusted repository at the selected app root, owned appropriately for publishing. Use the agreed remote/release revision; do not publish an unknown checkout.
+3. Provision the target database/account using the reviewed [schema-only creation contract](../../database-creation.md), including dependent views and reference seeds. It must work with the migrations directory absent. **Stop until that implementation is provided and validated.** The current Windows-specific rebuild script is not a Linux recipe. Record the schema baseline needed to accept only later migrations.
+4. Configure the app's runtime account/connection and isolated durable uploads before starting. Runtime privileges and migration/admin privileges differ; do not run the web process as MariaDB root.
+5. Build/publish and register the service below. Verify live application workflows and a real test-photo upload/reopen, then configure backups and validate an isolated recovery.
 
-## 2. Environment Model
+Creation bookkeeping must not read historical migration SQL. After creation, future compatible migrations are permitted; the prohibition is against replaying prior history into the assembled schema, not against upgrading that database later.
 
-| Environment | Platform     | Configuration Source           |
-| ----------- | ------------ | ------------------------------ |
-| Development | Windows PC   | `appsettings.Development.json` |
-| Production  | Raspberry Pi | `/etc/orchidapp/orchidapp.env` |
+## External configuration and service
 
-Rules:
+Create /etc/orchidapp with restricted ownership/access and a protected orchidapp.env using the operator's secure editor. Supply a correctly quoted complete ConnectionStrings__OrchidDb and Storage__UploadRoot. Keep passwords out of committed JSON, command arguments and copied support logs. A typical systemd value uses the form ConnectionStrings__OrchidDb="Server=127.0.0.1;Port=3306;Database=orchids;User=orchidapp;Password=..."; the ellipsis is a placeholder, not a password. Validate special-character quoting using the actual configuration mechanism. Use Storage__UploadRoot=/opt/orchidapp/uploads when that is the selected root.
 
-* Production never depends on Development configuration
-* Secrets are never committed to Git
-* All runtime configuration is externally supplied
+The env file can be root-owned mode 600 because systemd reads it for a system service. The service account needs execute/traverse access to the published tree and writable upload storage, not permission to modify the secret file. The upload root must exist before middleware starts; protect it and include it in recovery.
 
-##### needed to get Govee data in
-GRANT SELECT, INSERT, UPDATE, EXECUTE
-ON `orchids`.*
-TO `orchidapp`@`localhost`;
-
-GRANT DELETE
-ON `orchids`.`environmentimportrow`
-TO `orchidapp`@`localhost`;
-
-FLUSH PRIVILEGES;
-
-
-sudo apt install -y python3-venv libmariadb-dev build-essential
-
-python3 -m venv /opt/orchidapp/infrastructure/environment-importer/.venv
-
-/opt/orchidapp/infrastructure/environment-importer/.venv/bin/pip install mariadb
-
-/opt/orchidapp/infrastructure/environment-importer/.venv/bin/python -c "import mariadb; print('mariadb connector ok')"
-
-
-The systemd service must use the virtual environment Python:
-
-/opt/orchidapp/infrastructure/environment-importer/.venv/bin/python
-
-Do not install the MariaDB Python connector into the system Python environment.
-
-
----
-
-## 3. Installation Strategies (Critical)
-
-A database must be managed using **one and only one** strategy:
-
-### Strategy A - Rebuild (Fresh Installation)
-
-* Used for new environments
-* Uses canonical schema export
-* Does **not** use migrations
-
-### Strategy B - Migration (Existing System)
-
-* Used for upgrading an existing deployment
-* Applies forward-only migrations
-* Must not rebuild schema
-
-These strategies must **never be combined on the same database**.
-
----
-
-## 4. First-Time Installation (Fresh Raspberry Pi)
-
-This procedure uses the **Rebuild strategy**.
-
----
-
-### 4.1 Install Prerequisites
+After schema/native prerequisites pass, publish from the checkout root:
 
 ```bash
-sudo apt update && sudo apt upgrade -y
-sudo apt install -y curl git powershell rclone
-sudo apt install -y dotnet-sdk-8.0
-sudo apt install -y mariadb-server
+dotnet publish src/OrchidApp.Web/OrchidApp.Web.csproj -c Release -o /opt/orchidapp/publish
 ```
 
-Enable MariaDB:
-
-```bash
-sudo systemctl enable mariadb
-sudo systemctl start mariadb
-```
-
----
-
-### 4.2 Configure MariaDB (Required)
-
-Edit:
-
-```bash
-sudo nano /etc/mysql/mariadb.conf.d/50-server.cnf
-```
-
-Ensure:
-
-```ini
-[mysqld]
-character-set-server = utf8mb4
-collation-server     = utf8mb4_unicode_ci
-```
-
-Restart:
-
-```bash
-sudo systemctl restart mariadb
-```
-
-Verify:
-
-```sql
-SHOW VARIABLES LIKE 'collation%';
-```
-
-Expected:
-
-* `collation_server = utf8mb4_unicode_ci`
-
-If this step is skipped, stored procedures and comparisons may fail.
-
----
-
-### 4.3 Create Database and User
-
-```sql
-CREATE DATABASE orchids CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
-CREATE USER 'orchidapp'@'localhost' IDENTIFIED BY 'STRONG_PASSWORD';
-
-GRANT ALL PRIVILEGES ON orchids.* TO 'orchidapp'@'localhost';
-
-FLUSH PRIVILEGES;
-```
-
----
-
-### 4.4 Clone Repository
-
-```bash
-sudo mkdir -p /opt/orchidapp
-sudo chown $USER:$USER /opt/orchidapp
-cd /opt/orchidapp
-
-git clone <repo-url> .
-```
-
----
-
-### 4.5 Configure Environment
-
-Create:
-
-```bash
-sudo mkdir -p /etc/orchidapp
-sudo chmod 700 /etc/orchidapp
-sudo nano /etc/orchidapp/orchidapp.env
-```
-
-Add:
-
-```env
-ConnectionStrings__OrchidDb=Server=127.0.0.1;Port=3306;Database=orchids;User=orchidapp;Password=STRONG_PASSWORD
-Storage__UploadRoot=/opt/orchidapp/uploads
-```
-
-Secure:
-
-```bash
-sudo chmod 600 /etc/orchidapp/orchidapp.env
-```
-
----
-
-### 4.6 Configure Uploads Directory
-
-```bash
-sudo mkdir -p /opt/orchidapp/uploads
-sudo chown <user>:<user> /opt/orchidapp/uploads
-chmod 750 /opt/orchidapp/uploads
-```
-
-Requirements:
-
-* Must exist before application start
-* Must be writable by the application user
-* Part of the canonical dataset
-
----
-
-### 4.7 Install Image Processing Dependencies
-
-```bash
-sudo apt install -y libvips libheif1 libheif-dev
-```
-
-If missing, photo uploads will fail by design.
-
----
-
-### 4.8 Initialise Database Schema (Rebuild)
-
-From repository root:
-
-```bash
-pwsh ./database/scripts/rebuild.ps1
-```
-
-This:
-
-* Drops and recreates the database schema
-* Applies the canonical schema export
-* Produces a deterministic, clean state
-
-No manual SQL changes are permitted.
-
----
-
-### 4.9 Create systemd Service
-
-```bash
-sudo nano /etc/systemd/system/orchidapp.service
-```
+Require a successful exit. Create /etc/systemd/system/orchidapp.service, replacing the service-account placeholder and paths with the selected values:
 
 ```ini
 [Unit]
 Description=OrchidApp Web Application
-After=network.target
+After=network.target mariadb.service
 
 [Service]
 ExecStart=/usr/bin/dotnet /opt/orchidapp/publish/OrchidApp.Web.dll --urls http://0.0.0.0:5000
 WorkingDirectory=/opt/orchidapp/publish
-User=<user>
+User=<service-account>
 Environment=ASPNETCORE_ENVIRONMENT=Production
 EnvironmentFile=/etc/orchidapp/orchidapp.env
 Restart=on-failure
@@ -260,204 +52,47 @@ RestartSec=10
 WantedBy=multi-user.target
 ```
 
-Enable:
+Confirm the installed dotnet path; /usr/bin/dotnet is an example, not a verified path for every image. Restrict network access to the intended trusted users; OrchidApp has no built-in multi-user authentication. Enable/start only after configuration is checked:
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable orchidapp
+sudo systemctl enable orchidapp.service
+sudo systemctl start orchidapp.service
+systemctl is-active orchidapp.service
+sudo journalctl -u orchidapp.service --since '2 minutes ago' --no-pager -n 60
 ```
 
----
+Open the operator-provided URL (for the example listener, http://<pi-host>:5000). Service-active/listening status is not database/native readiness. Check lists, disposable test data, save/reopen, search, styling and photos. General installs must not provision the owner's monitoring objects to make Home work; report C03 instead.
 
-### 4.10 First Publish
+## Upgrade an existing correctly baselined database
 
-```bash
-dotnet publish src/OrchidApp.Web/OrchidApp.Web.csproj -c Release -o /opt/orchidapp/publish
-sudo systemctl start orchidapp
-```
+Complete the [full pre-upgrade backup](Full-App-Backup-Pre-Upgrade.md), verify its off-device copy and a recovery route, then leave app/other writers stopped. The owner's importer must be stopped only on that bespoke installation. Never rebuild the restored or existing database.
 
-Verify:
-
-```bash
-sudo systemctl status orchidapp
-```
-
-Application should be accessible at:
-
-```
-http://<pi-ip>:5000
-```
-
----
-
-### 4.11 Configure Backups (Mandatory)
-
-A deployment without backups is incomplete.
-
-Install script:
-
-```bash
-chmod +x /opt/orchidapp/infrastructure/backups/backup_orchids.sh
-```
-
-Test:
-
-```bash
-/opt/orchidapp/infrastructure/backups/backup_orchids.sh
-```
-
-Schedule:
-
-```bash
-crontab -e
-```
-
-```bash
-0 2 * * * /opt/orchidapp/infrastructure/backups/backup_orchids.sh
-```
-
----
-
-### 4.12 Validate Restore (Required)
-
-Follow the [backup and restore runbook](OrchidApp-MariaDB-Backup-and-Restore-Runbook.md)
-in an isolated test environment. A dump containing `CREATE DATABASE` or `USE`
-statements can select its original database even when a different database name
-is supplied to the client. Never test a restore against production.
-
-Backups are only valid if restore succeeds.
-
----
-
-## 5. Upgrade Procedure
-
-This procedure uses the **Migration strategy**.
-
----
-
-### 5.0 Pre-Upgrade Backup (Mandatory)
-
-Complete the [full pre-upgrade backup](Full-App-Backup-Pre-Upgrade.md), including
-application files, photos, database, external configuration and service settings.
-Verify an off-device copy before proceeding. Leave the app and any importer stopped.
-
-### 5.1 Update Source and Apply Migrations
+Check checkout revision and clean tracked state, then obtain the intended update:
 
 ```bash
 cd /opt/orchidapp
 git status --short --branch
-git log -1 --format="%h %s"
+git log -1 --format='%h %s'
 git pull --ff-only
 ```
 
-Tracked files must have no local changes. Preserve local `publish/`, `uploads/`
-and `imports/` directories; never run a cleanup that deletes them. If Git reports
-a conflict or an untracked file would be overwritten, stop and investigate.
+Stop on conflicts or unexpected local changes. Preserve publish, uploads, imports and external configuration. Do not clean them away. Prepare migration credentials in the operator terminal through local secret management: MARIADB_HOST, MARIADB_PORT, MARIADB_DATABASE=orchids, MARIADB_USER and MARIADB_PASSWORD. Ensure every value refers to the selected target; the runtime connection string does not supply these variables automatically.
 
-Load migration credentials without displaying them and export them to PowerShell:
+If using /etc/orchidapp/orchidapp-migrations.env, create it separately with restricted root/operator access and Bash-compatible quoted assignments, validate successful reading before sourcing it, and export its variables in a subshell. It is not automatically created or loaded by this repository, and a systemd env file is not automatically a safe Bash script. Do not invoke the runner after a failed/empty credential load or fall back to inherited targets.
 
-```bash
-(
-  set -a
-  source <(sudo cat /etc/orchidapp/orchidapp-migrations.env)
-  set +a
-  pwsh ./database/scripts/Apply-Migrations.ps1
-)
-echo "Migration exit code: $?"
-```
-
-Require exit code `0`. Resolve any failure before continuing or re-running.
-Use migrations for an existing database; never run the fresh-install rebuild.
-The system does not attempt automatic rollback.
-
-### 5.2 Publish and Start the Application
+With verified exported variables and compatible baseline, run:
 
 ```bash
-dotnet publish src/OrchidApp.Web/OrchidApp.Web.csproj -c Release -o /opt/orchidapp/publish
-echo "Publish exit code: $?"
+pwsh ./database/scripts/Apply-Migrations.ps1
 ```
 
-Require exit code `0` before starting:
+Require exit code 0 and review output before publishing. Historical checksum/order enforcement is incomplete; [C04](../../code-change-backlog.md#c04) records the required safeguards. DDL failures can leave partial state; do not blindly rerun or promise automatic rollback.
 
-```bash
-sudo systemctl start orchidapp.service
-systemctl is-active orchidapp.service
-sudo journalctl -u orchidapp.service --since "2 minutes ago" --no-pager -n 60
-```
+Publish as above, require success, start the app and repeat live checks. Resume only services/timers previously active; do not install an importer on other deployments. Keep the recovery set until the upgraded system has passed validation. Installer/ZIP copying is not a substitute for the maintained platform deployment process.
 
-Verify the browser checks below, then resume the importer timer if it was running
-before the backup:
+## Backup and recovery prerequisites
 
-```bash
-sudo systemctl start orchidapp-environment-importer.timer
-systemctl list-timers --all orchidapp-environment-importer.timer --no-pager
-```
+Follow the [routine backup/restore runbook](OrchidApp-MariaDB-Backup-and-Restore-Runbook.md) for account/path/remotes/scheduling checks and explicit backup selection. A fresh-source schema creation is different from restoring a backup. Recovery must not route a restored database through the destructive fresh-creation step. Restore app/configuration/service definitions and the compatible version, then publish/start only; apply only explicitly required subsequent migrations after a verified recovery copy.
 
-Do not manually replace published binaries or configuration files.
-
----
-
-## 6. Verification Checklist
-
-After deployment:
-
-```bash
-sudo systemctl status orchidapp
-```
-
-Confirm:
-
-* Service is running
-* No startup errors
-* Database connectivity successful
-
-Then verify:
-
-* Pages load
-* Data is visible
-* Styling is present
-* Plant photos load
-* Botanical name search returns expected results
-* The environmental summary loads on the supported Raspberry Pi platform
-
----
-
-## 7. Troubleshooting
-
-### Application fails at startup
-
-```bash
-journalctl -u orchidapp -n 50
-```
-
----
-
-### Connection string issues
-
-```bash
-cat /etc/orchidapp/orchidapp.env
-```
-
-Check:
-
-* Correct variable names
-* Correct credentials
-* File permissions (600)
-
----
-
-### Upload failures
-
-Check:
-
-* Upload directory exists
-* Permissions are correct
-* libvips is installed
-
----
-
-## 8. Deployment sequence
-
-For an existing deployment, follow section 5 in order: full backup, source update,
-migrations, publish, startup verification and resumption of scheduled imports.
-Application data and external configuration must survive every upgrade.
+For failures, inspect service/application logs without printing secret files into support output. Check selected endpoint, variable names, upload permissions and native libvips availability. Source-only validation and this guide do not certify a fresh machine or a backup restore; track acceptance with [C01–C05, C16/C17](../../code-change-backlog.md).

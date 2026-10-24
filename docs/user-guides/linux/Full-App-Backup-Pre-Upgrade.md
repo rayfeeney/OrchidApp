@@ -13,6 +13,18 @@ This full application backup complements that process.
 Run Pi commands in the same Bash terminal so `backup_dir` remains available.
 Stop at any failed command. Never proceed to an upgrade with an incomplete backup.
 
+## Execution prerequisites
+
+Use Bash with pipefail enabled so a failed source command in a pipeline is visible:
+
+```bash
+set -o pipefail
+```
+
+Verify rsync (including metadata preservation support), MariaDB dump/client tools, tar/gzip, sudo access, sufficient storage and an off-device SCP route. Check every exit result and stop on failure; do not treat the final successful command in a multi-command block as proof earlier steps worked. Preserve the trusted source/archive until full acceptance. These commands are not run by the documentation update.
+
+The importer below belongs only to the owner's bespoke local installation. General OrchidApp installations omit it. For whole-bundle restoration and acceptance, follow the [runbook recovery section](OrchidApp-MariaDB-Backup-and-Restore-Runbook.md#recovery-onto-a-replacement-linux-system), never a fresh schema rebuild over restored data.
+
 ## 1. Check paths and available space
 
 ```bash
@@ -30,7 +42,7 @@ them. Include additional deployment-specific units if present.
 
 ## 2. Stop application writes
 
-For a deployment with the environment importer:
+Only for the owner’s local deployment with its bespoke environment importer:
 
 ```bash
 sudo systemctl stop orchidapp-environment-importer.timer
@@ -145,7 +157,7 @@ the same SD card alone does not protect against SD-card failure.
 ## 8. Continue or resume service
 
 For an immediate upgrade, leave the app and importer stopped and continue with
-the [upgrade procedure](installation-upgrade.md#5-upgrade-procedure).
+the [upgrade procedure](installation-upgrade.md#upgrade-an-existing-correctly-baselined-database).
 If postponing the upgrade, restart the units that were active before the backup:
 
 ```bash
