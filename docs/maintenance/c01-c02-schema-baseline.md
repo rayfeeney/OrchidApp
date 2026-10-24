@@ -40,3 +40,9 @@ The subsequent Linux CI run failed during schema export because Get-Command retu
 Resolution now selects the first application match for both normal lookup and explicit overrides. ToolResolution.Checks.ps1 reproduced the failure before the fix and passed all seven checks afterwards on Windows using two real executable fixtures on PATH. It also verifies execution from a path containing spaces, explicit override precedence and invalid override rejection. The schema-contract job now runs the same cross-platform test before schema export. Actual Linux CI export success remains dependent on rerunning CI; these local checks do not certify that full job.
 
 No database objects, baseline cut-offs, schema checksums or migration history changed for this correction.
+
+## Follow-up: Unix regression-test argument passing
+
+The next Linux CI run passed the resolver checks but failed the fixture invocation assertion. The Unix branch's one-item argument array was unrolled by assignment from an if-expression into a scalar string. Splatting that scalar passed resolver-ok as individual characters, so echo returned r e s o l v e r - o k. The production resolver had already selected the correct single path; this failure was in the new test.
+
+The fixture argument variable is now explicitly typed as string[], with an additional assertion for array type and expected argument count. Invocation failures now report the captured exit code and output. Eight tool-resolution checks passed on Windows. A separate native-process reproduction of the exact Unix argument construction returned exit 1 and spaced characters before the correction, then exit 0 and resolver-ok afterwards. No application, workflow, resolver or database changes were needed for this second correction. The full Linux CI job still needs rerunning; it was not run locally.

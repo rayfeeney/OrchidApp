@@ -1,40 +1,38 @@
-# C01+C02 follow-up - Linux CI schema-export fix
+# CI follow-up - Unix tool-resolution test
 
-## Apply this delivery
+## Apply
 
-1. Apply after the C01+C02 changes-only ZIP.
-2. Extract directly into the repository root (the folder containing OrchidApp.sln), preserving folder paths and replacing the five modified files listed below. Merge any independent edits you have made to those files.
-3. One repository test file is added. CHANGELOG.md is this package manifest and replaces the previous delivery manifest if present. No deletions or moves are needed.
-4. Commit the changed files and rerun CI. No database commands, schema regeneration, history edits or rebuild are required to apply this correction.
+1. Apply after the previous C01+C02 CI fix.
+2. Extract directly into the repository root, the folder containing OrchidApp.sln. Replace the three modified files listed below, preserving their paths. Merge any independent edits you have made to these files.
+3. CHANGELOG.md is this delivery manifest and replaces the previous package manifest. No files are added, deleted or moved apart from this manifest.
+4. Commit and rerun CI. No database commands, schema regeneration or rebuild are needed.
 
-## Cause and correction
+## Cause
 
-The supplied Linux CI log shows two executable paths returned by Get-Command: /usr/bin/mariadb and /bin/mariadb. The resolver returned both, which were interpreted as one invalid command. It now returns the first application match in PATH order, including override-by-command-name lookups. The shared helper also resolves mariadb-dump and clients used by creation and migration scripts.
+The Linux resolver assertions had passed. The fixture invocation failed because assignment from an if-expression unrolled its one-item argument array into the scalar string resolver-ok. PowerShell splatted the string as individual characters, so echo returned r e s o l v e r - o k. This was a test bug introduced in the prior fix.
 
-## Files
+The argument variable is now explicitly string[]. An additional check validates its type/count, and native invocation failures include captured output and exit code. The production resolver and workflow are unchanged.
 
-| Status | Repository path | Change |
-| --- | --- | --- |
-| Modified | `database/scripts/Schema-Baseline.ps1` | Selects only the first executable match for PATH and override lookups, preventing joined /usr/bin and /bin paths. |
-| Modified | `.github/workflows/ci.yml` | Runs the cross-platform tool-resolution regression check before schema export in the schema-contract job. |
-| Added | `tests/SchemaBaseline.Checks/ToolResolution.Checks.ps1` | Adds seven checks for duplicate PATH entries, executable invocation, paths containing spaces and override behaviour. |
-| Modified | `docs/database-creation.md` | Documents single-executable lookup and the new regression-check command. |
-| Modified | `docs/maintenance/c01-c02-schema-baseline.md` | Records the CI failure, cause, reproduction, correction and validation limits. |
-| Modified | `RELEASE_NOTES.md` | Records the Linux CI tool-resolution correction. |
+## Changed files
+
+| Repository path | Change |
+| --- | --- |
+| `tests/SchemaBaseline.Checks/ToolResolution.Checks.ps1` | Keeps fixture arguments as a string array, checks their type/count and reports the exit code/output if invocation fails. |
+| `docs/maintenance/c01-c02-schema-baseline.md` | Adds the observed Linux test failure, exact cause, correction and validation evidence. |
+| `RELEASE_NOTES.md` | Records the Unix regression-test argument correction. |
 
 ## Validation
 
-- The regression test reproduced the failure before the fix: Resolution returns one string failed.
-- With the fix all seven checks passed on Windows using two actual executable fixtures on PATH. Tests also execute the selected tool from a path containing spaces.
-- Both the real local MariaDB client and dump executable resolved to single strings and executed their version commands successfully.
-- PowerShell syntax checks passed. Documentation links and package paths/contents were verified.
-- Linux schema CI now runs the new regression test before export. The full Linux CI job was not run locally; rerun it to confirm export and subsequent drift checks.
-- No application code, database SQL, schema manifest, baseline timestamp, schema checksums or historical migrations changed.
+- Eight tool-resolution checks passed locally on Windows.
+- Native-process reproduction of the exact Unix single-argument expression: before, exit 1 with r e s o l v e r - o k; after, exit 0 with resolver-ok.
+- PowerShell syntax and ZIP paths/contents were checked.
+- The full Linux CI job was not executed locally and must be rerun.
+- No production resolver, workflow, application code, SQL, schema metadata, checksums or migration history changed.
 
-## Local check
+## Optional local check
 
 ```powershell
 pwsh ./tests/SchemaBaseline.Checks/ToolResolution.Checks.ps1
 ```
 
-This check requires no database.
+No database is required.

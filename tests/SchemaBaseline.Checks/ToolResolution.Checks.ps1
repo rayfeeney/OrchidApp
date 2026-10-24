@@ -2,8 +2,8 @@ param([string]$RepoRoot = (Join-Path $PSScriptRoot '../..'))
 $ErrorActionPreference = 'Stop'
 . (Join-Path $RepoRoot 'database/scripts/Schema-Baseline.ps1')
 $checks = 0
-function Check([string]$Name, [bool]$Pass) {
-    if (-not $Pass) { throw "Check failed: $Name" }
+function Check([string]$Name, [bool]$Pass, [string]$Details = '') {
+    if (-not $Pass) { throw "Check failed: $Name. $Details" }
     $script:checks++
 }
 $temporary = Join-Path ([IO.Path]::GetTempPath()) ('orchids-tool-resolution-' + [guid]::NewGuid().ToString('N'))
@@ -24,9 +24,15 @@ try {
     $resolved = Resolve-MariaDbTool -Name $toolName
     Check 'Resolution returns one string' ($resolved -is [string] -and @($resolved).Count -eq 1)
     Check 'First PATH entry wins' ($resolved -ceq $firstTool)
-    $invokeArguments = if ($IsWindows) { @('/d', '/c', 'echo resolver-ok') } else { @('resolver-ok') }
+    # A one-item if-expression is unrolled to a string. Splatting that string
+    # passes each character separately, so retain an explicitly typed array.
+    [string[]]$invokeArguments = if ($IsWindows) { @('/d', '/c', 'echo resolver-ok') } else { @('resolver-ok') }
+    $expectedArgumentCount = if ($IsWindows) { 3 } else { 1 }
+    Check 'Native arguments remain an array' ($invokeArguments -is [string[]] -and $invokeArguments.Count -eq $expectedArgumentCount)
     $result = & $resolved @invokeArguments
-    Check 'Resolved tool executes with spaces in its path' ($LASTEXITCODE -eq 0 -and $result.Trim() -eq 'resolver-ok')
+    $toolExitCode = $LASTEXITCODE
+    $actualOutput = ($result -join "`n").Trim()
+    Check 'Resolved tool executes with spaces in its path' ($toolExitCode -eq 0 -and $actualOutput -eq 'resolver-ok') "Exit code: $toolExitCode; output: [$actualOutput]"
     $overridden = Resolve-MariaDbTool -Name $toolName -Override $secondTool
     Check 'Explicit override wins over PATH' ($overridden -is [string] -and $overridden -ceq $secondTool)
     $byName = Resolve-MariaDbTool -Override $toolName

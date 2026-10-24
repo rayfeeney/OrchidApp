@@ -1,5 +1,9 @@
 # Release notes
 
+## CI test follow-up - Unix fixture arguments
+
+Corrected the tool-resolution test to retain a one-item native argument array on Unix. Previously its scalar string was splatted into separate characters. Added an argument-count/type check and invocation diagnostics. Production tool resolution and database behaviour are unchanged.
+
 ## C01+C02 follow-up - Linux CI tool lookup
 
 Corrected MariaDB tool lookup to return one executable when PATH exposes multiple matches such as /usr/bin and /bin. Added a duplicate-PATH regression check to the Linux schema CI job before export. Database schema and migration history are unchanged.
