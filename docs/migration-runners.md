@@ -58,10 +58,11 @@ From the repository root:
 ```powershell
 dotnet run --configuration Release --project tests/MigrationHistory.Checks/MigrationHistory.Checks.csproj
 pwsh ./tests/MigrationHistory.Checks/Policy.Checks.ps1
+pwsh ./tests/MigrationHistory.Checks/Process.Checks.ps1
 pwsh ./tests/MigrationHistory.Checks/Database.Checks.ps1
 ```
 
-The first two run the same 24 policy scenarios without a database. The database suite requires explicit credentials/endpoint on a disposable MariaDB 10.11 server with create/drop rights. It creates/drops only an orchids_migrations_<guid> database, stages developer exports in a separate temporary source copy, and retains unique fixture folders for diagnosis. It tests both operational entry points, later-once-only application, complete preflight, legacy rows, failed DDL, retry blocking, competing runners, explicit target requirements and export refusal before source mutation.
+The first two run the same 24 policy scenarios without a database. Process.Checks.ps1 verifies the test-only child-process protocol without a database. Database.Checks.ps1 runs those protocol checks automatically first and matches the original exception message returned as JSON, rather than PowerShell formatted errors that can wrap differently on CI. The database suite requires explicit credentials/endpoint on a disposable MariaDB 10.11 server with create/drop rights. It creates/drops only an orchids_migrations_<guid> database, stages developer exports in a separate temporary source copy, and retains unique fixture folders for diagnosis. It tests both operational entry points, later-once-only application, complete preflight, legacy rows, failed DDL, retry blocking, competing runners, explicit target requirements and export refusal before source mutation.
 
 After a Release web build on Windows, actual staged Desktop checks are available with the same isolated server settings:
 

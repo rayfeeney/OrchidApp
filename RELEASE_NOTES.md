@@ -1,5 +1,9 @@
 # Release notes
 
+## C04 CI follow-up - test error reporting
+
+Database checks now compare the original child exception message returned as JSON, avoiding failures caused by wrapped/coloured PowerShell error displays. Added automatic protocol regression checks. Production migration and failed-DDL handling are unchanged.
+
 ## C04 - migration runner consistency
 
 PowerShell entry points now share one runner and require explicit targets. Desktop uses matching preflight rules for duplicate timestamps, chronology, checksums and missing files, with documented baseline exceptions. Failed or uncertain SQL leaves a durable pending marker and blocks automatic retries. Developer workflow applies before exporting for review. See [runner instructions](docs/migration-runners.md) and [local evidence/CI limits](docs/maintenance/c04-migration-runners.md).

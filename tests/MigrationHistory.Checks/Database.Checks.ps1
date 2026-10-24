@@ -3,6 +3,8 @@ $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false
 $RepoRoot = (Resolve-Path -LiteralPath $RepoRoot).Path
 . (Join-Path $RepoRoot 'database/scripts/Migration-History.ps1')
+. (Join-Path $PSScriptRoot 'Process.Helpers.ps1')
+& (Join-Path $PSScriptRoot 'Process.Checks.ps1')
 foreach ($name in @('MARIADB_HOST','MARIADB_PORT','MARIADB_USER','MARIADB_PASSWORD')) {
     if (-not [Environment]::GetEnvironmentVariable($name)) { throw "Explicit $name required for an isolated test server." }
 }
@@ -38,11 +40,11 @@ function SqlFile([string]$Folder,[string]$Name,[string]$Sql) {
     $path
 }
 function Run([string]$Script,[string[]]$Arguments,[string]$ErrorText = '') {
-    $output = & $pwsh -NoProfile -File $Script @Arguments 2>&1
-    $code = $LASTEXITCODE
-    $text = $output -join "`n"
+    $result = Invoke-CheckProcess $pwsh $Script $Arguments
+    $code = $result.ExitCode
+    $text = $result.Output
     if ($ErrorText) {
-        if ($code -eq 0 -or $text.IndexOf($ErrorText,[StringComparison]::OrdinalIgnoreCase) -lt 0) { throw "Expected '$ErrorText'; exit=$code; $text" }
+        if ($code -eq 0 -or $result.Message.IndexOf($ErrorText,[StringComparison]::OrdinalIgnoreCase) -lt 0) { throw "Expected '$ErrorText'; exit=$code; message=$($result.Message); $text" }
     }
     elseif ($code -ne 0) { throw "Unexpected failure (exit $code): $text" }
     $script:checks++

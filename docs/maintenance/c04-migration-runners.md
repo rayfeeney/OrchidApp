@@ -30,3 +30,13 @@ The workflow now runs the C# policy/inventory check in the build job and PowerSh
 The rules protect cooperating updated runners, not old clients or arbitrary manual changes to SQL/history. Checksums are raw-byte hashes; preserve trusted artifacts and line endings rather than changing stored digests. An inclusive schema cut-off cannot identify a newly invented filename below it: never add backdated schema-covered changes. Live structural drift, the historical DDL corpus on representative real backups, installer/hardware acceptance and real recovery remain separate work. Restore or obtain maintainer review for incomplete migration state; do not delete a marker to force replay.
 
 See [migration runners](../migration-runners.md) for commands, exact exceptions and recovery handling. C04 is implemented and locally verified with Linux CI acceptance pending. Next agreed implementation step is C16, developer setup, followed by C05 CI database acceptance.
+
+## Follow-up: formatted error output in Linux CI
+
+The supplied Linux CI log showed the intended SQL failure but split the phrase SQL may be partially applied across PowerShell error-display lines, inserting a gutter before may. The database test searched the formatted child output for a contiguous phrase and failed before reaching its database-state assertions. This was a test-harness defect; the reported runner correctly returned failure with the intended diagnostic.
+
+The test now uses a child-process wrapper that returns the original exception message in a JSON result, independently of PowerShell formatting. It retains the nonzero exit-code requirement and all existing database-state assertions. Script parameters are passed as JSON data, with explicit binding for declared named parameters/switches and positional arguments; paths and values are not interpolated as executable code. The test-only protocol preserves diagnostic output for failures.
+
+Process.Checks.ps1 reproduces the reported presentation split and checks long/multiline messages, Unicode and quotes, paths containing spaces, named/switch/positional binding, success/failure exit codes and empty arguments. It runs automatically at the start of Database.Checks.ps1. No production runner, workflow, schema, baseline or migration SQL changes were made for this correction. Linux CI must still be rerun for the updated test harness.
+
+Validation of this correction: 10 child-process protocol checks and all 53 migration database checks passed locally on Windows/MariaDB 10.11.16. PowerShell syntax checks passed. The protocol checks retain the exact reported formatted-line split as a regression fixture. Linux CI remains to be rerun.
