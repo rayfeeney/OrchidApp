@@ -95,6 +95,7 @@ periods.RemoveAt(periods.Count - 1);
 
 // Optional disposable MariaDB integration. Never point this at an existing instance.
 await PerformanceChecks.CacheAsync(Check);
+NetCostChecks.Run(Check);
 if (Environment.GetEnvironmentVariable("GREENHOUSE_TEST_CONNECTION") is { Length: > 0 } connection)
 {
     var settings = new MySqlConnectionStringBuilder(connection);
@@ -126,6 +127,7 @@ if (Environment.GetEnvironmentVariable("GREENHOUSE_TEST_CONNECTION") is { Length
     await using (var command = new MySqlCommand("UPDATE orchids.environmenttargetrule SET isActive=1 WHERE environmentTargetRuleId=1", sql))
         await command.ExecuteNonQueryAsync();
     await PerformanceChecks.DatabaseAsync(connection, now, Check);
+    await NetCostChecks.DatabaseAsync(connection, Check);
 }
 
 if (args.Length == 2 && args[0] == "--fixture-output")
@@ -147,6 +149,14 @@ if (args.Length == 2 && args[0] == "--serve")
         var engine = app.Services.GetRequiredService<Microsoft.AspNetCore.Mvc.ViewEngines.ICompositeViewEngine>();
         var view = engine.GetView(null, "/Pages/Shared/_GreenhouseChart.cshtml", false);
         if (!view.Success) throw new Exception(string.Join(",", view.SearchedLocations));
+        using var header = new StringWriter();
+        var costView = engine.GetView(null, "/Pages/Shared/_GreenhouseNetCosts.cshtml", false);
+        if (!costView.Success) throw new Exception("Cost partial not found");
+        var costModel = new GreenhouseNetCosts(new("Last 7 days", 12.34m), new("Year to date", -123.45m));
+        var costData = new Microsoft.AspNetCore.Mvc.ViewFeatures.ViewDataDictionary<GreenhouseNetCosts>(
+            new Microsoft.AspNetCore.Mvc.ModelBinding.EmptyModelMetadataProvider(), new Microsoft.AspNetCore.Mvc.ModelBinding.ModelStateDictionary()) { Model = costModel };
+        var costTemp = new Microsoft.AspNetCore.Mvc.ViewFeatures.TempDataDictionary(http, app.Services.GetRequiredService<Microsoft.AspNetCore.Mvc.ViewFeatures.ITempDataProvider>());
+        await costView.View.RenderAsync(new Microsoft.AspNetCore.Mvc.Rendering.ViewContext(action, costView.View, costData, costTemp, header, new Microsoft.AspNetCore.Mvc.ViewFeatures.HtmlHelperOptions()));
         using var output = new StringWriter();
         foreach (var name in new[] { "Cool side", "Hot side" })
         {
@@ -174,7 +184,7 @@ if (args.Length == 2 && args[0] == "--serve")
             await view.View.RenderAsync(new Microsoft.AspNetCore.Mvc.Rendering.ViewContext(action, view.View, data, temp, output, new Microsoft.AspNetCore.Mvc.ViewFeatures.HtmlHelperOptions()));
             output.Write("</div></div></div>");
         }
-        return Microsoft.AspNetCore.Http.Results.Content("<!DOCTYPE html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><link rel='stylesheet' href='/lib/bootstrap/dist/css/bootstrap.min.css'></head><body><main class='container py-4'><h1>Environment - last 7 days</h1><p>Preview — generated test data</p><div class='row g-3'>" + output + "</div></main><script src='/lib/chartjs/chart.umd.min.js'></script><script src='/js/greenhouse-charts.js'></script></body></html>", "text/html; charset=utf-8");
+        return Microsoft.AspNetCore.Http.Results.Content("<!DOCTYPE html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><link rel='stylesheet' href='/lib/bootstrap/dist/css/bootstrap.min.css'></head><body><main class='container py-4'><h1>Home</h1><p>Preview — generated test data</p><div class='row g-3 mb-3'><div class='col-12 col-md-6'><h2 class='h5 fw-bold'>Environment - last 7 days</h2><p>Values are shown as Actual / Target</p></div><div class='col-12 col-md-6'>" + header + "</div></div><div class='row g-3'>" + output + "</div></main><script src='/lib/chartjs/chart.umd.min.js'></script><script src='/js/greenhouse-charts.js'></script></body></html>", "text/html; charset=utf-8");
     });
     await app.RunAsync();
 }

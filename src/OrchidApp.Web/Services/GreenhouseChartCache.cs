@@ -25,17 +25,20 @@ public sealed class GreenhouseChartCache(IMemoryCache cache, IOptions<Greenhouse
         });
     }
 
-    public async Task<IReadOnlyList<GreenhouseChart>> GetAsync(string key,
+    public Task<IReadOnlyList<GreenhouseChart>> GetAsync(string key,
         Func<CancellationToken, Task<IReadOnlyList<GreenhouseChart>>> load, CancellationToken ct)
+        => GetValueAsync(key, load, ct);
+
+    public async Task<T> GetValueAsync<T>(string key, Func<CancellationToken, Task<T>> load, CancellationToken ct) where T : class
     {
         var seconds = Math.Clamp(options.Value.Seconds, 0, 900);
         if (seconds == 0) return await load(ct);
-        if (cache.TryGetValue<IReadOnlyList<GreenhouseChart>>(key, out var result)) return result!;
+        if (cache.TryGetValue<T>(key, out var result)) return result!;
         // Coalesce concurrent cold requests instead of repeating all chart queries.
         await gate.WaitAsync(ct);
         try
         {
-            if (cache.TryGetValue<IReadOnlyList<GreenhouseChart>>(key, out result)) return result!;
+            if (cache.TryGetValue<T>(key, out result)) return result!;
             result = await load(ct);
             cache.Set(key, result, TimeSpan.FromSeconds(seconds));
             return result;

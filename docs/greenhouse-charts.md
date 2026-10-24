@@ -1,5 +1,58 @@
 # Greenhouse home-page charts
 
+## Whole-period Cost / Saved boxes
+
+Two combined greenhouse boxes sit above the location cards, alongside the
+Environment heading. One covers the last seven complete Europe/London calendar
+days; the other covers 1 January through yesterday. Today is excluded. These
+calendar-day ranges are independent of the charts' existing 22:00-to-22:00 window.
+
+For EACH entire period, sum both heaters' kWh, subtract solar production once,
+then multiply that signed energy difference by the import tariff applicable
+yesterday (pence/kWh divided by 100). Positive results show Cost; negative results
+show Saved with an absolute amount. Zero shows Cost £0.00. Amounts are estimates,
+not actual grid expenditure or export income. There is no daily MAX/shortfall,
+no daily clamp, and no daily tariff weighting. Surplus generation on one day can
+offset heating on any other day in the same reporting period. Historical tariffs
+on the hourly chart remain unchanged.
+
+Production is read from the existing EnergyMonitoring.EnphaseInterval table.
+The current collector calls telemetry/production_meter, whose default interval
+is 15 minutes ([Enphase API FAQ](https://developer-v4.enphase.com/docs/faq)). Four
+valid quarter-hour readings are required for each real UTC hour. Interval ends
+belong to the preceding hour/day. Other telemetry rows with NULL ProducedWh do
+not count as production. Expected hours follow London calendar boundaries, so
+23-hour and 25-hour days are handled correctly. No MariaDB timezone tables are
+needed by the new cost queries.
+
+Each period needs complete readings for both unambiguously assigned heaters and
+solar production, plus one applicable tariff. Missing, invalid or ambiguous data
+shows a neutral dash rather than a fabricated zero or saving. Internal diagnostics
+are retained in the model and application logs; no coverage warnings are displayed
+in the chart. Both boxes use the existing 120-second cache configuration. A solar
+read failure leaves the original charts working independently.
+
+The date range above each chart and the reading-count/provisional messages in
+chart tooltips are removed. Tooltips show values and the period only. The cost
+boxes retain the small word Estimated to describe what their amounts represent.
+
+### Additional read permission
+
+No EnergyMonitoring code, collectors, tables, views or indexes are changed.
+The app account does need SELECT on the existing solar table. As a database
+administrator, grant it to the applicable existing OrchidApp accounts:
+
+    GRANT SELECT ON EnergyMonitoring.EnphaseInterval
+    TO 'orchidapp'@'localhost', 'orchidapp'@'127.0.0.1';
+
+This statement is also supplied as docs/grant-greenhouse-solar-read.sql. It has
+not been executed against the user's database. All other grants are unchanged.
+
+Current verification: 55 calculation/cache checks without a database, 72 including
+MariaDB integration, 25 existing platform checks, successful application build,
+and desktop/phone rendering checks for both boxes and the simplified tooltips.
+Generated solar/heater fixtures were rolled back; live data was not accessed.
+
 ## Performance update
 
 Chart temperature aggregation now runs in MariaDB. The hourly query returns one
@@ -37,7 +90,7 @@ The uncached chart load took approximately 150 ms on this test machine. This is
 not a timing guarantee for the deployed Raspberry Pi. A cache hit issued zero
 chart database commands. The generated readings were rolled back afterwards.
 
-Verification: 36 calculation/cache checks without a database; 49 checks including
+Verification at the performance-only stage: 36 calculation/cache checks without a database; 49 checks including
 MariaDB integration; 52 with the optional million-row benchmark. All pass, along
 with the 25 existing platform-gate checks. The application builds successfully.
 To reproduce the optional benchmark, set GREENHOUSE_BENCHMARK=1 along with the
@@ -53,13 +106,13 @@ hour may shift. Existing summary calculations retain their previous boundaries.
 
 Legend labels are Average (°C), Actual temperature (°C), Target (°C), and Cost (£).
 Descriptive text and expandable data tables have been removed. Full period values
-and provisional status remain in tooltips. Only a rendering failure shows a message
+remain in tooltips; technical coverage messages and the date-range heading are removed. Only a rendering failure shows a message
 beneath a chart.
 
 ## Scope and installation
 
 This change adds two charts beneath the existing Cool side and Hot side summaries.
-It includes no heating-cost totals, solar accounting, date selector or collector changes.
+It also includes the combined whole-period Cost / Saved boxes described above. No date selector or collector changes are included.
 
 The accompanying updated-files archive contains only added/changed OrchidApp files.
 Apply its paths at the OrchidApp repository root, review the diff, then build and deploy
@@ -71,7 +124,7 @@ The current OrchidApp database connection must have SELECT access to:
 - OrchidApp: environmentreading, environmentsensor, environmentperiodrule,
   environmenttargetrule and venvironmentreadingperiod.
 - EnergyMonitoring: TapoEnergyHourly, MonitoringDevice,
-  MonitoringDeviceLocationHistory, GreenhouseTargetLocationMap and Tariff.
+  MonitoringDeviceLocationHistory, GreenhouseTargetLocationMap, Tariff and EnphaseInterval.
 
 Verify existing access before deployment. This change does not alter users or grants.
 The cross-schema name EnergyMonitoring is the same name used by the supplied SQL.
@@ -86,8 +139,7 @@ rather than silently included. Location names must match Cool side / Hot side
 ## Data definitions
 
 - Chart boundaries use yesterday at 22:00 Europe/London, exclusive, and a start
-  exactly 168 elapsed hours earlier. The printed range includes the first and last
-  hourly timestamps. Summary boundaries remain the existing eight calendar dates.
+  exactly 168 elapsed hours earlier. No date-range heading is displayed. Summary boundaries remain the existing eight calendar dates.
 - Summary SQL retains the existing reading-weighted calculation but uses the same
   explicit London current date, rather than depending on MariaDB CURDATE().
   Missing or overlapping current target rules leave summary targets unavailable,
@@ -117,11 +169,11 @@ rather than silently included. Location names must match Cool side / Hot side
 - Temperature timestamps are local DATETIME values with no offset. Repeated autumn
   hours cannot be reconstructed reliably; ambiguous/invalid hourly temperatures
   are gaps with a notice. Period averages preserve the existing local reading logic.
-- Period averages are explicitly provisional, with counts and detailed coverage
-  status. Expected temperature sampling cadence is not configured, so no average
+- Period averages retain internal provisional status, reading counts and coverage
+  diagnostics. Expected temperature sampling cadence is not configured, so no average
   is claimed complete. Ongoing/unobserved periods are also identified.
 - Read/query errors leave the summaries available with a chart-unavailable message.
-  Period coverage is available in chart tooltips; there are no data listings.
+  Technical coverage messages and data listings are omitted from the end-user UI.
 
 ## Frontend dependency
 

@@ -1,0 +1,16 @@
+@model OrchidApp.Web.Models.GreenhouseNetCosts
+<div class="row g-2 greenhouse-net-costs">
+    @foreach (var metric in new[] { Model.LastSevenDays, Model.YearToDate })
+    {
+        <div class="col-6">
+            <div class="card bg-body-tertiary h-100">
+                <div class="card-body py-2 px-3">
+                    <div class="small text-muted">@metric.Period</div>
+                    <div class="fw-semibold">@metric.Label</div>
+                    <div class="h4 fw-bold mb-0">@metric.DisplayAmount</div>
+                    <div class="small text-muted">Estimated</div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
