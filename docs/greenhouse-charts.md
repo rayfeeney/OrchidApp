@@ -18,18 +18,19 @@ on the hourly chart remain unchanged.
 
 Production is read from the existing EnergyMonitoring.EnphaseInterval table.
 The current collector calls telemetry/production_meter, whose default interval
-is 15 minutes ([Enphase API FAQ](https://developer-v4.enphase.com/docs/faq)). Four
-valid quarter-hour readings are required for each real UTC hour. Interval ends
-belong to the preceding hour/day. Other telemetry rows with NULL ProducedWh do
-not count as production. Expected hours follow London calendar boundaries, so
-23-hour and 25-hour days are handled correctly. No MariaDB timezone tables are
-needed by the new cost queries.
+is 15 minutes ([Enphase API FAQ](https://developer-v4.enphase.com/docs/faq)). Totals
+sum the recorded production values without requiring a particular sample count.
+Interval ends belong to the preceding hour/day. NULL production values and absent
+intervals are skipped. Genuine zero readings are included. London boundaries
+handle 23-hour and 25-hour days; no MariaDB timezone tables are needed.
 
-Each period needs complete readings for both unambiguously assigned heaters and
-solar production, plus one applicable tariff. Missing, invalid or ambiguous data
-shows a neutral dash rather than a fabricated zero or saving. Internal diagnostics
-are retained in the model and application logs; no coverage warnings are displayed
-in the chart. Both boxes use the existing 120-second cache configuration. A solar
+Each period uses the available readings for the two assigned heaters and solar
+production. Missing/null readings are ignored; zero values are valid. Gaps are
+not interpolated or extrapolated, and there is no completeness threshold. Both
+feeds absent means recorded totals of zero, provided a tariff is available.
+Negative values are excluded. A missing/ambiguous tariff, conflicting mappings,
+duplicate readings or database access failures can still leave a dash. Internal
+diagnostics remain available without coverage warnings in the chart. Both boxes use the existing 120-second cache configuration. A solar
 read failure leaves the original charts working independently.
 
 The date range above each chart and the reading-count/provisional messages in
@@ -48,7 +49,7 @@ administrator, grant it to the applicable existing OrchidApp accounts:
 This statement is also supplied as docs/grant-greenhouse-solar-read.sql. It has
 not been executed against the user's database. All other grants are unchanged.
 
-Current verification: 55 calculation/cache checks without a database, 72 including
+Current verification: 61 calculation/cache checks without a database, 79 including
 MariaDB integration, 25 existing platform checks, successful application build,
 and desktop/phone rendering checks for both boxes and the simplified tooltips.
 Generated solar/heater fixtures were rolled back; live data was not accessed.

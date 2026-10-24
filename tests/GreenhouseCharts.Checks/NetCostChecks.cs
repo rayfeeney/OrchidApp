@@ -37,20 +37,38 @@ internal static class NetCostChecks
         yesterdayRate.Add(new() { EffectiveFromDate = new(2026,1,7), RatePence = 20 });
         check("Overlapping tariffs are unavailable", GreenhouseNetCostService.Build(now, data.Energy, data.Assignments, data.Solar, yesterdayRate).LastSevenDays.SignedAmount is null);
         data.Energy.RemoveAt(0);
-        check("Missing heater reading is not zero", Evaluate(now, data).LastSevenDays.SignedAmount is null);
+        check("Missing heater reading is ignored", Evaluate(now, data).LastSevenDays.SignedAmount == 41.75m);
         data = Fixture(now);
         data.Solar[0].ReadingCount = 3;
-        check("Missing quarter-hour solar coverage is not zero", Evaluate(now, data).LastSevenDays.SignedAmount is null);
+        data.Solar[0].ProducedWh = 750;
+        check("Missing quarter-hour solar reading retains available production", Evaluate(now, data).LastSevenDays.SignedAmount == 42.0625m);
         data = Fixture(now);
         data.Solar[0].InvalidCount = 1;
-        check("Invalid solar timestamps are rejected", Evaluate(now, data).LastSevenDays.SignedAmount is null);
+        check("Solar sampling cadence does not invalidate totals", Evaluate(now, data).LastSevenDays.SignedAmount == 42);
         data = Fixture(now);
         data.Assignments.Add(data.Assignments[0]);
         check("Duplicate assignment cannot inflate combined cost", Evaluate(now, data).LastSevenDays.SignedAmount is null);
         data = Fixture(new(2026,1,20,12,0,0,DateTimeKind.Utc));
         data.Energy.RemoveAt(0);
         var partial = Evaluate(new(2026,1,20,12,0,0,DateTimeKind.Utc), data);
-        check("Weekly total remains available when only earlier YTD data is missing", partial.LastSevenDays.SignedAmount is not null && partial.YearToDate.SignedAmount is null);
+        check("Earlier missing YTD data is ignored independently", partial.LastSevenDays.SignedAmount == 42 && partial.YearToDate.SignedAmount == 113.75m);
+        data = Fixture(now);
+        data.Energy[0].EnergyWh = null;
+        check("NULL heater reading is ignored", Evaluate(now, data).LastSevenDays.SignedAmount == 41.75m);
+        data = Fixture(now);
+        data.Energy[0].EnergyWh = 0;
+        check("Recorded heater zero is retained", Evaluate(now, data).LastSevenDays.SignedAmount == 41.75m);
+        data = Fixture(now);
+        data.Solar.RemoveAt(0);
+        check("Missing solar hour is ignored", Evaluate(now, data).LastSevenDays.SignedAmount == 42.25m);
+        data = Fixture(now);
+        data.Solar[0].ProducedWh = 0;
+        check("Recorded solar zero is retained", Evaluate(now, data).LastSevenDays.SignedAmount == 42.25m);
+        data = Fixture(now);
+        data.Energy.Clear();
+        check("Missing heater feed does not discard recorded solar", Evaluate(now, data).LastSevenDays is { SignedAmount: -42, Label: "Saved" });
+        data.Solar.Clear();
+        check("No recorded data sums to zero", Evaluate(now, data).LastSevenDays.SignedAmount == 0);
         var january = Evaluate(new(2026,1,3,12,0,0,DateTimeKind.Utc), Fixture(new(2026,1,3,12,0,0,DateTimeKind.Utc)));
         check("Seven-day range can cross New Year", january.LastSevenDays.HeaterKwh == 336);
         check("YTD starts at January midnight", january.YearToDate.HeaterKwh == 96);
@@ -94,7 +112,9 @@ internal static class NetCostChecks
             var second = await cache.GetValueAsync("costs", Load, default);
             check("Net cost cache reuses a complete calculated result", loads == 1 && ReferenceEquals(first, second) && second.LastSevenDays.SignedAmount == 42);
             await using (var gap = new MySqlCommand("UPDATE EnergyMonitoring.EnphaseInterval SET ProducedWh=NULL WHERE IntervalEndUtc='2026-01-07 00:00:00'", sql, transaction)) await gap.ExecuteNonQueryAsync();
-            check("MariaDB missing solar reading leaves amount unavailable", (await service.LoadAsync(now, default)).LastSevenDays.SignedAmount is null);
+            check("MariaDB NULL solar reading is skipped without blocking total", (await service.LoadAsync(now, default)).LastSevenDays.SignedAmount == 42.0625m);
+            await using (var missing = new MySqlCommand("DELETE FROM EnergyMonitoring.TapoEnergyHourly WHERE TapoDeviceKey=1 AND HourStartUtc='2026-01-01'", sql, transaction)) await missing.ExecuteNonQueryAsync();
+            check("MariaDB missing heater reading is skipped", (await service.LoadAsync(now, default)).LastSevenDays.SignedAmount == 41.8125m);
         }
         finally { await transaction.RollbackAsync(); }
     }

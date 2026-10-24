@@ -36,17 +36,16 @@ public sealed class GreenhouseNetCostService(OrchidDbContext db)
             JOIN EnergyMonitoring.GreenhouseTargetLocationMap m ON m.LocationId = h.LocationId
             WHERE md.SourceSystemCode = 'Tapo' AND md.IsActive = 1
             """).ToListAsync(ct);
-        // Production-meter collection uses 15-minute intervals. The interval end
+        // Sum available production values, including zero; omit null/negative data.
+        // Missing intervals do not invalidate totals. The interval end
         // belongs to the preceding hour/day. Solar is aggregated once, independently
         // of the heater joins, so it cannot be credited separately to each location.
         var solar = await db.Database.SqlQuery<GreenhouseSolarHour>($"""
             SELECT CAST(DATE_FORMAT(IntervalEndUtc - INTERVAL 1 SECOND, '%Y-%m-%d %H:00:00') AS DATETIME) AS AtUtc,
                    SUM(ProducedWh) AS ProducedWh, COUNT(*) AS ReadingCount,
-                   CAST(SUM(CASE WHEN ProducedWh < 0 OR
-                        MOD(TIMESTAMPDIFF(SECOND, '1970-01-01', IntervalEndUtc), 900) <> 0
-                        THEN 1 ELSE 0 END) AS SIGNED) AS InvalidCount
+                   CAST(0 AS SIGNED) AS InvalidCount
             FROM EnergyMonitoring.EnphaseInterval
-            WHERE IntervalEndUtc > {utcStart} AND IntervalEndUtc <= {utcEnd} AND ProducedWh IS NOT NULL
+            WHERE IntervalEndUtc > {utcStart} AND IntervalEndUtc <= {utcEnd} AND ProducedWh IS NOT NULL AND ProducedWh >= 0
             GROUP BY CAST(DATE_FORMAT(IntervalEndUtc - INTERVAL 1 SECOND, '%Y-%m-%d %H:00:00') AS DATETIME)
             """).ToListAsync(ct);
         var yesterday = end.AddDays(-1);
@@ -72,11 +71,13 @@ public sealed class GreenhouseNetCostService(OrchidDbContext db)
         var readings = energy.GroupBy(e => (e.DeviceId, e.AtUtc)).ToDictionary(g => g.Key, g => g.ToList());
         var production = solar.GroupBy(s => s.AtUtc).ToDictionary(g => g.Key, g => g.ToList());
         var from = weekStart < yearStart ? weekStart : yearStart;
-        var days = new Dictionary<DateTime, (decimal Heater, decimal Solar, bool Complete)>();
+        // Totals use recorded data only. Missing/null readings are skipped, without
+        // interpolating gaps or enforcing a particular number of samples per hour.
+        var days = new Dictionary<DateTime, (decimal Heater, decimal Solar, bool Ambiguous)>();
         for (var day = from; day < end; day = day.AddDays(1))
         {
             decimal heaterWh = 0, solarWh = 0;
-            var complete = true;
+            var ambiguous = false;
             var dayEndUtc = GreenhouseChartService.Utc(day.AddDays(1));
             for (var hour = GreenhouseChartService.Utc(day); hour < dayEndUtc; hour = hour.AddHours(1))
             {
@@ -87,31 +88,33 @@ public sealed class GreenhouseNetCostService(OrchidDbContext db)
                 {
                     var expected = assignments.Where(a => a.LocationName.Equals(side, StringComparison.OrdinalIgnoreCase)
                         && a.Start <= local && (a.End is null || a.End >= localEnd)).ToList();
-                    if (expected.Count != 1) { complete = false; continue; }
+                    if (expected.Count == 0) continue;
+                    if (expected.Count > 1) { ambiguous = true; continue; }
                     var device = expected[0].DeviceId;
                     if (!usedDevices.Add(device) || assignments.Count(a => a.DeviceId == device && a.Start <= local &&
                             (a.End is null || local < a.End)) != 1 ||
                         assignments.Any(a => a.DeviceId == device &&
                             ((a.Start > local && a.Start < localEnd) || (a.End > local && a.End < localEnd))))
-                    { complete = false; continue; }
+                    { ambiguous = true; continue; }
                     var rows = readings.GetValueOrDefault((device, hour));
-                    if (rows is not { Count: 1 } || rows[0].EnergyWh is null or < 0) complete = false;
-                    else heaterWh += rows[0].EnergyWh!.Value;
+                    if (rows is { Count: > 1 }) ambiguous = true;
+                    else if (rows is { Count: 1 } && rows[0].EnergyWh is >= 0)
+                        heaterWh += rows[0].EnergyWh!.Value;
                 }
                 var generated = production.GetValueOrDefault(hour);
-                if (generated is not { Count: 1 } || generated[0].ReadingCount != 4 ||
-                    generated[0].InvalidCount != 0 || generated[0].ProducedWh < 0) complete = false;
-                else solarWh += generated[0].ProducedWh;
+                if (generated is { Count: > 1 }) ambiguous = true;
+                else if (generated is { Count: 1 } && generated[0].ProducedWh >= 0)
+                    solarWh += generated[0].ProducedWh;
             }
-            days[day] = (heaterWh / 1000m, solarWh / 1000m, complete);
+            days[day] = (heaterWh / 1000m, solarWh / 1000m, ambiguous);
         }
         GreenhouseNetCost Summarise(string label, DateTime start)
         {
             var selected = days.Where(d => d.Key >= start && d.Key < end).Select(d => d.Value).ToList();
             var heater = selected.Sum(d => d.Heater);
             var generated = selected.Sum(d => d.Solar);
-            if (selected.Any(d => !d.Complete))
-                return new(label, null, heater, generated, "Heater or solar coverage is incomplete.");
+            if (selected.Any(d => d.Ambiguous))
+                return new(label, null, heater, generated, "Heater assignments or readings are ambiguous.");
             // Net across the ENTIRE reporting period, then apply yesterday's rate.
             // No daily MAX/shortfall, export rate, standing charge or grid-cost claim.
             return new(label, (heater - generated) * rate, heater, generated);
