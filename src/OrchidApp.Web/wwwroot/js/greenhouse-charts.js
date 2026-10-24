@@ -57,14 +57,12 @@
                                 return item?.dataset.period?.label ?? data.labels[Math.floor(item?.parsed.x ?? 0)] ?? '';
                             },
                             label: item => `${item.dataset.label}: ${item.parsed.y.toFixed(item.dataset.yAxisID === 'cost' ? 4 : 1)}`,
-                            afterLabel: item => item.dataset.period ?
-                                `${item.dataset.period.readingCount} readings · ${item.dataset.period.status}` : '',
                             afterBody: items => {
                                 const x = items[0]?.parsed.x;
                                 const p = data.periods.find(p => p.start <= x && x < p.end);
                                 return p ? [p.label,
-                                    `Average: ${p.average === null ? 'unavailable' : p.average.toFixed(1) + '°C'} / Target: ${p.target === null ? 'unavailable' : p.target.toFixed(1) + '°C'}`,
-                                    `${p.readingCount} readings · ${p.status}`] : [];
+                                    p.average === null ? '' : `Average: ${p.average.toFixed(1)}°C`,
+                                    p.target === null ? '' : `Target: ${p.target.toFixed(1)}°C`].filter(Boolean) : [];
                             }
                         } }
                     }

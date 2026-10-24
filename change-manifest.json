@@ -1,42 +1,62 @@
 [
   {
-    "path": "src/OrchidApp.Web/Models/GreenhouseChart.cs",
-    "sha256": "1985e27ea31cdde94774310db699c5fb81e5e5604941eb46b8e4e2c94da077b2",
-    "previousSha256": "5bac54155cc8e037b9ed2af8c3171805fc6ae3a92bdf8f43353c8798f4869271"
-  },
-  {
-    "path": "src/OrchidApp.Web/Services/GreenhouseChartService.cs",
-    "sha256": "41a2f7961a5510d010c349f195ef5de789d0d253436e7939366e1f73cd556318",
-    "previousSha256": "6c20ccf2c1d544e369fa32d823e310d75c9f87a4a779227037edce633c5cfef7"
-  },
-  {
-    "path": "src/OrchidApp.Web/Services/GreenhouseChartCache.cs",
-    "sha256": "6fb57bfaab9367bcf7f61d7cf68dfcd764abd78cdade622b63accf1bd2d08aab",
+    "path": "src/OrchidApp.Web/Models/GreenhouseNetCost.cs",
+    "sha256": "5c6b6c58b8d0b9026c66888ca9bfe7edc0b27d9cbbee7a629863a6edbb2bfb4e",
     "previousSha256": null
   },
   {
-    "path": "src/OrchidApp.Web/Pages/Index.cshtml.cs",
-    "sha256": "4f5f3483b620a21315abdd2e0ff5a0c5a0a7907cdd02385f7607510325a7c346",
-    "previousSha256": "00de755e2bb2d43e4fb0fabb1f0a3eeb42d411ebef852e0b5940a888e6008c62"
+    "path": "src/OrchidApp.Web/Services/GreenhouseNetCostService.cs",
+    "sha256": "602389459b4d7ea84cbf988fa253335ddedba5b517a274013d9c5479df1524b7",
+    "previousSha256": null
   },
   {
-    "path": "src/OrchidApp.Web/Program.cs",
-    "sha256": "932b66756da0cad4ab99a59fbf36df2f717ea48ee014618d9d380479948ede89",
-    "previousSha256": "bdd928f7de092b39152dcccd030ce28a246769d54376428f31324cd01cd21793"
+    "path": "src/OrchidApp.Web/Services/GreenhouseChartCache.cs",
+    "sha256": "3bded37d6394a7701f25880979ee1f3784f5f7fd7697f4f3c0c2c6cbc6bbef8e",
+    "previousSha256": "6fb57bfaab9367bcf7f61d7cf68dfcd764abd78cdade622b63accf1bd2d08aab"
+  },
+  {
+    "path": "src/OrchidApp.Web/Pages/Index.cshtml.cs",
+    "sha256": "8f6f58aa96d2df61b36a0e7526e16f701fb7d2814e71bf04a26f59ddb04e315c",
+    "previousSha256": "4f5f3483b620a21315abdd2e0ff5a0c5a0a7907cdd02385f7607510325a7c346"
+  },
+  {
+    "path": "src/OrchidApp.Web/Pages/Index.cshtml",
+    "sha256": "839bd10da8facaad76035d1f03798ad5f15738c526c4bb948ba3f2c439f2bea5",
+    "previousSha256": "ba6d6848f022db175cd56daf7d10f09d3ccc50b52e9aa66bcce7d750f15d5001"
+  },
+  {
+    "path": "src/OrchidApp.Web/Pages/Shared/_GreenhouseChart.cshtml",
+    "sha256": "9657cc3d1df0846832a91ab29f864b67852378ca0d1e70dff0c764c95bc343c3",
+    "previousSha256": "227d52ca98834cfa8971f074f84d1072cdeae3ef447617ab499a40d279b26aef"
+  },
+  {
+    "path": "src/OrchidApp.Web/Pages/Shared/_GreenhouseNetCosts.cshtml",
+    "sha256": "e23179c207482aba3adf89aa0c4000ce342edcdc51a97b43b04c88a61f9ff4e5",
+    "previousSha256": null
+  },
+  {
+    "path": "src/OrchidApp.Web/wwwroot/js/greenhouse-charts.js",
+    "sha256": "0dc5806404b4cc99eba201e3ff9800c51b5fab73c1d7fc208433b8c4b5338b77",
+    "previousSha256": "8c569636a34c424b73e5a9bc6b64a045f64588405de94fc3d64a25936f51e09c"
   },
   {
     "path": "tests/GreenhouseCharts.Checks/Program.cs",
-    "sha256": "9d272289bdc9bb2dfe0693d0b58e820c68974a6a6f4cafbd1fb8f3e3a151b3e6",
-    "previousSha256": "4e59e6c3dfe1a1c19a79daa050b6c96a7e42baca8d611a8ca7fc6d85d756d015"
+    "sha256": "04a799bb59e073211f7fc0d613b21093dae31aae6e2140163f09a199a3dbe373",
+    "previousSha256": "9d272289bdc9bb2dfe0693d0b58e820c68974a6a6f4cafbd1fb8f3e3a151b3e6"
   },
   {
-    "path": "tests/GreenhouseCharts.Checks/PerformanceChecks.cs",
-    "sha256": "22c765ae54d3d8b01f27f481c50fb9181478d53939583883d47faa5081c084c9",
+    "path": "tests/GreenhouseCharts.Checks/NetCostChecks.cs",
+    "sha256": "2c0e259a70847694639e21515a9efe0d43a842035135bf4850864910a4e71ea3",
     "previousSha256": null
   },
   {
     "path": "docs/greenhouse-charts.md",
-    "sha256": "7d85218382c1af253ba92b98f39f3caf32b299f7554df5e14de5e24c18ec0a65",
-    "previousSha256": "3b1cf668270b5ca9e4850700b3b9861a895bcf17187a6acacbb69392d110034f"
+    "sha256": "8121cb2f96815a13e739c3e7d58c264e80a11a694a1c707c01ea89b772386275",
+    "previousSha256": "7d85218382c1af253ba92b98f39f3caf32b299f7554df5e14de5e24c18ec0a65"
+  },
+  {
+    "path": "docs/grant-greenhouse-solar-read.sql",
+    "sha256": "02306730fc1fb14c4fac8d4e1cbf3bfdac1dfefc5c670792138327bfc77a17df",
+    "previousSha256": null
   }
 ]

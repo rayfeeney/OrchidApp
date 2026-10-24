@@ -1,8 +1,7 @@
 @model OrchidApp.Web.Models.GreenhouseChart
 <div class="greenhouse-chart mt-3 border-top pt-3">
-    <p class="small text-muted mb-2">@Model.RangeLabel</p>
     <div style="height:340px; position:relative; min-width:0">
-        <canvas role="img" aria-label="@Model.LocationName cost and actual temperature, with separate average and target segments. Hover or tap for values and provisional coverage status."></canvas>
+        <canvas role="img" aria-label="@Model.LocationName cost and actual temperature, with separate average and target segments. Hover or tap for values."></canvas>
     </div>
     <p class="small text-muted chart-status" role="status" hidden></p>
     <script type="application/json" class="greenhouse-data">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }))</script>

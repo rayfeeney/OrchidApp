@@ -25,6 +25,7 @@ public class IndexModel : PageModel
     public bool EnvironmentSummaryEnabled => PlatformFeatures.EnvironmentSummaryEnabled;
     public IReadOnlyList<GreenhouseChart> GreenhouseCharts { get; private set; } = [];
     public string? ChartError { get; private set; }
+    public GreenhouseNetCosts GreenhouseCosts { get; private set; } = GreenhouseNetCosts.Unavailable("Not loaded.");
 
     public async Task OnGetAsync()
     {
@@ -37,6 +38,7 @@ public class IndexModel : PageModel
             .FromSqlRaw(EnvironmentSummarySql.Query, GreenhouseChartService.Local(now).Date)
             .OrderBy(summary => summary.LocationName)
             .ToListAsync();
+        if (EnvironmentSummaries.Count == 0) return;
         try
         {
             var locations = EnvironmentSummaries.Select(s => s.LocationName).Where(n =>
@@ -54,6 +56,24 @@ public class IndexModel : PageModel
             HttpContext.RequestServices.GetRequiredService<ILogger<IndexModel>>()
                 .LogWarning(error, "Greenhouse chart data unavailable");
             ChartError = "Monitoring charts are unavailable. Check reporting database access and configuration.";
+        }
+        // Keep chart and cost failures independent; solar access is not required
+        // for the existing temperature/cost charts to remain available.
+        try
+        {
+            var connection = _context.Database.GetDbConnection();
+            var key = "net-cost:v1:" + GreenhouseChartCache.Key(
+                connection.DataSource + "/" + connection.Database, now, ["Cool side", "Hot side"]);
+            var costs = new GreenhouseNetCostService(_context);
+            GreenhouseCosts = _chartCache is null
+                ? await costs.LoadAsync(now, HttpContext.RequestAborted)
+                : await _chartCache.GetValueAsync(key, ct => costs.LoadAsync(now, ct), HttpContext.RequestAborted);
+        }
+        catch (DbException error)
+        {
+            HttpContext.RequestServices.GetRequiredService<ILogger<IndexModel>>()
+                .LogWarning(error, "Greenhouse net cost data unavailable");
+            GreenhouseCosts = GreenhouseNetCosts.Unavailable("Reporting data could not be read.");
         }
     }
 }
