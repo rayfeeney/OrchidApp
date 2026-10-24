@@ -296,3 +296,11 @@ for the known gaps above.
 - `src/OrchidApp.Web/Program.cs`
 - `app/tools/backup-orchidapp.ps1`
 - `app/tools/restore-orchidapp.ps1`
+
+## Required follow-up and current operator boundary
+
+The documentation cleanup does not implement [C06–C10 and C18](code-change-backlog.md), which track source-aware backup, restore/settings compatibility, retention, partial migration/state and actual installed-upgrade tests. Preserve a verified off-computer recovery copy before upgrading. Legacy migration requires maintainer support until its source-aware safety path is validated; do not treat a successful backup process alone as proof of source identity.
+
+Before restoring on a replacement PC, preserve the trusted ZIP separately and do not run a new empty-data backup into the only fixed-name cloud copy. A cloud destination is not required to select a restore ZIP. Configure future cloud backups only after verifying plants, photos, settings and subsequent startup. Current restore can omit included settings due to the path mismatch above; reconfigure and verify them.
+
+Fresh Desktop creation must meet the owner's [schema-only contract](database-creation.md). The current history initialisation dependency on packaged migration files is pending C02, not an endorsed creation requirement. Bespoke monitoring is not a Windows/general-install dependency.

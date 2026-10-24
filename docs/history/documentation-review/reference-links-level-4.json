@@ -1,0 +1,119 @@
+{
+  "round": 4,
+  "baseline": "OrchidApp-clean.zip",
+  "reviewed_files": [
+    "docs/CHART-UPDATE.md",
+    "docs/AVAILABLE-TOTALS-UPDATE.md",
+    "docs/NET-COSTS-UPDATE.md",
+    "docs/PERFORMANCE-UPDATE.md",
+    "docs/greenhouse-performance-verification.txt",
+    "docs/change-manifest.json",
+    "docs/grant-greenhouse-solar-read.sql"
+  ],
+  "references": [
+    {
+      "source": "docs/NET-COSTS-UPDATE.md",
+      "target": "docs/grant-greenhouse-solar-read.sql",
+      "kind": "plain repository path",
+      "exists": true
+    },
+    {
+      "source": "docs/PERFORMANCE-UPDATE.md",
+      "target": "docs/greenhouse-charts.md",
+      "kind": "plain repository path",
+      "exists": true
+    },
+    {
+      "source": "docs/PERFORMANCE-UPDATE.md",
+      "target": "src/OrchidApp.Web/Program.cs",
+      "kind": "source filename resolved by context",
+      "exists": true
+    },
+    {
+      "source": "docs/AVAILABLE-TOTALS-UPDATE.md",
+      "target": "src/OrchidApp.Web/Services/GreenhouseNetCostService.cs",
+      "kind": "source filename resolved by context",
+      "exists": true
+    },
+    {
+      "source": "docs/change-manifest.json",
+      "target": "src/OrchidApp.Web/Services/GreenhouseNetCostService.cs",
+      "kind": "manifest entry",
+      "exists": true
+    },
+    {
+      "source": "docs/change-manifest.json",
+      "target": "tests/GreenhouseCharts.Checks/NetCostChecks.cs",
+      "kind": "manifest entry",
+      "exists": true
+    },
+    {
+      "source": "docs/change-manifest.json",
+      "target": "docs/greenhouse-charts.md",
+      "kind": "manifest entry",
+      "exists": true
+    }
+  ],
+  "manifest_checks": [
+    {
+      "target": "src/OrchidApp.Web/Services/GreenhouseNetCostService.cs",
+      "exists": true,
+      "expected_sha256": "ec86e9046b6edca6aff32299cb3cefde1af30baea0888373cd23b906620c4665",
+      "actual_sha256": "ec86e9046b6edca6aff32299cb3cefde1af30baea0888373cd23b906620c4665",
+      "matches": true,
+      "previous_sha256": "602389459b4d7ea84cbf988fa253335ddedba5b517a274013d9c5479df1524b7",
+      "previous_hash_verified": false,
+      "previous_hash_note": "Previous-stage files/history not supplied for verification."
+    },
+    {
+      "target": "tests/GreenhouseCharts.Checks/NetCostChecks.cs",
+      "exists": true,
+      "expected_sha256": "30dbb3691715c3552e1230cacbcea245e8ab890dc1c389e579a1efb761222ef5",
+      "actual_sha256": "30dbb3691715c3552e1230cacbcea245e8ab890dc1c389e579a1efb761222ef5",
+      "matches": true,
+      "previous_sha256": "2c0e259a70847694639e21515a9efe0d43a842035135bf4850864910a4e71ea3",
+      "previous_hash_verified": false,
+      "previous_hash_note": "Previous-stage files/history not supplied for verification."
+    },
+    {
+      "target": "docs/greenhouse-charts.md",
+      "exists": true,
+      "expected_sha256": "f91415b7facc7be286f8cac43290da147714279ecdd6c0ae77ad5539e7597cf5",
+      "actual_sha256": "f91415b7facc7be286f8cac43290da147714279ecdd6c0ae77ad5539e7597cf5",
+      "matches": true,
+      "previous_sha256": "8121cb2f96815a13e739c3e7d58c264e80a11a694a1c707c01ea89b772386275",
+      "previous_hash_verified": false,
+      "previous_hash_note": "Previous-stage files/history not supplied for verification."
+    }
+  ],
+  "delivery_references": [
+    {
+      "source": "docs/CHART-UPDATE.md",
+      "reference": "these five files",
+      "status": "Delivery-relative phrase; no file list or archive identity in this note."
+    },
+    {
+      "source": "docs/AVAILABLE-TOTALS-UPDATE.md",
+      "reference": "three included files",
+      "status": "Three-entry change-manifest.json matches the described source/test/guide scope, but the note does not link it or identify the delivery archive."
+    },
+    {
+      "source": "docs/NET-COSTS-UPDATE.md",
+      "reference": "included source files / separate patch",
+      "status": "No named archive, patch or baseline identifier."
+    },
+    {
+      "source": "docs/PERFORMANCE-UPDATE.md",
+      "reference": "accompanying patch",
+      "status": "No named patch or baseline identifier."
+    },
+    {
+      "source": "docs/PERFORMANCE-UPDATE.md",
+      "reference": "synthetic query-plan report",
+      "resolved": "docs/greenhouse-performance-verification.txt",
+      "status": "Matching report exists by contents; replace descriptive phrase with a link."
+    }
+  ],
+  "new_current_documents_to_review": [],
+  "limits": "No patch application, deployment, SQL grant, benchmark or live test executed; no previous-stage hashes verified."
+}

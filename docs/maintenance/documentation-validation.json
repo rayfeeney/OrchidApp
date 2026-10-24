@@ -1,0 +1,12 @@
+{
+  "current_local_links_checked": 208,
+  "link_errors": [],
+  "word_guides_rendered": 7,
+  "word_pages": 77,
+  "word_renderer": "Installed Microsoft Word via hidden COM, then PDFium PNG rendering; packaged LibreOffice renderer unavailable",
+  "word_visual_review": "All page contact sheets inspected after final edits; recovery section flow/title colours corrected; no clipping or overlap observed. Original screenshots preserved; physical-device tests not run.",
+  "code_config_sql_scripts_changed": false,
+  "word_embedded_images_unchanged": true,
+  "application_tests_run": false,
+  "historical_links_scope": "Fixed release/evidence/review snapshots retain original delivery context. Current navigation/history indexes were checked; frozen historical links are not rewritten."
+}

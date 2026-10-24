@@ -1,0 +1,27 @@
+# OrchidApp repository instructions
+
+## Working rules
+
+Read [docs/index.md](docs/index.md) and [CONTRIBUTING.md](CONTRIBUTING.md) before changing behaviour. Use [docs/documentation-map.md](docs/documentation-map.md) to identify the authoritative document for each area. Put new explanations, change summaries and reports under docs/, not at repository root. Keep required root files such as this file, README.md, CONTRIBUTING.md, RELEASE_NOTES.md and licence notices in their established locations.
+
+## Documentation is part of every code change
+
+- For each code, SQL, script, configuration, dependency, packaging or UI change, review the affected current guides and update them in the same change. Check this even when the code change appears small.
+- Check referenced files, links, commands, setting names/defaults and platform scope against the implementation. Record what was actually validated. Do not claim a build proves install, database, device or recovery behaviour.
+- Keep general installation independent of the owner's bespoke monitoring installation. New databases must be created from database/schema/ and its required reference seeds alone; never create one by replaying database/migrations/. Migrations apply only to changes after creation. Keep baseline metadata compatible without requiring historical migration SQL for creation.
+- Use [docs/code-change-backlog.md](docs/code-change-backlog.md) for unresolved implementation/documentation mismatches, with affected files, status and acceptance checks. Do not write pending behaviour as already implemented.
+- If a document under docs/ becomes inapplicable or superseded, move it to docs/history/, preserve its context and identify the replacement. Update incoming current links and the documentation index/map. Preserve original historical evidence and licence texts.
+- Before marking work complete, state which documentation was updated, or give a specific reason none was affected. Run appropriate link/command checks and relevant workflow validation. For Word edits, render and inspect all pages, preserving useful screenshots and checking their relevance; identify any device testing still pending.
+- Keep backlog status aligned with actual validation. Database fixes require new migrations for existing databases and regenerated schema/checksum artefacts; never edit applied migration history or generated schema directly.
+
+## Create a clean source review ZIP
+
+Run from the repository root in PowerShell. This includes uncommitted source and documentation, not live collection data. Review retained files for secrets before sharing.
+
+```powershell
+$archivePath = Join-Path $env:USERPROFILE 'Downloads\OrchidApp-clean.zip'
+tar.exe -a -c -f $archivePath --exclude=.git --exclude=bin --exclude=obj --exclude=./dist --exclude=./.runtime-downloads --exclude=./app/runtime --exclude=./app/data --exclude=./app/backups --exclude=./state --exclude=./infrastructure/environment-importer/downloads --exclude=./src/OrchidApp.Web/wwwroot/uploads --exclude=.vs --exclude=.idea --exclude=node_modules --exclude=__pycache__ --exclude=.venv --exclude=.env --exclude='.env.*' --exclude=appsettings.Production.json --exclude='appsettings.*.Local.json' --exclude=launcher-settings.json --exclude='*.csproj.user' --exclude='*.csproj.lscache' --exclude='*.log' .
+if ($LASTEXITCODE -ne 0) { throw 'Archive creation failed.' }
+```
+
+Only the root dist is excluded; nested vendored web-library dist folders are required. The broad .env.* exclusion also omits .env.example from the ZIP. This is not a full backup or a guarantee that other files contain no secrets. See the [database creation contract](docs/database-creation.md) and [code backlog](docs/code-change-backlog.md) for pending implementation work.

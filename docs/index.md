@@ -1,52 +1,45 @@
 # OrchidApp documentation
 
-Start here to find the current instructions. User guides are grouped by platform;
-feature and design references live directly under `docs/`. MariaDB is the
-supported database engine on Windows and Raspberry Pi/Linux. Legacy client or
-environment-variable names in scripts are compatibility details, not support for
-a separate MySQL deployment.
+Use current guides below. For each procedure, check its stated implementation limits before acting. Pending code changes are tracked in the [code backlog](code-change-backlog.md); this documentation update does not implement them.
 
-## Install, upgrade and recover
+## Develop and maintain
+
+- [Developer machine and first run](development-setup.md)
+- [Contributing and validation](../CONTRIBUTING.md)
+- [Schema-only database creation and future migrations](database-creation.md)
+- [Architecture](architecture.md) and [temporal design](temporal-design.md)
+- [Windows upgrade contract](windows-upgrade-contract.md)
+- [Documentation ownership and maintenance](documentation-map.md)
+- [Code change backlog](code-change-backlog.md)
+- [Release notes](../RELEASE_NOTES.md) and [third-party notices](../THIRD_PARTY_NOTICES.md)
+
+## Install and protect data
 
 | Task | Guide |
 | --- | --- |
-| Install or upgrade a Raspberry Pi | [Linux installation and upgrades](user-guides/linux/installation-upgrade.md) |
-| Back up the app, database, photos and configuration before a Pi upgrade | [Full pre-upgrade backup](user-guides/linux/Full-App-Backup-Pre-Upgrade.md) |
-| Configure routine Linux backups or restore data | [MariaDB backup and restore runbook](user-guides/linux/OrchidApp-MariaDB-Backup-and-Restore-Runbook.md) |
-| Add OrchidApp to an iPhone or iPad Home Screen | [iPhone and iPad web app](user-guides/ios/home-screen-web-app.md) |
-| Install and validate a Safari Dock web app on Mac | [Safari Dock web app](user-guides/macos/safari-web-app.md) |
-| Install or upgrade Windows | [Windows installation guide](user-guides/windows/01-InstallOrUpgradeOrchidAppOnWindows.docx) |
-| Configure Windows cloud backups | [Windows backup guide](user-guides/windows/04-ConfigureCloudBackupFolderInOrchidAppForWindows.docx) |
-| Recover onto a replacement Windows PC | [Windows recovery guide](user-guides/windows/05-RecoverOrchidAppOnReplacementWindowsComputer.docx) |
+| Install or upgrade a general Raspberry Pi/Linux deployment | [Linux installation](user-guides/linux/installation-upgrade.md) |
+| Full Pi backup before upgrade | [Full backup](user-guides/linux/Full-App-Backup-Pre-Upgrade.md) |
+| Routine Linux data backup and isolated restore | [MariaDB runbook](user-guides/linux/OrchidApp-MariaDB-Backup-and-Restore-Runbook.md) |
+| Windows installation or upgrade | [Windows 01](user-guides/windows/01-InstallOrUpgradeOrchidAppOnWindows.docx) |
+| Windows first use | [Windows 02](user-guides/windows/02-PrepareOrchidAppForFirstUse.docx) |
+| Windows plant management | [Windows 03](user-guides/windows/03-AddAndManagePlantsInOrchidApp.docx) |
+| Windows cloud backup | [Windows 04](user-guides/windows/04-ConfigureCloudBackupFolderInOrchidAppForWindows.docx) |
+| Windows recovery | [Windows 05](user-guides/windows/05-RecoverOrchidAppOnReplacementWindowsComputer.docx) |
+| Linux first use | [Linux 01](user-guides/linux/01-PrepareOrchidAppForFirstUseLinuxPi.docx) |
+| Linux plant management | [Linux 02](user-guides/linux/02-AddAndManagePlantsInOrchidApp-LinuxPi.docx) |
+| iPhone/iPad Home Screen client | [iOS client](user-guides/ios/home-screen-web-app.md) |
+| Mac Safari Dock client | [Mac client](user-guides/macos/safari-web-app.md) |
 
-Additional illustrated first-use and plant-management guides are in
-[Linux user guides](user-guides/linux/) and [Windows user guides](user-guides/windows/).
+## Application references
 
-## Features
+- [Formatted genus/taxon notes](rich-notes.md)
+- [Return navigation](navigation.md)
+- [Botanical and active-plant search](name-search.md)
 
-- [Formatted genus and taxon notes](rich-notes.md)
-- [Back, Cancel and return navigation](navigation.md)
-- [Genus, species and hybrid name search](name-search.md)
-- [Environmental summary platform support](environment-summary-platform.md)
+## Owner's installation only
 
-## Development and design
+[Local greenhouse monitoring](local-installation/greenhouse-monitoring.md) covers bespoke data feeds, charts, costs and permissions for the owner's one installation. [Current platform guard versus required opt-in](environment-summary-platform.md) explains the pending isolation fix. No other installation should need these data objects, grants, importers or settings.
 
-- [Project overview](../README.md)
-- [Contribution and validation requirements](../CONTRIBUTING.md)
-- [Architecture](architecture.md): system responsibilities and invariants.
-- [Temporal design](temporal-design.md): lifecycle dates and ordering.
-- [Windows upgrade contract](windows-upgrade-contract.md): installer and persistent data responsibilities.
-- [Release notes](../RELEASE_NOTES.md)
-- [Third-party notices](../THIRD_PARTY_NOTICES.md)
+## History
 
-## Maintaining documentation
-
-Update the existing guide when behaviour changes. Keep installation, upgrade,
-backup and recovery instructions in `user-guides/<platform>/`; keep implementation
-references under `docs/`. Avoid adding root-level patch readmes or lists of changed
-files: Git records file changes and the release notes record release history.
-
-Files under `release/` are historical release material, not current operating
-instructions. Keep those snapshots, third-party licences and bundled component
-readmes separate from current guides. Word guides remain alongside Markdown guides
-because they are also distributed with the application.
+[Documentation history](history/index.md) preserves superseded guides, recent delivery records, evidence and prior release publications. They are not current operating procedures. When a docs/ file is no longer applicable, move it into docs/history/, identify the replacement and update incoming current links. Follow [AGENTS.md](../AGENTS.md) and the ownership map when changing code or documents.
