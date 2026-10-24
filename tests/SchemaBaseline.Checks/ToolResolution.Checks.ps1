@@ -1,5 +1,6 @@
 param([string]$RepoRoot = (Join-Path $PSScriptRoot '../..'))
 $ErrorActionPreference = 'Stop'
+Write-Host 'Tool resolution check revision: array-arguments-v2'
 . (Join-Path $RepoRoot 'database/scripts/Schema-Baseline.ps1')
 $checks = 0
 function Check([string]$Name, [bool]$Pass, [string]$Details = '') {

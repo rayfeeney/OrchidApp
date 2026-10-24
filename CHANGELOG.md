@@ -1,38 +1,30 @@
-# CI follow-up - Unix tool-resolution test
+# Reissued CI tool-resolution test fix
 
 ## Apply
 
-1. Apply after the previous C01+C02 CI fix.
-2. Extract directly into the repository root, the folder containing OrchidApp.sln. Replace the three modified files listed below, preserving their paths. Merge any independent edits you have made to these files.
-3. CHANGELOG.md is this delivery manifest and replaces the previous package manifest. No files are added, deleted or moved apart from this manifest.
-4. Commit and rerun CI. No database commands, schema regeneration or rebuild are needed.
+Extract directly into the repository root (the folder containing OrchidApp.sln) and replace the two listed files. Preserve paths; no deletions or moves are needed. Merge any independent edits to those files. CHANGELOG.md replaces the previous delivery manifest.
 
-## Cause
+Commit and push the corrected test file to the branch used by CI, then open the CI run belonging to that new commit. The earlier log shows the old throw expression and cannot be from this corrected source.
 
-The Linux resolver assertions had passed. The fixture invocation failed because assignment from an if-expression unrolled its one-item argument array into the scalar string resolver-ok. PowerShell splatted the string as individual characters, so echo returned r e s o l v e r - o k. This was a test bug introduced in the prior fix.
+The test step must now print this revision label before its checks:
 
-The argument variable is now explicitly string[]. An additional check validates its type/count, and native invocation failures include captured output and exit code. The production resolver and workflow are unchanged.
+    Tool resolution check revision: array-arguments-v2
 
-## Changed files
+If the label is absent, verify the test file on the run's commit rather than making another resolver change.
+
+## Files
 
 | Repository path | Change |
 | --- | --- |
-| `tests/SchemaBaseline.Checks/ToolResolution.Checks.ps1` | Keeps fixture arguments as a string array, checks their type/count and reports the exit code/output if invocation fails. |
-| `docs/maintenance/c01-c02-schema-baseline.md` | Adds the observed Linux test failure, exact cause, correction and validation evidence. |
-| `RELEASE_NOTES.md` | Records the Unix regression-test argument correction. |
+| tests/SchemaBaseline.Checks/ToolResolution.Checks.ps1 | Reissues the complete corrected test: typed native argument array, count/type assertion, invocation diagnostics and an explicit revision label. |
+| docs/maintenance/c01-c02-schema-baseline.md | Records the source-version mismatch and how to recognise the corrected test in CI. |
 
 ## Validation
 
-- Eight tool-resolution checks passed locally on Windows.
-- Native-process reproduction of the exact Unix single-argument expression: before, exit 1 with r e s o l v e r - o k; after, exit 0 with resolver-ok.
-- PowerShell syntax and ZIP paths/contents were checked.
-- The full Linux CI job was not executed locally and must be rerun.
-- No production resolver, workflow, application code, SQL, schema metadata, checksums or migration history changed.
+Eight tool-resolution checks pass locally on Windows. The one-argument native-process construction was previously reproduced failing as spaced characters and passing after retaining the typed array. Linux CI has not been run locally.
 
-## Optional local check
+No resolver, workflow, application, SQL, schema or migration changes are included. This package assumes the first CI resolver fix (selecting one PATH match) has already been applied.
 
-```powershell
-pwsh ./tests/SchemaBaseline.Checks/ToolResolution.Checks.ps1
-```
+Exact SHA-256 of the test file inside this ZIP (line-ending-sensitive):
 
-No database is required.
+10123793c3a8298e33327c685045cbbe0d18d6aef702d94f5b9304e214dfa7de
