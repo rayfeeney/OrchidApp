@@ -259,7 +259,7 @@ app.MapRazorPages();
 
 app.Run();
 
-static void RunScriptWithMariaDb(string scriptPath, string mariadbExe, string connectionString)
+static void RunScriptWithMariaDb(string scriptPath, string mariadbExe, string connectionString, string? sqlSnapshot = null)
 {
     Console.WriteLine($"Setting up database item: {Path.GetFileName(scriptPath)}");
 
@@ -277,7 +277,7 @@ static void RunScriptWithMariaDb(string scriptPath, string mariadbExe, string co
     };
 
     var connection = new MySqlConnectionStringBuilder(connectionString);
-    foreach (var argument in new[] { "--protocol=TCP", "--host=" + connection.Server,
+    foreach (var argument in new[] { "--no-defaults", "--protocol=TCP", "--host=" + connection.Server,
         "--port=" + connection.Port, "--user=" + connection.UserID, "--database=" + connection.Database,
         "--default-character-set=utf8mb4", "--connect-timeout=5", "--abort-source-on-error" })
         process.StartInfo.ArgumentList.Add(argument);
@@ -302,7 +302,7 @@ static void RunScriptWithMariaDb(string scriptPath, string mariadbExe, string co
     process.BeginOutputReadLine();
     process.BeginErrorReadLine();
 
-    var sql = "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;\n" + File.ReadAllText(scriptPath) + "\n";
+    var sql = "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;\n" + (sqlSnapshot ?? File.ReadAllText(scriptPath)) + "\n";
 
     process.StandardInput.Write(sql);
     process.StandardInput.Close();
@@ -383,47 +383,79 @@ static void RunPreMigrationBackup(string runtimeRoot)
     Console.WriteLine("Safety backup completed.");
 }
 
+static string[] MigrationFiles(string folder) => Directory.Exists(folder)
+    ? Directory.GetFiles(folder).Where(path => Path.GetExtension(path).Equals(".sql", StringComparison.OrdinalIgnoreCase)).ToArray()
+    : [];
+
 static void RunMigrations(string folderPath, string mariadbExe, MySqlConnection dbConn, string runtimeRoot, string connectionString)
 {
-    var history = SchemaBaseline.ReadHistory(dbConn);
-    var files = Directory.Exists(folderPath) ? Directory.GetFiles(folderPath, "*.sql") : [];
-    var pendingFiles = SchemaBaseline.Pending(files, history);
-
+    var pendingFiles = MigrationHistory.Plan(MigrationFiles(folderPath), SchemaBaseline.ReadHistory(dbConn));
     if (pendingFiles.Count > 0)
     {
         Console.WriteLine($"Database updates are available: {pendingFiles.Count}");
         RunPreMigrationBackup(runtimeRoot);
     }
-
-    foreach (var file in pendingFiles)
+    foreach (var item in pendingFiles)
     {
-        var scriptName = Path.GetFileName(file);
-        var checksum = ComputeChecksum(file);
-
-        Console.WriteLine($"Applying database update: {scriptName}");
-
-        RunScriptWithMariaDb(file, mariadbExe, connectionString);
-
-        using var insertCmd = dbConn.CreateCommand();
-        insertCmd.CommandText = @"
-            INSERT INTO schemaversion (scriptName, appliedAt, checksum)
-            VALUES (@name, NOW(), @checksum)";
-
-        insertCmd.Parameters.AddWithValue("@name", scriptName);
-        insertCmd.Parameters.AddWithValue("@checksum", checksum);
-
-        insertCmd.ExecuteNonQuery();
+        var acquired = false;
+        var sqlStarted = false;
+        try
+        {
+            using (var acquire = dbConn.CreateCommand())
+            {
+                acquire.CommandText = "INSERT INTO schemaversion(scriptName,checksum) VALUES (@name,@checksum)";
+                acquire.Parameters.AddWithValue("@name", MigrationHistory.PendingMarker);
+                acquire.Parameters.AddWithValue("@checksum", item.Checksum);
+                acquire.ExecuteNonQuery();
+                acquired = true;
+            }
+            var current = SchemaBaseline.ReadHistory(dbConn);
+            if (current[MigrationHistory.PendingMarker] != item.Checksum)
+                throw new InvalidOperationException("Migration ownership marker changed.");
+            current.Remove(MigrationHistory.PendingMarker);
+            var selected = MigrationHistory.Plan(MigrationFiles(folderPath), current).SingleOrDefault(file => file.Name == item.Name);
+            if (selected is null)
+            {
+                ClearPending(dbConn, item.Checksum);
+                continue;
+            }
+            if (selected.Checksum != item.Checksum)
+                throw new InvalidOperationException("Migration changed after preflight: " + item.Name);
+            Console.WriteLine("Applying database update: " + item.Name);
+            sqlStarted = true;
+            RunScriptWithMariaDb(item.Path, mariadbExe, connectionString, item.Sql);
+            using var tx = dbConn.BeginTransaction();
+            using var record = dbConn.CreateCommand();
+            record.Transaction = tx;
+            record.CommandText = @"INSERT INTO schemaversion(scriptName,checksum) VALUES (@name,@checksum);
+                DELETE FROM schemaversion WHERE scriptName='migration:pending' AND checksum=@checksum;";
+            record.Parameters.AddWithValue("@name", item.Name);
+            record.Parameters.AddWithValue("@checksum", item.Checksum);
+            record.ExecuteNonQuery();
+            tx.Commit();
+        }
+        catch (Exception error)
+        {
+            if (acquired && !sqlStarted) ClearPending(dbConn, item.Checksum);
+            if (acquired && sqlStarted)
+                throw new InvalidOperationException($"Migration '{item.Name}' failed or could not be confirmed. SQL may be partially applied; no automatic DDL rollback is promised. Preserve the error and inspect migration:pending before any retry.", error);
+            throw;
+        }
     }
-
-    if (pendingFiles.Count == 0)
-    {
-        Console.WriteLine("Database is up to date.");
-    }
+    if (pendingFiles.Count == 0) Console.WriteLine("Database is up to date.");
     else
     {
-        VerifyMigrationsApplied(pendingFiles, dbConn);
+        VerifyMigrationsApplied(pendingFiles.Select(file => file.Path), dbConn);
         Console.WriteLine($"Database updates applied: {pendingFiles.Count}");
     }
+}
+
+static void ClearPending(MySqlConnection connection, string checksum)
+{
+    using var clear = connection.CreateCommand();
+    clear.CommandText = "DELETE FROM schemaversion WHERE scriptName='migration:pending' AND checksum=@checksum";
+    clear.Parameters.AddWithValue("@checksum", checksum);
+    clear.ExecuteNonQuery();
 }
 
 static void VerifyMigrationsApplied(

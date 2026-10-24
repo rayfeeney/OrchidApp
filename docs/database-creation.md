@@ -34,7 +34,7 @@ Desktop startup loads the same schema manifest from the packaged database/schema
 
 ## Future changes and existing databases
 
-Desktop and both PowerShell migration runners recognise baseline:v1 markers. SQL files with timestamps at or before the database's recorded cut-off are already represented in that schema. Later files apply once and receive their ordinary per-file SHA-256 row. Recorded file checksums are checked before skipping. Missing or changed files and chronology beyond this baseline contract remain part of C04 runner reconciliation; do not infer a universal schema-drift or rollback guarantee.
+Desktop and both PowerShell migration runners recognise baseline:v1 markers. SQL files with timestamps at or before the database's recorded cut-off are already represented in that schema. Later files apply once and receive their ordinary per-file SHA-256 row. Recorded file checksums are checked before skipping. C04 now enforces duplicate timestamps, chronology, missing-file and checksum rules with durable incomplete markers; see [migration runners](migration-runners.md) for the baseline exceptions and recovery contract. This is not a universal schema-drift or DDL rollback guarantee.
 
 Older Desktop databases retain their literal baseline/baseline row and recorded migration rows unchanged. Those rows continue to use their existing per-file checksums; the latest packaged manifest is never used to invent an earlier database's baseline. A legacy marker alone does not authorise skipping unrecorded SQL. Review incomplete legacy history rather than filling it by hand. Existing databases created by recorded migrations without a baseline marker retain that per-file path.
 

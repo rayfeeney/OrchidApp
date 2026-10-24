@@ -86,7 +86,7 @@ Implementation: Monitoring:Enabled defaults false and requires Linux ARM/ARM64. 
 
 ## C04
 
-**Reconcile migration runners and enforce compatible history** — P1; Confirmed enforcement gap; status: Open.
+**Reconcile migration runners and enforce compatible history** — P1; Confirmed enforcement gap; status: Implemented and verified locally; updated Linux CI pending.
 
 Affected files/areas: database/scripts/Apply-Migrations.ps1; Apply-MariaDBMigrations.ps1; dev-runner.ps1; src/OrchidApp.Web/Program.cs.
 
@@ -95,6 +95,8 @@ Required work: Choose supported routes; enforce format, duplicate timestamps, ch
 Dependencies: C02.
 
 Acceptance: Isolated tests cover tampering, duplicate/backdated names, missing files, baseline compatibility, partial-failure reporting and future-only migration application. No claim of automatic DDL rollback.
+
+Implementation: canonical PowerShell runner plus compatibility alias, matching Desktop validation, complete preflight and a durable pending marker. See [runner contract](migration-runners.md) and [C04 evidence](maintenance/c04-migration-runners.md). No historical migration or applied baseline/checksum rows were rewritten.
 
 ## C05
 

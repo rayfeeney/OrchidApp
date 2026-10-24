@@ -29,14 +29,14 @@ Creation now validates schema/bootstrap.json, imports required seeds in dependen
 
 | Path | Current behaviour and limit |
 | --- | --- |
-| database/scripts/Apply-Migrations.ps1 | Recognises schema baseline cut-offs, verifies recorded checksums and applies later files once. Unique timestamp chronology and universal pre-execution schema drift remain C04. |
-| Desktop in src/OrchidApp.Web/Program.cs | Imports the schema manifest without a migration-folder dependency; writes completion last. Retains legacy history, skips SQL covered by a fresh baseline, checks recorded checksums and requires a backup command before pending SQL. |
-| database/scripts/Apply-MariaDBMigrations.ps1 | Recognises current/legacy baseline rows; case-sensitive export-path references are corrected. Its extra checks, defaults and working-tree/export assumptions still require C04 reconciliation. |
-| database/scripts/dev-runner.ps1 | Export/drift wrapper with additional working-tree assumptions; not interchangeable with the documented simple runner. |
+| database/scripts/Apply-Migrations.ps1 | Canonical runner with full history preflight, duplicate/chronology/checksum/missing-file validation and durable incomplete markers. Requires an explicit target; no Git/export dependency. |
+| Desktop in src/OrchidApp.Web/Program.cs | Matching C# policy; schema-only first use, legacy ledger preservation and backup before pending SQL. |
+| database/scripts/Apply-MariaDBMigrations.ps1 | Compatibility entry point delegating to the canonical runner. |
+| database/scripts/dev-runner.ps1 | Maintainer apply-then-export workflow; generated differences are reviewed rather than treated as failed SQL. |
 
-There is no universal duplicate-timestamp/history or live schema-drift guarantee across all routes. DDL failures may leave partial state. Keep backup and controlled upgrade tests. [C04](code-change-backlog.md#c04) defines runner reconciliation.
+See [migration runners](migration-runners.md) for exact baseline exceptions, parameters, pending-marker recovery and intentional backup/export differences. These rules validate history, not universal live schema drift; DDL failures can leave partial state. Cooperating runners use the existing schemaversion unique key and pending marker; no new schema table or rewritten applied history is needed.
 
-Schema and checksum files are generated; do not edit them manually. The hook exports/stages the configured development DB on every commit. CI reconstructs/exports a schema, which differs from proving seeds, future-only baseline behaviour or migration replay. See [contributor checks](../CONTRIBUTING.md) and [C05](code-change-backlog.md#c05).
+Schema and checksum files are generated; do not edit them manually. The hook exports/stages the configured development DB on every commit. CI reconstructs/exports a schema and is now configured for C04 policy and disposable runner checks. Broader seeded application first-use/upgrade acceptance and representative history replay remain separate. See [contributor checks](../CONTRIBUTING.md) and [C05](code-change-backlog.md#c05).
 
 ## Lifecycle and writes
 

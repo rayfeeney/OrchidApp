@@ -1,0 +1,433 @@
+[
+  {
+    "name": "Baseline with no historic payload",
+    "files": [],
+    "history": [
+      {
+        "name": "baseline:v1:202606041820",
+        "checksum": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "name": "All covered files ignored",
+    "files": [
+      {
+        "name": "202604010000_Historic.sql",
+        "sql": "SELECT 1;"
+      },
+      {
+        "name": "202606041820_Covered.sql",
+        "sql": "SELECT 1;"
+      }
+    ],
+    "history": [
+      {
+        "name": "baseline:v1:202606041820",
+        "checksum": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "name": "Future SQL sorted",
+    "files": [
+      {
+        "name": "202702010000_Second.sql",
+        "sql": "SELECT 1;"
+      },
+      {
+        "name": "202701010000_First.sql",
+        "sql": "SELECT 1;"
+      }
+    ],
+    "history": [
+      {
+        "name": "baseline:v1:202606041820",
+        "checksum": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    ],
+    "pending": [
+      "202701010000_First.sql",
+      "202702010000_Second.sql"
+    ]
+  },
+  {
+    "name": "Already applied once",
+    "files": [
+      {
+        "name": "202701010000_First.sql",
+        "sql": "SELECT 1;"
+      }
+    ],
+    "history": [
+      {
+        "name": "baseline:v1:202606041820",
+        "checksum": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "name": "202701010000_First.sql",
+        "sql": "SELECT 1;"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "name": "Tampered applied SQL",
+    "files": [
+      {
+        "name": "202701010000_First.sql",
+        "sql": "SELECT 2;"
+      }
+    ],
+    "history": [
+      {
+        "name": "baseline:v1:202606041820",
+        "checksum": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "name": "202701010000_First.sql",
+        "sql": "SELECT 1;"
+      }
+    ],
+    "error": "checksum changed"
+  },
+  {
+    "name": "Duplicate timestamps",
+    "files": [
+      {
+        "name": "202701010000_First.sql",
+        "sql": "SELECT 1;"
+      },
+      {
+        "name": "202701010000_Another.sql",
+        "sql": "SELECT 1;"
+      }
+    ],
+    "history": [
+      {
+        "name": "baseline:v1:202606041820",
+        "checksum": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    ],
+    "error": "Duplicate migration timestamp"
+  },
+  {
+    "name": "Duplicate across recorded history",
+    "files": [
+      {
+        "name": "202701010000_Another.sql",
+        "sql": "SELECT 1;"
+      }
+    ],
+    "history": [
+      {
+        "name": "baseline:v1:202606041820",
+        "checksum": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "name": "202701010000_First.sql",
+        "sql": "SELECT 1;"
+      }
+    ],
+    "error": "Duplicate migration timestamp"
+  },
+  {
+    "name": "Backdated after baseline",
+    "files": [
+      {
+        "name": "202701010000_First.sql",
+        "sql": "SELECT 1;"
+      },
+      {
+        "name": "202702010000_Second.sql",
+        "sql": "SELECT 1;"
+      }
+    ],
+    "history": [
+      {
+        "name": "baseline:v1:202606041820",
+        "checksum": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "name": "202702010000_Second.sql",
+        "sql": "SELECT 1;"
+      }
+    ],
+    "error": "Backdated or out-of-order"
+  },
+  {
+    "name": "Missing applied future file",
+    "files": [],
+    "history": [
+      {
+        "name": "baseline:v1:202606041820",
+        "checksum": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "name": "202701010000_First.sql",
+        "sql": "SELECT 1;"
+      }
+    ],
+    "error": "file is missing"
+  },
+  {
+    "name": "Covered recorded file can be omitted",
+    "files": [],
+    "history": [
+      {
+        "name": "baseline:v1:202606041820",
+        "checksum": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "name": "202604010000_Historic.sql",
+        "sql": "SELECT 1;"
+      }
+    ],
+    "pending": []
+  },
+  {
+    "name": "Missing legacy file",
+    "files": [],
+    "history": [
+      {
+        "name": "baseline",
+        "checksum": "baseline"
+      },
+      {
+        "name": "202604010000_Historic.sql",
+        "sql": "SELECT 1;"
+      }
+    ],
+    "error": "file is missing"
+  },
+  {
+    "name": "Legacy ledger preserved",
+    "files": [
+      {
+        "name": "202604010000_Historic.sql",
+        "sql": "SELECT 1;"
+      },
+      {
+        "name": "202701010000_First.sql",
+        "sql": "SELECT 1;"
+      }
+    ],
+    "history": [
+      {
+        "name": "baseline",
+        "checksum": "baseline"
+      },
+      {
+        "name": "202604010000_Historic.sql",
+        "sql": "SELECT 1;"
+      }
+    ],
+    "pending": [
+      "202701010000_First.sql"
+    ]
+  },
+  {
+    "name": "Legacy baseline without ledger",
+    "files": [
+      {
+        "name": "202604010000_Historic.sql",
+        "sql": "SELECT 1;"
+      }
+    ],
+    "history": [
+      {
+        "name": "baseline",
+        "checksum": "baseline"
+      }
+    ],
+    "error": "no recorded migration ledger"
+  },
+  {
+    "name": "Markerless tracked history",
+    "files": [
+      {
+        "name": "202701010000_First.sql",
+        "sql": "SELECT 1;"
+      },
+      {
+        "name": "202702010000_Second.sql",
+        "sql": "SELECT 1;"
+      }
+    ],
+    "history": [
+      {
+        "name": "202701010000_First.sql",
+        "sql": "SELECT 1;"
+      }
+    ],
+    "pending": [
+      "202702010000_Second.sql"
+    ]
+  },
+  {
+    "name": "Malformed file name",
+    "files": [
+      {
+        "name": "readme.sql",
+        "sql": "SELECT 1;"
+      }
+    ],
+    "history": [
+      {
+        "name": "baseline:v1:202606041820",
+        "checksum": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    ],
+    "error": "Invalid migration filename"
+  },
+  {
+    "name": "Invalid calendar timestamp",
+    "files": [
+      {
+        "name": "202702300000_BadDate.sql",
+        "sql": "SELECT 1;"
+      }
+    ],
+    "history": [
+      {
+        "name": "baseline:v1:202606041820",
+        "checksum": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    ],
+    "error": "Invalid migration filename"
+  },
+  {
+    "name": "Case sensitive SQL suffix",
+    "files": [
+      {
+        "name": "202701010000_First.SQL",
+        "sql": "SELECT 1;"
+      }
+    ],
+    "history": [
+      {
+        "name": "baseline:v1:202606041820",
+        "checksum": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    ],
+    "error": "Invalid migration filename"
+  },
+  {
+    "name": "Malformed recorded row",
+    "files": [],
+    "history": [
+      {
+        "name": "baseline:v1:202606041820",
+        "checksum": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "name": "unknown-row",
+        "checksum": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    ],
+    "error": "Invalid migration filename"
+  },
+  {
+    "name": "Blank recorded checksum",
+    "files": [
+      {
+        "name": "202701010000_First.sql",
+        "sql": "SELECT 1;"
+      }
+    ],
+    "history": [
+      {
+        "name": "baseline:v1:202606041820",
+        "checksum": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "name": "202701010000_First.sql",
+        "checksum": ""
+      }
+    ],
+    "error": "Invalid recorded migration checksum"
+  },
+  {
+    "name": "Multiple baseline markers",
+    "files": [],
+    "history": [
+      {
+        "name": "baseline:v1:202606041820",
+        "checksum": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "name": "baseline",
+        "checksum": "baseline"
+      }
+    ],
+    "error": "Multiple database baseline"
+  },
+  {
+    "name": "Unknown baseline version",
+    "files": [],
+    "history": [
+      {
+        "name": "baseline:v9:202606041820",
+        "checksum": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    ],
+    "error": "Unrecognised database baseline"
+  },
+  {
+    "name": "Pending SQL blocks retry",
+    "files": [
+      {
+        "name": "202701010000_First.sql",
+        "sql": "SELECT 1;"
+      }
+    ],
+    "history": [
+      {
+        "name": "baseline:v1:202606041820",
+        "checksum": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "name": "migration:pending",
+        "checksum": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    ],
+    "error": "incomplete or running migration"
+  },
+  {
+    "name": "Empty history",
+    "files": [
+      {
+        "name": "202701010000_First.sql",
+        "sql": "SELECT 1;"
+      }
+    ],
+    "history": [],
+    "error": "history is empty"
+  },
+  {
+    "name": "Validate full batch before execution",
+    "files": [
+      {
+        "name": "202701010000_First.sql",
+        "sql": "SELECT 1;"
+      },
+      {
+        "name": "202702010000_Second.sql",
+        "sql": "SELECT 9;"
+      }
+    ],
+    "history": [
+      {
+        "name": "baseline:v1:202606041820",
+        "checksum": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "name": "202702010000_Second.sql",
+        "sql": "SELECT 1;"
+      }
+    ],
+    "error": "checksum changed"
+  }
+]

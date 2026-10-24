@@ -1,5 +1,9 @@
 # Release notes
 
+## C04 - migration runner consistency
+
+PowerShell entry points now share one runner and require explicit targets. Desktop uses matching preflight rules for duplicate timestamps, chronology, checksums and missing files, with documented baseline exceptions. Failed or uncertain SQL leaves a durable pending marker and blocks automatic retries. Developer workflow applies before exporting for review. See [runner instructions](docs/migration-runners.md) and [local evidence/CI limits](docs/maintenance/c04-migration-runners.md).
+
 ## CI test follow-up - Unix fixture arguments
 
 Corrected the tool-resolution test to retain a one-item native argument array on Unix. Previously its scalar string was splatted into separate characters. Added an argument-count/type check and invocation diagnostics. Production tool resolution and database behaviour are unchanged.

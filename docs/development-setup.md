@@ -81,3 +81,7 @@ The result should be .githooks. Setup only configures/checks prerequisites; it d
 ## Other development routes
 
 For Windows packaging, inspect scripts/package-windows.ps1 and scripts/build-windows-installer.ps1, restore required runtimes and use the installer contract. A source web run is not a packaged-launcher test. For Linux deployment, use the [platform guide](user-guides/linux/installation-upgrade.md). Relevant feature checks and validation limits are listed in CONTRIBUTING. No setup or recovery procedure in this documentation cleanup has been executed on a fresh machine.
+
+## Applying later database changes
+
+Follow the [migration runner contract](migration-runners.md). All PowerShell routes require an explicit host, port, database and account/password. Use PlanOnly first. The compatibility runner now delegates to Apply-Migrations; dev-runner applies successfully before exporting for maintainer review. It no longer rejects a valid old database merely for differing from the newest canonical schema. Never remove incomplete markers or rewrite applied history to bypass validation.

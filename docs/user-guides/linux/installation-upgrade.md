@@ -87,7 +87,7 @@ With verified exported variables and compatible baseline, run:
 pwsh ./database/scripts/Apply-Migrations.ps1
 ```
 
-Require exit code 0 and review output before publishing. Historical checksum/order enforcement is incomplete; [C04](../../code-change-backlog.md#c04) records the required safeguards. DDL failures can leave partial state; do not blindly rerun or promise automatic rollback.
+Require exit code 0 and review output before publishing. The [runner contract](../../migration-runners.md) now enforces checksum, timestamp, chronology and missing-file rules. Failed/uncertain SQL leaves migration:pending and blocks retries. Preserve the error and use a verified recovery path; do not delete that marker to force another attempt. DDL may remain partially applied.
 
 Publish as above, require success, start the app and repeat live checks. Resume only services/timers previously active; do not install an importer on other deployments. Keep the recovery set until the upgraded system has passed validation. Installer/ZIP copying is not a substitute for the maintained platform deployment process.
 

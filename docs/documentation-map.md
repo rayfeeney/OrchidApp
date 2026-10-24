@@ -7,6 +7,7 @@ Use one current owner for each subject. Other documents link to that owner rathe
 | Project overview and starting links | [README](../README.md) | [Documentation index](index.md) |
 | Development machine and first run | [Developer setup](development-setup.md) | [Contributing](../CONTRIBUTING.md) |
 | Fresh schema creation and later migrations | [Database creation](database-creation.md) | [Architecture](architecture.md), contributor workflow |
+| Later migration execution and incomplete markers | [Migration runners](migration-runners.md) | [Creation contract](database-creation.md), [C04 evidence](maintenance/c04-migration-runners.md) |
 | Contribution and validation | [CONTRIBUTING](../CONTRIBUTING.md) | Feature check commands in feature guides |
 | Architecture and temporal behaviour | [Architecture](architecture.md), [temporal design](temporal-design.md) | Current source limits are explicit |
 | Windows layout and migration contract | [Windows upgrade contract](windows-upgrade-contract.md) | Windows Word guides listed in the index |
