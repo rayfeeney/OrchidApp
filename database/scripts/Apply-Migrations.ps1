@@ -1,8 +1,10 @@
 param (
-    [string]$MigrationFolder = "database/migrations"
+    [string]$MigrationFolder = "database/migrations",
+    [string]$MariaDbExe = $env:MARIADB_EXE
 )
 
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "Schema-Baseline.ps1")
 
 try {
     Write-Host "Starting MariaDB migration runner..."
@@ -18,16 +20,7 @@ try {
 
     # --- TOOL PATHS ---------------------------------------------------------
 
-    if ($IsWindows) {
-        $MariaDbExe = "C:\Program Files\MariaDB 10.11\bin\mariadb.exe"
-    }
-    else {
-        $MariaDbExe = "mariadb"
-    }
-
-    if ($IsWindows -and -not (Test-Path $MariaDbExe)) {
-        throw "mariadb.exe not found at $MariaDbExe"
-    }
+    $MariaDbExe = Resolve-MariaDbTool -Override $MariaDbExe
 
     # --- CONNECTION SETTINGS ------------------------------------------------
 
@@ -76,6 +69,7 @@ database=$Database
         $output = & $MariaDbExe `
             "--defaults-extra-file=$credFile" `
             --protocol=TCP `
+            --abort-source-on-error `
             --connect-timeout=5 `
             --batch `
             --skip-column-names `
@@ -111,6 +105,7 @@ source $normalizedPath;
         $output = & $MariaDbExe `
             "--defaults-extra-file=$credFile" `
             --protocol=TCP `
+            --abort-source-on-error `
             --connect-timeout=5 `
             --default-character-set=utf8mb4 `
             --execute="$sql" `
@@ -136,13 +131,8 @@ source $normalizedPath;
 
     Write-Host "Ensuring schemaversion table exists..."
 
-    Invoke-MariaDbQuery @"
-CREATE TABLE IF NOT EXISTS schemaversion (
-    scriptName VARCHAR(255) NOT NULL PRIMARY KEY,
-    checksum CHAR(64) NOT NULL,
-    appliedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-"@ | Out-Null
+    $historyExists = @(Invoke-MariaDbQuery "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='schemaversion';")
+    if ($historyExists.Count -ne 1 -or [int]$historyExists[0] -ne 1) { throw 'Create the database from schema first; this runner does not initialise databases.' }
 
     # --- READ APPLIED MIGRATIONS -------------------------------------------
 
@@ -163,6 +153,7 @@ ORDER BY scriptName;
         $appliedMigrations[$parts[0]] = if ($parts.Count -ge 2) { $parts[1] } else { "" }
     }
 
+    $baselineCutoff = Get-DatabaseBaselineCutoff $appliedMigrations
     Write-Host "Applied migrations found: $($appliedMigrations.Count)"
 
     # --- COLLECT MIGRATION FILES -------------------------------------------
@@ -179,11 +170,19 @@ ORDER BY scriptName;
     $appliedCount = 0
 
     foreach ($file in $migrationFiles) {
+        $covered = Test-MigrationCovered $file.Name $baselineCutoff
         if ($appliedMigrations.ContainsKey($file.Name)) {
+            if ((Get-MigrationChecksum $file.FullName) -ne $appliedMigrations[$file.Name]) {
+                throw "Applied migration checksum changed: $($file.Name)"
+            }
             Write-Host "Skipping: $($file.Name)"
             continue
         }
 
+        if ($covered) {
+            Write-Host "Covered by schema baseline: $($file.Name)"
+            continue
+        }
         Write-Host "Applying: $($file.Name)"
 
         $checksum = Get-MigrationChecksum $file.FullName

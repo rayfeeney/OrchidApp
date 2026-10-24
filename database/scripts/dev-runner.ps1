@@ -22,8 +22,8 @@ try {
 
     $MigrationFolder = "database/migrations"
     $SchemaFolder    = "database/schema"
-    $ExportScript    = "database/scripts/Export-MariaDbSchema.ps1"
-    $ApplyScript     = "database/scripts/apply-migrations.ps1"
+    $ExportScript    = "database/scripts/Export-MariaDBSchema.ps1"
+    $ApplyScript     = "database/scripts/Apply-Migrations.ps1"
 
     foreach ($path in @($MigrationFolder, $SchemaFolder, $ExportScript, $ApplyScript)) {
         if (-not (Test-Path $path)) {

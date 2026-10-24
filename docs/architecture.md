@@ -23,15 +23,15 @@ Development does not run Desktop schema bootstrap. Ordinary Production hosting l
 
 A fresh database must be built from database/schema/ and required seeds alone. It must not need historic migration SQL, including for baseline bookkeeping. Migrations apply only to changes after creation. The [creation contract](database-creation.md) is authoritative. Baseline metadata belongs with the schema export so a fresh installation can later accept only subsequent compatible changes.
 
-Current rebuild portability/view ordering, Desktop history initialisation and baseline compatibility need [C01/C02](code-change-backlog.md). Do not replay migrations to work around creation gaps, manually edit applied history, or use a destructive rebuild as an upgrade.
+Creation now validates schema/bootstrap.json, imports required seeds in dependency order and records a completion marker last. The retained rebuild.ps1 filename creates only absent/empty targets and never drops a database. Desktop no longer scans historic SQL for creation. See [C01/C02 evidence and remaining platform acceptance](maintenance/c01-c02-schema-baseline.md). Do not manually edit applied history or use creation as an upgrade.
 
 ## Implemented migration paths
 
 | Path | Current behaviour and limit |
 | --- | --- |
-| database/scripts/Apply-Migrations.ps1 | Sorts files, skips recorded names, records new checksums. Does not enforce skipped-file checksum integrity, unique timestamp chronology or universal pre-execution schema drift. |
-| Desktop in src/OrchidApp.Web/Program.cs | Imports schema for a new DB, but currently scans packaged migrations to populate history; checks recorded checksums for existing DBs and requires a backup command for pending SQL. |
-| database/scripts/Apply-MariaDBMigrations.ps1 | Separate developer runner with extra checks and different defaults; baseline-row and case-sensitive export-path compatibility need reconciliation. |
+| database/scripts/Apply-Migrations.ps1 | Recognises schema baseline cut-offs, verifies recorded checksums and applies later files once. Unique timestamp chronology and universal pre-execution schema drift remain C04. |
+| Desktop in src/OrchidApp.Web/Program.cs | Imports the schema manifest without a migration-folder dependency; writes completion last. Retains legacy history, skips SQL covered by a fresh baseline, checks recorded checksums and requires a backup command before pending SQL. |
+| database/scripts/Apply-MariaDBMigrations.ps1 | Recognises current/legacy baseline rows; case-sensitive export-path references are corrected. Its extra checks, defaults and working-tree/export assumptions still require C04 reconciliation. |
 | database/scripts/dev-runner.ps1 | Export/drift wrapper with additional working-tree assumptions; not interchangeable with the documented simple runner. |
 
 There is no universal duplicate-timestamp/history or live schema-drift guarantee across all routes. DDL failures may leave partial state. Keep backup and controlled upgrade tests. [C04](code-change-backlog.md#c04) defines runner reconciliation.
@@ -70,4 +70,4 @@ Keep trusted-network access: there is no built-in multi-user authentication, and
 
 Directory.Build.props currently carries public version 1.3.0 and internal build metadata. Launcher version metadata drives Windows packaging/operational decisions; matching web metadata is for display/diagnostics. Package scripts update versions before building; empty version input increments the internal build, while explicit input resets it. Do not derive app version from user data or invent a release date from a documentation review.
 
-CI cross-publishes linux-arm64, reconstructs/exports a MariaDB 10.11 schema and builds a Windows package. It does not run all five feature check projects, prove schema-only seeded first run, test all migration history, build the Inno installer or perform device recovery. Requirements and acceptance remain in [the code backlog](code-change-backlog.md). Code changes must update the affected [document owner](documentation-map.md) in the same change.
+CI cross-publishes linux-arm64, reconstructs/exports a MariaDB 10.11 schema and builds a Windows package. It does not run all executable feature check projects, prove schema-only seeded first run, test all migration history, build the Inno installer or perform device recovery. Requirements and acceptance remain in [the code backlog](code-change-backlog.md). Code changes must update the affected [document owner](documentation-map.md) in the same change.

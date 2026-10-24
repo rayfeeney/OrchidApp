@@ -148,6 +148,10 @@ jobs:
             mysql --default-character-set=utf8mb4 -h 127.0.0.1 -uroot -proot orchids < "$f" || exit 1
           done
 
+      - name: Check MariaDB tool resolution
+        shell: pwsh
+        run: ./tests/SchemaBaseline.Checks/ToolResolution.Checks.ps1
+
       - name: Run schema export
         env:
           MARIADB_HOST: 127.0.0.1

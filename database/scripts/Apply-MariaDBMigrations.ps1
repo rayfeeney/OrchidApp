@@ -1,4 +1,5 @@
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "Schema-Baseline.ps1")
 
 try {
     Write-Host "Starting MariaDB migration runner..."
@@ -15,7 +16,7 @@ try {
 
     $MigrationFolder = (Resolve-Path "database/migrations").Path
     $SchemaFolder    = (Resolve-Path "database/schema").Path
-    $ExportScript    = (Resolve-Path "database/scripts/Export-MariaDbSchema.ps1").Path
+    $ExportScript    = (Resolve-Path "database/scripts/Export-MariaDBSchema.ps1").Path
 
     Write-Host "Repository root: $RepoRoot"
     Write-Host "Migration folder: $MigrationFolder"
@@ -24,22 +25,13 @@ try {
 
     # --- TOOL PATHS (deterministic, no PATH dependency) --------------------
 
-    if ($IsWindows) {
-        $MariaDbExe = "C:\Program Files\MariaDB 10.11\bin\mariadb.exe"
-    }
-    else {
-        $MariaDbExe = "mariadb"
-    }
-
-    if ($IsWindows -and -not (Test-Path $MariaDbExe)) {
-        throw "mariadb.exe not found at $MariaDbExe"
-    }
+    $MariaDbExe = Resolve-MariaDbTool -Override $env:MARIADB_EXE
 
     # --- CONNECTION SETTINGS -----------------------------------------------
 
     $MariaDbHost = $env:MARIADB_HOST ?? $env:MYSQL_HOST ?? "localhost"
     $MariaDbPort = $env:MARIADB_PORT ?? $env:MYSQL_PORT ?? 3307
-    $Database    = "orchids"
+    $Database    = $env:MARIADB_DATABASE ?? "orchids"
     $User        = $env:MARIADB_USER
     $Password    = $env:MARIADB_PASSWORD
 
@@ -66,6 +58,7 @@ try {
             --host=$MariaDbHost `
             --port=$MariaDbPort `
             --user=$User `
+            --abort-source-on-error `
             --connect-timeout=5 `
             --batch `
             --skip-column-names `
@@ -107,6 +100,7 @@ source $normalizedPath;
             --port=$MariaDbPort `
             --user=$User `
             --database=$Database `
+            --abort-source-on-error `
             --connect-timeout=5 `
             --default-character-set=utf8mb4 `
             2>&1
@@ -174,13 +168,8 @@ $env:MYSQL_PWD = $Password
 
     Write-Host "Ensuring schemaversion table exists..."
 
-    Invoke-MariaDbQuery @"
-CREATE TABLE IF NOT EXISTS schemaversion (
-    scriptName VARCHAR(255) NOT NULL PRIMARY KEY,
-    checksum CHAR(64) NOT NULL,
-    appliedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-"@ | Out-Null
+    $historyExists = @(Invoke-MariaDbQuery "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='schemaversion';")
+    if ($historyExists.Count -ne 1 -or [int]$historyExists[0] -ne 1) { throw 'Create the database from schema first; this runner does not initialise databases.' }
 
     Write-Host "schemaversion table is ready."
 
@@ -208,6 +197,7 @@ ORDER BY scriptName;
         $appliedMigrations[$scriptName] = $checksum
     }
 
+    $baselineCutoff = Get-DatabaseBaselineCutoff $appliedMigrations
     Write-Host "Applied migrations found: $($appliedMigrations.Count)"
 
     # --- COLLECT MIGRATION FILES -------------------------------------------
@@ -229,6 +219,7 @@ ORDER BY scriptName;
     $expectedPattern = '^\d{12}_.+\.sql$'
 
     foreach ($migrationFile in $migrationFiles) {
+        $null = Test-MigrationCovered $migrationFile.Name $baselineCutoff
         if ($migrationFile.Name -notmatch $expectedPattern) {
             throw "Invalid migration filename '$($migrationFile.Name)'. Expected format: YYYYMMDDHHMM_Description.sql"
         }
@@ -239,6 +230,8 @@ ORDER BY scriptName;
     # --- VALIDATE APPLIED MIGRATIONS STILL EXIST ---------------------------
 
     foreach ($appliedScriptName in $appliedMigrations.Keys) {
+        if ($appliedScriptName -like "baseline*") { continue }
+        if (Test-MigrationCovered $appliedScriptName $baselineCutoff) { continue }
         $matchingFile = $migrationFiles | Where-Object { $_.Name -eq $appliedScriptName }
 
         if (-not $matchingFile) {
@@ -276,7 +269,7 @@ ORDER BY scriptName;
     $firstMissingEncountered = $false
 
     foreach ($migrationFile in $migrationFiles) {
-        $isApplied = $appliedMigrations.ContainsKey($migrationFile.Name)
+        $isApplied = $appliedMigrations.ContainsKey($migrationFile.Name) -or (Test-MigrationCovered $migrationFile.Name $baselineCutoff)
 
         if (-not $isApplied) {
             $firstMissingEncountered = $true
@@ -297,7 +290,7 @@ ORDER BY scriptName;
     foreach ($migrationFile in $migrationFiles) {
         $scriptName = $migrationFile.Name
 
-        if ($appliedMigrations.ContainsKey($scriptName)) {
+        if ($appliedMigrations.ContainsKey($scriptName) -or (Test-MigrationCovered $scriptName $baselineCutoff)) {
             Write-Host "Skipping already applied migration: $scriptName"
             continue
         }
