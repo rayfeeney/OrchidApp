@@ -49,7 +49,7 @@ All 333 schema/checksum/historical SQL artifacts were verified unchanged. No mig
 - Windows guide 04 retained all five embedded media files. All six rendered pages were visually inspected. Existing screenshots illustrate buttons; historic log text is not the new policy. QA PDF/PNGs remain outside this ZIP.
 - Archived file list/bytes, merge markers, unchanged SQL/startup/reconciliation/restore artifacts and backup-only C# edits were checked. Generated database processes were shut down; diagnostic fixture directories remain. No live collection or private credential file was used.
 
-## Limits and next work
+Copying is not a cross-directory transaction. Failed or mismatched partial state is retained for resume/review; no automatic deletion or rollback is claimed. Do not run the old database again while relying on its preserved-source fingerprint. Original raw files can change during a database restart even when plant records appear unchanged.
 
 Retention is not an exact disk-space cap or cloud version history. Validation may need temporary space and time; unknown/protected files and cleanup warnings can leave extra archives. This does not add atomic SQL/filesystem backup consistency or certify a real installer/interactive recovery. Keep a verified off-computer copy.
 

@@ -1,6 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../src/OrchidApp.Launcher/Infrastructure/MigrationFiles.cs" Link="MigrationFiles.cs" />
+    <Compile Include="../../src/OrchidApp.Launcher/Infrastructure/MigrationState.cs" Link="MigrationState.cs" />
+    <Compile Include="../../src/OrchidApp.Launcher/Infrastructure/MigrationStateService.cs" Link="MigrationStateService.cs" />
+    <Compile Include="../../src/OrchidApp.Launcher/Infrastructure/MigrationStatus.cs" Link="MigrationStatus.cs" />
+    <Compile Include="../../src/OrchidApp.Launcher/Infrastructure/LegacyMigrationCoordinator.cs" Link="LegacyMigrationCoordinator.cs" />
+    <Compile Include="../../src/OrchidApp.Launcher/OrchidAppLayoutResolver.cs" Link="OrchidAppLayoutResolver.cs" />
+    <Compile Include="../../src/OrchidApp.Launcher/OrchidAppLayoutState.cs" Link="OrchidAppLayoutState.cs" />
+    <Compile Include="../../src/OrchidApp.Launcher/OrchidAppLayoutStatus.cs" Link="OrchidAppLayoutStatus.cs" />
+    <Compile Include="../../src/OrchidApp.Launcher/OrchidAppLegacyCandidate.cs" Link="OrchidAppLegacyCandidate.cs" />
     <Compile Include="../../src/OrchidApp.Launcher/Infrastructure/RestoreRecovery.cs" Link="RestoreRecovery.cs" />
     <Compile Include="../../src/OrchidApp.Launcher/Infrastructure/LegacySourceSnapshot.cs" Link="LegacySourceSnapshot.cs" />
     <Compile Include="../../src/OrchidApp.Launcher/Infrastructure/LegacyDataMigrationService.cs" Link="LegacyDataMigrationService.cs" />

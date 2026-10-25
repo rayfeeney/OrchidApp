@@ -59,13 +59,13 @@ internal sealed class LegacyDataMigrationService
 
     private void ValidateProgramDataTargetIsSafe()
     {
-        var targetOrchidsDatabasePath = Path.Combine(_programDataPaths.MariaDbData, "orchids");
+        var targetOrchidsDatabasePath = _programDataPaths.MariaDbData;
 
         if (Directory.Exists(targetOrchidsDatabasePath) &&
             Directory.EnumerateFileSystemEntries(targetOrchidsDatabasePath).Any())
         {
             throw new InvalidOperationException(
-                "ProgramData already contains an orchids database. Migration has been stopped to avoid overwriting user data.");
+                "ProgramData already contains MariaDB files. Migration has been stopped to avoid overwriting user data, including partial system databases.");
         }
 
         if (Directory.Exists(_programDataPaths.Uploads) &&
