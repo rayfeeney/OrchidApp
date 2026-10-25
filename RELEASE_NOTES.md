@@ -1,5 +1,9 @@
 # Release notes
 
+## C16 follow-up - ordinary Development startup
+
+Development now reads the repository .env automatically and derives its app connection string from existing MariaDB values, so normal daily startup is dotnet run. An omitted upload setting uses a created per-user development directory. Explicit settings retain precedence. Production/Desktop ignore the development file. The optional configuration wrapper uses the same upload default. See [developer setup](docs/development-setup.md).
+
 ## C05 - schema creation and future-upgrade CI acceptance
 
 CI now creates its canonical database through the production schema/seed manifest with no migration directory, then runs separate disposable creation/upgrade checks before export/drift comparison. Expanded checks verify required seeds, baseline identity, preserved records and a later migration applied once; missing seed/manifest, broken view order and partial imports must fail. Added the C# baseline policy check to CI and reused structured child errors in the database suite. Current-schema-to-future-migration coverage is locally verified; updated Linux CI and real older-installation fixtures remain separate acceptance. See [C05 evidence](docs/maintenance/c05-ci-database-acceptance.md).
