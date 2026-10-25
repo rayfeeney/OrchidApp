@@ -1,5 +1,13 @@
 # Release notes
 
+## C09 protected backup retention
+
+Normal backups now retain three verified routine ZIPs by default, with a minimum of one and an effective skip switch. Pre-upgrade, migration/restore safety copies and recorded recovery inputs are protected; unrelated or unrecognised files remain for review. Desktop database-update backups use a separate non-pruning directory. ZIP creation preserves empty directories and hidden files. See the [retention contract](docs/windows-backup-format.md#routine-backup-retention).
+
+## C10 legacy migration reconciliation
+
+Interrupted legacy copies now resume only missing, hash-verified files under recorded ownership. Completion waits for database identity and web readiness; failed startup retries readiness without recopying raw data. A verified target takes precedence over its unchanged preserved source. Changed/unrelated sources, residual targets and unsupported old state stop for review. See the [migration contract](docs/windows-upgrade-contract.md#migration-state-and-completion).
+
 ## C08 Windows restore recovery
 
 Restore retains the selected ZIP and requires a verified safety backup before replacing data. Interrupted SQL/photo/settings replacement blocks normal startup and backups until an explicit recovery restores the retained input or original safety copy. Launcher cloud copies preserve recorded recovery inputs after restart. See the [recovery contract](docs/windows-backup-format.md#failure-and-acceptance-boundaries) for sequential replacement limits and support steps.

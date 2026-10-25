@@ -112,17 +112,19 @@ database is complete, current or recoverable.
 | One | Yes | `LegacyAndProgramDataFound`: stop |
 | More than one | Either | `MultipleLegacyLayoutsFound`: stop |
 
-Uploads and launcher settings are also recorded during discovery, but they do
-not make ProgramData authoritative in this status calculation. Migration performs
-additional checks: a nonempty target orchids folder, nonempty target uploads
-folder or existing target settings file blocks copying. Empty target folders are
-permitted. Partial system-database files or other residual state need support
-review rather than assumptions based only on these statuses.
+The table describes layouts without recognised migration ownership. A version 2
+state record, matching target ownership token and readiness completion allow the
+verified ProgramData target to take precedence over its exact preserved source.
+The source path and SHA-256 inventory fingerprint must still match when that
+source exists. A changed source or unrelated discovered source stops startup.
+No source is deleted to resolve a conflict. Missing targets or ownership tokens
+also stop; a saved status alone cannot authorise recreating a missing collection.
 
-The current startup path does not use saved migration state to choose a canonical
-layout. A preserved legacy source can therefore conflict with ProgramData on a
-later launch. Do not promise automatic precedence for ProgramData or advise users
-to delete old folders merely to clear the conflict.
+Empty target folders are permitted for new copying. Any existing MariaDB files,
+including partial system databases, uploads or launcher settings block a new
+migration. An interrupted operation may resume only under its recorded ownership
+and file inventory, as described below. Empty, corrupt or version 1 state requires
+support review; old copy-only completion is not treated as readiness evidence.
 
 ## Legacy migration
 
@@ -135,23 +137,32 @@ launcher-settings.json
 ```
 
 The sequence is discovery, quiescent source capture, successful safety backup,
-migration-state `Started`, copy from that capture to ProgramData, migration-state `Completed`, then local database
-and web startup. Backup failure aborts before the copy. Copy failure is reported
-and the launcher attempts to write `Failed` state before stopping.
+version 2 state `Started`/`Copying`, verified copy to ProgramData,
+`AwaitingReadiness`, database identity/bootstrap and successful web response,
+then `Completed`. Backup failure aborts before copying. Failures preserve their
+last phase and original input. The launcher attempts to record `Failed` without
+destroying the last valid atomic state if that write also fails.
 
-`LegacyDataMigrationService` copies the complete MariaDB data tree, the complete
+`LegacyMigrationCoordinator` copies the complete MariaDB data tree, the complete
 legacy `wwwroot\uploads` tree when present, and settings when present. It does not
 overwrite existing files, delete the source or migrate the old backups/logs tree.
 It does not discover arbitrary alternate legacy upload roots.
 
-Copying is not transactional. Failure can leave a partial ProgramData destination;
-there is no automatic cleanup, rollback or resume/reconciliation policy. Source
-preservation provides a recovery option, not proof that the partial destination
-cannot affect later discovery. Raw MariaDB files must be copied from a quiescent
-source. The launcher now captures the source while denying file writes/deletion,
-rejects an active database/writer or changing inventory, and uses the same staged
-data for backup and copying. The migration service alone does not stop a live
-database; callers must use the captured source. C10 still owns reconciliation.
+Copying is not a cross-directory transaction. Each file is copied to unique work
+space, checked and moved into place without replacing an existing destination.
+After interruption, the launcher offers to resume the recorded operation. All
+existing target components must be exact inventory members with matching hashes;
+missing files may then be copied from the same unchanged capture. Changed or
+unrelated destination files stop the operation. No automatic deletion or rollback
+of partial data is attempted. Retain original data, captured input, work files,
+state and the verified safety ZIP until acceptance; support must review conflicts.
+
+Raw database files are copied only from the quiescent capture used for backup.
+The original source fingerprint is recorded while its capture read locks are held.
+Do not run the old installation again: its raw engine files/settings may change,
+invalidating preserved-source identity and requiring review even if its logical
+plant records appear unchanged. An empty uploads root is represented explicitly
+when the captured source has no uploads.
 
 ### Source-bound safety backup
 
@@ -173,15 +184,26 @@ using its property names, such as `SchemaVersion`, `MigrationStatus`,
 `PreUpgradeBackupPath` and copied-component flags. Start/completion/failure times
 are recorded in UTC. The current serializer does not apply camel-case naming.
 
-A clean first install does not create legacy migration state. `Started` is saved
-after the backup command succeeds. `Completed` is saved after file copying,
-before the copied database has started or the web app has passed functional checks.
-The flags describe copying/source presence; they are not content checksums.
+A clean first install does not create legacy migration state. Version 2 adds
+`Phase`, `OperationId`, `SnapshotRootPath`, `SourceFingerprint` and a
+`CopyManifest` with SHA-256 file hashes/directory entries. `migration-target-id`
+binds the target to that operation. State writes flush a temporary file and use
+same-directory atomic replacement. An exclusive migration lock prevents concurrent
+migration attempts; ordinary Close is refused while copying/readiness runs.
 
-State writes use direct file replacement, without a transactional file-write
-protocol. State-save failures can stop startup but may also leave incomplete
-diagnostic state. There is no implemented `launcher-state.json` tracking the last
-successfully started product version.
+Only `Copying` may resume file copying. Once `AwaitingReadiness` is saved, subsequent
+launches retry database/web readiness against the copied target and never recopy
+raw database files that startup may have changed. Occupied database/web ports
+stop migration startup. The launcher starts MariaDB with explicit basedir/datadir
+and no option files, verifies `@@datadir` before bootstrap and waits for web success
+before saving completion, opening the browser or enabling automatic backup.
+A failed completion write leaves readiness pending. This is startup readiness,
+not proof of every plant/photo workflow or installed-device acceptance.
+
+Version 1 records cannot be automatically promoted because they lack source/target
+ownership and readiness evidence. Preserve all files for support-led reconciliation;
+do not delete state or old folders to force a new install. There is no implemented
+`launcher-state.json` tracking the last successfully started product version.
 
 ## Fresh setup and same-layout upgrades
 
@@ -221,10 +243,17 @@ copy. A single-transaction dump protects transactional database reads but does
 not establish a common snapshot with uploads. Concurrent changes need explicit
 consistency testing and operational control.
 
-The legacy launcher now passes the declared `SkipOldBackupPruning` switch.
-General retention remains C09: the script still tests an undeclared
-`PruneOldBackups` variable. Do not claim that the nominal
-`BackupsToKeep` setting is reliably enforced until corrected and tested.
+Routine backup now retains three verified unprotected archives by default,
+always including the new current ZIP. `BackupsToKeep` must be at least one;
+`SkipOldBackupPruning` disables deletion. PreUpgrade backups and protected
+recovery directories never participate in routine pruning. Recorded restore
+inputs and migration/safety copies are pinned; unrelated, unsupported or corrupt
+files remain for review. These extras may exceed the requested count.
+See the [retention contract](windows-backup-format.md#routine-backup-retention).
+
+The Desktop database-update backup goes to `backups/pre-migration` with pruning
+disabled. Routine retention cannot remove those safety copies. Archive creation
+also preserves empty upload directories and hidden payload files.
 
 After a successful normal local backup, the launcher can copy the latest ZIP to
 the configured cloud-synchronised folder as `OrchidAppDataBackup.zip`, replacing
@@ -296,7 +325,7 @@ for the known gaps above.
 
 ## Required follow-up and current operator boundary
 
-Source-bound capture/backup and archive settings compatibility (C06/C07), plus explicit restore recovery (C08), are implemented with local checks. New CI and installed-machine acceptance remain pending. [C09, C10 and C18](code-change-backlog.md) retain retention, migration-state reconciliation and installed-upgrade work. Preserve a verified off-computer recovery copy before upgrading and obtain support for busy/ambiguous legacy sources or partial targets.
+Source-bound capture/backup and archive settings compatibility (C06/C07), explicit restore recovery (C08), migration reconciliation (C10) and protected routine retention (C09) are implemented with local checks. New CI and installed-machine acceptance remain pending under [C18](code-change-backlog.md#c18). Preserve a verified off-computer recovery copy before upgrading and obtain support for busy/ambiguous sources, changed partial targets or unsupported old state. See [C10 evidence](maintenance/c10-migration-reconciliation.md) and [C09 evidence](maintenance/c09-backup-retention.md).
 
 Before restoring on a replacement PC, preserve the trusted ZIP separately and do not run a new empty-data backup into the only fixed-name cloud copy. A cloud destination is not required to select a restore ZIP. Configure future cloud backups only after verifying plants, photos, settings and subsequent startup. Included settings now restore through the supported archive layouts; verify them before enabling future backups.
 

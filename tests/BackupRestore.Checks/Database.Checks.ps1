@@ -92,7 +92,7 @@ try {
     $busy=& dotnet $cli capture $legacy (Join-Path $root 'busy capture') 2>&1
     Check 'A running source database blocks capture' ($LASTEXITCODE -ne 0)
     Stop-Fixture $SourcePort
-    $snapshot=& dotnet $cli capture $legacy (Join-Path $root 'staging')
+    $snapshot=& dotnet $cli capture $legacy (Join-Path $target 'migration-staging')
     if ($LASTEXITCODE -ne 0) { throw 'Source capture failed.' }
     $snapshot=[string]$snapshot
     Check 'Installed tools and captured legacy roots differ' ($installed -ne $snapshot)
@@ -102,12 +102,44 @@ try {
     Check 'Unrelated listener creates no safety ZIP' (@(Get-ChildItem -LiteralPath $backups -Filter '*.zip').Count -eq 0)
     Check 'Unrelated listener remains intact' ([int](Query $SourcePort 'SELECT COUNT(*) FROM orchids.plant;') -eq 1)
     Stop-Fixture $SourcePort
+    # That intentional original-server restart changed raw engine files. Capture its
+    # new quiescent identity for the actual migration, rather than reusing old proof.
+    $snapshot=& dotnet $cli capture $legacy (Join-Path $target 'migration-staging')
+    if ($LASTEXITCODE -ne 0) { throw 'Post-listener-test source recapture failed.' }
+    $snapshot=[string]$snapshot
     Run-Tool 'backup-orchidapp.ps1' @('-BackupType','PreUpgrade','-LegacySourceRoot',$snapshot,'-BackupsRoot',$backups,'-MariaDbPort',"$SourcePort",'-SkipOldBackupPruning')
     $zip=@(Get-ChildItem -LiteralPath $backups -Filter '*.zip')[0].FullName
     Check 'Source original files retained' (Test-Path -LiteralPath $settings)
-    & dotnet $cli migrate $snapshot $common
-    if ($LASTEXITCODE -ne 0) { throw 'Captured raw-file migration failed.' }
+    $interrupted=& dotnet $cli migrate-reconciled $snapshot $common $zip interrupt 2>&1
+    Check 'Interrupted raw copy reports failure' ($LASTEXITCODE -ne 0)
+    $migrationFile=Join-Path $target 'migration-state.json'
+    Check 'Interrupted migration retains copying state' ((Get-Content -LiteralPath $migrationFile -Raw | ConvertFrom-Json).Phase -eq 'Copying')
+    & dotnet $cli resume-migration $common
+    if ($LASTEXITCODE -ne 0) { throw 'Recorded raw-file copy resume failed.' }
+    $copied=Get-Content -LiteralPath $migrationFile -Raw | ConvertFrom-Json
+    Check 'Raw copy completion still awaits readiness' ($copied.Phase -eq 'AwaitingReadiness' -and $copied.MigrationStatus -ne 'Completed')
+    $failedStart=Start-Process -FilePath $server -ArgumentList "--no-defaults --basedir=`"$MariaDbRuntimeRoot`" --datadir=`"$(Join-Path $target 'data/mariadb')`" --port=$TargetPort --bind-address=127.0.0.1 --orchidapp-deliberately-invalid-option" -PassThru -WindowStyle Hidden -RedirectStandardOutput (Join-Path $root 'failed-start.log') -RedirectStandardError (Join-Path $root 'failed-start-error.log')
+    $processes.Add($failedStart);$null=$failedStart.Handle
+    if (-not $failedStart.WaitForExit(10000)) { $failedStart.Kill(); throw 'Disposable invalid-option server did not exit.' }
+    Check 'Real migrated-database startup failure is reported' ($failedStart.ExitCode -ne 0)
+    & dotnet $cli fail-migration-readiness $common
+    if ($LASTEXITCODE -ne 0) { throw 'Could not record fixture readiness failure.' }
+    $failedState=Get-Content -LiteralPath $migrationFile -Raw | ConvertFrom-Json
+    Check 'Database startup failure retains readiness phase' ($failedState.Phase -eq 'AwaitingReadiness' -and $failedState.MigrationStatus -eq 'Failed')
+    $rawWitness=(Get-ChildItem -LiteralPath (Join-Path $target 'data/mariadb/orchids') -File | Select-Object -First 1).FullName
+    $rawHash=(Get-FileHash -LiteralPath $rawWitness).Hash
+    & dotnet $cli resume-migration $common
+    Check 'Next launch retries readiness without recopying raw database' ($LASTEXITCODE -eq 0 -and (Get-FileHash -LiteralPath $rawWitness).Hash -eq $rawHash)
     Start-Fixture (Join-Path $target 'data/mariadb') $TargetPort
+    Check 'Migrated MariaDB starts with expected plant data' ((Query $TargetPort 'SELECT plantNotes FROM orchids.plant;') -ceq 'Round trip café')
+    $actualData=[IO.Path]::GetFullPath([string](Query $TargetPort 'SELECT @@datadir;')).TrimEnd([char[]]@('\','/'))
+    $expectedData=[IO.Path]::GetFullPath((Join-Path $target 'data/mariadb')).TrimEnd([char[]]@('\','/'))
+    Check 'Migrated database listener has expected identity' ($actualData -ieq $expectedData)
+    & dotnet $cli complete-migration $common
+    if ($LASTEXITCODE -ne 0) { throw 'Migration completion state failed.' }
+    Check 'Verified migration completion persisted' ((Get-Content -LiteralPath $migrationFile -Raw | ConvertFrom-Json).MigrationStatus -eq 'Completed')
+    $resolved=& dotnet $cli migration-layout $common
+    Check 'Next launch selects verified target with original retained' ($LASTEXITCODE -eq 0 -and $resolved -eq 'ProgramDataLayoutInPlace')
     Query $TargetPort "UPDATE orchids.plant SET plantNotes='changed';" | Out-Null
     'changed' | Set-Content (Join-Path $target "uploads/plants/$plantId/photo.jpg")
     '{"CloudBackupFolderPath":"wrong"}' | Set-Content (Join-Path $target 'launcher-settings.json')
@@ -201,6 +233,35 @@ try {
     Check 'Owned-process completion clears pending marker' (-not (Test-Path -LiteralPath $pendingPath))
     Start-Fixture (Join-Path $target 'data/mariadb') $TargetPort
     Check 'Restored database restarts with expected records' ((Query $TargetPort 'SELECT plantNotes FROM orchids.plant;') -ceq 'Round trip café')
+    $retentionRoot=Join-Path $root 'routine retention'
+    New-Item -ItemType Directory -Path $retentionRoot | Out-Null
+    $retentionPayload=Join-Path $root 'retention payload'
+    Expand-Archive -LiteralPath $normalZip -DestinationPath $retentionPayload
+    . (Join-Path $RepoRoot 'app/tools/Backup-Contract.ps1')
+    $oldRoutines=@()
+    foreach ($number in @(1,2)) {
+        $archiveName='OrchidAppBackup_20000101_'+$number.ToString('000000')
+        $retentionManifest=Get-Content -LiteralPath (Join-Path $retentionPayload 'manifest.json') -Raw | ConvertFrom-Json
+        $retentionManifest.backupName=$archiveName
+        $retentionManifest | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $retentionPayload 'manifest.json') -Encoding UTF8
+        $archive=Join-Path $retentionRoot ($archiveName+'.zip')
+        New-OrchidBackupArchive $retentionPayload $archive
+        $oldRoutines+=$archive
+    }
+    $unrelatedZip=Join-Path $retentionRoot 'trusted-separate-copy.zip';Copy-Item -LiteralPath $normalZip -Destination $unrelatedZip
+    Run-Tool 'backup-orchidapp.ps1' @('-BackupsRoot',$retentionRoot,'-MariaDbPort',"$TargetPort",'-BackupsToKeep','1')
+    Check 'Native normal backup prunes only old routine archives' (-not (Test-Path -LiteralPath $oldRoutines[0]) -and -not (Test-Path -LiteralPath $oldRoutines[1]))
+    Check 'Native retention leaves unrelated recovery ZIP intact' ((Get-FileHash -LiteralPath $unrelatedZip).Hash -eq (Get-FileHash -LiteralPath $normalZip).Hash)
+    $latestRoutine=@(Get-ChildItem -LiteralPath $retentionRoot -Filter 'OrchidAppBackup_*.zip' -File)
+    Check 'Native minimum count retains the new verified archive' ($latestRoutine.Count -eq 1)
+    Run-Tool 'backup-orchidapp.ps1' @('-BackupsRoot',$retentionRoot,'-MariaDbPort',"$TargetPort",'-BackupsToKeep','1','-SkipOldBackupPruning')
+    Check 'Native skip switch preserves previous routine backup' (@(Get-ChildItem -LiteralPath $retentionRoot -Filter 'OrchidAppBackup_*.zip' -File).Count -eq 2 -and (Test-Path -LiteralPath $latestRoutine[0].FullName))
+    $beforeFailure=@(Get-ChildItem -LiteralPath $retentionRoot -Filter '*.zip' -File).Count
+    $retentionPhoto=Join-Path $target "uploads/plants/$plantId/photo.jpg"
+    $retentionHeld=[IO.File]::Open($retentionPhoto,[IO.FileMode]::Open,[IO.FileAccess]::Read,[IO.FileShare]::None)
+    try { Run-Tool 'backup-orchidapp.ps1' @('-BackupsRoot',$retentionRoot,'-MariaDbPort',"$TargetPort",'-BackupsToKeep','1') 'another process' }
+    finally { $retentionHeld.Dispose() }
+    Check 'Failed new backup does not prune existing archives' (@(Get-ChildItem -LiteralPath $retentionRoot -Filter '*.zip' -File).Count -eq $beforeFailure)
     Run-Tool 'backup-orchidapp.ps1' @('-BackupType','PreUpgrade','-BackupsRoot',$backups,'-MariaDbPort',"$SourcePort") 'explicit LegacySourceRoot'
     Remove-Item -LiteralPath (Join-Path $snapshot "wwwroot/uploads/plants/$plantId/photo.jpg")
     Run-Tool 'backup-orchidapp.ps1' @('-BackupType','PreUpgrade','-LegacySourceRoot',$snapshot,'-BackupsRoot',$backups,'-MariaDbPort',"$SourcePort",'-SkipOldBackupPruning') 'photo is missing'

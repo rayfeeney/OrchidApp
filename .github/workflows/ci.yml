@@ -209,6 +209,13 @@ jobs:
           & powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tests/BackupRestore.Checks/Policy.Checks.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+      - name: Check Windows backup retention
+        shell: pwsh
+        run: |
+          ./tests/BackupRestore.Checks/Retention.Checks.ps1
+          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tests/BackupRestore.Checks/Retention.Checks.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Check Windows backup and restore round trip
         shell: pwsh
         run: ./tests/BackupRestore.Checks/Database.Checks.ps1 -MariaDbRuntimeRoot ./app/runtime/mariadb/win-x64

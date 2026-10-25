@@ -29,8 +29,8 @@ Record actual evidence at each step.
 | [C06](#c06) | P1 | Confirmed source-selection gap | Bind legacy safety backup to the detected source |
 | [C07](#c07) | P1 | Confirmed backup/restore format mismatch | Restore settings from the format written by backup |
 | [C08](#c08) | P1 | Implemented; CI/installed acceptance pending | Make restore failure recoverable and preserve the source ZIP |
-| [C09](#c09) | P2 | Confirmed parameter mismatch | Correct backup retention controls |
-| [C10](#c10) | P1 | Confirmed defect / incomplete state policy | Reconcile interrupted and completed legacy migration state |
+| [C09](#c09) | P2 | Implemented; CI/installed acceptance pending | Correct backup retention controls |
+| [C10](#c10) | P1 | Implemented; CI/installed acceptance pending | Reconcile interrupted and completed legacy migration state |
 | [C11](#c11) | P1 | Confirmed SQL defect | Correct manual lifecycle closure and its failure handling |
 | [C12](#c12) | P2 | Confirmed inconsistency / policy decision required | Make temporal and ended-plant restrictions deliberate |
 | [C13](#c13) | P2 | Investigation / documented transaction gap | Verify structural transaction rollback and concurrency |
@@ -156,7 +156,7 @@ Implementation: retained input, verified safety backup, persistent phase journal
 
 ## C09
 
-**Correct backup retention controls** — P2; Confirmed parameter mismatch; status: Open.
+**Correct backup retention controls** — P2; status: Implemented with local retention/native/Desktop checks; CI/installed-machine acceptance pending.
 
 Affected files/areas: app/tools/backup-orchidapp.ps1; src/OrchidApp.Launcher/OrchidAppLauncherForm.cs.
 
@@ -166,9 +166,11 @@ Dependencies: C06 coordination.
 
 Acceptance: Test retention enabled/disabled, minimum counts, unrelated files and pre-upgrade archives; launcher arguments match declared script parameters.
 
+Implementation: declared skip/count controls, minimum one backup, validated top-level routine candidates, pinned recovery/migration copies, protected safety directories and same-destination backup lock. The Desktop update backup now uses a separate non-pruning directory. Empty/hidden payload entries are preserved during ZIP creation. See [retention contract](windows-backup-format.md#routine-backup-retention) and [C09 evidence](maintenance/c09-backup-retention.md).
+
 ## C10
 
-**Reconcile interrupted and completed legacy migration state** — P1; Confirmed defect / incomplete state policy; status: Open.
+**Reconcile interrupted and completed legacy migration state** — P1; status: Implemented with local reconciliation checks; CI/installed-machine acceptance pending.
 
 Affected files/areas: src/OrchidApp.Launcher/OrchidAppLayoutResolver.cs; Infrastructure/LegacyDataMigrationService.cs; Infrastructure/MigrationStateService.cs; OrchidAppLauncherForm.cs.
 
@@ -177,6 +179,8 @@ Required work: Define source-preserving resume/rollback for partial copies, atom
 Dependencies: C06, C07.
 
 Acceptance: Interrupted copy/state-write/database-start failure and next launch are tested; verified target precedence does not guess; original source is preserved and no data overwritten.
+
+Implementation: version 2 atomic state, exclusive operation lock, captured-source fingerprint, target ownership token, hash-checked missing-file resume and readiness-aware completion. Preserved source precedence requires matching identity; unrelated/changed sources and unsupported version 1 state stop for review. See [contract](windows-upgrade-contract.md#migration-state-and-completion) and [C10 evidence](maintenance/c10-migration-reconciliation.md). No automatic partial-target deletion/rollback is claimed.
 
 ## C11
 
