@@ -1,5 +1,9 @@
 # Release notes
 
+## C10 legacy migration reconciliation
+
+Interrupted legacy copies now resume only missing, hash-verified files under recorded ownership. Completion waits for database identity and web readiness; failed startup retries readiness without recopying raw data. A verified target takes precedence over its unchanged preserved source. Changed/unrelated sources, residual targets and unsupported old state stop for review. See the [migration contract](docs/windows-upgrade-contract.md#migration-state-and-completion).
+
 ## C08 Windows restore recovery
 
 Restore retains the selected ZIP and requires a verified safety backup before replacing data. Interrupted SQL/photo/settings replacement blocks normal startup and backups until an explicit recovery restores the retained input or original safety copy. Launcher cloud copies preserve recorded recovery inputs after restart. See the [recovery contract](docs/windows-backup-format.md#failure-and-acceptance-boundaries) for sequential replacement limits and support steps.

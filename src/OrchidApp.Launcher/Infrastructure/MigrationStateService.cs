@@ -32,10 +32,11 @@ public sealed class MigrationStateService
 
         if (string.IsNullOrWhiteSpace(json))
         {
-            return null;
+            throw new InvalidOperationException("Migration state is empty. Preserve it and obtain support before startup.");
         }
 
-        return JsonSerializer.Deserialize<MigrationState>(json, JsonOptions);
+        return JsonSerializer.Deserialize<MigrationState>(json, JsonOptions)
+            ?? throw new InvalidOperationException("Migration state is null. Source review is required.");
     }
 
     public void Save(MigrationState state)
@@ -49,6 +50,19 @@ public sealed class MigrationStateService
 
         string json = JsonSerializer.Serialize(state, JsonOptions);
 
-        File.WriteAllText(_paths.MigrationStateFile, json);
+        MigrationFiles.RejectAliases(_paths.MigrationStateFile);
+        var temporary = _paths.MigrationStateFile + "." + Guid.NewGuid().ToString("N") + ".tmp";
+        try
+        {
+            using (var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+            {
+                var bytes = System.Text.Encoding.UTF8.GetBytes(json);
+                stream.Write(bytes);
+                stream.Flush(flushToDisk: true);
+            }
+            if (File.Exists(_paths.MigrationStateFile)) File.Replace(temporary, _paths.MigrationStateFile, null);
+            else File.Move(temporary, _paths.MigrationStateFile);
+        }
+        finally { if (File.Exists(temporary)) File.Delete(temporary); }
     }
 }

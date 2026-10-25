@@ -1,5 +1,7 @@
 using OrchidApp.Launcher.Infrastructure;
 
+if (MigrationChecks.TryRunCommand(args)) return;
+
 if (args.Length == 3 && args[0] == "capture") { Console.WriteLine(LegacySourceSnapshot.Capture(args[1], args[2])); return; }
 if (args.Length == 3 && args[0] == "migrate") { new LegacyDataMigrationService(new WindowsProgramDataPaths(args[2])).MigrateFromLegacyRoot(args[1]); return; }
 var root = Path.Combine(Path.GetTempPath(), "orchids-source-" + Guid.NewGuid().ToString("N"));
@@ -57,6 +59,7 @@ try
     File.WriteAllText(Path.Combine(history,"recovery.json"), "broken");
     try { recovery.ProtectsCloudDestination(cloud); throw new Exception("Corrupt history allowed cloud overwrite"); }
     catch (System.Text.Json.JsonException) { count++; }
-    Console.WriteLine($"{count} legacy source capture/migration checks passed.");
+    count += MigrationChecks.Run(root);
+    Console.WriteLine($"{count} source, restore recovery and migration reconciliation checks passed.");
 }
 finally { Directory.Delete(root,true); }

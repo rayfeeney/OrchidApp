@@ -55,6 +55,8 @@ public partial class OrchidAppLauncherForm : Form
     private const string CloudBackupFileName = "OrchidAppDataBackup.zip";
     private bool _backupInProgress = false;
     private bool _restoreInProgress;
+    private MigrationState? _activeMigration;
+    private bool _migrationStartupInProgress;
 
     private Process? _webAppProcess;
     private Process? _mariaDbProcess;
@@ -227,6 +229,7 @@ public partial class OrchidAppLauncherForm : Form
     protected override async void OnLoad(EventArgs e)
     {
         base.OnLoad(e);
+        FileStream? migrationLock = null;
 
         try
         {
@@ -268,8 +271,41 @@ public partial class OrchidAppLauncherForm : Form
                 return;
             }
 
+            var migrationStateService = new MigrationStateService(_programDataPaths);
+            var previousMigration = migrationStateService.Load();
+            if (previousMigration is not null && previousMigration.MigrationStatus != MigrationStatus.Completed)
+            {
+                if (MessageBox.Show("A previous legacy migration did not finish. Resume the recorded copy or readiness check?\n\n" +
+                    "Only matching files from the retained capture will be used. Existing changed or unrelated data will not be overwritten. Choose No to leave all files for support.",
+                    "Resume interrupted migration", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
+                {
+                    statusLabel.Text = "Migration is paused for review. Preserve the original, capture, safety ZIP and ProgramData state; contact support.";
+                    SetWindowTitle("Migration review required");
+                    return;
+                }
+                _migrationStartupInProgress = true;
+                configureCloudBackupButton.Enabled = false;
+                var coordinator = new LegacyMigrationCoordinator(_programDataPaths);
+                migrationLock = coordinator.AcquireLock();
+                var currentMigration = migrationStateService.Load()
+                    ?? throw new InvalidOperationException("Migration state changed before the operation lock was acquired. Restart for a fresh review.");
+                if (currentMigration.MigrationStatus == MigrationStatus.Completed || currentMigration.OperationId != previousMigration.OperationId)
+                    throw new InvalidOperationException("Another migration attempt changed the recorded operation. Close and reopen OrchidApp for a fresh review.");
+                if (Directory.Exists(currentMigration.SourceLegacyRootPath))
+                    coordinator.CheckPreservedSource(currentMigration, currentMigration.SourceLegacyRootPath);
+                _activeMigration = currentMigration;
+                await Task.Run(() => coordinator.ContinueCopy(_activeMigration));
+                AppendLog("Recorded migration copy is complete; database and web readiness are still required.");
+            }
+
             if (layout.Status == OrchidAppLayoutStatus.OldLayoutRequiresMigration)
             {
+                _migrationStartupInProgress = true;
+                configureCloudBackupButton.Enabled = false;
+                var coordinator = new LegacyMigrationCoordinator(_programDataPaths);
+                migrationLock = coordinator.AcquireLock();
+                if (migrationStateService.Exists())
+                    throw new InvalidOperationException("Migration state appeared before the operation lock was acquired. Restart for a fresh review.");
                 AppendLog("Existing legacy OrchidApp layout detected. Mandatory pre-upgrade backup is required.");
 
                 var legacyCandidate = layout.LegacyCandidates.Single(candidate => candidate.HasOrchidsDatabase);
@@ -296,81 +332,17 @@ public partial class OrchidAppLauncherForm : Form
                 _preUpgradeBackupCompletedThisStartup = true;
                 AppendLog("Pre-upgrade backup succeeded. Startup may continue.");
 
-                var migrationStateService = new MigrationStateService(_programDataPaths);
-
-                var migrationState = new MigrationState
-                {
-                    SchemaVersion = 1,
-                    MigrationStatus = MigrationStatus.Started,
-                    MigrationStartedAtUtc = DateTime.UtcNow,
-                    SourceLegacyRootPath = legacyCandidate.RootPath,
-                    TargetProgramDataRootPath = _programDataPaths.Root,
-                    ApplicationProductVersion = AppVersion.ProductVersion,
-                    ApplicationInformationalVersion = AppVersion.InformationalVersion,
-                    PreUpgradeBackupPath = _lastPreUpgradeBackupPath,
-                    MigratedMariaDbData = false,
-                    MigratedUploads = false,
-                    MigratedLauncherSettings = false
-                };
-
-                migrationStateService.Save(migrationState);
-                AppendLog($"Migration state written: {MigrationStatus.Started}");
-
-                try
-                {
-                    AppendLog("Starting legacy data migration to ProgramData...");
-
-                    var migrationService = new LegacyDataMigrationService(_programDataPaths);
-                    migrationService.MigrateFromLegacyRoot(sourceSnapshot);
-
-                    var legacyLauncherSettingsFile = Path.Combine(
-                        sourceSnapshot,
-                        "launcher-settings.json");
-
-                    var legacyUploadsFolder = Path.Combine(
-                        sourceSnapshot,
-                        "wwwroot",
-                        "uploads");
-
-                    migrationState.MigrationStatus = MigrationStatus.Completed;
-                    migrationState.MigrationCompletedAtUtc = DateTime.UtcNow;
-                    migrationState.MigratedMariaDbData = true;
-                    migrationState.MigratedUploads =
-                        Directory.Exists(legacyUploadsFolder) &&
-                        Directory.EnumerateFileSystemEntries(legacyUploadsFolder).Any();
-                    migrationState.MigratedLauncherSettings = File.Exists(legacyLauncherSettingsFile);
-
-                    migrationStateService.Save(migrationState);
-
-                    AppendLog("Legacy data migration to ProgramData completed.");
-                    AppendLog("Migration state marks the copy operation as completed. Post-copy MariaDB/database verification is deferred beyond v1.2.0.");
-                    AppendLog($"Migration state written: {MigrationStatus.Completed}");
-                }
-                catch (Exception ex)
-                {
-                    migrationState.MigrationStatus = MigrationStatus.Failed;
-                    migrationState.FailedAtUtc = DateTime.UtcNow;
-                    migrationState.ErrorMessage = ex.Message;
-
-                    migrationStateService.Save(migrationState);
-
-                    AppendLog("Legacy data migration to ProgramData failed.");
-                    AppendLog($"Migration state written: {MigrationStatus.Failed}");
-                    AppendLog(ex.ToString());
-                    AppendSupportInstructions();
-
-                    SetLauncherStatus(LauncherStatus.Red);
-                    SetWindowTitle("Migration failed");
-
-                    statusLabel.Text =
-                        "Startup stopped: OrchidApp could not complete the required data migration. " +
-                        "Your original legacy data has not been deleted, moved or renamed. Contact support.";
-
-                    return;
-                }
+                _activeMigration = coordinator.Begin(legacyCandidate.RootPath, sourceSnapshot, _lastPreUpgradeBackupPath!);
+                _activeMigration.ApplicationProductVersion = AppVersion.ProductVersion;
+                _activeMigration.ApplicationInformationalVersion = AppVersion.InformationalVersion;
+                migrationStateService.Save(_activeMigration);
+                await Task.Run(() => coordinator.ContinueCopy(_activeMigration));
+                AppendLog("Legacy copy verified. Completion awaits database and web readiness.");
             }
 
             StartMariaDb();
+
+            await WaitForMariaDbAsync("server=127.0.0.1;port=3308;user=root;password=;");
 
             await BootstrapOrchidDatabaseIfRequiredAsync();
 
@@ -385,6 +357,16 @@ public partial class OrchidAppLauncherForm : Form
         }
         catch (Exception ex)
         {
+            if (_activeMigration is not null)
+            {
+                _activeMigration.MigrationStatus = MigrationStatus.Failed;
+                _activeMigration.FailedAtUtc = DateTime.UtcNow;
+                _activeMigration.ErrorMessage = ex.Message;
+                try { new MigrationStateService(_programDataPaths).Save(_activeMigration); }
+                catch (Exception stateError) { AppendLog("Unable to update failure state; retain the last atomic state: " + stateError.Message); }
+                try { await StopWebAppForRestoreAsync(); StopMariaDbGracefully(); }
+                catch (Exception stopError) { AppendLog("Migration startup shutdown: " + stopError.Message); }
+            }
             SetLauncherStatus(LauncherStatus.Red);
             SetWindowTitle("Error");
             AppendLog("STARTUP ERROR:");
@@ -401,6 +383,7 @@ public partial class OrchidAppLauncherForm : Form
                 MessageBoxIcon.Warning
             );
         }
+        finally { _migrationStartupInProgress = false; migrationLock?.Dispose(); }
     }
 
     private void InitialiseMariaDbDataDirectoryIfRequired(string dataDir)
@@ -476,6 +459,7 @@ public partial class OrchidAppLauncherForm : Form
 
     private void StartMariaDb()
     {
+        if (_activeMigration is not null) RequireUnusedMigrationPort(3308);
         var baseDir = AppContext.BaseDirectory;
 
         var mariaDbExe = Path.Combine(
@@ -514,6 +498,8 @@ public partial class OrchidAppLauncherForm : Form
             {
                 FileName = mariaDbExe,
                 Arguments =
+                    "--no-defaults " +
+                    $"--basedir=\"{Path.GetDirectoryName(Path.GetDirectoryName(mariaDbExe))}\" " +
                     $"--datadir=\"{dataDir}\" " +
                     $"--port=3308 " +
                     $"--bind-address=127.0.0.1 " +
@@ -553,6 +539,12 @@ public partial class OrchidAppLauncherForm : Form
         _mariaDbProcess = process;
     }
 
+    private static void RequireUnusedMigrationPort(int port)
+    {
+        if (System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners().Any(endpoint => endpoint.Port == port))
+            throw new InvalidOperationException($"Port {port} is already in use. Close the other OrchidApp/database instance and obtain support before resuming migration readiness.");
+    }
+
     private async Task WaitForMariaDbAsync(
         string connectionString,
         int timeoutSeconds = 30)
@@ -566,6 +558,16 @@ public partial class OrchidAppLauncherForm : Form
                 using var conn = new MySqlConnection(connectionString);
 
                 await conn.OpenAsync();
+
+                if (_activeMigration is not null)
+                {
+                    using var identity = new MySqlCommand("SELECT @@datadir;", conn);
+                    var directory = Convert.ToString(await identity.ExecuteScalarAsync())!;
+                    if (!LegacyMigrationCoordinator.SamePath(directory, _programDataPaths.MariaDbData))
+                        throw new InvalidOperationException("Migration readiness connected to a different MariaDB data directory.");
+                }
+                if (_mariaDbProcess is null || _mariaDbProcess.HasExited)
+                    throw new InvalidOperationException("The launched MariaDB process is not running.");
 
                 AppendLog("MariaDB is ready.");
 
@@ -645,6 +647,17 @@ FLUSH PRIVILEGES;
                 "mariadb-admin.exe"
             );
 
+            using (var connection = new MySqlConnection("server=127.0.0.1;port=3308;user=orchid;password=orchid;Connection Timeout=5;"))
+            {
+                connection.Open();
+                using var identity = new MySqlCommand("SELECT @@datadir;", connection);
+                if (!LegacyMigrationCoordinator.SamePath(Convert.ToString(identity.ExecuteScalar())!, _programDataPaths.MariaDbData))
+                {
+                    AppendLog("MariaDB shutdown refused: listener data directory differs from ProgramData. Contact support.");
+                    return;
+                }
+            }
+
             AppendLog($"MariaDB shutdown tool: {mariadbAdminExe}");
 
             if (!File.Exists(mariadbAdminExe))
@@ -659,7 +672,7 @@ FLUSH PRIVILEGES;
                 StartInfo = new ProcessStartInfo
                 {
                     FileName = mariadbAdminExe,
-                    Arguments = "-h 127.0.0.1 -P 3308 -u orchid_shutdown -porchid_shutdown shutdown",
+                    Arguments = "--no-defaults --protocol=TCP --connect-timeout=5 -h 127.0.0.1 -P 3308 -u orchid_shutdown -porchid_shutdown shutdown",
                     WorkingDirectory = baseDir,
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
@@ -722,6 +735,7 @@ FLUSH PRIVILEGES;
 
     private async Task StartWebAppAsync()
     {
+        if (_activeMigration is not null) RequireUnusedMigrationPort(5285);
         statusLabel.Text = "Starting web application...";
         SetWindowTitle("Starting");
 
@@ -817,6 +831,13 @@ FLUSH PRIVILEGES;
 
         await WaitForWebAppAsync("http://localhost:5285");
 
+        if (_activeMigration is not null)
+        {
+            new LegacyMigrationCoordinator(_programDataPaths).CompleteAfterReadiness(_activeMigration);
+            AppendLog("Legacy migration completed after database identity and web readiness verification. Original source retained.");
+            _activeMigration = null;
+        }
+
         Process.Start(new ProcessStartInfo
         {
             FileName = "http://localhost:5285",
@@ -833,6 +854,7 @@ FLUSH PRIVILEGES;
         backupButton.Enabled = true;
         restoreButton.Enabled = true;
 
+        configureCloudBackupButton.Enabled = true;
         _ = RunAutomaticBackupIfDueAsync();
     }
 
@@ -1608,6 +1630,12 @@ FLUSH PRIVILEGES;
 
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
+        if (_migrationStartupInProgress)
+        {
+            e.Cancel = true;
+            AppendLog("Migration/startup verification is running. Wait for completion or a reported failure before closing.");
+            return;
+        }
         if (_restoreInProgress && !_closeConfirmed)
         {
             e.Cancel = true;
