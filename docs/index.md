@@ -1,14 +1,17 @@
 # OrchidApp documentation
 
-Use current guides below. For each procedure, check its stated implementation limits before acting. Pending code changes are tracked in the [code backlog](code-change-backlog.md); this documentation update does not implement them.
+Use current guides below. For each procedure, check its stated implementation limits before acting. Implementation status and pending acceptance are tracked in the [code backlog](code-change-backlog.md).
 
 ## Develop and maintain
 
-- [Developer machine and first run](development-setup.md)
+- [Developer machine and first run](development-setup.md), with [C16 evidence and remaining acceptance](maintenance/c16-developer-setup.md)
 - [Contributing and validation](../CONTRIBUTING.md)
-- [Schema-only database creation and future migrations](database-creation.md)
+- [Migration runners and incomplete-upgrade handling](migration-runners.md)
+- [Schema-only database creation and future migrations](database-creation.md), with [C01/C02 evidence](maintenance/c01-c02-schema-baseline.md) and [C05 CI checks](maintenance/c05-ci-database-acceptance.md)
 - [Architecture](architecture.md) and [temporal design](temporal-design.md)
 - [Windows upgrade contract](windows-upgrade-contract.md)
+- [Windows backup source and archive compatibility](windows-backup-format.md)
+- [Windows restore recovery evidence](maintenance/c08-restore-recovery.md)
 - [Documentation ownership and maintenance](documentation-map.md)
 - [Code change backlog](code-change-backlog.md)
 - [Release notes](../RELEASE_NOTES.md) and [third-party notices](../THIRD_PARTY_NOTICES.md)

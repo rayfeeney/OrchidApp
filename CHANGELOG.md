@@ -1,23 +1,51 @@
-# Development startup recovery
+# C08 Windows restore recovery
 
-The inspected checkout has no DevelopmentConfiguration.Apply startup call and no DevelopmentConfiguration.cs. This restores the previously implemented C16 direct dotnet run fix. The cause of the missing files has not been established.
+Changes only: 16 modified and 3 added repository files, plus this CHANGELOG.md. No deletions or moves. No credentials, private .env, database contents, photos or runtime binaries are included.
 
-## Apply and start
+## Apply
 
-Stop the running development app. Extract this archive over the repository root containing OrchidApp.sln, accepting replacement of the listed files. Keep the existing private .env at that root. Then run dotnet run from src/OrchidApp.Web. No wrapper or manual credential export is required.
+1. Extract over the source repository root containing OrchidApp.sln and review the listed files. This follows the merged C06/C07 and C16 startup fix. Keep all existing private configuration.
+2. Rebuild/repackage Windows from source. This ZIP is not a deployed installer. The package script copies the complete tools directory, including new Restore-Recovery.ps1; do not distribute the restore script without both shared helpers.
+3. Run CI. For restore acceptance use disposable data and the Windows recovery guide; do not test destructive failure scenarios against the live collection.
+
+C08 does not modify the web startup files that now read the repository .env for ordinary dotnet run. All 333 schema/checksum/historical SQL artifacts were verified unchanged. No migration is required.
 
 ## Files
 
-- src/OrchidApp.Web/Program.cs: applies development configuration before registering database services.
-- src/OrchidApp.Web/Configuration/DevelopmentConfiguration.cs: reads allowlisted root .env settings in Development, constructs OrchidDb, selects an absolute development upload directory, and locates an already restored Windows image runtime.
-- src/OrchidApp.Web/appsettings.Development.json: leaves the upload directory unset so the development default or private override takes effect.
-- tests/DevelopmentConfiguration.Checks/DevelopmentConfiguration.Checks.csproj: standalone startup configuration check project.
-- tests/DevelopmentConfiguration.Checks/Program.cs: checks .env loading, explicit precedence, missing settings, upload defaults and environment isolation.
-- docs/development-setup.md: documents direct dotnet run and private .env setup.
-- docs/maintenance/c16-developer-setup.md: records C16 implementation and validation scope.
+| Change | Repository path | Description |
+| --- | --- | --- |
+| Modified | CONTRIBUTING.md | Document expanded recovery checks and disposable Windows fixture requirements. |
+| Modified | RELEASE_NOTES.md | Describe C08 restore recovery and its operating limits. |
+| Added | app/tools/Restore-Recovery.ps1 | Add atomic persistent recovery journal writes compatible with both PowerShell versions. |
+| Modified | app/tools/backup-orchidapp.ps1 | Block normal backups during pending restore and shorten native backup working paths. |
+| Modified | app/tools/restore-orchidapp.ps1 | Retain input, require verified safety backup, persist phases and offer explicit input/safety recovery with importer survival guard. |
+| Modified | docs/code-change-backlog.md | Record C08 implementation and pending CI/installed acceptance. |
+| Modified | docs/documentation-map.md | Identify the restore recovery reference and evidence. |
+| Modified | docs/index.md | Link C08 recovery evidence. |
+| Added | docs/maintenance/c08-restore-recovery.md | Record design, validation evidence and remaining limits. |
+| Modified | docs/user-guides/windows/04-ConfigureCloudBackupFolderInOrchidAppForWindows.docx | Explain protection of selected restore ZIP paths from later cloud copies; preserve illustrations. |
+| Modified | docs/user-guides/windows/05-RecoverOrchidAppOnReplacementWindowsComputer.docx | Explain safety copies and explicit recovery choices after interruption; preserve illustrations. |
+| Modified | docs/windows-backup-format.md | Maintain recovery procedures, persistent phases, cloud protection and support commands. |
+| Modified | docs/windows-upgrade-contract.md | Replace obsolete restore safety-copy gap with the implemented recovery boundary. |
+| Added | src/OrchidApp.Launcher/Infrastructure/RestoreRecovery.cs | Read persistent recovery state and protect recorded cloud destinations across restarts. |
+| Modified | src/OrchidApp.Launcher/OrchidAppLauncherForm.cs | Gate startup on pending restore, offer recovery choices, prevent ordinary close during restore, restore useful controls and guard cloud copies. |
+| Modified | tests/BackupRestore.Checks/BackupRestore.Checks.csproj | Compile shared restore recovery policy into the executable checks. |
+| Modified | tests/BackupRestore.Checks/Database.Checks.ps1 | Exercise actual failed restore phases, safety/input recovery, prior importer guard, clean shutdown and restart on generated MariaDB data. |
+| Modified | tests/BackupRestore.Checks/Policy.Checks.ps1 | Verify atomic pending/history journal writes and failed-phase persistence on both PowerShell versions. |
+| Modified | tests/BackupRestore.Checks/Program.cs | Check pending state, protected cloud destinations, incomplete preflight and corrupt history. |
 
-No deletions or moves. No credentials, database contents, uploads or runtime binaries are included. This is a targeted recovery package, not a replacement repository or a cumulative delivery of all phases.
+## Validation actually performed
 
-## Validation
+- Release launcher build: zero warnings/errors.
+- 23 C# source/recovery checks passed; 14 existing development startup checks passed.
+- 28 payload/recovery journal checks passed under PowerShell 7 and again under Windows PowerShell 5.1.
+- 59 Windows/MariaDB database checks passed. Generated fixtures covered SQL failure, missing referenced photo after import, locked upload/settings replacement, inability to create the safety copy, blocking an active prior importer, explicit retained-input and original-safety recovery, tool-owned clean database shutdown and subsequent restart. Existing archive compatibility and photo/settings byte checks also passed.
+- Selected inputs remained byte-identical; original safety archives and completed/failed phase history remained retained. Ordinary restore and backup were blocked during pending recovery.
+- Word guides 04 and 05 retained all five embedded images each. Six and seven rendered pages were visually inspected. QA PDFs/PNGs are outside this ZIP.
+- Changed Markdown links, unchanged database/startup artifacts, archive entries and file bytes were verified. No live collection or actual ProgramData collection was used. Antivirus stayed enabled.
 
-Re-ran the startup configuration suite: all 14 checks passed. Verified every packaged repository file against its source bytes. The user's development database was not accessed and the user's checkout was not modified. Actual local startup after applying remains to be confirmed.
+## Limits and next work
+
+Replacement remains sequential across SQL, uploads and settings; no automatic or atomic rollback is claimed. Recovery can still require support for disk/permission/runtime/input problems. Keep the retained input, safety archive and journal; do not delete restore-pending.json to force startup. Close other app instances during restore. Completed history protects selected ZIP paths from later fixed-name cloud overwrite; choose a different future cloud folder if necessary.
+
+Existing Windows CI steps run the expanded suites, but GitHub Actions and interactive installed-machine acceptance have not been run here. These fixtures do not prove recovery from actual historical releases. General concurrent-write backup consistency remains outside C08. Next in the agreed order is C10 migration-state reconciliation, followed by C09 retention and C17 Linux backup/restore.

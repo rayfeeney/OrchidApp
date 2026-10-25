@@ -245,9 +245,11 @@ root-level file. Conflicting files or missing declared components fail. Successf
 restore replaces the upload set and restores included settings; absent settings
 reset the target to defaults. See [archive compatibility](windows-backup-format.md).
 
-Restore does not automatically take a safety backup of current data before replacement and
-does not provide atomic rollback across SQL, uploads and settings. Keep a separate
-recovery copy before a deliberate restore. A success message is not a substitute
+Restore retains the selected input and requires a verified safety backup before replacement.
+A persistent pending marker blocks normal startup/backups after destructive interruption;
+the launcher offers explicit recovery from retained input or original safety copy.
+It does not provide atomic rollback across SQL, uploads and settings. See the
+[recovery procedure](windows-backup-format.md#failure-and-acceptance-boundaries). A success message is not a substitute
 for checking restored plants, photos, settings and subsequent startup.
 
 ## Logging and failure handling
@@ -294,7 +296,7 @@ for the known gaps above.
 
 ## Required follow-up and current operator boundary
 
-Source-bound capture/backup and archive settings compatibility (C06/C07) are implemented and locally tested. New CI and installed-machine acceptance remain pending. [C08–C10 and C18](code-change-backlog.md) retain failure recovery, retention, state reconciliation and installed-upgrade work. Preserve a verified off-computer recovery copy before upgrading and obtain support for busy/ambiguous legacy sources or partial targets.
+Source-bound capture/backup and archive settings compatibility (C06/C07), plus explicit restore recovery (C08), are implemented with local checks. New CI and installed-machine acceptance remain pending. [C09, C10 and C18](code-change-backlog.md) retain retention, migration-state reconciliation and installed-upgrade work. Preserve a verified off-computer recovery copy before upgrading and obtain support for busy/ambiguous legacy sources or partial targets.
 
 Before restoring on a replacement PC, preserve the trusted ZIP separately and do not run a new empty-data backup into the only fixed-name cloud copy. A cloud destination is not required to select a restore ZIP. Configure future cloud backups only after verifying plants, photos, settings and subsequent startup. Included settings now restore through the supported archive layouts; verify them before enabling future backups.
 

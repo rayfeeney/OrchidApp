@@ -1,6 +1,6 @@
 # Windows backup source and archive contract
 
-This is the maintained reference for the packaged Windows backup/restore tools. Use the launcher for ordinary operations. Keep a separate trusted recovery copy before deliberate replacement. Local C06/C07 tests cover the paths below; installed-machine, historical-release and failure-recovery acceptance remain separate.
+This is the maintained reference for the packaged Windows backup/restore tools. Use the launcher for ordinary operations. Keep a separate trusted recovery copy before deliberate replacement. Local C06/C07 and C08 checks cover the paths below; installed-machine and historical-release acceptance remain separate.
 
 ## Legacy source selection
 
@@ -41,7 +41,27 @@ Successful restore replaces the upload set rather than leaving unrelated photos 
 
 ## Failure and acceptance boundaries
 
-Structural/archive validation happens before import. SQL import and filesystem/settings replacement are not one transaction: a failure after import may leave partially replaced state. Unique extracted input/log folders are retained, and a selected ZIP inside the uploads directory being replaced is refused. C08 still owns safety copies, launcher recovery state, cloud overwrite protection and guided handling of partial failures. Do not retry blindly or discard the trusted original archive.
+Structural/archive validation happens before import. Restore first copies the selected ZIP into a unique ProgramData/OrchidApp/restore-recovery/<id>/recovery-input.zip, holding the selected file against writes/deletion while copying. It validates that retained copy and creates a verified normal-format safety ZIP in that operation's safety/ directory. A safety-copy failure stops replacement. These safety ZIPs are outside routine backup retention. A selected ZIP inside the uploads directory being replaced is refused. Close other OrchidApp instances and do not edit data during recovery.
+
+Before the first SQL statement, restore writes restore-pending.json in the ProgramData OrchidApp root. The journal records the input, original safety copy, operation directory and phase: ImportingDatabase, VerifyingPhotos, ReplacingUploads, ReplacingSettings, StoppingDatabase or Completed. Updates use same-directory temporary files and replacement. A second restore process cannot acquire the restore lock while one is running. The marker survives process interruption; it is removed only after successful database/photo/settings restoration and clean shutdown of a database started by the tool.
+
+While that marker exists, launcher startup stops before migration, database/web startup and automatic/cloud backup. Ordinary backup and ordinary restore invocations refuse to proceed. The launcher enables Restore from backup and explains the recovery choices. Yes restores the retained input; No restores the safety backup from before the first attempt; Cancel leaves everything for support. A recovery attempt retains the previous journal and original safety copy instead of backing up partial data. If a recovery file or journal is unavailable/corrupt, stop and obtain support; do not delete the pending marker to bypass the block.
+
+Before streaming SQL, the journal also records the native import process ID and start time. Recovery refuses to compete with that same process if it survived an interrupted PowerShell/launcher session. Wait for it to exit and contact support if it does not; do not start a second import or force a retry. The launcher refuses an ordinary Close while its restore is running.
+
+For support-led recovery with the launcher closed, use the installed tools directory and one explicit action:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./restore-orchidapp.ps1 -RecoveryAction RestoreInput
+# Or, to return to the collection before the original attempt:
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./restore-orchidapp.ps1 -RecoveryAction RestoreSafety
+```
+
+The tool uses the pending record, not a newly supplied BackupZip. Normal selection still uses -BackupZip. Preserve operation folders, original ZIPs and launcher logs until plants, photo bytes, settings and a subsequent startup have been checked. No automatic rollback is claimed: SQL and files are replaced sequentially. A full disk, permission problem or unavailable recovery input can require support before either recovery option succeeds.
+
+Completed operation journals remain. The launcher refuses to copy a later fixed-name cloud backup over any recorded original input, retained input or safety ZIP, including after restarting. Select a different future cloud folder after verification. An unreadable history record also stops the cloud copy. This protection starts when the recovery operation is recorded; before selecting a recovery file, preserve it separately and avoid backing up a fresh empty installation over your only cloud copy.
+
+If web shutdown fails before restore starts, the launcher reports that no restore began and restores usable controls. If the web app has stopped but preflight fails, Open and Backup stay disabled and Restore remains available; close and reopen for normal startup when no pending marker exists. After a destructive failure, the persistent recovery state takes precedence.
 
 Retention remains C09. The legacy invocation now passes the declared SkipOldBackupPruning switch; the existing general pruning condition is still unresolved and is not certified here.
 
@@ -54,4 +74,4 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tests/BackupRestore.Ch
 pwsh ./tests/BackupRestore.Checks/Database.Checks.ps1 -MariaDbRuntimeRoot ./app/runtime/mariadb/win-x64
 ```
 
-The database suite requires Windows, an initialized build of its C# fixture utility and a complete MariaDB 10.11 runtime with mariadb-install-db.exe. It uses unique source/target/ProgramData fixtures and unused loopback ports, not the live collection. It retains fixture directories and cleans up its own database processes. New Windows CI checks still require confirmation. See [C06/C07 evidence](maintenance/c06-c07-backup-source-and-format.md) and the [Windows upgrade contract](windows-upgrade-contract.md).
+The database suite requires Windows, an initialized build of its C# fixture utility and a complete MariaDB 10.11 runtime with mariadb-install-db.exe. It uses unique source/target/ProgramData fixtures and unused loopback ports, not the live collection. Use a short FixtureParent path because native Windows MariaDB dump paths remain length-limited. The suite exercises partial SQL, post-import photo and locked upload/settings failures and explicit recovery. It retains fixture directories and cleans up its own database processes. New Windows CI checks still require confirmation. See [C06/C07 evidence](maintenance/c06-c07-backup-source-and-format.md), [C08 recovery evidence](maintenance/c08-restore-recovery.md) and the [Windows upgrade contract](windows-upgrade-contract.md).

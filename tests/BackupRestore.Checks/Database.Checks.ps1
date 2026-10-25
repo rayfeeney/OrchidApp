@@ -24,11 +24,11 @@ $installer=Join-Path $MariaDbRuntimeRoot 'bin/mariadb-install-db.exe'
 $cli=Join-Path $RepoRoot 'tests/BackupRestore.Checks/bin/Release/net8.0/BackupRestore.Checks.dll'
 foreach ($file in @($client,$admin,$server,$installer,$cli)) { if (-not (Test-Path -LiteralPath $file)) { throw "Required fixture tool missing: $file" } }
 foreach ($port in @($SourcePort,$TargetPort)) { if (Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue) { throw 'A test port is occupied; choose isolated unused ports.' } }
-$root=Join-Path $FixtureParent ('orchids-backup-'+[guid]::NewGuid().ToString('N'))
+$root=Join-Path $FixtureParent ('orchids-backup-'+[guid]::NewGuid().ToString('N').Substring(0,12))
 $installed=Join-Path $root 'installed package'
 $legacy=Join-Path $root 'different legacy installation'
 $legacyData=Join-Path $legacy 'data/mariadb'
-$common=Join-Path $root 'isolated ProgramData'
+$common=Join-Path $root 'pd'
 $target=Join-Path $common 'OrchidApp'
 $backups=Join-Path $root 'safety backups'
 $prior=@{}
@@ -136,6 +136,71 @@ try {
     Query $TargetPort "UPDATE orchids.plant SET plantNotes='normal restore witness';" | Out-Null
     Run-Tool 'restore-orchidapp.ps1' @('-BackupZip',$normalZip,'-MariaDbPort',"$TargetPort")
     Check 'Normal backup/restore round trip' ((Query $TargetPort 'SELECT plantNotes FROM orchids.plant;') -ceq 'preserve validation witness')
+    $pendingPath=Join-Path $target 'restore-pending.json'
+    $historyRoot=Join-Path $target 'restore-recovery'
+    $preflightLock=[IO.File]::Open((Join-Path $target "uploads/plants/$plantId/photo.jpg"),[IO.FileMode]::Open,[IO.FileAccess]::Read,[IO.FileShare]::None)
+    try { Run-Tool 'restore-orchidapp.ps1' @('-BackupZip',$zip,'-MariaDbPort',"$TargetPort") 'before replacement' }
+    finally { $preflightLock.Dispose() }
+    Check 'Safety-copy failure creates no pending destructive restore' (-not (Test-Path -LiteralPath $pendingPath))
+    Check 'Safety-copy failure leaves current SQL untouched' ((Query $TargetPort 'SELECT plantNotes FROM orchids.plant;') -ceq 'preserve validation witness')
+    $preflightRecords=@(Get-ChildItem -LiteralPath $historyRoot -Filter recovery.json -Recurse -File | ForEach-Object { Get-Content -LiteralPath $_.FullName -Raw | ConvertFrom-Json } | Where-Object { $_.status -eq 'PreflightFailed' })
+    Check 'Safety-copy failure retains input and protection history' ($preflightRecords.Count -eq 1 -and (Test-Path -LiteralPath $preflightRecords[0].preservedInput))
+    $failedSqlRoot=Join-Path $root 'sql failure archive'
+    Expand-Archive -LiteralPath $oldZip -DestinationPath $failedSqlRoot
+    Add-Content -LiteralPath (Join-Path $failedSqlRoot 'orchids.sql') "SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Intentional restore failure';"
+    $failedSqlZip=Join-Path $root 'sql failure.zip'
+    Compress-Archive -Path (Join-Path $failedSqlRoot '*') -DestinationPath $failedSqlZip
+    $originalHash=(Get-FileHash -LiteralPath $failedSqlZip).Hash
+    Run-Tool 'restore-orchidapp.ps1' @('-BackupZip',$failedSqlZip,'-MariaDbPort',"$TargetPort") 'ImportingDatabase'
+    $pending=Get-Content -LiteralPath $pendingPath -Raw | ConvertFrom-Json
+    Check 'SQL failure persists failed phase' ($pending.status -eq 'Failed' -and $pending.phase -eq 'ImportingDatabase')
+    Check 'Selected recovery ZIP preserved byte for byte' ((Get-FileHash -LiteralPath $pending.preservedInput).Hash -eq $originalHash -and (Get-FileHash -LiteralPath $failedSqlZip).Hash -eq $originalHash)
+    Check 'Safety backup retained outside routine retention' ((Test-Path -LiteralPath $pending.safetyBackup) -and $pending.safetyBackup.StartsWith($historyRoot))
+    Run-Tool 'restore-orchidapp.ps1' @('-BackupZip',$zip,'-MariaDbPort',"$TargetPort") 'explicit RecoveryAction'
+    $recordBeforeGuard=Get-Content -LiteralPath $pendingPath -Raw
+    $pending.importProcessId=$PID
+    $pending.importStartedUtc=(Get-Process -Id $PID).StartTime.ToUniversalTime().ToString('o')
+    $pending | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $pendingPath -Encoding UTF8
+    Run-Tool 'restore-orchidapp.ps1' @('-RecoveryAction','RestoreSafety','-MariaDbPort',"$TargetPort") 'previous database import process is still running'
+    $recordBeforeGuard | Set-Content -LiteralPath $pendingPath -Encoding UTF8
+    Run-Tool 'backup-orchidapp.ps1' @('-BackupsRoot',$normalBackups,'-MariaDbPort',"$TargetPort",'-SkipOldBackupPruning') 'Normal backups are blocked'
+    Run-Tool 'restore-orchidapp.ps1' @('-RecoveryAction','RestoreSafety','-MariaDbPort',"$TargetPort")
+    Check 'Safety recovery clears pending marker' (-not (Test-Path -LiteralPath $pendingPath))
+    Check 'Safety recovery restores pre-attempt SQL' ((Query $TargetPort 'SELECT plantNotes FROM orchids.plant;') -ceq 'preserve validation witness')
+    Check 'Original retained input survives safety recovery' ((Get-FileHash -LiteralPath $pending.preservedInput).Hash -eq $originalHash)
+
+    $missingRoot=Join-Path $root 'missing restored photo'
+    Expand-Archive -LiteralPath $oldZip -DestinationPath $missingRoot
+    Remove-Item -LiteralPath (Join-Path $missingRoot "uploads/plants/$plantId/photo.jpg")
+    $missingManifest=Get-Content -LiteralPath (Join-Path $missingRoot 'manifest.json') -Raw | ConvertFrom-Json
+    $missingManifest.uploadsFileCount=3
+    $missingManifest | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $missingRoot 'manifest.json') -Encoding UTF8
+    $missingZip=Join-Path $root 'missing referenced photo.zip'
+    Compress-Archive -Path (Join-Path $missingRoot '*') -DestinationPath $missingZip
+    Run-Tool 'restore-orchidapp.ps1' @('-BackupZip',$missingZip,'-MariaDbPort',"$TargetPort") 'VerifyingPhotos'
+    $missingPending=Get-Content -LiteralPath $pendingPath -Raw | ConvertFrom-Json
+    Check 'Post-import photo failure retains original uploads' (Test-Path -LiteralPath (Join-Path $target "uploads/plants/$plantId/photo.jpg"))
+    Run-Tool 'restore-orchidapp.ps1' @('-RecoveryAction','RestoreSafety','-MariaDbPort',"$TargetPort")
+    foreach ($phase in @('ReplacingUploads','ReplacingSettings')) {
+        $lockedPath=Join-Path $target 'launcher-settings.json'
+        if ($phase -eq 'ReplacingUploads') { $lockedPath=Join-Path $target "uploads/plants/$plantId/photo.jpg" }
+        $held=[IO.File]::Open($lockedPath,[IO.FileMode]::Open,[IO.FileAccess]::Read,[IO.FileShare]::Read)
+        try { Run-Tool 'restore-orchidapp.ps1' @('-BackupZip',$zip,'-MariaDbPort',"$TargetPort") $phase }
+        finally { $held.Dispose() }
+        $lockedPending=Get-Content -LiteralPath $pendingPath -Raw | ConvertFrom-Json
+        Check "$phase records persistent recovery state" ($lockedPending.phase -eq $phase -and (Test-Path -LiteralPath $lockedPending.safetyBackup))
+        Run-Tool 'restore-orchidapp.ps1' @('-RecoveryAction','RestoreInput','-MariaDbPort',"$TargetPort")
+        Check "$phase retained input recovery clears block" (-not (Test-Path -LiteralPath $pendingPath))
+        Check "$phase recovers photo bytes" ((Get-FileHash -LiteralPath (Join-Path $uploads "plants/$plantId/photo.jpg")).Hash -eq (Get-FileHash -LiteralPath (Join-Path $target "uploads/plants/$plantId/photo.jpg")).Hash)
+        Check "$phase recovers settings bytes" ((Get-FileHash -LiteralPath $settings).Hash -eq (Get-FileHash -LiteralPath (Join-Path $target 'launcher-settings.json')).Hash)
+    }
+    Check 'Completed attempt journals remain across subsequent restores' (@(Get-ChildItem -LiteralPath $historyRoot -Filter recovery.json -Recurse -File).Count -ge 8)
+    Stop-Fixture $TargetPort
+    Run-Tool 'restore-orchidapp.ps1' @('-BackupZip',$zip,'-MariaDbPort',"$TargetPort")
+    Check 'Restore-owned MariaDB stops cleanly before success' (-not (Get-NetTCPConnection -LocalPort $TargetPort -State Listen -ErrorAction SilentlyContinue))
+    Check 'Owned-process completion clears pending marker' (-not (Test-Path -LiteralPath $pendingPath))
+    Start-Fixture (Join-Path $target 'data/mariadb') $TargetPort
+    Check 'Restored database restarts with expected records' ((Query $TargetPort 'SELECT plantNotes FROM orchids.plant;') -ceq 'Round trip café')
     Run-Tool 'backup-orchidapp.ps1' @('-BackupType','PreUpgrade','-BackupsRoot',$backups,'-MariaDbPort',"$SourcePort") 'explicit LegacySourceRoot'
     Remove-Item -LiteralPath (Join-Path $snapshot "wwwroot/uploads/plants/$plantId/photo.jpg")
     Run-Tool 'backup-orchidapp.ps1' @('-BackupType','PreUpgrade','-LegacySourceRoot',$snapshot,'-BackupsRoot',$backups,'-MariaDbPort',"$SourcePort",'-SkipOldBackupPruning') 'photo is missing'
