@@ -2,7 +2,10 @@
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '../../database/scripts/Database-Environment.ps1')
 $developmentTarget = Get-ExplicitDatabaseEnvironment
-if (-not $env:Storage__UploadRoot -or -not [IO.Path]::IsPathFullyQualified($env:Storage__UploadRoot)) {
+if (-not $env:Storage__UploadRoot) {
+    $env:Storage__UploadRoot = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'OrchidApp/Development/uploads'
+}
+if (-not [IO.Path]::IsPathFullyQualified($env:Storage__UploadRoot)) {
     throw 'Storage__UploadRoot must be an explicit absolute directory for disposable development photos.'
 }
 # A builder quotes semicolons, quotes and other special characters in credentials.

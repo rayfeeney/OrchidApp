@@ -2,7 +2,7 @@
 
 The inspected checkout has no DevelopmentConfiguration.Apply startup call and no DevelopmentConfiguration.cs. This restores the previously implemented C16 direct dotnet run fix. The cause of the missing files has not been established.
 
-## Apply
+## Apply and start
 
 Stop the running development app. Extract this archive over the repository root containing OrchidApp.sln, accepting replacement of the listed files. Keep the existing private .env at that root. Then run dotnet run from src/OrchidApp.Web. No wrapper or manual credential export is required.
 
