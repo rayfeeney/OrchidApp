@@ -65,6 +65,8 @@ C08 extends those checks with persistent recovery/cloud-copy policy, partial SQL
 
 C10 extends the same executable and database suites with atomic migration state, interrupted-copy reconciliation, ownership/source precedence and readiness-aware completion. Keep the original quiescent: even restarting its database changes raw fingerprint evidence. Missing/changed target files after readiness must not be repaired by blindly recopying a raw database. See [C10 evidence](docs/maintenance/c10-migration-reconciliation.md).
 
+C09 adds tests/BackupRestore.Checks/Retention.Checks.ps1 on both PowerShell versions and real backup retention cases in the disposable database suite. Desktop.Checks.ps1 also checks the protected pre-migration invocation using its recording-only BackupFixture.ps1. Verify unrelated/pinned/pre-upgrade files survive before changing retention. See [C09 evidence](docs/maintenance/c09-backup-retention.md).
+
 Default checks use isolated/substitute data and SQL translation where designed. Optional greenhouse DB/benchmark modes require a disposable instance, never the owner's production database; see the [local guide](docs/local-installation/greenhouse-monitoring.md). Passing these does not prove live save/reopen, native image processing, device behaviour, installer safety or restore completeness.
 
 For docs-only work, check paths, links, commands, setting names, platform scope and Word rendering rather than requiring an app build. For database, backup/restore and package changes, validate the actual affected workflow on an isolated supported target. Preserve the recovery input and verify records, photos, settings and restart behaviour. Inspect git diff --check, staged changes and the completed commit.

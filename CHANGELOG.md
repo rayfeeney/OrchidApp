@@ -1,57 +1,56 @@
-# C10 legacy migration reconciliation
+# C09 protected backup retention
 
-Changes only: 17 modified and 4 added repository files, plus this CHANGELOG.md. No deletions or moves. No private configuration, credentials, database contents, photos or runtime binaries are included.
+Changes only: 17 modified and 4 added repository files plus this CHANGELOG.md. No deletions or moves. No private .env, collection data, photos or runtime binaries are included.
 
 ## Apply
 
-1. Extract over the source repository root containing OrchidApp.sln, accepting replacement of the listed files. This follows C08 and the working C16 .env startup fix. Keep private .env and collection data unchanged.
-2. Review docs/windows-upgrade-contract.md and docs/maintenance/c10-migration-reconciliation.md. Rebuild/repackage Windows from source; this ZIP is not a deployed installer.
-3. Run CI and perform installed-machine acceptance on disposable data. Existing Windows check steps execute the expanded suites without a workflow change.
+1. Extract over the source repository root containing OrchidApp.sln, accepting replacement of the listed files. This follows C10 and the working C16 startup fix. Keep private configuration/data unchanged.
+2. Review docs/windows-backup-format.md and docs/maintenance/c09-backup-retention.md. Rebuild/repackage Windows from source; this is not a deployed installer ZIP.
+3. Keep Backup-Retention.ps1, Backup-Contract.ps1 and Restore-Recovery.ps1 with the tool scripts. Packaging now requires all three helpers. Run CI; the workflow adds dual-PowerShell retention checks.
 
-Old version 1 migration state requires support review. Do not delete migration-state.json, the old installation, migration-target-id or partial destination files to bypass a stop. Version 2 copying can resume only matching recorded ownership; readiness retry never blindly recopies raw database files.
+Routine Normal backups now prune after a new verified ZIP, keeping three verified unprotected routine archives by default and never fewer than one. SkipOldBackupPruning disables pruning. PreUpgrade and protected safety directories never prune; recorded recovery/migration inputs and unrecognised files remain. These extras can exceed the nominal count. Desktop database-update safety backups move to backups/pre-migration with pruning disabled. No existing backup files are moved by applying this source ZIP.
 
-All 333 existing schema/checksum/historical migration artifacts were verified unchanged. No database migration is required. Development web startup files and C08 backup/restore tools were also verified unchanged.
+All 333 schema/checksum/historical SQL artifacts were verified unchanged. No migration is required. Development configuration, restore recovery and migration reconciliation files are unchanged. Reconstructing the two previous backup-call blocks reproduces their pre-C09 file hashes, confirming Program.cs/launcher edits are confined to those invocations.
 
 ## Files
 
 | Change | Repository path | Description |
 | --- | --- | --- |
-| Modified | CONTRIBUTING.md | Document migration interruption/readiness checks and source fingerprint precautions. |
-| Modified | RELEASE_NOTES.md | Record C10 missing-file resume, readiness-aware completion and review boundaries. |
-| Modified | docs/code-change-backlog.md | Record implemented C10 reconciliation with CI/installed acceptance still pending. |
-| Modified | docs/documentation-map.md | Link migration reconciliation evidence to the Windows contract. |
-| Modified | docs/index.md | Link C10 evidence. |
-| Added | docs/maintenance/c10-migration-reconciliation.md | Record implementation, local evidence and remaining acceptance limits. |
-| Modified | docs/user-guides/windows/01-InstallOrUpgradeOrchidAppOnWindows.docx | Explain the resume prompt, retained original and support boundaries; preserve all illustrations. |
-| Modified | docs/windows-backup-format.md | Replace the deferred reconciliation pointer with the implemented C10 contract. |
-| Modified | docs/windows-upgrade-contract.md | Document version 2 ownership, atomic writes, copy/readiness phases, source precedence and unsupported old-state handling. |
-| Modified | src/OrchidApp.Launcher/Infrastructure/LegacyDataMigrationService.cs | Reject all existing target MariaDB files, including partial system databases, in the older copy helper. |
-| Added | src/OrchidApp.Launcher/Infrastructure/LegacyMigrationCoordinator.cs | Add ownership-bound, checksum-verified missing-file resume and readiness completion without source deletion or target overwrite. |
-| Modified | src/OrchidApp.Launcher/Infrastructure/LegacySourceSnapshot.cs | Record the original source fingerprint while capture read locks are held. |
-| Added | src/OrchidApp.Launcher/Infrastructure/MigrationFiles.cs | Add safe inventory, SHA-256 fingerprint and contained path helpers. |
-| Modified | src/OrchidApp.Launcher/Infrastructure/MigrationState.cs | Add operation ID, phase, capture path, source fingerprint and copy inventory. |
-| Modified | src/OrchidApp.Launcher/Infrastructure/MigrationStateService.cs | Reject empty/null state and save through a flushed temporary file plus atomic replacement. |
-| Modified | src/OrchidApp.Launcher/OrchidAppLauncherForm.cs | Resume recorded migration under lock; mark completion after database identity/web readiness; block occupied ports/ordinary close and re-read state after locking; guard shutdown identity. |
-| Modified | src/OrchidApp.Launcher/OrchidAppLayoutResolver.cs | Use validated migration ownership to distinguish the exact preserved source from unrelated/changed legacy sources; allow isolated discovery fixtures. |
-| Modified | tests/BackupRestore.Checks/BackupRestore.Checks.csproj | Compile shared migration and layout policy into the existing Windows executable checks. |
-| Modified | tests/BackupRestore.Checks/Database.Checks.ps1 | Test real interrupted raw copy, resume, native startup failure/retry, database identity/completion and next-launch source precedence alongside restore regressions. |
-| Added | tests/BackupRestore.Checks/Migration.Checks.cs | Add disposable migration policy fixtures and integration CLI modes. |
-| Modified | tests/BackupRestore.Checks/Program.cs | Run migration reconciliation scenarios and dispatch fixture CLI modes. |
+| Modified | .github/workflows/ci.yml | Run retention fixtures under both PowerShell versions before Windows packaging. |
+| Modified | CONTRIBUTING.md | Document retention/native and Desktop argument checks. |
+| Modified | RELEASE_NOTES.md | Record effective retention controls, protected safety copies and complete ZIP payloads. |
+| Modified | app/tools/Backup-Contract.ps1 | Add shared ZIP creation preserving empty directories and hidden files. |
+| Added | app/tools/Backup-Retention.ps1 | Add verified routine retention with recovery/migration pins, protected directories and fail-closed history handling. |
+| Modified | app/tools/backup-orchidapp.ps1 | Validate minimum count, serialise same-directory runs and prune only after new ZIP verification using the declared controls. |
+| Modified | docs/code-change-backlog.md | Record C09 implementation and pending CI/installed acceptance. |
+| Modified | docs/documentation-map.md | Identify the maintained retention contract and evidence. |
+| Modified | docs/index.md | Link C09 evidence. |
+| Added | docs/maintenance/c09-backup-retention.md | Record changes, validation evidence and operating limits. |
+| Modified | docs/migration-runners.md | Document protected pre-migration safety placement and the Desktop recording fixture. |
+| Modified | docs/user-guides/windows/04-ConfigureCloudBackupFolderInOrchidAppForWindows.docx | Explain the default local routine count and protected/review extras; preserve illustrations. |
+| Modified | docs/windows-backup-format.md | Describe actual retention scope, exclusions, ordering, warnings and archive creation. |
+| Modified | docs/windows-upgrade-contract.md | Replace the old undeclared-variable gap with the implemented retention boundary. |
+| Modified | scripts/package-windows.ps1 | Require all three shared backup/restore helper files in the package inventory. |
+| Modified | src/OrchidApp.Launcher/OrchidAppLauncherForm.cs | Pass declared Normal/root/count arguments for routine backups through ArgumentList. |
+| Modified | src/OrchidApp.Web/Program.cs | Send Desktop migration safety backups to the protected pre-migration directory with pruning disabled. |
+| Modified | tests/BackupRestore.Checks/Database.Checks.ps1 | Add native routine pruning, skip, unrelated-copy preservation and failure-before-pruning checks. |
+| Added | tests/BackupRestore.Checks/Retention.Checks.ps1 | Add disposable archive fixtures for effective retention, protected files, invalid inputs, locks and complete ZIP payloads. |
+| Added | tests/MigrationHistory.Checks/BackupFixture.ps1 | Record Desktop safety arguments only in a temporary stage; never write the supplied backup directory. |
+| Modified | tests/MigrationHistory.Checks/Desktop.Checks.ps1 | Use the named recording fixture and verify the real Desktop caller passes protected declared arguments. |
 
 ## Validation actually performed
 
-- Release launcher and fixture builds: zero warnings/errors.
-- All 57 combined source, restore recovery and migration reconciliation executable checks passed. New cases include interrupted copy and matching-file resume; unknown/changed destination rejection; incomplete/full copy with failed state writes; locked completion commit retaining previous JSON; readiness failure without raw recopy; target/source identity, ambiguous roots and unsupported/corrupt/empty state; missing backup, changed capture and residual system database rejection.
-- All 69 Windows/MariaDB 10.11 database checks passed. The suite interrupts an actual raw copy, resumes it, reports a real native server startup failure, retries readiness without recopying, starts/queries the migrated database, records completion and resolves the target with the original retained. The C06/C07/C08 archive, photo/settings byte, failed SQL/import and explicit restore recovery regressions also pass.
-- The fixture database completion test checks database identity and state transitions. The full interactive launcher/web startup path has not been exercised as an installed application here.
-- Windows guide 01 retains all 11 embedded media files. All 12 rendered pages were visually inspected. QA PDF/PNGs remain outside this ZIP.
-- Changed Markdown links, merge-marker checks, unchanged database/startup/restore artifact hashes, ZIP entry list and archived source bytes were checked.
-- Generated database processes were shut down; fixture/log directories remain for diagnosis. No live collection, actual ProgramData collection or user credential file was used. Antivirus remained enabled.
-
-## Operating boundary and next work
+- All 29 retention checks passed under PowerShell 7 and Windows PowerShell 5.1, including default/minimum/disabled/pre-upgrade modes, invalid counts, old/current names, timestamp skew, unrelated/foreign/corrupt/nested ZIPs, pinned/protected inputs, unreadable history, pending restore, locked deletion and complete hidden/empty payloads.
+- All 28 existing archive/journal policy checks passed under both versions.
+- All 77 native Windows/MariaDB checks passed, including actual backup pruning, skip mode, unrelated-copy preservation and no deletion after a failed new backup, alongside migration/restore regressions.
+- All 13 staged Desktop migration checks passed. The real C# caller invoked the recording-only synthetic backup with declared Normal/root/skip arguments. This fixture never writes the supplied real ProgramData path and does not substitute for a real safety archive test.
+- Web and launcher Release builds: zero warnings/errors. All 14 development startup configuration checks passed.
+- Changed PowerShell syntax and actionlint workflow checks passed (optional ShellCheck/Pyflakes integrations disabled). Required helper source files and changed Markdown links were verified.
+- Windows guide 04 retained all five embedded media files. All six rendered pages were visually inspected. Existing screenshots illustrate buttons; historic log text is not the new policy. QA PDF/PNGs remain outside this ZIP.
+- Archived file list/bytes, merge markers, unchanged SQL/startup/reconciliation/restore artifacts and backup-only C# edits were checked. Generated database processes were shut down; diagnostic fixture directories remain. No live collection or private credential file was used.
 
 Copying is not a cross-directory transaction. Failed or mismatched partial state is retained for resume/review; no automatic deletion or rollback is claimed. Do not run the old database again while relying on its preserved-source fingerprint. Original raw files can change during a database restart even when plant records appear unchanged.
 
-Completed version 2 ownership distinguishes only the recorded preserved source. Unrelated or changed legacy sources still stop. Old version 1 copy-only state is not promoted automatically. Readiness is database identity plus a successful web response, not proof of every record/photo/device workflow. Missing permissions, incompatible runtime/credentials or damaged inputs may require support.
+Retention is not an exact disk-space cap or cloud version history. Validation may need temporary space and time; unknown/protected files and cleanup warnings can leave extra archives. This does not add atomic SQL/filesystem backup consistency or certify a real installer/interactive recovery. Keep a verified off-computer copy.
 
-GitHub Actions, actual installer/interactive acceptance and reviewed real historical installations remain pending. Next in the agreed order is C09 backup retention, then C17 Linux backup/restore.
+GitHub Actions and real installed-machine acceptance remain pending. Next in the agreed order is C17 Linux backup/restore portability and pairing.

@@ -2,12 +2,13 @@ param(
     [ValidateSet('Normal','PreUpgrade')][string]$BackupType = 'Normal',
     [string]$BackupsRoot,
     [ValidateRange(1,65535)][int]$MariaDbPort = 3308,
-    [int]$BackupsToKeep = 3,
+    [ValidateRange(1,2147483647)][int]$BackupsToKeep = 3,
     [switch]$SkipOldBackupPruning,
     [string]$LegacySourceRoot
 )
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'Backup-Contract.ps1')
+. (Join-Path $PSScriptRoot 'Backup-Retention.ps1')
 $AppRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $MariaDbRoot = Join-Path $AppRoot 'runtime/mariadb/win-x64'
 $MariaDbServer = Join-Path $MariaDbRoot 'bin/mariadbd.exe'
@@ -63,9 +64,13 @@ $MariaDbServerLogPath=Join-Path $BackupWorkingRoot 'mariadb-server.log'
 $MariaDbServerErrorLogPath=Join-Path $BackupWorkingRoot 'mariadb-server-error.log'
 $StartedMariaDb=$false; $MariaDbProcess=$null
 $previousPassword=$env:MYSQL_PWD
+$backupLock=$null
 function Write-Step([string]$Message) { Write-Host $Message }
 function Write-Log([string]$Message) { Add-Content -LiteralPath $BackupLogPath -Value $Message -Encoding UTF8 }
 try {
+    $lockPath=Join-Path $BackupsRoot '.orchidapp-backup.lock'
+    Assert-ChildPath $lockPath $BackupsRoot
+    $backupLock=[IO.File]::Open($lockPath,[IO.FileMode]::OpenOrCreate,[IO.FileAccess]::ReadWrite,[IO.FileShare]::None)
     $env:MYSQL_PWD='orchid'
     Start-OrchidDatabase
     if ([int](Invoke-OrchidQuery "SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME='orchids';") -ne 1) { throw 'Selected source has no orchids database.' }
@@ -101,8 +106,7 @@ try {
     Read-BackupPayload $PayloadRoot | Out-Null
     Stop-OrchidDatabase
     # Archive only payload, not logs that may still be appended after hashing.
-    [string[]]$archiveInputs=@('orchids.sql','schemaversion.txt','uploads','launcher-settings','manifest.json') | ForEach-Object { Join-Path $PayloadRoot $_ }
-    Compress-Archive -LiteralPath $archiveInputs -DestinationPath $BackupZip
+    New-OrchidBackupArchive $PayloadRoot $BackupZip
     $verify=Join-Path $BackupWorkingRoot 'verify'
     Expand-CheckedBackup $BackupZip $verify
     Read-BackupPayload $verify | Out-Null
@@ -111,35 +115,8 @@ try {
     Write-Log "Verified backup: $BackupZip"
     Assert-ChildPath $BackupWorkingRoot $BackupsRoot
     Remove-Item -LiteralPath $BackupWorkingRoot -Recurse -Force
-    if ($PruneOldBackups) {
-        Write-Step "Removing old backups"
-
-        $OldBackups = Get-ChildItem `
-            -Path $BackupsRoot `
-            -Filter "OrchidAppBackup_*.zip" `
-            -File `
-            -ErrorAction SilentlyContinue |
-            Sort-Object LastWriteTime -Descending |
-            Select-Object -Skip $BackupsToKeep
-
-        if ($OldBackups) {
-            foreach ($OldBackup in $OldBackups) {
-                Remove-Item `
-                    -Path $OldBackup.FullName `
-                    -Force
-
-                Write-Host "Removed old backup: $($OldBackup.Name)" -ForegroundColor Yellow
-            }
-        }
-        else {
-            Write-Host "No old backups to remove." -ForegroundColor Green
-        }
-    }
-    else {
-        Write-Step "Skipping old backup pruning"
-        Write-Host "Old backup pruning disabled for this backup run." -ForegroundColor Green
-    }
+    Invoke-BackupRetention -BackupType $BackupType -BackupsRoot $BackupsRoot -CurrentBackup $BackupZip -ProgramDataRoot $ProgramDataRoot -BackupsToKeep $BackupsToKeep -SkipOldBackupPruning:$SkipOldBackupPruning
 }
 finally {
-    try { Stop-OrchidDatabase } finally { $env:MYSQL_PWD=$previousPassword }
+    try { Stop-OrchidDatabase } finally { $env:MYSQL_PWD=$previousPassword; if ($backupLock) { $backupLock.Dispose() } }
 }

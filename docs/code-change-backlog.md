@@ -29,7 +29,7 @@ Record actual evidence at each step.
 | [C06](#c06) | P1 | Confirmed source-selection gap | Bind legacy safety backup to the detected source |
 | [C07](#c07) | P1 | Confirmed backup/restore format mismatch | Restore settings from the format written by backup |
 | [C08](#c08) | P1 | Implemented; CI/installed acceptance pending | Make restore failure recoverable and preserve the source ZIP |
-| [C09](#c09) | P2 | Confirmed parameter mismatch | Correct backup retention controls |
+| [C09](#c09) | P2 | Implemented; CI/installed acceptance pending | Correct backup retention controls |
 | [C10](#c10) | P1 | Implemented; CI/installed acceptance pending | Reconcile interrupted and completed legacy migration state |
 | [C11](#c11) | P1 | Confirmed SQL defect | Correct manual lifecycle closure and its failure handling |
 | [C12](#c12) | P2 | Confirmed inconsistency / policy decision required | Make temporal and ended-plant restrictions deliberate |
@@ -156,7 +156,7 @@ Implementation: retained input, verified safety backup, persistent phase journal
 
 ## C09
 
-**Correct backup retention controls** — P2; Confirmed parameter mismatch; status: Open.
+**Correct backup retention controls** — P2; status: Implemented with local retention/native/Desktop checks; CI/installed-machine acceptance pending.
 
 Affected files/areas: app/tools/backup-orchidapp.ps1; src/OrchidApp.Launcher/OrchidAppLauncherForm.cs.
 
@@ -165,6 +165,8 @@ Required work: Reconcile PruneOldBackups, SkipOldBackupPruning and BackupsToKeep
 Dependencies: C06 coordination.
 
 Acceptance: Test retention enabled/disabled, minimum counts, unrelated files and pre-upgrade archives; launcher arguments match declared script parameters.
+
+Implementation: declared skip/count controls, minimum one backup, validated top-level routine candidates, pinned recovery/migration copies, protected safety directories and same-destination backup lock. The Desktop update backup now uses a separate non-pruning directory. Empty/hidden payload entries are preserved during ZIP creation. See [retention contract](windows-backup-format.md#routine-backup-retention) and [C09 evidence](maintenance/c09-backup-retention.md).
 
 ## C10
 

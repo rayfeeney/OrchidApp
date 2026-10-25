@@ -1091,14 +1091,11 @@ FLUSH PRIVILEGES;
                 );
             }
 
-            var process = new Process
+            using var process = new Process
             {
                 StartInfo = new ProcessStartInfo
                 {
                     FileName = "powershell.exe",
-                    Arguments =
-                        "-NoProfile -ExecutionPolicy Bypass " +
-                        $"-File \"{backupScript}\"",
                     WorkingDirectory = baseDir,
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
@@ -1106,6 +1103,9 @@ FLUSH PRIVILEGES;
                     CreateNoWindow = true
                 }
             };
+            foreach (var argument in new[] { "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", backupScript,
+                "-BackupType", "Normal", "-BackupsRoot", _programDataPaths.Backups, "-BackupsToKeep", "3" })
+                process.StartInfo.ArgumentList.Add(argument);
 
             process.OutputDataReceived += (s, e) =>
             {

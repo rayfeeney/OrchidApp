@@ -94,7 +94,7 @@ function Read-BackupJsonObject([string]$Path) {
 }
 function Read-BackupPayload([string]$Root) {
     $manifestFile = Join-Path $Root 'manifest.json'; $sql = Join-Path $Root 'orchids.sql'
-    if (-not (Test-Path -LiteralPath $manifestFile -PathType Leaf) -or -not (Test-Path -LiteralPath $sql -PathType Leaf) -or (Get-Item -LiteralPath $sql).Length -eq 0) { throw 'Backup requires manifest.json and nonempty orchids.sql.' }
+    if (-not (Test-Path -LiteralPath $manifestFile -PathType Leaf) -or -not (Test-Path -LiteralPath $sql -PathType Leaf) -or (Get-Item -LiteralPath $sql -Force).Length -eq 0) { throw 'Backup requires manifest.json and nonempty orchids.sql.' }
     $manifest = Read-BackupJsonObject $manifestFile
     if ($manifest.database -cne 'orchids' -or $manifest.databaseBackup -cne 'orchids.sql') { throw 'Backup manifest database/payload is incompatible.' }
     $version = 1
@@ -130,7 +130,7 @@ function Read-BackupPayload([string]$Root) {
             if (-not $relative -or $relative.Contains('\') -or $relative -match '(^|/)\.\.(/|$)' -or [IO.Path]::IsPathRooted($relative) -or $relative -eq 'manifest.json' -or $seen.ContainsKey($relative)) { throw 'Invalid or duplicated backup inventory path.' }
             $seen[$relative]=$true; $file = Join-Path $Root $relative
             Assert-ChildPath $file $Root
-            if (-not (Test-Path -LiteralPath $file -PathType Leaf) -or (Get-Item -LiteralPath $file).Length -ne [long]$entry.length -or (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash -ine [string]$entry.sha256) { throw "Backup payload missing or checksum changed: $relative" }
+            if (-not (Test-Path -LiteralPath $file -PathType Leaf) -or (Get-Item -LiteralPath $file -Force).Length -ne [long]$entry.length -or (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash -ine [string]$entry.sha256) { throw "Backup payload missing or checksum changed: $relative" }
         }
         $actual = @(Get-ChildItem -LiteralPath $Root -Recurse -File -Force | Where-Object FullName -ne $manifestFile)
         if ($actual.Count -ne $seen.Count) { throw 'Backup inventory does not cover the archive.' }
@@ -156,4 +156,15 @@ function Expand-CheckedBackup([string]$Zip, [string]$Destination) {
     }
     finally { $archive.Dispose() }
     Expand-Archive -LiteralPath $Zip -DestinationPath $Destination -Force
+}
+
+function New-OrchidBackupArchive([string]$PayloadRoot,[string]$Zip) {
+    Assert-NoPathAlias $PayloadRoot
+    Assert-NoPathAlias (Split-Path -Parent ([IO.Path]::GetFullPath($Zip)))
+    $prefix=(Get-FullLocalPath $PayloadRoot)+[IO.Path]::DirectorySeparatorChar
+    if ([IO.Path]::GetFullPath($Zip).StartsWith($prefix,[StringComparison]::OrdinalIgnoreCase)) { throw 'Archive output must be outside the payload.' }
+    Add-Type -AssemblyName System.IO.Compression
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    # Compress-Archive drops empty directories and hidden files; both belong to the payload.
+    [IO.Compression.ZipFile]::CreateFromDirectory($PayloadRoot,$Zip,[IO.Compression.CompressionLevel]::Optimal,$false)
 }

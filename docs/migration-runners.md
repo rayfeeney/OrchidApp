@@ -17,6 +17,8 @@ The default migration folder is relative to each script's repository location, i
 
 Before applying: stop normal application writes using the relevant platform procedure, keep the complete migration package and verify a recoverable backup. Operational PowerShell runners do not create a backup automatically; Desktop retains its separate backup command. These differences are deliberate.
 
+On packaged Windows, Desktop now sends its pre-update backup to ProgramData/OrchidApp/backups/pre-migration with SkipOldBackupPruning. These safety copies are outside routine retention; see the [Windows retention contract](windows-backup-format.md#routine-backup-retention). This changes backup placement, not migration SQL/history policy or the Development .env startup flow.
+
 ```powershell
 pwsh ./database/scripts/Apply-Migrations.ps1 -PlanOnly
 pwsh ./database/scripts/Apply-Migrations.ps1
@@ -70,6 +72,6 @@ After a Release web build on Windows, actual staged Desktop checks are available
 pwsh ./tests/MigrationHistory.Checks/Desktop.Checks.ps1
 ```
 
-These create/drop only an orchids_desktop_<guid> database, copy the app/client into a unique temporary stage and simulate a successful backup command there. They verify actual application startup, once-only upgrades, preflight before backup, failed-DDL markers and blocked restart. The synthetic command is never delivered as operational app code and does not validate real backups.
+These create/drop only an orchids_desktop_<guid> database, copy the app/client into a unique temporary stage and simulate a successful backup command there. They verify actual application startup, once-only upgrades, preflight before backup, failed-DDL markers, blocked restart and the declared protected backup arguments. BackupFixture.ps1 records arguments only in that temporary stage and never writes the supplied backup directory. The synthetic command is never delivered as operational app code and does not validate real backups.
 
 CI runs the C# policy check in the build job and the PowerShell policy/database checks in schema-contract. Local results and platform limits are in [C04 evidence](maintenance/c04-migration-runners.md). Full new-environment CI acceptance remains C05.
