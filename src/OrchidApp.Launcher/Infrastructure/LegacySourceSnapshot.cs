@@ -49,6 +49,7 @@ internal static class LegacySourceSnapshot
             foreach (var relative in before.Where(p => File.Exists(Path.Combine(sourceRoot, p))))
                 held.Add(relative, new FileStream(Path.Combine(sourceRoot, relative), FileMode.Open, FileAccess.Read, FileShare.Read));
             if (!before.SequenceEqual(Inventory(), StringComparer.OrdinalIgnoreCase)) throw new IOException("Legacy source changed while acquiring its read locks.");
+            var sourceFingerprint = MigrationFiles.Fingerprint(sourceRoot);
             snapshot = Path.Combine(parent, "legacy-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(snapshot);
             foreach (var relative in before)
@@ -63,7 +64,7 @@ internal static class LegacySourceSnapshot
                 else Directory.CreateDirectory(target);
             }
             if (!before.SequenceEqual(Inventory(), StringComparer.OrdinalIgnoreCase)) throw new IOException("Legacy source changed during capture; migration must stop.");
-            File.WriteAllText(Path.Combine(snapshot, "source-capture.json"), JsonSerializer.Serialize(new { originalRoot = sourceRoot, capturedAtUtc = DateTime.UtcNow }));
+            File.WriteAllText(Path.Combine(snapshot, "source-capture.json"), JsonSerializer.Serialize(new { originalRoot = sourceRoot, capturedAtUtc = DateTime.UtcNow, sourceFingerprint }));
             return snapshot;
         }
         catch (IOException ex)

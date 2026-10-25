@@ -29,4 +29,9 @@ public sealed class MigrationState
     public bool MigratedLauncherSettings { get; set; }
 
     public string? ErrorMessage { get; set; }
+    public string? Phase { get; set; }
+    public string? OperationId { get; set; }
+    public string? SnapshotRootPath { get; set; }
+    public string? SourceFingerprint { get; set; }
+    public List<MigrationFileEntry>? CopyManifest { get; set; }
 }

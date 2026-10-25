@@ -5,10 +5,11 @@ namespace OrchidApp.Launcher;
 public static class OrchidAppLayoutResolver
 {
     public static OrchidAppLayoutState Resolve(string appRoot)
+        => Resolve(appRoot, new WindowsProgramDataPaths());
+
+    internal static OrchidAppLayoutState Resolve(string appRoot, WindowsProgramDataPaths programDataPaths, IEnumerable<string>? candidateRoots = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(appRoot);
-
-        var programDataPaths = new WindowsProgramDataPaths();
 
         var programDataRootPath = programDataPaths.Root;
 
@@ -21,36 +22,13 @@ public static class OrchidAppLayoutResolver
             currentAppLegacyCandidate
         };
 
-        foreach (var desktopFolder in GetDesktopOrchidAppFolders())
+        foreach (var desktopFolder in candidateRoots ?? GetDesktopOrchidAppFolders()
+                     .Concat(GetShortcutTargetRoots()).Concat(GetCommonInstallCandidateFolders()).Concat(GetBackstopOrchidAppFolders()))
         {
             legacyCandidates.Add(
                 InspectLegacyCandidate(
                     desktopFolder,
                     "Desktop OrchidApp folder"));
-        }
-
-        foreach (var shortcutTargetRoot in GetShortcutTargetRoots())
-        {
-            legacyCandidates.Add(
-                InspectLegacyCandidate(
-                    shortcutTargetRoot,
-                    "Desktop/Start Menu shortcut"));
-        }
-
-        foreach (var commonInstallFolder in GetCommonInstallCandidateFolders())
-        {
-            legacyCandidates.Add(
-                InspectLegacyCandidate(
-                    commonInstallFolder,
-                    "Common install folder"));
-        }
-
-        foreach (var backstopFolder in GetBackstopOrchidAppFolders())
-        {
-            legacyCandidates.Add(
-                InspectLegacyCandidate(
-                    backstopFolder,
-                    "Backstop OrchidApp folder search"));
         }
 
         legacyCandidates = legacyCandidates
@@ -72,6 +50,17 @@ public static class OrchidAppLayoutResolver
             .Where(candidate => candidate.IsDataBearingLegacyCandidate)
             .ToList();
 
+        var migration = new MigrationStateService(programDataPaths).Load();
+        if (migration is not null)
+        {
+            var coordinator = new LegacyMigrationCoordinator(programDataPaths);
+            coordinator.Validate(migration);
+            if (Directory.Exists(migration.SourceLegacyRootPath))
+                coordinator.CheckPreservedSource(migration, migration.SourceLegacyRootPath);
+            dataBearingLegacyCandidates = dataBearingLegacyCandidates
+                .Where(c => !LegacyMigrationCoordinator.SamePath(c.RootPath, migration.SourceLegacyRootPath)).ToList();
+        }
+
         var oldLayoutExists =
             dataBearingLegacyCandidates.Count > 0;
 
@@ -87,6 +76,8 @@ public static class OrchidAppLayoutResolver
         var status = ResolveStatus(
             dataBearingLegacyCandidates.Count,
             programDataLayoutExists);
+        if (migration is not null && dataBearingLegacyCandidates.Count > 0)
+            status = dataBearingLegacyCandidates.Count > 1 ? OrchidAppLayoutStatus.MultipleLegacyLayoutsFound : OrchidAppLayoutStatus.LegacyAndProgramDataFound;
 
         return new OrchidAppLayoutState
         {
@@ -173,6 +164,7 @@ public static class OrchidAppLayoutResolver
         List<string> shortcutTargetRoots,
         string shortcutSearchRoot)
     {
+        if (!OperatingSystem.IsWindows()) return;
         if (string.IsNullOrWhiteSpace(shortcutSearchRoot) ||
             !Directory.Exists(shortcutSearchRoot))
         {

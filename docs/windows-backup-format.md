@@ -10,7 +10,7 @@ Capture rejects reparse points and holds read handles that deny writes/deletion 
 
 The mandatory backup receives the captured root explicitly through LegacySourceRoot. Its executable/runtime location remains the installed application directory. The logical dump and the later raw-file migration therefore use the same captured source, even if the detected legacy installation and new application directory differ. The captured database must stop cleanly after dumping before raw migration may proceed. The launcher does not accept an exit-success result without the returned completed ZIP existing.
 
-Staging and failed-attempt diagnostic folders are retained for review. They are not additional discovered legacy installations or a completion/retry policy. C10 still covers migration-state reconciliation and partial destinations.
+Staging and failed-attempt diagnostic folders are retained for review. They are not additional discovered legacy installations. C10 adds ownership/hash-based copy resume and readiness-aware completion; see [migration reconciliation](windows-upgrade-contract.md#migration-state-and-completion).
 
 ## Database identity
 
