@@ -1,5 +1,9 @@
 # Release notes
 
+## C05 - schema creation and future-upgrade CI acceptance
+
+CI now creates its canonical database through the production schema/seed manifest with no migration directory, then runs separate disposable creation/upgrade checks before export/drift comparison. Expanded checks verify required seeds, baseline identity, preserved records and a later migration applied once; missing seed/manifest, broken view order and partial imports must fail. Added the C# baseline policy check to CI and reused structured child errors in the database suite. Current-schema-to-future-migration coverage is locally verified; updated Linux CI and real older-installation fixtures remain separate acceptance. See [C05 evidence](docs/maintenance/c05-ci-database-acceptance.md).
+
 ## C16 - reproducible source development setup
 
 Developer setup now uses one explicit MARIADB target to generate the app connection string, validates MariaDB/.NET tools and activates hooks. Committed development credentials and personal storage defaults are removed. The source-run wrapper restores the complete pinned Windows libvips runtime and verifies actual photo/thumbnail save and reopen before startup. Export requires explicit endpoints and ignores hidden native option files. The obsolete local MySQL Docker route now calls the supported disposable database suites. Added Windows/Linux native and configuration CI checks. See [setup instructions](docs/development-setup.md) and [local evidence/pending acceptance](docs/maintenance/c16-developer-setup.md).
