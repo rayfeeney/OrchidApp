@@ -1,6 +1,9 @@
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "Schema-Baseline.ps1")
 
+$previousMysqlPassword = $env:MYSQL_PWD
+. (Join-Path $PSScriptRoot 'Database-Environment.ps1')
+$explicitTarget = Get-ExplicitDatabaseEnvironment
 try {
 
 # --- PRECONDITIONS -----------------------------------------------------------
@@ -12,26 +15,13 @@ Set-Location $RepoRoot
 $MariaDbExe = Resolve-MariaDbTool -Override $env:MARIADB_EXE
 $MariaDbDumpExe = Resolve-MariaDbTool -Name 'mariadb-dump' -Override $env:MARIADB_DUMP_EXE
 
-$MariaDbHost = $env:MARIADB_HOST ?? $env:MYSQL_HOST ?? "localhost"
-$MariaDbPort = $env:MARIADB_PORT ?? $env:MYSQL_PORT ?? 3306
-$Database = $env:MARIADB_DATABASE ?? "orchids"
-if ($Database -cnotmatch "^[A-Za-z0-9_]{1,64}$") { throw "Invalid MARIADB_DATABASE identifier." }
-$User = $env:MARIADB_USER
-$Password = $env:MARIADB_PASSWORD
+$MariaDbHost = $explicitTarget.HostName
+$MariaDbPort = $explicitTarget.Port
+$Database = $explicitTarget.Database
+$User = $explicitTarget.User
+$env:MYSQL_PWD = $explicitTarget.Password
 
-if (-not $User -or -not $Password) {
-    throw "MARIADB_USER and MARIADB_PASSWORD must be set"
-}
-
-$env:MYSQL_PWD = $Password
-
-Write-Host "Using DB user: $User"
-
-if (-not $User -or -not $Password) {
-  throw "MARIADB_USER or MARIADB_PASSWORD environment variables not set"
-}
-
-Write-Host "Starting MariaDB schema export…"
+Write-Host "Starting MariaDB schema export�"
 Write-Host "Server: ${MariaDbHost}:${MariaDbPort}"
 Write-Host "Database: $Database"
 
@@ -58,9 +48,11 @@ SET SESSION lock_wait_timeout = 5;
 $Query
 "@
 
-  Write-Host "Connecting to MariaDB (timeout 5s)…"
+  Write-Host "Connecting to MariaDB (timeout 5s)�"
 
   $output = & $MariaDbExe `
+    --no-defaults `
+    --default-character-set=utf8mb4 `
     --protocol=TCP `
     --host=$MariaDbHost `
     --port=$MariaDbPort `
@@ -202,7 +194,10 @@ function Export-Object {
   )
 
   $dumpExe = $MariaDbDumpExe
-  $dumpArgs = @(
+  $nativeDumpArguments = @(
+    "--no-defaults"
+    "--protocol=TCP"
+    "--default-character-set=utf8mb4"
     "--host=$MariaDbHost"
     "--port=$MariaDbPort"
     "--user=$User"
@@ -213,21 +208,21 @@ function Export-Object {
 
   # Force schema-only for tables (never trust caller)
   if ($Type -eq "tables") {
-    $dumpArgs += @(
+    $nativeDumpArguments += @(
       "--no-data",
       "--skip-add-drop-table"
     )
   }
   elseif ($DumpArgs) {
-    $dumpArgs += $DumpArgs
+    $nativeDumpArguments += $DumpArgs
   }
 
-  $dumpArgs += @(
+  $nativeDumpArguments += @(
     $Database
     $Name
   )
 
-  $sql = & $dumpExe @dumpArgs 2>&1
+  $sql = & $dumpExe @nativeDumpArguments 2>&1
 
   if ($LASTEXITCODE -ne 0) {
       throw "mariadb-dump failed for $Type $Name"
@@ -389,7 +384,7 @@ if ($Type -eq "tables") {
 }
 
 # --- DISCOVER & EXPORT ------------------------------------------------------
-Write-Host "Reading database metadata…"
+Write-Host "Reading database metadata�"
 $fkColumnMap = @{}
 
 $fkRows = Invoke-MariaDbQuery @"
@@ -431,7 +426,7 @@ WHERE TABLE_SCHEMA = '$Database'
 ORDER BY TABLE_NAME;
 "@
 
-Write-Host "Exporting tables…"
+Write-Host "Exporting tables�"
 
 foreach ($t in $tables) {
   $outPath = Join-Path $SchemaRoot "tables\$t.sql"
@@ -522,7 +517,7 @@ WHERE TABLE_SCHEMA = '$Database'
 ORDER BY TABLE_NAME;
 "@
 
-Write-Host "Exporting views…"
+Write-Host "Exporting views�"
 
 foreach ($v in $views) {
   $outPath = Join-Path $SchemaRoot "views\$v.sql"
@@ -732,7 +727,7 @@ if (-not (Test-Path $ChecksumFile) -or (Get-Content $ChecksumFile -Raw).Trim() -
 
 # SAFETY: ensure discovery worked before allowing deletions
 if (-not $tables -or $tables.Count -eq 0) {
-  throw "Table discovery failed — aborting cleanup to prevent accidental deletions"
+  throw "Table discovery failed � aborting cleanup to prevent accidental deletions"
 }
 
 foreach ($dir in @("tables", "constraints", "views", "routines", "triggers")) {
@@ -795,5 +790,5 @@ Write-Host "MariaDB schema export completed successfully."
 
 }
 finally {
-    Remove-Item Env:\MYSQL_PWD -ErrorAction SilentlyContinue
+    $env:MYSQL_PWD = $previousMysqlPassword
 }

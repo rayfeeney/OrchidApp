@@ -40,3 +40,7 @@ The test now uses a child-process wrapper that returns the original exception me
 Process.Checks.ps1 reproduces the reported presentation split and checks long/multiline messages, Unicode and quotes, paths containing spaces, named/switch/positional binding, success/failure exit codes and empty arguments. It runs automatically at the start of Database.Checks.ps1. No production runner, workflow, schema, baseline or migration SQL changes were made for this correction. Linux CI must still be rerun for the updated test harness.
 
 Validation of this correction: 10 child-process protocol checks and all 53 migration database checks passed locally on Windows/MariaDB 10.11.16. PowerShell syntax checks passed. The protocol checks retain the exact reported formatted-line split as a regression fixture. Linux CI remains to be rerun.
+
+## Subsequent CI confirmation
+
+The owner subsequently reported Passed for the corrected C04 CI run. This confirms that reported run, including the previously failing migration execution/failed-DDL step. The earlier pending statements above record the delivery state at the time. C16 introduces additional CI changes that still require a separate run.

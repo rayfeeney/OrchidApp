@@ -70,3 +70,5 @@ launcher-settings.json
 *.csproj.lscache
 
 infrastructure/environment-importer/downloads/
+# Restored native runtimes are local/package inputs, never source.
+app/runtime/

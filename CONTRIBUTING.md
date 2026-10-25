@@ -55,6 +55,8 @@ dotnet run --configuration Release --project tests/MigrationHistory.Checks/Migra
 
 Schema creation/baseline integration checks also use pwsh ./tests/SchemaBaseline.Checks/Database.Checks.ps1 with explicit credentials for an isolated MariaDB server; they create/drop only a generated test database. See the [creation contract](docs/database-creation.md).
 
+C16 provides pwsh ./tests/DevelopmentSetup.Checks/Configuration.Checks.ps1 and the native photo probe used by scripts/DevSetup/run.ps1; see [developer setup](docs/development-setup.md).
+
 C04 also provides database-free PowerShell policy checks and isolated database/Desktop integration checks under tests/MigrationHistory.Checks; see the [runner guide](docs/migration-runners.md).
 
 Default checks use isolated/substitute data and SQL translation where designed. Optional greenhouse DB/benchmark modes require a disposable instance, never the owner's production database; see the [local guide](docs/local-installation/greenhouse-monitoring.md). Passing these does not prove live save/reopen, native image processing, device behaviour, installer safety or restore completeness.
@@ -63,7 +65,7 @@ For docs-only work, check paths, links, commands, setting names, platform scope 
 
 ## Current CI limits
 
-The [workflow](.github/workflows/ci.yml) builds/publishes linux-arm64, reconstructs/exports a MariaDB 10.11 schema to check drift, and creates a Windows package. C04 adds the shared C#/PowerShell migration-policy scenarios, actual package inventory validation and disposable runner/failed-DDL checks. These new Linux steps still require a CI run for this delivery. It does not run every executable check project, exercise all historical DDL against representative real databases, build the Inno installer or prove actual device install/recovery. [C05/C20](docs/code-change-backlog.md) retain broader coverage work. Cross-publishing is not Pi hardware validation.
+The [workflow](.github/workflows/ci.yml) builds/publishes linux-arm64, reconstructs/exports a MariaDB 10.11 schema to check drift, and creates a Windows package. C04 adds the shared C#/PowerShell migration-policy scenarios, actual package inventory validation and disposable runner/failed-DDL checks. The owner confirmed these corrected C04 Linux checks passed. C16 adds development configuration and native photo/thumbnail save/reopen checks on Windows and Linux; those new steps still need CI confirmation. It does not run every executable check project, exercise all historical DDL against representative real databases, build the Inno installer or prove actual device install/recovery. [C05/C20](docs/code-change-backlog.md) retain broader coverage work. Cross-publishing is not Pi hardware validation.
 
 ## Pull requests
 

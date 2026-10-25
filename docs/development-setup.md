@@ -1,87 +1,99 @@
 # Developer machine and first run
 
-Use an isolated development database and upload directory. Never aim setup, hooks, migrations or recovery experiments at the live collection. Commands below are run from the repository root. Schema-only creation is implemented locally; see the creation contract for remaining Linux/native-photo acceptance. Historical migrations are never a creation workaround.
+Use a separate development MariaDB server/database and upload directory. Run commands from the repository root in PowerShell 7. Never use the live collection for setup, hooks or experiments. Fresh databases come only from schema and required seeds; historical migration replay is not a setup step.
 
-## Tools and checkout
+## Prerequisites and platform scope
 
-Obtain the repository from its owner or clone the agreed remote, then open its root (the folder containing OrchidApp.sln). Install Git, PowerShell 7+, the .NET 8 SDK and MariaDB 10.11 server/client tools for the validated development platform. Windows launcher/installer work additionally needs Windows, the Windows desktop build toolchain and Inno Setup for actual installers. Linux database validation is required for case/collation/procedure behaviour. Exact supported OS/package-image validation is part of [C16](code-change-backlog.md#c16), not established by this document.
+| Component | Requirement and evidence |
+| --- | --- |
+| Git | Command-line Git, including its shell for the pre-commit hook; tested with the installed Git for Windows |
+| PowerShell | 7 or newer; use pwsh, including on Linux |
+| .NET | SDK 8 or newer plus .NET 8 and ASP.NET Core 8 runtimes; the application targets net8.0. Local C16 checks used SDK 9.0.315 and the installed .NET 8 runtimes |
+| MariaDB | Server, mariadb and mariadb-dump 10.11; tested locally with 10.11.16. MySQL server and mysql/mysqldump aliases are not the setup contract |
+| Windows native images | Windows x64; the source-run command restores the complete libvips 8.18.2 archive, verifies its SHA-256 and checks required DLLs/version |
+| Linux native images | A system libvips installation with PNG/JPEG support; the Ubuntu CI check installs libvips-tools and reports its actual version. The new Linux check still needs CI confirmation |
 
-Check available tools without changing data:
+Install Git, PowerShell, the SDK/ASP.NET runtime and MariaDB using your platform's supported installers/package manager. Start an isolated MariaDB instance and prepare an account permitted to create the intended development database and its objects. setup.ps1 verifies tools, server connectivity/version and hooks; it does not install these tools, start a server, create accounts or change database objects. Windows source development does not require Chocolatey: the -LibVipsOnly restore path downloads only libvips. Windows packaging retains its separate MariaDB runtime restore path.
+
+Check installed tools:
 
 ```powershell
 git --version
 pwsh --version
 dotnet --list-sdks
+dotnet --list-runtimes
 ```
 
-DevSetup still checks mysql/mysqldump aliases on PATH. Creation/export resolve mariadb/mariadb-dump through explicit tool overrides, PATH and a Windows fallback. These client names do not imply MySQL server support. Native/developer tooling reconciliation remains C16.
+For MariaDB tools, MARIADB_EXE and MARIADB_DUMP_EXE may hold explicit executable paths, including paths with spaces. Otherwise discovery uses mariadb/mariadb-dump on PATH, then the Windows MariaDB 10.11 installation directory. One executable is selected even if PATH exposes multiple copies.
 
-## Database creation prerequisite
+## Configure one target in one terminal
 
-Use the [schema-only creation contract](database-creation.md). First supply the explicit target and credentials below, plus MARIADB_DATABASE, MARIADB_CHARSET=utf8mb4 and MARIADB_COLLATION=utf8mb4_unicode_ci. Then, from the repository root:
+Choose your own endpoint, database and account. These example non-secret values describe a disposable local instance; replace them before running:
+
+```powershell
+$env:MARIADB_HOST = '127.0.0.1'
+$env:MARIADB_PORT = '3306'
+$env:MARIADB_DATABASE = 'orchids_dev'
+$env:MARIADB_USER = 'orchid_developer'
+# Choose an absolute path used only for development photographs.
+$env:Storage__UploadRoot = Join-Path $HOME 'OrchidApp-development-uploads'
+$devCredential = Get-Credential -UserName $env:MARIADB_USER -Message 'Isolated development MariaDB credentials'
+$env:MARIADB_PASSWORD = $devCredential.GetNetworkCredential().Password
+Remove-Variable devCredential
+. ./scripts/DevSetup/configure.ps1
+pwsh ./scripts/DevSetup/setup.ps1
+```
+
+The dot-sourced configure.ps1 generates ConnectionStrings__OrchidDb from the same five MARIADB values, quoting credentials correctly. It requires an absolute upload path, selects Development, disables monitoring and sets the schema creation charset/collation. The app and scripts therefore use the same explicit target. Committed Development settings contain no endpoint, password or personal upload directory.
+
+No MYSQL_USER/MYSQL_PASSWORD aliases, default target/port or repository .env loading is used. Creation, migrations and export all require the explicit MARIADB target. MYSQL_PWD is used only as the native client's temporary password transport; setup/export preserve its previous value. Environment values remain process-readable: use a private development terminal or your local secret management, and do not commit credentials or echo the connection string.
+
+Keep this terminal open for app commands and command-line Git commits. A GUI Git client already running elsewhere does not inherit these settings; launch it from the configured environment if needed. Repeat configuration in each new terminal and after changing target values. Runtime deployment permissions remain a separate concern; this is an isolated developer workflow.
+
+## Create the database from schema and seeds
+
+After setup succeeds:
 
 ```powershell
 pwsh ./database/scripts/rebuild.ps1 -ConfirmDatabase $env:MARIADB_DATABASE
 ```
 
-This creates only an absent or empty target and records its baseline after all seeds succeed. It never drops existing data and refuses partial/nonempty targets. Development startup does not create the schema. Keep runtime and schema-administration permissions separate. See [local validation and remaining platform acceptance](maintenance/c01-c02-schema-baseline.md).
+The creator uses the manifest's dependency order, imports required seeds and records its completion marker last. It accepts only an absent or empty target, never drops existing data and rejects partial/nonempty targets. It does not need the migrations directory. See [database creation](database-creation.md). Development web startup does not initialise a database.
 
-## Configure one explicit development target
-
-Supply settings in the same terminal that starts the app and scripts; process-local variables do not automatically reach an already running GUI Git client. Use local secret management. Do not commit credentials or print them in support output. For an existing development target, these names must agree:
-
-| Consumer | Configuration |
-| --- | --- |
-| Web app | ConnectionStrings__OrchidDb (complete MariaDB connection string) |
-| Upload services | Storage__UploadRoot (isolated writable absolute path) |
-| Export/migration scripts | MARIADB_HOST, MARIADB_PORT, MARIADB_USER, MARIADB_PASSWORD and MARIADB_DATABASE |
-| Setup compatibility checks | MYSQL_USER and MYSQL_PASSWORD assigned from the MARIADB account |
-
-Creation requires an explicit MARIADB_DATABASE. The exporter and documented migration runner honour that target (default orchids for compatibility outside creation). Set endpoint values explicitly; committed Development settings and older wrapper defaults differ. MARIADB_* variables do not configure the app connection string. App/export/creation do not automatically load repository .env files.
-
-Use PowerShell to collect a password without echoing it, after supplying your explicit non-secret endpoint/account values:
+## Native check and source run
 
 ```powershell
-$devCredential = Get-Credential -UserName $env:MARIADB_USER -Message 'Development MariaDB credentials'
-$env:MARIADB_PASSWORD = $devCredential.GetNetworkCredential().Password
-Remove-Variable devCredential
-$env:MYSQL_USER = $env:MARIADB_USER
-$env:MYSQL_PASSWORD = $env:MARIADB_PASSWORD
+# Validate native decoding, photo/thumbnail save and reopen without starting the app.
+pwsh ./scripts/DevSetup/run.ps1 -CheckOnly
+# Run the app after the same native check.
+pwsh ./scripts/DevSetup/run.ps1
 ```
 
-Provide ConnectionStrings__OrchidDb using your local secret method, with the same endpoint/database/account and correctly escaped connection-string values. Create the configured upload folder, ensure your app account can write it, and keep it separate from real photos. Clear secret variables when finished; terminal variables are still process-readable and are not a secret store.
+On Windows, run.ps1 downloads the pinned full libvips runtime on first use, adds its bin directory to the child process PATH and restores PATH when finished. This handles the DLLs needed by NetVips 2.4.2; the smaller native NuGet binary alone was insufficient in local testing. Downloaded archives and restored runtimes are ignored by Git. On Linux, install your distribution's libvips runtime/tools first; the native probe is the compatibility check. No Windows runtime is installed on Linux.
 
-## Native image processing
+The probe calls the application's actual PhotoPipeline with a generated PNG, saves and fully decodes separate JPEG photo and thumbnail files in a unique child of Storage__UploadRoot, checks dimensions and removes only that probe directory. It verifies native/filesystem behavior, not database or browser readiness. A failed probe prevents source app startup.
 
-Managed package restore/build does not install a usable native libvips runtime automatically. On Windows, scripts/restore-windows-runtime.ps1 restores packaged runtimes; review its prerequisites before running it. For a source web run, ensure the matching libvips bin directory is on that terminal's PATH. The launcher normally adds it for its child process; direct dotnet run does not. On Linux install the compatible libvips/native dependencies for the validated OS image. A real test-photo upload/reopen is the acceptance check. Repeatable native setup is tracked in [C16](code-change-backlog.md#c16).
+Open http://localhost:5285. Use -Url http://127.0.0.1:5286 if that port is occupied. The command selects Development explicitly without a launch profile. It does not open a browser. Check a database-backed list, create a disposable plant, save/reopen notes, upload a test photo and reopen the photo page. Verify both photo files under the configured upload root. Home alone does not prove readiness. General development leaves bespoke monitoring disabled.
 
-## Build and run the web application
+## Hooks and local checks
 
-After database and native prerequisites are satisfied:
-
-```powershell
-dotnet restore src/OrchidApp.Web/OrchidApp.Web.csproj
-dotnet build src/OrchidApp.Web/OrchidApp.Web.csproj --configuration Release
-dotnet run --project src/OrchidApp.Web/OrchidApp.Web.csproj --launch-profile http
-```
-
-Open http://localhost:5285 yourself; the profile selects Development and does not open a browser. Check a database-backed list, add a disposable test plant, save/reopen notes, upload/reopen a test photo and check its storage location. Home alone is not full readiness. Other installations must not depend on the owner's monitoring feeds. Leave Monitoring:Enabled false or absent for general development and validate Home without bespoke feeds.
-
-## Activate hooks and make changes
-
-Once the database/export prerequisites are verified:
+setup.ps1 activates .githooks in this Git checkout. Verify and use the configured terminal:
 
 ```powershell
-pwsh ./scripts/DevSetup/setup.ps1
 git config --local --get core.hooksPath
+pwsh ./tests/DevelopmentSetup.Checks/Configuration.Checks.ps1
 ```
 
-The result should be .githooks. Setup only configures/checks prerequisites; it does not install .NET, initialise the database or validate a photo pipeline. Every commit, including docs-only commits, exports/stages schema/checksum files. Use the intended development target and review the full resulting commit. Do not bypass the hook to conceal an unexpected schema export. See [CONTRIBUTING](../CONTRIBUTING.md) for migration and test discipline.
+Every commit, including docs-only commits, runs the schema exporter and stages generated schema/checksum files. The exporter requires all five MARIADB values, ignores native option files and uses TCP; hidden client defaults cannot choose another endpoint. Review all staged/generated changes and the resulting commit. Do not bypass a failing hook. An export may report legitimate platform/schema differences that require review.
 
-## Other development routes
+For isolated database suites, supply the same explicit server credentials and run:
 
-For Windows packaging, inspect scripts/package-windows.ps1 and scripts/build-windows-installer.ps1, restore required runtimes and use the installer contract. A source web run is not a packaged-launcher test. For Linux deployment, use the [platform guide](user-guides/linux/installation-upgrade.md). Relevant feature checks and validation limits are listed in CONTRIBUTING. No setup or recovery procedure in this documentation cleanup has been executed on a fresh machine.
+```powershell
+pwsh ./scripts/DevSetup/ci-local.ps1
+```
 
-## Applying later database changes
+This runs the existing schema baseline and migration database checks, which use generated disposable database names. It replaces the obsolete MySQL Docker/Assemble-Schema route; it does not claim to mirror every CI step or validate the running app. Relevant feature checks are in [CONTRIBUTING](../CONTRIBUTING.md).
 
-Follow the [migration runner contract](migration-runners.md). All PowerShell routes require an explicit host, port, database and account/password. Use PlanOnly first. The compatibility runner now delegates to Apply-Migrations; dev-runner applies successfully before exporting for maintainer review. It no longer rejects a valid old database merely for differing from the newest canonical schema. Never remove incomplete markers or rewrite applied history to bypass validation.
+For later database changes use [migration runners](migration-runners.md), beginning with PlanOnly and a recoverable backup. Never remove incomplete markers or edit applied SQL/history. Windows packaging and installer work use the separate packaging scripts and [upgrade contract](windows-upgrade-contract.md).
+
+C16's local setup, schema creation, actual hook, source startup and photo HTTP round trip are recorded in [C16 evidence](maintenance/c16-developer-setup.md). The added Windows/Linux CI checks and a completely fresh OS installation still need acceptance; local Windows success is not Linux/device/installer proof.

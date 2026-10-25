@@ -17,7 +17,7 @@ ASP.NET Core loads shared/environment-specific JSON, environment variables and c
 - Upload services bind Storage:UploadRoot. Desktop overrides it with ORCHIDAPP_UPLOAD_ROOT or falls back to runtime wwwroot/uploads; the packaged launcher supplies ProgramData uploads.
 - Media options bind from MediaIngestion, but StripGpsMetadata is currently unused by the image saver.
 
-Development does not run Desktop schema bootstrap. Ordinary Production hosting lacks comprehensive startup database/filesystem/native readiness checks and a dedicated health endpoint. EF server autodetection and errors may occur when a request resolves the context. External uploads are served only if the configured directory exists at middleware setup. A listening HTTP service is not proof of working database pages or photo processing. [C16/C19](code-change-backlog.md) cover setup and readiness work.
+Development does not run Desktop schema bootstrap. The supported source-run wrapper now aligns app/script configuration and probes native photo save/reopen before startup; see [developer setup](development-setup.md). Ordinary Production hosting lacks comprehensive startup database/filesystem/native readiness checks and a dedicated health endpoint. EF server autodetection and errors may occur when a request resolves the context. External uploads are served only if the configured directory exists at middleware setup. A listening HTTP service is not proof of working database pages or photo processing. [C16/C19](code-change-backlog.md) cover setup and readiness work.
 
 ## Database creation and evolution
 

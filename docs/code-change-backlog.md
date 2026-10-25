@@ -86,7 +86,7 @@ Implementation: Monitoring:Enabled defaults false and requires Linux ARM/ARM64. 
 
 ## C04
 
-**Reconcile migration runners and enforce compatible history** — P1; Confirmed enforcement gap; status: Implemented and verified locally; updated Linux CI pending.
+**Reconcile migration runners and enforce compatible history** — P1; Confirmed enforcement gap; status: Implemented; local checks and corrected Linux CI confirmed passed by the owner.
 
 Affected files/areas: database/scripts/Apply-Migrations.ps1; Apply-MariaDBMigrations.ps1; dev-runner.ps1; src/OrchidApp.Web/Program.cs.
 
@@ -241,6 +241,8 @@ Required work: Reconcile MYSQL/MARIADB setup variables and client discovery; mak
 Dependencies: C01, C02.
 
 Acceptance: Fresh isolated development machine can install prerequisites, configure credentials/uploads, create schema-only DB, run web app, upload/reopen photo and use the hook without hidden local preparation.
+
+Implementation: one explicit MARIADB target generates app configuration; committed development secrets/personal paths removed; setup validates tools/server/hooks; source run restores the complete pinned Windows native runtime and probes the actual photo pipeline. Local schema creation, actual hook, source startup, HTTP photo upload/reopen and thumbnail retrieval passed. See [C16 evidence](maintenance/c16-developer-setup.md) and [developer setup](development-setup.md). New Windows/Linux CI steps and a completely fresh OS installation remain unverified; C05 is next in the agreed order.
 
 ## C17
 

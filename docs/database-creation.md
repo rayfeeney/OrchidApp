@@ -42,7 +42,7 @@ Create no empty database by running migrations. Do not manually delete, update o
 
 ## Export and maintenance
 
-Export-MariaDBSchema.ps1 now honours MARIADB_DATABASE (default orchids for compatibility) and resolves mariadb/mariadb-dump from explicit MARIADB_EXE/MARIADB_DUMP_EXE or platform tools. It regenerates the manifest after schema export using the maximum recorded DB baseline/migration timestamp, never the newest file merely present in migrations/. An export with no usable history may retain the existing cut-off only if its manifest still validates the exported schema unchanged.
+Export-MariaDBSchema.ps1 requires explicit MARIADB_HOST, MARIADB_PORT, MARIADB_DATABASE, MARIADB_USER and MARIADB_PASSWORD (no MYSQL aliases or endpoint defaults) and resolves mariadb/mariadb-dump from explicit MARIADB_EXE/MARIADB_DUMP_EXE or platform tools. It regenerates the manifest after schema export using the maximum recorded DB baseline/migration timestamp, never the newest file merely present in migrations/. An export with no usable history may retain the existing cut-off only if its manifest still validates the exported schema unchanged.
 
 Do not hand-edit the generated manifest or canonical schema/checksums. For this initial manifest the generator was run against the reviewed canonical snapshot with the known inclusive cut-off:
 
