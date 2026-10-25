@@ -66,6 +66,9 @@ jobs:
           Storage__UploadRoot: ${{ runner.temp }}/orchidapp-native-check
         run: dotnet run --configuration Release --project tests/DevelopmentNative.Checks/DevelopmentNative.Checks.csproj
 
+      - name: Check schema baseline policy
+        run: dotnet run --configuration Release --project tests/SchemaBaseline.Checks/SchemaBaseline.Checks.csproj
+
       - name: Check Desktop migration policy
         run: dotnet run --configuration Release --project tests/MigrationHistory.Checks/MigrationHistory.Checks.csproj
 
@@ -79,7 +82,6 @@ jobs:
         image: mariadb:10.11
         env:
           MARIADB_ROOT_PASSWORD: root
-          MARIADB_DATABASE: orchids
         ports:
           - 3306:3306
         options: >-
@@ -95,73 +97,34 @@ jobs:
       - name: Install MariaDB client
         run: sudo apt-get update && sudo apt-get install -y mariadb-client
 
-      - name: Wait for MariaDB
+      - name: Create canonical database from schema and seeds only
+        shell: pwsh
+        env:
+          MARIADB_HOST: 127.0.0.1
+          MARIADB_PORT: 3306
+          MARIADB_DATABASE: orchids
+          MARIADB_USER: root
+          MARIADB_PASSWORD: root
+          MARIADB_CHARSET: utf8mb4
+          MARIADB_COLLATION: utf8mb4_unicode_ci
         run: |
-          for i in {1..10}; do
-            mysql --default-character-set=utf8mb4 -h 127.0.0.1 -uroot -proot -e "SELECT 1" && break
-            echo "Waiting for DB..."
-            sleep 2
-          done
+          $stage = Join-Path $env:RUNNER_TEMP ('schema-only-' + [guid]::NewGuid().ToString('N'))
+          $database = Join-Path $stage 'database'
+          New-Item -ItemType Directory -Path $database | Out-Null
+          foreach ($directory in @('scripts','schema')) {
+            Copy-Item -LiteralPath (Join-Path $PWD "database/$directory") -Destination $database -Recurse
+          }
+          if (Test-Path -LiteralPath (Join-Path $database 'migrations')) { throw 'Creation stage must not contain migrations.' }
+          & (Join-Path $database 'scripts/rebuild.ps1') -ConfirmDatabase $env:MARIADB_DATABASE
 
-      - name: Recreate database with utf8mb4
-        run: |
-          mysql -h 127.0.0.1 -uroot -proot -e "DROP DATABASE IF EXISTS orchids;"
-          mysql -h 127.0.0.1 -uroot -proot -e "CREATE DATABASE orchids CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-
-      - name: Apply schema (tables)
-        run: |
-          for f in $(ls database/schema/tables/*.sql | sort); do
-            echo "Applying $f"
-            mysql --default-character-set=utf8mb4 -h 127.0.0.1 -uroot -proot orchids < "$f" || exit 1
-          done
-
-      - name: Apply constraints
-        run: |
-          for f in $(ls database/schema/constraints/*.sql | sort); do
-            echo "Applying $f"
-            mysql --default-character-set=utf8mb4 -h 127.0.0.1 -uroot -proot orchids < "$f" || exit 1
-          done
-
-      - name: Apply routines
-        run: |
-          for f in $(ls database/schema/routines/*.sql | sort); do
-            echo "Applying $f"
-            mysql --default-character-set=utf8mb4 -h 127.0.0.1 -uroot -proot orchids < "$f" || exit 1
-          done
-
-      - name: Apply views
-        run: |
-          # Environment views have dependencies and must be applied first
-          # in dependency order.
-          for f in \
-            database/schema/views/venvironmentreadingperiod.sql \
-            database/schema/views/venvironmentdailyperiodsummary.sql \
-            database/schema/views/venvironmentlastsevendayssummary.sql
-          do
-            echo "Applying $f"
-            mysql --default-character-set=utf8mb4 -h 127.0.0.1 -uroot -proot orchids < "$f" || exit 1
-          done
-
-          # Apply all remaining independent views alphabetically.
-          for f in $(ls database/schema/views/*.sql | sort); do
-            case "$f" in
-              database/schema/views/venvironmentreadingperiod.sql|\
-              database/schema/views/venvironmentdailyperiodsummary.sql|\
-              database/schema/views/venvironmentlastsevendayssummary.sql)
-                continue
-                ;;
-            esac
-
-            echo "Applying $f"
-            mysql --default-character-set=utf8mb4 -h 127.0.0.1 -uroot -proot orchids < "$f" || exit 1
-          done
-
-      - name: Apply triggers
-        run: |
-          for f in $(ls database/schema/triggers/*.sql | sort); do
-            echo "Applying $f"
-            mysql --default-character-set=utf8mb4 -h 127.0.0.1 -uroot -proot orchids < "$f" || exit 1
-          done
+      - name: Check schema-only seeded creation and future upgrade
+        shell: pwsh
+        env:
+          MARIADB_HOST: 127.0.0.1
+          MARIADB_PORT: 3306
+          MARIADB_USER: root
+          MARIADB_PASSWORD: root
+        run: ./tests/SchemaBaseline.Checks/Database.Checks.ps1
 
       - name: Check MariaDB tool resolution
         shell: pwsh

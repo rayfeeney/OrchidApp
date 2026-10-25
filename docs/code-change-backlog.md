@@ -108,7 +108,9 @@ Required work: Add isolated fresh creation without migration files, required see
 
 Dependencies: C01, C02, C04.
 
-Acceptance: CI proves both empty-environment schema-only creation and upgrade of a representative existing database; missing seed/view dependency/baseline regressions fail meaningfully.
+Acceptance (agreed scope): CI checks empty-environment schema-only creation, then a later migration against that current-schema database with representative test records. Required seeds, view dependencies, baseline identity, record preservation and once-only application are asserted. Older-installation fixtures and historical-version upgrade acceptance are a separate future task, as agreed with the owner.
+
+Implementation: CI uses the production creator from a stage containing scripts/schema and no migration directory, followed by separate disposable creation/upgrade checks and canonical export/drift comparison. The expanded suite passed all 44 checks locally; 18 C# baseline policy checks and the extracted CI creation/export/drift sequence also passed. See [C05 evidence](maintenance/c05-ci-database-acceptance.md). GitHub Actions/Linux acceptance remains pending; next in the agreed order is C06+C07, legacy backup source/settings compatibility.
 
 ## C06
 
