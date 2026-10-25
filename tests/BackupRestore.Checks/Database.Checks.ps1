@@ -1,0 +1,151 @@
+param(
+    [string]$RepoRoot=(Join-Path $PSScriptRoot '../..'),
+    [string]$MariaDbRuntimeRoot,
+    [string]$FixtureParent=[IO.Path]::GetTempPath(),
+    [int]$SourcePort=53331,
+    [int]$TargetPort=53332
+)
+$ErrorActionPreference='Stop'
+$PSNativeCommandUseErrorActionPreference=$false
+if (-not $IsWindows) { throw 'These packaged backup/restore checks require Windows.' }
+$RepoRoot=(Resolve-Path -LiteralPath $RepoRoot).Path
+if (-not $MariaDbRuntimeRoot) {
+    $programFiles=$env:ProgramW6432
+    if (-not $programFiles) { $programFiles=$env:ProgramFiles }
+    $MariaDbRuntimeRoot=Join-Path $programFiles 'MariaDB 10.11'
+}
+$MariaDbRuntimeRoot=(Resolve-Path -LiteralPath $MariaDbRuntimeRoot).Path
+$FixtureParent=(Resolve-Path -LiteralPath $FixtureParent).Path
+$windowsPowerShell=Join-Path $env:SystemRoot 'System32/WindowsPowerShell/v1.0/powershell.exe'
+$client=Join-Path $MariaDbRuntimeRoot 'bin/mariadb.exe'
+$admin=Join-Path $MariaDbRuntimeRoot 'bin/mariadb-admin.exe'
+$server=Join-Path $MariaDbRuntimeRoot 'bin/mariadbd.exe'
+$installer=Join-Path $MariaDbRuntimeRoot 'bin/mariadb-install-db.exe'
+$cli=Join-Path $RepoRoot 'tests/BackupRestore.Checks/bin/Release/net8.0/BackupRestore.Checks.dll'
+foreach ($file in @($client,$admin,$server,$installer,$cli)) { if (-not (Test-Path -LiteralPath $file)) { throw "Required fixture tool missing: $file" } }
+foreach ($port in @($SourcePort,$TargetPort)) { if (Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue) { throw 'A test port is occupied; choose isolated unused ports.' } }
+$root=Join-Path $FixtureParent ('orchids-backup-'+[guid]::NewGuid().ToString('N'))
+$installed=Join-Path $root 'installed package'
+$legacy=Join-Path $root 'different legacy installation'
+$legacyData=Join-Path $legacy 'data/mariadb'
+$common=Join-Path $root 'isolated ProgramData'
+$target=Join-Path $common 'OrchidApp'
+$backups=Join-Path $root 'safety backups'
+$prior=@{}
+foreach ($name in @('ProgramData','MYSQL_PWD','MARIADB_HOST','MARIADB_PORT','MARIADB_USER','MARIADB_PASSWORD','MARIADB_DATABASE','MARIADB_CHARSET','MARIADB_COLLATION')) { $prior[$name]=[Environment]::GetEnvironmentVariable($name) }
+$processes=[Collections.Generic.List[Diagnostics.Process]]::new()
+$checks=0
+function Check([string]$Name,[bool]$Pass) { if (-not $Pass) { throw "Check failed: $Name" }; $script:checks++ }
+function Query([int]$Port,[string]$Sql) {
+    $previous=$env:MYSQL_PWD; $env:MYSQL_PWD='isolated-backup-test'
+    try {
+        $result=& $client --no-defaults --protocol=TCP --host=127.0.0.1 "--port=$Port" --user=root --connect-timeout=5 --default-character-set=utf8mb4 --batch --skip-column-names "--execute=$Sql" 2>&1
+        if ($LASTEXITCODE -ne 0) { throw "Fixture query failed: $($result -join "`n")" }
+        $result
+    } finally { $env:MYSQL_PWD=$previous }
+}
+function Start-Fixture([string]$Data,[int]$Port) {
+    $p=Start-Process -FilePath $server -ArgumentList "--no-defaults --basedir=`"$MariaDbRuntimeRoot`" --datadir=`"$Data`" --port=$Port --bind-address=127.0.0.1 --console" -PassThru -WindowStyle Hidden -RedirectStandardOutput (Join-Path $root "server-$Port.log") -RedirectStandardError (Join-Path $root "server-$Port-error.log")
+    $processes.Add($p)
+    for ($attempt=0;$attempt -lt 30;$attempt++) {
+        if ($p.HasExited) { throw 'Fixture server exited; inspect retained logs.' }
+        try { Query $Port 'SELECT 1;' | Out-Null; return } catch { Start-Sleep -Seconds 1 }
+    }
+    throw 'Fixture server did not become ready.'
+}
+function Stop-Fixture([int]$Port) {
+    $previous=$env:MYSQL_PWD; $env:MYSQL_PWD='isolated-backup-test'
+    try { & $admin --no-defaults --protocol=TCP --host=127.0.0.1 "--port=$Port" --user=root shutdown | Out-Null; if ($LASTEXITCODE -ne 0) { throw 'Fixture shutdown failed.' } }
+    finally { $env:MYSQL_PWD=$previous }
+    foreach ($p in $processes) { if (-not $p.HasExited) { $p.WaitForExit(10000) | Out-Null } }
+}
+function Run-Tool([string]$Name,[string[]]$Arguments,[string]$ErrorText='') {
+    $requestFile=Join-Path $root ('request-'+[guid]::NewGuid().ToString('N')+'.json')
+    @{script=(Join-Path $installed "tools/$Name");arguments=@($Arguments)} | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+    $output=& $windowsPowerShell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'Run-Tool.ps1') -RequestFile $requestFile 2>&1
+    $code=$LASTEXITCODE
+    $records=@($output | ForEach-Object { [string]$_ } | Where-Object { $_.StartsWith('ORCHID_BACKUP_CHECK:') })
+    if ($records.Count -ne 1) { throw "Child check protocol failed: $($output -join "`n")" }
+    $result=$records[0].Substring('ORCHID_BACKUP_CHECK:'.Length) | ConvertFrom-Json
+    if (($code -eq 0) -ne $result.success) { throw 'Child exit code/result disagree.' }
+    if ($ErrorText) { Check "Rejected: $ErrorText" (-not $result.Success -and $result.Message.IndexOf($ErrorText,[StringComparison]::OrdinalIgnoreCase) -ge 0) }
+    elseif (-not $result.Success) { throw ($output -join "`n") }
+    else { $script:checks++ }
+}
+try {
+    New-Item -ItemType Directory -Path (Join-Path $installed 'runtime/mariadb'),(Split-Path -Parent $legacyData),$backups -Force | Out-Null
+    Copy-Item -LiteralPath (Join-Path $RepoRoot 'app/tools') -Destination $installed -Recurse
+    # Executables only are shared; every database/upload/settings path is isolated.
+    New-Item -ItemType Junction -Path (Join-Path $installed 'runtime/mariadb/win-x64') -Target $MariaDbRuntimeRoot | Out-Null
+    & $installer "--datadir=$legacyData" --password=isolated-backup-test "--port=$SourcePort" | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw 'Disposable server initialization failed.' }
+    Start-Fixture $legacyData $SourcePort
+    $env:MARIADB_HOST='127.0.0.1';$env:MARIADB_PORT=[string]$SourcePort;$env:MARIADB_USER='root';$env:MARIADB_PASSWORD='isolated-backup-test';$env:MARIADB_DATABASE='orchids';$env:MARIADB_CHARSET='utf8mb4';$env:MARIADB_COLLATION='utf8mb4_unicode_ci'
+    & (Join-Path $RepoRoot 'database/scripts/rebuild.ps1') -ConfirmDatabase orchids | Out-Null
+    Query $SourcePort "CREATE USER 'orchid'@'127.0.0.1' IDENTIFIED BY 'orchid'; GRANT ALL PRIVILEGES ON *.* TO 'orchid'@'127.0.0.1'; CREATE USER 'orchid_shutdown'@'127.0.0.1' IDENTIFIED BY 'orchid_shutdown'; GRANT SHUTDOWN ON *.* TO 'orchid_shutdown'@'127.0.0.1';" | Out-Null
+    Query $SourcePort "CALL orchids.spAddGenus('Backup fixture','fixture'); SET @taxon=(SELECT MIN(taxonId) FROM orchids.taxon); CALL orchids.spAddPlant(@taxon,NOW(),'fixture','Backup plant','Round trip café'); INSERT INTO orchids.plantevent(plantId,eventDateTime,eventDetails,observationTypeId) SELECT MIN(plantId),NOW(),'Photo fixture',(SELECT Id FROM orchids.observationtype WHERE typeCode='OBS_PHOTO') FROM orchids.plant; INSERT INTO orchids.plantphoto(plantEventId,plantId,fileName,thumbnailFileName,mimeType) SELECT MIN(plantEventId),MIN(plantId),'photo.jpg','thumb.jpg','image/jpeg' FROM orchids.plantevent; INSERT INTO orchids.taxonphoto(taxonId,fileName,thumbnailFileName,mimeType) SELECT MIN(taxonId),'taxon.jpg','taxon-thumb.jpg','image/jpeg' FROM orchids.taxon;" | Out-Null
+    $plantId=[int](Query $SourcePort 'SELECT MIN(plantId) FROM orchids.plant;'); $taxonId=[int](Query $SourcePort 'SELECT MIN(taxonId) FROM orchids.taxon;')
+    $uploads=Join-Path $legacy 'wwwroot/uploads'
+    New-Item -ItemType Directory -Path (Join-Path $uploads "plants/$plantId"),(Join-Path $uploads "taxa/$taxonId") -Force | Out-Null
+    foreach ($name in @("plants/$plantId/photo.jpg","plants/$plantId/thumb.jpg","taxa/$taxonId/taxon.jpg","taxa/$taxonId/taxon-thumb.jpg")) { [IO.File]::WriteAllText((Join-Path $uploads $name),"fixture-$name") }
+    $settings=Join-Path $legacy 'launcher-settings.json'; '{"CloudBackupFolderPath":"C:\\Fixture cloud folder"}' | Set-Content -LiteralPath $settings -Encoding UTF8
+    $busy=& dotnet $cli capture $legacy (Join-Path $root 'busy capture') 2>&1
+    Check 'A running source database blocks capture' ($LASTEXITCODE -ne 0)
+    Stop-Fixture $SourcePort
+    $snapshot=& dotnet $cli capture $legacy (Join-Path $root 'staging')
+    if ($LASTEXITCODE -ne 0) { throw 'Source capture failed.' }
+    $snapshot=[string]$snapshot
+    Check 'Installed tools and captured legacy roots differ' ($installed -ne $snapshot)
+    $env:ProgramData=$common
+    Start-Fixture $legacyData $SourcePort
+    Run-Tool 'backup-orchidapp.ps1' @('-BackupType','PreUpgrade','-LegacySourceRoot',$snapshot,'-BackupsRoot',$backups,'-MariaDbPort',"$SourcePort",'-SkipOldBackupPruning') 'identity mismatch'
+    Check 'Unrelated listener creates no safety ZIP' (@(Get-ChildItem -LiteralPath $backups -Filter '*.zip').Count -eq 0)
+    Check 'Unrelated listener remains intact' ([int](Query $SourcePort 'SELECT COUNT(*) FROM orchids.plant;') -eq 1)
+    Stop-Fixture $SourcePort
+    Run-Tool 'backup-orchidapp.ps1' @('-BackupType','PreUpgrade','-LegacySourceRoot',$snapshot,'-BackupsRoot',$backups,'-MariaDbPort',"$SourcePort",'-SkipOldBackupPruning')
+    $zip=@(Get-ChildItem -LiteralPath $backups -Filter '*.zip')[0].FullName
+    Check 'Source original files retained' (Test-Path -LiteralPath $settings)
+    & dotnet $cli migrate $snapshot $common
+    if ($LASTEXITCODE -ne 0) { throw 'Captured raw-file migration failed.' }
+    Start-Fixture (Join-Path $target 'data/mariadb') $TargetPort
+    Query $TargetPort "UPDATE orchids.plant SET plantNotes='changed';" | Out-Null
+    'changed' | Set-Content (Join-Path $target "uploads/plants/$plantId/photo.jpg")
+    '{"CloudBackupFolderPath":"wrong"}' | Set-Content (Join-Path $target 'launcher-settings.json')
+    Run-Tool 'restore-orchidapp.ps1' @('-BackupZip',$zip,'-MariaDbPort',"$TargetPort")
+    Check 'Restored plant record and Unicode notes' ((Query $TargetPort 'SELECT plantNotes FROM orchids.plant;') -ceq 'Round trip café')
+    foreach ($relative in @("plants/$plantId/photo.jpg","plants/$plantId/thumb.jpg","taxa/$taxonId/taxon.jpg","taxa/$taxonId/taxon-thumb.jpg")) { Check "Restored $relative" ((Get-FileHash -LiteralPath (Join-Path $uploads $relative)).Hash -eq (Get-FileHash -LiteralPath (Join-Path $target "uploads/$relative")).Hash) }
+    Check 'Nested settings restored exactly' ((Get-FileHash -LiteralPath $settings).Hash -eq (Get-FileHash -LiteralPath (Join-Path $target 'launcher-settings.json')).Hash)
+    $legacyArchive=Join-Path $root 'old archive'; Expand-Archive -LiteralPath $zip -DestinationPath $legacyArchive
+    $manifest=Get-Content (Join-Path $legacyArchive 'manifest.json') -Raw | ConvertFrom-Json
+    foreach ($property in @('formatVersion','files','launcherSettingsIncluded')) { $manifest.PSObject.Properties.Remove($property) }
+    $manifest | ConvertTo-Json -Depth 6 | Set-Content (Join-Path $legacyArchive 'manifest.json')
+    Copy-Item -LiteralPath (Join-Path $legacyArchive 'launcher-settings/launcher-settings.json') -Destination $legacyArchive
+    Remove-Item -LiteralPath (Join-Path $legacyArchive 'launcher-settings/launcher-settings.json')
+    $oldZip=Join-Path $root 'legacy-root-settings.zip'; Compress-Archive -Path (Join-Path $legacyArchive '*') -DestinationPath $oldZip
+    Run-Tool 'restore-orchidapp.ps1' @('-BackupZip',$oldZip,'-MariaDbPort',"$TargetPort")
+    Check 'Old root-settings archive round trip' ((Get-FileHash -LiteralPath $settings).Hash -eq (Get-FileHash -LiteralPath (Join-Path $target 'launcher-settings.json')).Hash)
+    $bad=Join-Path $root 'corrupt archive'; Expand-Archive -LiteralPath $zip -DestinationPath $bad
+    Add-Content -LiteralPath (Join-Path $bad 'orchids.sql') '-- changed'
+    $badZip=Join-Path $root 'corrupt.zip'; Compress-Archive -Path (Join-Path $bad '*') -DestinationPath $badZip
+    Query $TargetPort "UPDATE orchids.plant SET plantNotes='preserve validation witness';" | Out-Null
+    Run-Tool 'restore-orchidapp.ps1' @('-BackupZip',$badZip,'-MariaDbPort',"$TargetPort") 'checksum changed'
+    Check 'Corrupt payload rejected before SQL import' ((Query $TargetPort 'SELECT plantNotes FROM orchids.plant;') -ceq 'preserve validation witness')
+    $normalBackups=Join-Path $root 'normal backups'
+    Run-Tool 'backup-orchidapp.ps1' @('-BackupsRoot',$normalBackups,'-MariaDbPort',"$TargetPort",'-SkipOldBackupPruning')
+    $normalZip=@(Get-ChildItem -LiteralPath $normalBackups -Filter '*.zip')[0].FullName
+    Query $TargetPort "UPDATE orchids.plant SET plantNotes='normal restore witness';" | Out-Null
+    Run-Tool 'restore-orchidapp.ps1' @('-BackupZip',$normalZip,'-MariaDbPort',"$TargetPort")
+    Check 'Normal backup/restore round trip' ((Query $TargetPort 'SELECT plantNotes FROM orchids.plant;') -ceq 'preserve validation witness')
+    Run-Tool 'backup-orchidapp.ps1' @('-BackupType','PreUpgrade','-BackupsRoot',$backups,'-MariaDbPort',"$SourcePort") 'explicit LegacySourceRoot'
+    Remove-Item -LiteralPath (Join-Path $snapshot "wwwroot/uploads/plants/$plantId/photo.jpg")
+    Run-Tool 'backup-orchidapp.ps1' @('-BackupType','PreUpgrade','-LegacySourceRoot',$snapshot,'-BackupsRoot',$backups,'-MariaDbPort',"$SourcePort",'-SkipOldBackupPruning') 'photo is missing'
+    Check 'Missing photo cannot create another safety ZIP' (@(Get-ChildItem -LiteralPath $backups -Filter '*.zip').Count -eq 1)
+    Stop-Fixture $TargetPort
+    Write-Host "$checks Windows packaged backup/restore database checks passed. Fixtures retained: $root"
+}
+finally {
+    foreach ($port in @($SourcePort,$TargetPort)) {
+        if (@($processes | Where-Object { -not $_.HasExited }).Count -and (Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue)) { Stop-Fixture $port }
+    }
+    foreach ($name in $prior.Keys) { [Environment]::SetEnvironmentVariable($name,$prior[$name]) }
+}

@@ -1,40 +1,23 @@
-# C16 follow-up: dotnet run with repository .env
+# Development startup recovery
 
-Changes-only correction on top of C16/C05: 9 modified and 3 added repository files, plus this CHANGELOG.md. No private .env, credentials, photos, runtime binaries, whole repository or patch is included. No deletions or moves.
+The inspected checkout has no DevelopmentConfiguration.Apply startup call and no DevelopmentConfiguration.cs. This restores the previously implemented C16 direct dotnet run fix. The cause of the missing files has not been established.
 
 ## Apply and start
 
-1. Extract directly over the repository root containing OrchidApp.sln, replacing the listed files.
-2. Keep your existing private repository .env. Its MARIADB_HOST, MARIADB_PORT, MARIADB_DATABASE, MARIADB_USER and MARIADB_PASSWORD values now configure the Development app automatically.
-3. From src/OrchidApp.Web run dotnet run. No DevSetup wrapper or upload environment setting is required.
-
-The upload default is %LOCALAPPDATA%/OrchidApp/Development/uploads on Windows. If existing development photos are in another directory, add Storage__UploadRoot with that absolute path to your private .env; no existing files are moved or deleted. Existing explicit environment/app settings override .env. Production/Desktop do not read the development file. Missing credentials are reported by key name without values or a guessed database target. A full Windows libvips runtime still needs its one-time restore for photo processing; normal startup does not download or run a photo probe.
+Stop the running development app. Extract this archive over the repository root containing OrchidApp.sln, accepting replacement of the listed files. Keep the existing private .env at that root. Then run dotnet run from src/OrchidApp.Web. No wrapper or manual credential export is required.
 
 ## Files
 
-| Change | Path | Description |
-| --- | --- | --- |
-| Modified | `.github/workflows/ci.yml` | Run the new Development startup configuration checks on both CI platforms. |
-| Modified | `RELEASE_NOTES.md` | Record automatic .env loading and ordinary dotnet run startup. |
-| Modified | `docs/code-change-backlog.md` | Record the C16 direct-start correction. |
-| Modified | `docs/development-setup.md` | Make dotnet run the daily command; document private .env loading, precedence, upload default and optional diagnostics. |
-| Modified | `docs/maintenance/c16-developer-setup.md` | Preserve original evidence and append the correction, tests and limits. |
-| Modified | `scripts/DevSetup/configure.ps1` | Use the per-user development upload default when the optional wrapper has no upload setting. |
-| Added | `src/OrchidApp.Web/Configuration/DevelopmentConfiguration.cs` | Development-only repository .env reader and MariaDB connection generation; local upload default and restored Windows native PATH. |
-| Modified | `src/OrchidApp.Web/Program.cs` | Apply Development configuration before service setup. |
-| Modified | `src/OrchidApp.Web/appsettings.Development.json` | Clear the inherited generic Linux upload default for Development. |
-| Added | `tests/DevelopmentConfiguration.Checks/DevelopmentConfiguration.Checks.csproj` | Add the executable startup configuration check project. |
-| Added | `tests/DevelopmentConfiguration.Checks/Program.cs` | Check .env discovery/credentials/precedence, uploads, errors and Production/Desktop isolation. |
-| Modified | `tests/DevelopmentSetup.Checks/Configuration.Checks.ps1` | Verify omitted upload setting now uses an absolute local default. |
+- src/OrchidApp.Web/Program.cs: applies development configuration before registering database services.
+- src/OrchidApp.Web/Configuration/DevelopmentConfiguration.cs: reads allowlisted root .env settings in Development, constructs OrchidDb, selects an absolute development upload directory, and locates an already restored Windows image runtime.
+- src/OrchidApp.Web/appsettings.Development.json: leaves the upload directory unset so the development default or private override takes effect.
+- tests/DevelopmentConfiguration.Checks/DevelopmentConfiguration.Checks.csproj: standalone startup configuration check project.
+- tests/DevelopmentConfiguration.Checks/Program.cs: checks .env loading, explicit precedence, missing settings, upload defaults and environment isolation.
+- docs/development-setup.md: documents direct dotnet run and private .env setup.
+- docs/maintenance/c16-developer-setup.md: records C16 implementation and validation scope.
 
-## Actual validation
+No deletions or moves. No credentials, database contents, uploads or runtime binaries are included. This is a targeted recovery package, not a replacement repository or a cumulative delivery of all phases.
 
-- 14 C# Development startup configuration checks passed, including literal special-character credentials and Production/Desktop isolation.
-- 18 PowerShell configuration checks passed, including the new optional upload default.
-- Direct dotnet run started against an isolated MariaDB 10.11.16 database using only a temporary repository .env with five DB settings. No connection, credential or upload environment values and no wrapper were supplied. Home and Plants returned HTTP 200; startup created its upload default.
-- Release web build passed with zero warnings/errors. actionlint workflow validation and modified PowerShell parsing passed. Changed Markdown links and JSON parsed; all 333 schema/checksum/historical migration files were unchanged.
-- The generated database was dropped and the isolated test server shut down. The real collection was not used. No user credential file was modified.
+## Validation
 
-## Remaining acceptance
-
-The new CI steps still require a run. Direct-start HTTP checks cover database access and upload directory initialization; this follow-up does not claim a new end-to-end photo upload, historical data/photo migration, Linux direct-start acceptance or installer/recovery validation. Existing C16 photo tests remain earlier evidence.
+Re-ran the startup configuration suite: all 14 checks passed. Verified every packaged repository file against its source bytes. The user's development database was not accessed and the user's checkout was not modified. Actual local startup after applying remains to be confirmed.

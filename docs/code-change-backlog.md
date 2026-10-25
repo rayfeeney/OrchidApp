@@ -44,7 +44,7 @@ Record actual evidence at each step.
 
 ## C01
 
-**Make fresh schema creation portable and dependency ordered** — P1; Confirmed defect / agreed requirement; status: Implemented locally; Linux/native-photo acceptance pending.
+**Make fresh schema creation portable and dependency ordered** — P1; Confirmed defect / agreed requirement; status: Open.
 
 Affected files/areas: database/scripts/rebuild.ps1; database/schema/; schema export tooling.
 
@@ -54,11 +54,9 @@ Dependencies: None.
 
 Acceptance: Create on Windows and Linux with database/migrations absent; required reference values and basic app workflows work; repeat safely only on an explicitly disposable target.
 
-Implementation and local validation: [C01/C02 evidence](maintenance/c01-c02-schema-baseline.md). The creation script no longer drops databases. Schema-contained manifest and completion marker replace historical bookkeeping scans; existing history is preserved.
-
 ## C02
 
-**Supply schema-contained baseline identity for future upgrades** — P1; Agreed requirement / current dependency gap; status: Implemented locally; Linux/native-photo acceptance pending.
+**Supply schema-contained baseline identity for future upgrades** — P1; Agreed requirement / current dependency gap; status: Open.
 
 Affected files/areas: src/OrchidApp.Web/Program.cs; database/scripts/Export-MariaDBSchema.ps1; rebuild and migration scripts; schema metadata.
 
@@ -67,8 +65,6 @@ Required work: Choose and implement a baseline/cutover contract carried with the
 Dependencies: C01 design coordination.
 
 Acceptance: Fresh creation succeeds with no migration directory; reintroduce historic and one later migration: only the later change applies once. Existing Desktop baseline rows remain compatible through a reviewed upgrade path.
-
-Implementation and local validation: [C01/C02 evidence](maintenance/c01-c02-schema-baseline.md). The creation script no longer drops databases. Schema-contained manifest and completion marker replace historical bookkeeping scans; existing history is preserved.
 
 ## C03
 
@@ -86,7 +82,7 @@ Implementation: Monitoring:Enabled defaults false and requires Linux ARM/ARM64. 
 
 ## C04
 
-**Reconcile migration runners and enforce compatible history** — P1; Confirmed enforcement gap; status: Implemented; local checks and corrected Linux CI confirmed passed by the owner.
+**Reconcile migration runners and enforce compatible history** — P1; Confirmed enforcement gap; status: Open.
 
 Affected files/areas: database/scripts/Apply-Migrations.ps1; Apply-MariaDBMigrations.ps1; dev-runner.ps1; src/OrchidApp.Web/Program.cs.
 
@@ -95,8 +91,6 @@ Required work: Choose supported routes; enforce format, duplicate timestamps, ch
 Dependencies: C02.
 
 Acceptance: Isolated tests cover tampering, duplicate/backdated names, missing files, baseline compatibility, partial-failure reporting and future-only migration application. No claim of automatic DDL rollback.
-
-Implementation: canonical PowerShell runner plus compatibility alias, matching Desktop validation, complete preflight and a durable pending marker. See [runner contract](migration-runners.md) and [C04 evidence](maintenance/c04-migration-runners.md). No historical migration or applied baseline/checksum rows were rewritten.
 
 ## C05
 
@@ -108,9 +102,7 @@ Required work: Add isolated fresh creation without migration files, required see
 
 Dependencies: C01, C02, C04.
 
-Acceptance (agreed scope): CI checks empty-environment schema-only creation, then a later migration against that current-schema database with representative test records. Required seeds, view dependencies, baseline identity, record preservation and once-only application are asserted. Older-installation fixtures and historical-version upgrade acceptance are a separate future task, as agreed with the owner.
-
-Implementation: CI uses the production creator from a stage containing scripts/schema and no migration directory, followed by separate disposable creation/upgrade checks and canonical export/drift comparison. The expanded suite passed all 44 checks locally; 18 C# baseline policy checks and the extracted CI creation/export/drift sequence also passed. See [C05 evidence](maintenance/c05-ci-database-acceptance.md). GitHub Actions/Linux acceptance remains pending; next in the agreed order is C06+C07, legacy backup source/settings compatibility.
+Acceptance: CI proves both empty-environment schema-only creation and upgrade of a representative existing database; missing seed/view dependency/baseline regressions fail meaningfully.
 
 ## C06
 
