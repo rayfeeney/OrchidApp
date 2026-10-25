@@ -36,7 +36,10 @@ try {
     $env:MARIADB_PORT='53319'; $env:MARIADB_DATABASE='unsafe-name'; $rejected=$false
     try { Get-ExplicitDatabaseEnvironment | Out-Null } catch { $rejected=$_.Exception.Message.Contains('MARIADB_DATABASE') }
     Check 'Unsafe identifier rejected' $rejected
-    $env:MARIADB_DATABASE='orchids_setup_fixture'; $env:Storage__UploadRoot='relative/photos'; $rejected=$false
+    $env:MARIADB_DATABASE='orchids_setup_fixture'; $env:Storage__UploadRoot=''
+    . (Join-Path $repositoryRoot 'scripts/DevSetup/configure.ps1')
+    Check 'Missing upload setting uses absolute local default' ([IO.Path]::IsPathFullyQualified($env:Storage__UploadRoot))
+    $env:Storage__UploadRoot='relative/photos'; $rejected=$false
     try { . (Join-Path $repositoryRoot 'scripts/DevSetup/configure.ps1') } catch { $rejected=$_.Exception.Message.Contains('Storage__UploadRoot') }
     Check 'Relative upload path rejected' $rejected
     Write-Host "$checks development configuration checks passed."

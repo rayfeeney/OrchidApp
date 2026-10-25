@@ -2,6 +2,22 @@
 
 Use a separate development MariaDB server/database and upload directory. Run commands from the repository root in PowerShell 7. Never use the live collection for setup, hooks or experiments. Fresh databases come only from schema and required seeds; historical migration replay is not a setup step.
 
+## Normal daily startup
+
+From src/OrchidApp.Web, run:
+
+```powershell
+dotnet run
+```
+
+Development startup reads the repository root .env automatically and builds the app connection string from MARIADB_HOST, MARIADB_PORT, MARIADB_DATABASE, MARIADB_USER and MARIADB_PASSWORD. Keep your existing private credentials there; no wrapper, password prompt or repeated terminal configuration is required for the app. Existing explicit app/environment configuration overrides .env values. Production and Desktop do not read this development file.
+
+The .env stays ignored by Git. Values are literal: KEY=value, optional export prefix, optional matching single/double quotes, blank lines and full-line # comments. There is no shell evaluation, variable expansion or backslash rewriting; unquoted # inside a password remains literal. Do not place inline comments after unquoted credentials. Only supported database, connection-string and upload keys are read; no unrelated process variables are imported.
+
+Storage__UploadRoot is optional for the app. The default is the current user's local application-data directory under OrchidApp/Development/uploads (on Windows, %LOCALAPPDATA%/OrchidApp/Development/uploads), created automatically. If you already have development photographs in another folder, retain that location by adding Storage__UploadRoot with its absolute path to .env. No existing photographs are moved or deleted.
+
+On Windows, dotnet run also discovers the complete libvips runtime already restored under app/runtime/libvips/win-x64/bin. Restore it once if needed using pwsh ./scripts/restore-windows-runtime.ps1 -LibVipsOnly from the repository root. No download or native probe runs on every normal app startup. Native readiness can be checked separately below.
+
 ## Prerequisites and platform scope
 
 | Component | Requirement and evidence |
@@ -26,7 +42,7 @@ dotnet --list-runtimes
 
 For MariaDB tools, MARIADB_EXE and MARIADB_DUMP_EXE may hold explicit executable paths, including paths with spaces. Otherwise discovery uses mariadb/mariadb-dump on PATH, then the Windows MariaDB 10.11 installation directory. One executable is selected even if PATH exposes multiple copies.
 
-## Configure one target in one terminal
+## Configure administration scripts and hooks (when needed)
 
 Choose your own endpoint, database and account. These example non-secret values describe a disposable local instance; replace them before running:
 
@@ -44,9 +60,9 @@ Remove-Variable devCredential
 pwsh ./scripts/DevSetup/setup.ps1
 ```
 
-The dot-sourced configure.ps1 generates ConnectionStrings__OrchidDb from the same five MARIADB values, quoting credentials correctly. It requires an absolute upload path, selects Development, disables monitoring and sets the schema creation charset/collation. The app and scripts therefore use the same explicit target. Committed Development settings contain no endpoint, password or personal upload directory.
+The optional dot-sourced configure.ps1 generates ConnectionStrings__OrchidDb from the same five MARIADB values, quoting credentials correctly. It uses the same local upload default if none is supplied, selects Development, disables monitoring and sets the schema creation charset/collation. The app and scripts therefore use the same explicit target. Committed Development settings contain no endpoint, password or personal upload directory.
 
-No MYSQL_USER/MYSQL_PASSWORD aliases, default target/port or repository .env loading is used. Creation, migrations and export all require the explicit MARIADB target. MYSQL_PWD is used only as the native client's temporary password transport; setup/export preserve its previous value. Environment values remain process-readable: use a private development terminal or your local secret management, and do not commit credentials or echo the connection string.
+The administration scripts below still use explicit MARIADB environment values and do not load .env themselves; this is separate from the web app's automatic Development .env loading. No MYSQL_USER/MYSQL_PASSWORD aliases or database endpoint defaults are used. Creation, migrations and export all require the explicit MARIADB target. MYSQL_PWD is used only as the native client's temporary password transport; setup/export preserve its previous value. Environment values remain process-readable: use a private development terminal or your local secret management, and do not commit credentials or echo the connection string.
 
 Keep this terminal open for app commands and command-line Git commits. A GUI Git client already running elsewhere does not inherit these settings; launch it from the configured environment if needed. Repeat configuration in each new terminal and after changing target values. Runtime deployment permissions remain a separate concern; this is an isolated developer workflow.
 
@@ -60,20 +76,20 @@ pwsh ./database/scripts/rebuild.ps1 -ConfirmDatabase $env:MARIADB_DATABASE
 
 The creator uses the manifest's dependency order, imports required seeds and records its completion marker last. It accepts only an absent or empty target, never drops existing data and rejects partial/nonempty targets. It does not need the migrations directory. See [database creation](database-creation.md). Development web startup does not initialise a database.
 
-## Native check and source run
+## Optional native diagnostic checks
 
 ```powershell
 # Validate native decoding, photo/thumbnail save and reopen without starting the app.
 pwsh ./scripts/DevSetup/run.ps1 -CheckOnly
-# Run the app after the same native check.
+# Optional diagnostic wrapper: check native processing, then run the app.
 pwsh ./scripts/DevSetup/run.ps1
 ```
 
 On Windows, run.ps1 downloads the pinned full libvips runtime on first use, adds its bin directory to the child process PATH and restores PATH when finished. This handles the DLLs needed by NetVips 2.4.2; the smaller native NuGet binary alone was insufficient in local testing. Downloaded archives and restored runtimes are ignored by Git. On Linux, install your distribution's libvips runtime/tools first; the native probe is the compatibility check. No Windows runtime is installed on Linux.
 
-The probe calls the application's actual PhotoPipeline with a generated PNG, saves and fully decodes separate JPEG photo and thumbnail files in a unique child of Storage__UploadRoot, checks dimensions and removes only that probe directory. It verifies native/filesystem behavior, not database or browser readiness. A failed probe prevents source app startup.
+The probe calls the application's actual PhotoPipeline with a generated PNG, saves and fully decodes separate JPEG photo and thumbnail files in a unique child of Storage__UploadRoot, checks dimensions and removes only that probe directory. It verifies native/filesystem behavior, not database or browser readiness. A failed probe prevents startup through that optional wrapper. Normal dotnet run does not invoke the probe.
 
-Open http://localhost:5285. Use -Url http://127.0.0.1:5286 if that port is occupied. The command selects Development explicitly without a launch profile. It does not open a browser. Check a database-backed list, create a disposable plant, save/reopen notes, upload a test photo and reopen the photo page. Verify both photo files under the configured upload root. Home alone does not prove readiness. General development leaves bespoke monitoring disabled.
+Open http://localhost:5285. Use -Url http://127.0.0.1:5286 if that port is occupied. The optional wrapper selects Development explicitly without a launch profile; ordinary dotnet run uses the Development launch profile. It does not open a browser. Check a database-backed list, create a disposable plant, save/reopen notes, upload a test photo and reopen the photo page. Verify both photo files under the configured upload root. Home alone does not prove readiness. General development leaves bespoke monitoring disabled.
 
 ## Hooks and local checks
 
@@ -97,3 +113,5 @@ This runs the existing schema baseline and migration database checks, which use 
 For later database changes use [migration runners](migration-runners.md), beginning with PlanOnly and a recoverable backup. Never remove incomplete markers or edit applied SQL/history. Windows packaging and installer work use the separate packaging scripts and [upgrade contract](windows-upgrade-contract.md).
 
 C16's local setup, schema creation, actual hook, source startup and photo HTTP round trip are recorded in [C16 evidence](maintenance/c16-developer-setup.md). The added Windows/Linux CI checks and a completely fresh OS installation still need acceptance; local Windows success is not Linux/device/installer proof.
+
+The C16 direct-start follow-up adds automatic Development .env loading and the local upload default. See [C16 evidence](maintenance/c16-developer-setup.md) for validation of that correction.
