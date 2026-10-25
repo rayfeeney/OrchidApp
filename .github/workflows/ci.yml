@@ -54,6 +54,18 @@ jobs:
             exit 1
           fi
 
+      - name: Check development configuration
+        shell: pwsh
+        run: ./tests/DevelopmentSetup.Checks/Configuration.Checks.ps1
+
+      - name: Install native photo dependencies
+        run: sudo apt-get update && sudo apt-get install -y libvips-tools
+
+      - name: Check native photo save and reopen
+        env:
+          Storage__UploadRoot: ${{ runner.temp }}/orchidapp-native-check
+        run: dotnet run --configuration Release --project tests/DevelopmentNative.Checks/DevelopmentNative.Checks.csproj
+
       - name: Check Desktop migration policy
         run: dotnet run --configuration Release --project tests/MigrationHistory.Checks/MigrationHistory.Checks.csproj
 
@@ -170,6 +182,7 @@ jobs:
 
       - name: Run schema export
         env:
+          MARIADB_DATABASE: orchids
           MARIADB_HOST: 127.0.0.1
           MARIADB_PORT: 3306
           MARIADB_USER: root
@@ -205,6 +218,18 @@ jobs:
         shell: pwsh
         run: ./scripts/restore-windows-runtime.ps1
       
+      - name: Check development configuration
+        shell: pwsh
+        run: ./tests/DevelopmentSetup.Checks/Configuration.Checks.ps1
+
+      - name: Check native photo save and reopen
+        shell: pwsh
+        env:
+          Storage__UploadRoot: ${{ runner.temp }}/orchidapp-native-check
+        run: |
+          $env:PATH = (Join-Path $PWD 'app/runtime/libvips/win-x64/bin') + [IO.Path]::PathSeparator + $env:PATH
+          dotnet run --configuration Release --project tests/DevelopmentNative.Checks/DevelopmentNative.Checks.csproj
+
       - name: Create Windows package
         shell: pwsh
         run: ./scripts/package-windows.ps1

@@ -1,5 +1,9 @@
 # Release notes
 
+## C16 - reproducible source development setup
+
+Developer setup now uses one explicit MARIADB target to generate the app connection string, validates MariaDB/.NET tools and activates hooks. Committed development credentials and personal storage defaults are removed. The source-run wrapper restores the complete pinned Windows libvips runtime and verifies actual photo/thumbnail save and reopen before startup. Export requires explicit endpoints and ignores hidden native option files. The obsolete local MySQL Docker route now calls the supported disposable database suites. Added Windows/Linux native and configuration CI checks. See [setup instructions](docs/development-setup.md) and [local evidence/pending acceptance](docs/maintenance/c16-developer-setup.md).
+
 ## C04 CI follow-up - test error reporting
 
 Database checks now compare the original child exception message returned as JSON, avoiding failures caused by wrapped/coloured PowerShell error displays. Added automatic protocol regression checks. Production migration and failed-DDL handling are unchanged.

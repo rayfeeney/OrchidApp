@@ -1,78 +1,34 @@
-$ErrorActionPreference = "Stop"
-
-Write-Host ""
-Write-Host "Repository setup starting..." -ForegroundColor Cyan
-Write-Host ""
-
-# --- Helper function ---
-function Require-Command {
-    param (
-        [string]$Name
-    )
-
-    if (-not (Get-Command $Name -ErrorAction SilentlyContinue)) {
-        Write-Error "Required command '$Name' was not found in PATH."
-    }
-
-    Write-Host "✔ Found $Name"
+# Prerequisite check and local Git hook activation; never creates or migrates a DB.
+$ErrorActionPreference = 'Stop'
+if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'Run setup with PowerShell 7 (pwsh).' }
+$repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
+. (Join-Path $repositoryRoot 'database/scripts/Schema-Baseline.ps1')
+. (Join-Path $PSScriptRoot 'configure.ps1')
+foreach ($command in @('git','dotnet','pwsh')) {
+    Get-Command $command -CommandType Application -ErrorAction Stop | Select-Object -First 1 | Out-Null
 }
-
-# --- Ensure PowerShell 7 ---
-if ($PSVersionTable.PSVersion.Major -lt 7) {
-    Write-Error "PowerShell 7 or higher is required. Please run this script using 'pwsh'."
+$sdkVersions = & dotnet --list-sdks
+if ($LASTEXITCODE -ne 0 -or -not ($sdkVersions -match '^(8|9|[1-9][0-9])\.')) { throw '.NET SDK 8 or newer is required (dotnet --list-sdks).' }
+$runtimeVersions = & dotnet --list-runtimes
+foreach ($runtime in @('Microsoft.NETCore.App','Microsoft.AspNetCore.App')) {
+    if (-not ($runtimeVersions -match ('^' + [regex]::Escape($runtime) + ' 8\.'))) { throw "The .NET 8 runtime $runtime is required." }
 }
-
-Write-Host "✔ PowerShell $($PSVersionTable.PSVersion) detected"
-
-# --- Required commands ---
-Require-Command git
-Require-Command pwsh
-Require-Command mysql
-Require-Command mysqldump
-
-Write-Host ""
-
-# --- Environment variables ---
-$MissingEnv = @()
-
-if (-not $env:MYSQL_USER) {
-    $MissingEnv += "MYSQL_USER"
+$client = Resolve-MariaDbTool -Override $env:MARIADB_EXE
+$dump = Resolve-MariaDbTool -Name 'mariadb-dump' -Override $env:MARIADB_DUMP_EXE
+foreach ($tool in @($client,$dump)) {
+    $versionText = & $tool --no-defaults --version
+    if ($LASTEXITCODE -ne 0 -or $versionText -notmatch '10\.11\..*MariaDB|MariaDB.*10\.11\.') { throw 'MariaDB 10.11 client and dump tools are required.' }
 }
-
-if (-not $env:MYSQL_PASSWORD) {
-    $MissingEnv += "MYSQL_PASSWORD"
+$previousPassword = $env:MYSQL_PWD
+try {
+    $env:MYSQL_PWD = $env:MARIADB_PASSWORD
+    $serverVersion = & $client --no-defaults --protocol=TCP "--host=$env:MARIADB_HOST" "--port=$env:MARIADB_PORT" "--user=$env:MARIADB_USER" --connect-timeout=5 --batch --skip-column-names '--execute=SELECT VERSION();'
+    if ($LASTEXITCODE -ne 0 -or $serverVersion -notmatch '^10\.11\..*MariaDB') { throw 'Could not verify the explicit target as MariaDB 10.11.' }
 }
-
-if ($MissingEnv.Count -gt 0) {
-    Write-Error (
-        "Missing required environment variables: " +
-        ($MissingEnv -join ", ") +
-        "`nSet them using:`n" +
-        'setx MYSQL_USER "your_mysql_user"`n' +
-        'setx MYSQL_PASSWORD "your_mysql_password"`n' +
-        "`nThen restart GitHub Desktop."
-    )
-}
-
-Write-Host "✔ Required environment variables are set"
-
-Write-Host ""
-
-# --- Configure Git hooks path ---
-Write-Host "Configuring Git hooks path for this repository..."
-
-git config core.hooksPath .githooks
-
-$ConfiguredHooksPath = git config --local --get core.hooksPath
-
-if ($ConfiguredHooksPath -ne ".githooks") {
-    Write-Error "Failed to configure core.hooksPath. Expected '.githooks', got '$ConfiguredHooksPath'."
-}
-
-Write-Host "✔ Git hooks path set to .githooks"
-
-Write-Host ""
-Write-Host "Setup complete." -ForegroundColor Green
-Write-Host ""
-Write-Host "If you use GitHub Desktop, please restart it before committing." -ForegroundColor Yellow
-Write-Host ""
+finally { $env:MYSQL_PWD = $previousPassword }
+& git -C $repositoryRoot config --local core.hooksPath .githooks
+if ($LASTEXITCODE -ne 0) { throw 'Could not configure hooks: use a Git checkout.' }
+$hooks = & git -C $repositoryRoot config --local --get core.hooksPath
+if ($LASTEXITCODE -ne 0 -or $hooks -ne '.githooks') { throw 'Git hook configuration failed.' }
+Write-Host 'Prerequisites verified; repository hooks activated. No database objects changed.'
+Write-Host 'Use this configured terminal for Git commits; a previously opened GUI does not inherit its environment.'
