@@ -1,420 +1,112 @@
 param(
-    [ValidateSet("Normal", "PreUpgrade")]
-    [string]$BackupType = "Normal",
-
+    [ValidateSet('Normal','PreUpgrade')][string]$BackupType = 'Normal',
     [string]$BackupsRoot,
-
-    [int]$MariaDbPort = 3308,
-
+    [ValidateRange(1,65535)][int]$MariaDbPort = 3308,
     [int]$BackupsToKeep = 3,
-
-    [switch]$SkipOldBackupPruning
+    [switch]$SkipOldBackupPruning,
+    [string]$LegacySourceRoot
 )
-
-$ErrorActionPreference = "Stop"
-
-function Write-Step {
-    param([string]$Message)
-
-    Write-Host ""
-    Write-Host "==> $Message"
-}
-
-function Test-PortListening {
-    param([int]$Port)
-
-    $listener = Get-NetTCPConnection `
-        -LocalPort $Port `
-        -State Listen `
-        -ErrorAction SilentlyContinue
-
-    return $null -ne $listener
-}
-
-function Wait-ForMariaDb {
-    param(
-        [string]$MariaDbClient,
-        [int]$Port,
-        [int]$TimeoutSeconds = 30
-    )
-
-    for ($i = 0; $i -lt $TimeoutSeconds; $i++) {
-        & $MariaDbClient `
-            -h 127.0.0.1 `
-            -P $Port `
-            -u orchid `
-            -porchid `
-            -e "SELECT 1;" `
-            2>$null | Out-Null
-
-        if ($LASTEXITCODE -eq 0) {
-            return
-        }
-
-        Start-Sleep -Seconds 1
-    }
-
-    throw "MariaDB did not become ready within $TimeoutSeconds seconds."
-}
-
-function Write-Log {
-    param([string]$Message)
-
-    $Line = "[{0}] {1}" -f (Get-Date -Format "yyyy-MM-dd HH:mm:ss"), $Message
-
-    Add-Content `
-        -Path $BackupLogPath `
-        -Value $Line `
-        -Encoding UTF8
-}
-
-function Write-UserAndLog {
-    param([string]$Message)
-
-    Write-Host $Message
-    Write-Log $Message
-}
-
-function Stop-LocalMariaDb {
-    if ($StartedMariaDb -and $MariaDbProcess -and -not $MariaDbProcess.HasExited) {
-        Write-Step "Stopping local database"
-
-        & $MariaDbAdmin `
-            -h 127.0.0.1 `
-            -P $MariaDbPort `
-            -u orchid_shutdown `
-            -porchid_shutdown `
-            shutdown
-
-        if ($LASTEXITCODE -eq 0) {
-            $MariaDbProcess.WaitForExit(30000) | Out-Null
-            Write-Host "MariaDB stopped." -ForegroundColor Green
-            Write-Log "MariaDB stopped cleanly."
-        }
-        else {
-            Stop-Process -Id $MariaDbProcess.Id -Force
-            Write-Host "MariaDB had to be force-stopped." -ForegroundColor Red
-            Write-Log "MariaDB had to be force-stopped."
-        }
-    }
-}
-
-$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$AppRoot = Resolve-Path (Join-Path $ScriptDir "..")
-
-$MariaDbRoot = Join-Path $AppRoot "runtime\mariadb\win-x64"
-$MariaDbBin = Join-Path $MariaDbRoot "bin"
-
-$MariaDbServer = Join-Path $MariaDbBin "mariadbd.exe"
-$MariaDbClient = Join-Path $MariaDbBin "mariadb.exe"
-$MariaDbDump = Join-Path $MariaDbBin "mariadb-dump.exe"
-$MariaDbAdmin = Join-Path $MariaDbBin "mariadb-admin.exe"
-
-$ProgramDataRoot = Join-Path $env:ProgramData "OrchidApp"
-
-if ($BackupType -eq "PreUpgrade") {
-    $MariaDbData = Join-Path $AppRoot "data\mariadb"
-    $UploadsRoot = Join-Path $AppRoot "wwwroot\uploads"
-    $LauncherSettingsPath = Join-Path $AppRoot "launcher-settings.json"
-
-    if ([string]::IsNullOrWhiteSpace($BackupsRoot)) {
-        $BackupsRoot = Join-Path $ProgramDataRoot "backups\pre-upgrade"
-    }
+$ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'Backup-Contract.ps1')
+$AppRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
+$MariaDbRoot = Join-Path $AppRoot 'runtime/mariadb/win-x64'
+$MariaDbServer = Join-Path $MariaDbRoot 'bin/mariadbd.exe'
+$MariaDbClient = Join-Path $MariaDbRoot 'bin/mariadb.exe'
+$MariaDbDump = Join-Path $MariaDbRoot 'bin/mariadb-dump.exe'
+$MariaDbAdmin = Join-Path $MariaDbRoot 'bin/mariadb-admin.exe'
+$ProgramDataRoot = Join-Path $env:ProgramData 'OrchidApp'
+if ($BackupType -eq 'PreUpgrade') {
+    if ([string]::IsNullOrWhiteSpace($LegacySourceRoot)) { throw 'PreUpgrade requires an explicit LegacySourceRoot captured from the detected installation.' }
+    $SourceRoot = (Resolve-Path -LiteralPath $LegacySourceRoot).Path
+    $MariaDbData = Join-Path $SourceRoot 'data/mariadb'
+    $UploadsRoot = Join-Path $SourceRoot 'wwwroot/uploads'
+    $LauncherSettingsPath = Join-Path $SourceRoot 'launcher-settings.json'
+    if (-not $BackupsRoot) { $BackupsRoot = Join-Path $ProgramDataRoot 'backups/pre-upgrade' }
+    $capture = Join-Path $SourceRoot 'source-capture.json'
+    if (-not (Test-Path -LiteralPath $capture -PathType Leaf)) { throw 'PreUpgrade requires a quiescent captured source, not a live legacy directory.' }
+    $OriginalLegacyRoot = (Get-Content -LiteralPath $capture -Raw -Encoding UTF8 | ConvertFrom-Json).originalRoot
 }
 else {
-    $MariaDbData = Join-Path $ProgramDataRoot "data\mariadb"
-    $UploadsRoot = Join-Path $ProgramDataRoot "uploads"
-    $LauncherSettingsPath = Join-Path $ProgramDataRoot "launcher-settings.json"
-
-    if ([string]::IsNullOrWhiteSpace($BackupsRoot)) {
-        $BackupsRoot = Join-Path $ProgramDataRoot "backups"
+    if ($LegacySourceRoot) { throw 'LegacySourceRoot is valid only for PreUpgrade.' }
+    $SourceRoot=$ProgramDataRoot
+    $MariaDbData=Join-Path $SourceRoot 'data/mariadb'
+    $UploadsRoot=Join-Path $SourceRoot 'uploads'
+    $LauncherSettingsPath=Join-Path $SourceRoot 'launcher-settings.json'
+    if (-not $BackupsRoot) { $BackupsRoot=Join-Path $SourceRoot 'backups' }
+}
+foreach ($path in @($MariaDbServer,$MariaDbClient,$MariaDbDump,$MariaDbAdmin,$MariaDbData)) {
+    if (-not (Test-Path -LiteralPath $path)) { throw "Required backup item missing: $path" }
+}
+Assert-NoPathAlias $MariaDbData
+if ($BackupType -eq 'PreUpgrade') {
+    foreach ($source in @($SourceRoot,$OriginalLegacyRoot)) {
+        $destination=Get-FullLocalPath $BackupsRoot; $prefix=(Get-FullLocalPath $source)+'\'
+        if ($destination -ieq (Get-FullLocalPath $source) -or $destination.StartsWith($prefix,[StringComparison]::OrdinalIgnoreCase)) { throw 'Pre-upgrade backups must be outside captured and original legacy roots.' }
     }
 }
-if ($BackupType -eq "PreUpgrade") {
-    $ResolvedBackupsRootParent = Split-Path -Parent $BackupsRoot
-
-    if (-not (Test-Path $ResolvedBackupsRootParent)) {
-        New-Item `
-            -Path $ResolvedBackupsRootParent `
-            -ItemType Directory `
-            -Force | Out-Null
-    }
-
-    $ResolvedBackupsRoot = Resolve-Path `
-        -Path $BackupsRoot `
-        -ErrorAction SilentlyContinue
-
-    if ($ResolvedBackupsRoot -and
-        $ResolvedBackupsRoot.Path.StartsWith($AppRoot.Path, [System.StringComparison]::OrdinalIgnoreCase)) {
-        throw "Pre-upgrade backup destination must not be inside the source app root."
-    }
-}
-
-$Timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-if ($BackupType -eq "PreUpgrade") {
-    $BackupName = "OrchidAppPreUpgradeBackup_$Timestamp"
-}
-else {
-    $BackupName = "OrchidAppBackup_$Timestamp"
-}
-$BackupWorkingRoot = Join-Path $BackupsRoot $BackupName
-$BackupLogPath = Join-Path $BackupWorkingRoot "backup.log"
-$MariaDbServerLogPath = Join-Path $BackupWorkingRoot "mariadb-server.log"
-$MariaDbServerErrorLogPath = Join-Path $BackupWorkingRoot "mariadb-server-error.log"
-$BackupZip = Join-Path $BackupsRoot "$BackupName.zip"
-$MariaDbDataRoot = $MariaDbData
-
-$StartedMariaDb = $false
-$MariaDbProcess = $null
-
-Write-Step "Checking backup prerequisites"
-
-$RequiredPaths = @(
-    $MariaDbServer,
-    $MariaDbClient,
-    $MariaDbDump,
-    $MariaDbAdmin,
-    $MariaDbData
-)
-
-foreach ($RequiredPath in $RequiredPaths) {
-    if (-not (Test-Path $RequiredPath)) {
-        throw "Required backup item missing: $RequiredPath"
-    }
-
-    Write-Host "OK: $RequiredPath" -ForegroundColor Green
-}
-
 New-Item -ItemType Directory -Path $BackupsRoot -Force | Out-Null
-New-Item -ItemType Directory -Path $BackupWorkingRoot -Force | Out-Null
-
-Set-Content `
-    -Path $BackupLogPath `
-    -Value ("[{0}] Backup started." -f (Get-Date -Format "yyyy-MM-dd HH:mm:ss")) `
-    -Encoding UTF8
-
+Assert-NoPathAlias $BackupsRoot
+$name='OrchidAppBackup_'
+if ($BackupType -eq 'PreUpgrade') { $name='OrchidAppPreUpgradeBackup_' }
+$name += (Get-Date -Format 'yyyyMMdd_HHmmss_fff')+'_'+[guid]::NewGuid().ToString('N').Substring(0,8)
+$BackupWorkingRoot=Join-Path $BackupsRoot $name
+New-Item -ItemType Directory -Path $BackupWorkingRoot | Out-Null
+$BackupZip=Join-Path $BackupsRoot ($name+'.zip')
+$PayloadRoot=Join-Path $BackupWorkingRoot 'payload'
+New-Item -ItemType Directory -Path $PayloadRoot | Out-Null
+$BackupLogPath=Join-Path $BackupWorkingRoot 'backup.log'
+$MariaDbServerLogPath=Join-Path $BackupWorkingRoot 'mariadb-server.log'
+$MariaDbServerErrorLogPath=Join-Path $BackupWorkingRoot 'mariadb-server-error.log'
+$StartedMariaDb=$false; $MariaDbProcess=$null
+$previousPassword=$env:MYSQL_PWD
+function Write-Step([string]$Message) { Write-Host $Message }
+function Write-Log([string]$Message) { Add-Content -LiteralPath $BackupLogPath -Value $Message -Encoding UTF8 }
 try {
-    Write-Step "Starting local database if needed"
-
-    if (Test-PortListening -Port $MariaDbPort) {
-        Write-Host "MariaDB already appears to be running on port $MariaDbPort."
+    $env:MYSQL_PWD='orchid'
+    Start-OrchidDatabase
+    if ([int](Invoke-OrchidQuery "SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME='orchids';") -ne 1) { throw 'Selected source has no orchids database.' }
+    Assert-PhotoFiles $UploadsRoot
+    $DatabaseBackupPath=Join-Path $PayloadRoot 'orchids.sql'
+    & $MariaDbDump --no-defaults --protocol=TCP --host=127.0.0.1 "--port=$MariaDbPort" --user=orchid --default-character-set=utf8mb4 --single-transaction --routines --triggers --events --databases orchids --add-drop-database --add-drop-table "--result-file=$DatabaseBackupPath"
+    if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $DatabaseBackupPath) -or (Get-Item -LiteralPath $DatabaseBackupPath).Length -eq 0) { throw 'Database backup failed.' }
+    $UploadsBackupPath=Join-Path $PayloadRoot 'uploads'
+    $SettingsBackupRoot=Join-Path $PayloadRoot 'launcher-settings'
+    New-Item -ItemType Directory -Path $UploadsBackupPath,$SettingsBackupRoot | Out-Null
+    if (Test-Path -LiteralPath $UploadsRoot) {
+        Assert-NoPathAlias $UploadsRoot
+        $items=@(Get-ChildItem -LiteralPath $UploadsRoot -Force)
+        if ($items.Count) { Copy-Item -LiteralPath $items.FullName -Destination $UploadsBackupPath -Recurse -Force }
     }
-    else {
-        $MariaDbProcess = Start-Process `
-            -FilePath $MariaDbServer `
-            -ArgumentList "--datadir=`"$MariaDbData`" --port=$MariaDbPort --bind-address=127.0.0.1 --console" `
-            -WorkingDirectory $AppRoot `
-            -RedirectStandardOutput $MariaDbServerLogPath `
-            -RedirectStandardError $MariaDbServerErrorLogPath `
-            -PassThru `
-            -WindowStyle Hidden
-
-        $StartedMariaDb = $true
-
-        Write-Host "Waiting for MariaDB to become ready..."
-        Wait-ForMariaDb `
-            -MariaDbClient $MariaDbClient `
-            -Port $MariaDbPort
+    $settingsIncluded=Test-Path -LiteralPath $LauncherSettingsPath -PathType Leaf
+    if ($settingsIncluded) { Copy-Item -LiteralPath $LauncherSettingsPath -Destination $SettingsBackupRoot }
+    Invoke-OrchidQuery 'SELECT scriptName, appliedAt, checksum FROM orchids.schemaversion ORDER BY appliedAt,scriptName;' | Set-Content -LiteralPath (Join-Path $PayloadRoot 'schemaversion.txt') -Encoding UTF8
+    $inventory=@(Get-PayloadFiles $PayloadRoot | ForEach-Object {
+        Assert-NoPathAlias $_.FullName
+        [ordered]@{ path=$_.FullName.Substring($PayloadRoot.Length+1).Replace('\','/'); length=$_.Length; sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant() }
+    })
+    $manifest=[ordered]@{
+        formatVersion=2; backupName=$name; backupType=$BackupType; createdAt=(Get-Date).ToString('o')
+        appRoot=$AppRoot; sourceRoot=$SourceRoot; originalLegacyRoot=$OriginalLegacyRoot
+        database='orchids'; databaseBackup='orchids.sql'; schemaVersionFile='schemaversion.txt'
+        mariaDbPort=$MariaDbPort; mariaDbDataRoot=$MariaDbData; uploadsRoot=$UploadsRoot
+        uploadsIncluded=$true; sourceUploadsPresent=(Test-Path -LiteralPath $UploadsRoot)
+        uploadsFileCount=@(Get-ChildItem -LiteralPath $UploadsBackupPath -Recurse -File -Force).Count
+        launcherSettingsIncluded=[bool]$settingsIncluded; launcherSettingsPath=$LauncherSettingsPath; files=$inventory
     }
-
-    Write-Step "Checking plant database exists"
-
-    $DatabaseExists = & $MariaDbClient `
-        -h 127.0.0.1 `
-        -P $MariaDbPort `
-        -u orchid `
-        -porchid `
-        -N `
-        -B `
-        -e "SELECT COUNT(*) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = 'orchids';"
-
-    if ($LASTEXITCODE -ne 0) {
-        throw "Unable to check whether the OrchidApp database exists."
-    }
-
-    if ([int]$DatabaseExists -ne 1) {
-        if ($BackupType -eq "PreUpgrade") {
-            throw "Pre-upgrade backup was not required because no existing OrchidApp database was found in the detected source layout."
-        }
-
-        throw "No OrchidApp database was found. Start OrchidApp once before creating a backup."
-    }
-
-    Write-Host "OK: OrchidApp database found." -ForegroundColor Green
-
-    Write-Step "Preparing backup files"
-
-    Write-Log "Backup working folder: $BackupWorkingRoot"
-
-    $DatabaseBackupPath = Join-Path $BackupWorkingRoot "orchids.sql"
-
-    Write-Step "Backing up plant database"
-
-    & $MariaDbDump `
-        -h 127.0.0.1 `
-        -P $MariaDbPort `
-        -u orchid `
-        -porchid `
-        --databases orchids `
-        --single-transaction `
-        --routines `
-        --triggers `
-        --events `
-        --add-drop-database `
-        --add-drop-table `
-        --result-file="$DatabaseBackupPath"
-
-    if ($LASTEXITCODE -ne 0) {
-        throw "Database backup failed."
-    }
-
-    Write-Host "OK: Database backup created." -ForegroundColor Green
-
-    Write-Step "Backing up uploaded files"
-
-    $UploadsBackupPath = Join-Path $BackupWorkingRoot "uploads"
-
-    # Always include an uploads folder in the backup, even when there are no photos yet.
-    New-Item -ItemType Directory -Path $UploadsBackupPath -Force | Out-Null
-
-    $UploadsFileCount = 0
-
-    if (Test-Path $UploadsRoot) {
-        $UploadsFileCount = @(
-            Get-ChildItem `
-                -Path $UploadsRoot `
-                -File `
-                -Recurse `
-                -ErrorAction SilentlyContinue
-        ).Count
-
-        $UploadItems = Get-ChildItem `
-            -Path $UploadsRoot `
-            -Force `
-            -ErrorAction SilentlyContinue
-
-        if ($UploadItems) {
-            Copy-Item `
-                -Path $UploadItems.FullName `
-                -Destination $UploadsBackupPath `
-                -Recurse `
-                -Force
-
-            Write-Host "OK: Uploaded files copied. Files included: $UploadsFileCount" -ForegroundColor Green
-            Write-Log "Uploaded files copied. Files included: $UploadsFileCount"
-        }
-        else {
-            Write-Host "OK: No uploaded files found yet. Empty uploads folder included." -ForegroundColor Green
-            Write-Log "No uploaded files found. Empty uploads folder included."
-        }
-    }
-    else {
-        Write-Host "OK: Uploads folder has not been created yet. Empty uploads folder included." -ForegroundColor Green
-        Write-Log "Uploads folder not found. Empty uploads folder included."
-    }
-
-    Write-Step "Backing up launcher settings"
-
-    $LauncherSettingsBackupPath = Join-Path $BackupWorkingRoot "launcher-settings"
-
-    New-Item `
-        -Path $LauncherSettingsBackupPath `
-        -ItemType Directory `
-        -Force | Out-Null
-
-    if (Test-Path $LauncherSettingsPath) {
-        Copy-Item `
-            -Path $LauncherSettingsPath `
-            -Destination $LauncherSettingsBackupPath `
-            -Force
-
-        Write-Host "OK: Launcher settings backed up." -ForegroundColor Green
-    }
-    else {
-        Write-Host "OK: Launcher settings file not found. Empty launcher-settings folder included." -ForegroundColor Green
-    }
-
-    Write-Step "Writing backup manifest"
-
-    $SchemaVersionPath = Join-Path $BackupWorkingRoot "schemaversion.txt"
-
-    & $MariaDbClient `
-        -h 127.0.0.1 `
-        -P $MariaDbPort `
-        -u orchid `
-        -porchid `
-        -e "SELECT scriptName, appliedAt, checksum FROM orchids.schemaversion ORDER BY appliedAt, scriptName;" `
-        > $SchemaVersionPath
-
-    if ($LASTEXITCODE -ne 0) {
-        throw "Failed to export schema version information."
-    }
-
-    if ($BackupType -eq "PreUpgrade") {
-        $BackupReason = "Upgrade safety backup before an upgrade-sensitive operation."
-    }
-    else {
-        $BackupReason = "Manual OrchidApp backup."
-    }
-
-    Write-Log "Uploads file count: $UploadsFileCount"
-
-    $Manifest = [ordered]@{
-        backupName = $BackupName
-        backupType = $BackupType
-        backupReason = $BackupReason
-        createdAt = (Get-Date).ToString("o")
-        appRoot = $AppRoot.Path
-        database = "orchids"
-        databaseBackup = "orchids.sql"
-        uploadsIncluded = (Test-Path $UploadsRoot)
-        uploadsFileCount = $UploadsFileCount
-        schemaVersionFile = "schemaversion.txt"
-        mariaDbPort = $MariaDbPort
-        backupsToKeep = $BackupsToKeep
-        backupsRoot = $BackupsRoot
-        mariaDbDataRoot = $MariaDbDataRoot
-        uploadsRoot = $UploadsRoot
-        launcherSettingsPath = $LauncherSettingsPath
-    }
-
-    $ManifestPath = Join-Path $BackupWorkingRoot "manifest.json"
-
-    $Manifest |
-        ConvertTo-Json -Depth 5 |
-        Set-Content -Path $ManifestPath -Encoding UTF8
-
-    Write-Host "OK: Manifest created." -ForegroundColor Green
-
-    Stop-LocalMariaDb
-
-    Write-Step "Creating backup ZIP"
-
-    if (Test-Path $BackupZip) {
-        Remove-Item $BackupZip -Force
-    }
-
-    Compress-Archive `
-        -Path (Join-Path $BackupWorkingRoot "*") `
-        -DestinationPath $BackupZip `
-        -Force
-
-    Write-Host ""
-    Write-Host "Backup created:" -ForegroundColor Green
-    Write-Host $BackupZip -ForegroundColor Green
-    Write-Log "Backup ZIP created: $BackupZip"
-    Write-Log "Backup completed successfully."
-    Write-Log "Temporary backup folder will be removed: $BackupWorkingRoot"
-
-    Write-Step "Cleaning temporary backup files"
-
-    Remove-Item `
-        -Path $BackupWorkingRoot `
-        -Recurse `
-        -Force
-
-    Write-Host "Temporary backup files removed." -ForegroundColor Green
-
+    $manifest | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $PayloadRoot 'manifest.json') -Encoding UTF8
+    Read-BackupPayload $PayloadRoot | Out-Null
+    Stop-OrchidDatabase
+    # Archive only payload, not logs that may still be appended after hashing.
+    [string[]]$archiveInputs=@('orchids.sql','schemaversion.txt','uploads','launcher-settings','manifest.json') | ForEach-Object { Join-Path $PayloadRoot $_ }
+    Compress-Archive -LiteralPath $archiveInputs -DestinationPath $BackupZip
+    $verify=Join-Path $BackupWorkingRoot 'verify'
+    Expand-CheckedBackup $BackupZip $verify
+    Read-BackupPayload $verify | Out-Null
+    Write-Host 'Backup created:'
+    Write-Host $BackupZip
+    Write-Log "Verified backup: $BackupZip"
+    Assert-ChildPath $BackupWorkingRoot $BackupsRoot
+    Remove-Item -LiteralPath $BackupWorkingRoot -Recurse -Force
     if ($PruneOldBackups) {
         Write-Step "Removing old backups"
 
@@ -444,16 +136,6 @@ try {
         Write-Host "Old backup pruning disabled for this backup run." -ForegroundColor Green
     }
 }
-catch {
-    try {
-        Write-Log "ERROR: $($_.Exception.Message)"
-    }
-    catch {
-        # ignore logging failure
-    }
-
-    throw
-}
 finally {
-    Stop-LocalMariaDb
+    try { Stop-OrchidDatabase } finally { $env:MYSQL_PWD=$previousPassword }
 }

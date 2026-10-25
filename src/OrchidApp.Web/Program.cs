@@ -12,6 +12,7 @@ using OrchidApp.Web.Infrastructure;
 using OrchidApp.Web.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
+DevelopmentConfiguration.Apply(builder.Configuration, builder.Environment.EnvironmentName, builder.Environment.ContentRootPath);
 
 Console.WriteLine("Program starting...");
 Console.WriteLine($"ENV: {builder.Environment.EnvironmentName}");

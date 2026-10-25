@@ -58,6 +58,9 @@ jobs:
         shell: pwsh
         run: ./tests/DevelopmentSetup.Checks/Configuration.Checks.ps1
 
+      - name: Check direct Development startup configuration
+        run: dotnet run --configuration Release --project tests/DevelopmentConfiguration.Checks/DevelopmentConfiguration.Checks.csproj
+
       - name: Install native photo dependencies
         run: sudo apt-get update && sudo apt-get install -y libvips-tools
 
@@ -185,6 +188,9 @@ jobs:
         shell: pwsh
         run: ./tests/DevelopmentSetup.Checks/Configuration.Checks.ps1
 
+      - name: Check direct Development startup configuration
+        run: dotnet run --configuration Release --project tests/DevelopmentConfiguration.Checks/DevelopmentConfiguration.Checks.csproj
+
       - name: Check native photo save and reopen
         shell: pwsh
         env:
@@ -192,6 +198,20 @@ jobs:
         run: |
           $env:PATH = (Join-Path $PWD 'app/runtime/libvips/win-x64/bin') + [IO.Path]::PathSeparator + $env:PATH
           dotnet run --configuration Release --project tests/DevelopmentNative.Checks/DevelopmentNative.Checks.csproj
+
+      - name: Check legacy source capture
+        run: dotnet run --configuration Release --project tests/BackupRestore.Checks/BackupRestore.Checks.csproj
+
+      - name: Check Windows backup payload compatibility
+        shell: pwsh
+        run: |
+          ./tests/BackupRestore.Checks/Policy.Checks.ps1
+          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tests/BackupRestore.Checks/Policy.Checks.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Check Windows backup and restore round trip
+        shell: pwsh
+        run: ./tests/BackupRestore.Checks/Database.Checks.ps1 -MariaDbRuntimeRoot ./app/runtime/mariadb/win-x64
 
       - name: Create Windows package
         shell: pwsh

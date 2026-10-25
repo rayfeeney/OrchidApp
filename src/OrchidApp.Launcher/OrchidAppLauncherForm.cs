@@ -265,7 +265,10 @@ public partial class OrchidAppLauncherForm : Form
             {
                 AppendLog("Existing legacy OrchidApp layout detected. Mandatory pre-upgrade backup is required.");
 
-                var preUpgradeBackupSucceeded = await RunPreUpgradeBackupAsync();
+                var legacyCandidate = layout.LegacyCandidates.Single(candidate => candidate.HasOrchidsDatabase);
+                var sourceSnapshot = await Task.Run(() => LegacySourceSnapshot.Capture(legacyCandidate.RootPath,
+                    Path.Combine(_programDataPaths.Root, "migration-staging")));
+                var preUpgradeBackupSucceeded = await RunPreUpgradeBackupAsync(sourceSnapshot);
 
                 if (!preUpgradeBackupSucceeded)
                 {
@@ -285,8 +288,6 @@ public partial class OrchidAppLauncherForm : Form
 
                 _preUpgradeBackupCompletedThisStartup = true;
                 AppendLog("Pre-upgrade backup succeeded. Startup may continue.");
-
-                var legacyCandidate = layout.LegacyCandidates.Single(candidate => candidate.HasOrchidsDatabase);
 
                 var migrationStateService = new MigrationStateService(_programDataPaths);
 
@@ -313,14 +314,14 @@ public partial class OrchidAppLauncherForm : Form
                     AppendLog("Starting legacy data migration to ProgramData...");
 
                     var migrationService = new LegacyDataMigrationService(_programDataPaths);
-                    migrationService.MigrateFromLegacyRoot(legacyCandidate.RootPath);
+                    migrationService.MigrateFromLegacyRoot(sourceSnapshot);
 
                     var legacyLauncherSettingsFile = Path.Combine(
-                        legacyCandidate.RootPath,
+                        sourceSnapshot,
                         "launcher-settings.json");
 
                     var legacyUploadsFolder = Path.Combine(
-                        legacyCandidate.RootPath,
+                        sourceSnapshot,
                         "wwwroot",
                         "uploads");
 
@@ -921,7 +922,7 @@ FLUSH PRIVILEGES;
     }
 
 
-    private async Task<bool> RunPreUpgradeBackupAsync()
+    private async Task<bool> RunPreUpgradeBackupAsync(string sourceSnapshot)
     {
         _lastPreUpgradeBackupPath = null;
         bool nextOutputLineIsBackupPath = false;
@@ -946,19 +947,11 @@ FLUSH PRIVILEGES;
 
         var preUpgradeBackupsRoot = programDataPaths.PreUpgradeBackups;
 
-        var arguments =
-            "-NoProfile -ExecutionPolicy Bypass " +
-            $"-File \"{backupScript}\" " +
-            "-BackupType PreUpgrade " +
-            $"-BackupsRoot \"{preUpgradeBackupsRoot}\" " +
-            "-PruneOldBackups 0";
-
         var process = new Process
         {
             StartInfo = new ProcessStartInfo
             {
                 FileName = "powershell.exe",
-                Arguments = arguments,
                 WorkingDirectory = baseDir,
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
@@ -966,6 +959,10 @@ FLUSH PRIVILEGES;
                 CreateNoWindow = true
             }
         };
+        foreach (var argument in new[] { "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", backupScript,
+            "-BackupType", "PreUpgrade", "-LegacySourceRoot", sourceSnapshot,
+            "-BackupsRoot", preUpgradeBackupsRoot, "-SkipOldBackupPruning" })
+            process.StartInfo.ArgumentList.Add(argument);
 
         process.OutputDataReceived += (s, e) =>
         {
@@ -1014,6 +1011,11 @@ FLUSH PRIVILEGES;
                 return false;
             }
 
+            if (string.IsNullOrWhiteSpace(_lastPreUpgradeBackupPath) || !File.Exists(_lastPreUpgradeBackupPath))
+            {
+                AppendLog("PRE-UPGRADE BACKUP ERROR: No completed backup ZIP was returned.");
+                return false;
+            }
             AppendLog("Mandatory pre-upgrade backup completed successfully.");
             return true;
         }

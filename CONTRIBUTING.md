@@ -17,7 +17,7 @@ For a compatible change after creation, add a new database/migrations/YYYYMMDDHH
 pwsh ./database/scripts/Apply-Migrations.ps1
 ```
 
-Supply all five explicit MARIADB_HOST, MARIADB_PORT, MARIADB_DATABASE, MARIADB_USER and MARIADB_PASSWORD values. All PowerShell entry points use one canonical runner; the compatibility alias delegates to it, and dev-runner applies then exports for review. Desktop uses the matching C# policy plus its existing backup gate. See [migration runners](docs/migration-runners.md) for PlanOnly, raw-byte checksums, chronology, missing-file/baseline exceptions, incomplete markers and recovery. DDL failures can leave partial state; do not remove a pending marker to force a retry.
+Supply explicit MARIADB_* credentials/endpoint; MARIADB_DATABASE is accepted by this runner. The exporter always targets orchids. DDL failures can leave partial state; investigate rather than blindly rerunning. This runner sorts filenames, skips recorded names and records new checksums, but does not enforce every chronology, format or skipped-file checksum rule. Desktop and the separate developer runner differ; see [migration paths](docs/architecture.md#implemented-migration-paths). [C02/C04](docs/code-change-backlog.md) track baseline and enforcement fixes.
 
 Schema and checksums are generated through database/scripts/Export-MariaDBSchema.ps1. Do not manually edit database/schema/ or database/checksums/schema.json. The pre-commit hook runs the exporter on every commit and stages generated changes; an export failure aborts. Review both the staged diff and finished commit so unrelated database changes cannot slip in. Use required hooks, not --no-verify. CI cannot prove local hook use.
 
@@ -49,15 +49,7 @@ dotnet run --configuration Release --project tests/Navigation.Checks/Navigation.
 dotnet run --configuration Release --project tests/NameSearch.Checks/NameSearch.Checks.csproj
 dotnet run --configuration Release --project tests/EnvironmentSummary.Checks/EnvironmentSummary.Checks.csproj
 dotnet run --configuration Release --project tests/GreenhouseCharts.Checks/GreenhouseCharts.Checks.csproj
-dotnet run --configuration Release --project tests/SchemaBaseline.Checks/SchemaBaseline.Checks.csproj
-dotnet run --configuration Release --project tests/MigrationHistory.Checks/MigrationHistory.Checks.csproj
 ```
-
-Schema creation/baseline integration checks also use pwsh ./tests/SchemaBaseline.Checks/Database.Checks.ps1 with explicit credentials for an isolated MariaDB server; they create/drop only a generated test database. See the [creation contract](docs/database-creation.md).
-
-C16 provides pwsh ./tests/DevelopmentSetup.Checks/Configuration.Checks.ps1 and the native photo probe used by scripts/DevSetup/run.ps1; see [developer setup](docs/development-setup.md).
-
-C04 also provides database-free PowerShell policy checks and isolated database/Desktop integration checks under tests/MigrationHistory.Checks; see the [runner guide](docs/migration-runners.md).
 
 Default checks use isolated/substitute data and SQL translation where designed. Optional greenhouse DB/benchmark modes require a disposable instance, never the owner's production database; see the [local guide](docs/local-installation/greenhouse-monitoring.md). Passing these does not prove live save/reopen, native image processing, device behaviour, installer safety or restore completeness.
 
@@ -65,9 +57,7 @@ For docs-only work, check paths, links, commands, setting names, platform scope 
 
 ## Current CI limits
 
-C05 replaces CI's duplicated schema assembly loops with the production schema-only creator in a stage without migration SQL. A separate 44-check disposable suite verifies seeds, baseline identity, usable views/plant records, a once-only later migration and negative creation cases. The canonical database is exported and checked for drift separately. See [creation/CI checks](docs/database-creation.md) and [C05 evidence](docs/maintenance/c05-ci-database-acceptance.md). The updated workflow still needs a GitHub Actions run. Real older-release fixtures remain a separate future task.
-
-The [workflow](.github/workflows/ci.yml) builds/publishes linux-arm64, reconstructs/exports a MariaDB 10.11 schema to check drift, and creates a Windows package. C04 adds the shared C#/PowerShell migration-policy scenarios, actual package inventory validation and disposable runner/failed-DDL checks. The owner confirmed these corrected C04 Linux checks passed. C16 adds development configuration and native photo/thumbnail save/reopen checks on Windows and Linux; those new steps still need CI confirmation. It does not run every executable check project, exercise all historical DDL against representative real databases, build the Inno installer or prove actual device install/recovery. [C20](docs/code-change-backlog.md#c20) retains broader feature-test coverage work. Cross-publishing is not Pi hardware validation.
+The [workflow](.github/workflows/ci.yml) builds/publishes linux-arm64, reconstructs/exports a disposable MariaDB 10.11 schema to check drift, and creates a Windows package. It does not establish seeded schema-only first run independent of migrations, run all five executable check projects, replay and validate upgrade history, build the Inno Setup installer or exercise actual device install/recovery. [C05/C20](docs/code-change-backlog.md) track improved coverage. Cross-publishing is not Pi hardware validation.
 
 ## Pull requests
 

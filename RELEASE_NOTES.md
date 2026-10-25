@@ -1,33 +1,5 @@
 # Release notes
 
-## C05 - schema creation and future-upgrade CI acceptance
-
-CI now creates its canonical database through the production schema/seed manifest with no migration directory, then runs separate disposable creation/upgrade checks before export/drift comparison. Expanded checks verify required seeds, baseline identity, preserved records and a later migration applied once; missing seed/manifest, broken view order and partial imports must fail. Added the C# baseline policy check to CI and reused structured child errors in the database suite. Current-schema-to-future-migration coverage is locally verified; updated Linux CI and real older-installation fixtures remain separate acceptance. See [C05 evidence](docs/maintenance/c05-ci-database-acceptance.md).
-
-## C16 - reproducible source development setup
-
-Developer setup now uses one explicit MARIADB target to generate the app connection string, validates MariaDB/.NET tools and activates hooks. Committed development credentials and personal storage defaults are removed. The source-run wrapper restores the complete pinned Windows libvips runtime and verifies actual photo/thumbnail save and reopen before startup. Export requires explicit endpoints and ignores hidden native option files. The obsolete local MySQL Docker route now calls the supported disposable database suites. Added Windows/Linux native and configuration CI checks. See [setup instructions](docs/development-setup.md) and [local evidence/pending acceptance](docs/maintenance/c16-developer-setup.md).
-
-## C04 CI follow-up - test error reporting
-
-Database checks now compare the original child exception message returned as JSON, avoiding failures caused by wrapped/coloured PowerShell error displays. Added automatic protocol regression checks. Production migration and failed-DDL handling are unchanged.
-
-## C04 - migration runner consistency
-
-PowerShell entry points now share one runner and require explicit targets. Desktop uses matching preflight rules for duplicate timestamps, chronology, checksums and missing files, with documented baseline exceptions. Failed or uncertain SQL leaves a durable pending marker and blocks automatic retries. Developer workflow applies before exporting for review. See [runner instructions](docs/migration-runners.md) and [local evidence/CI limits](docs/maintenance/c04-migration-runners.md).
-
-## CI test follow-up - Unix fixture arguments
-
-Corrected the tool-resolution test to retain a one-item native argument array on Unix. Previously its scalar string was splatted into separate characters. Added an argument-count/type check and invocation diagnostics. Production tool resolution and database behaviour are unchanged.
-
-## C01+C02 follow-up - Linux CI tool lookup
-
-Corrected MariaDB tool lookup to return one executable when PATH exposes multiple matches such as /usr/bin and /bin. Added a duplicate-PATH regression check to the Linux schema CI job before export. Database schema and migration history are unchanged.
-
-## C01+C02 - schema creation and baselines (local implementation)
-
-Fresh setup uses a generated, checksummed schema manifest and required seeds without historical migration files. The retained rebuild.ps1 script no longer drops databases: it requires explicit confirmation and an absent/empty target. Desktop and PowerShell runners recognise the recorded schema cut-off and preserve legacy history. Export regenerates baseline metadata from recorded DB state. See [creation instructions](docs/database-creation.md) and [validation/pending Linux and native-photo acceptance](docs/maintenance/c01-c02-schema-baseline.md).
-
 ## C03 - monitoring isolation (local implementation)
 
 Monitoring requires explicit Monitoring:Enabled=true and Linux ARM/ARM64. Distributed and absent settings default off. Preserve the owner private service override. See [evidence and pending device acceptance](docs/maintenance/c03-monitoring-isolation.md).

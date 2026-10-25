@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../src/OrchidApp.Launcher/Infrastructure/LegacySourceSnapshot.cs" Link="LegacySourceSnapshot.cs" />
+    <Compile Include="../../src/OrchidApp.Launcher/Infrastructure/LegacyDataMigrationService.cs" Link="LegacyDataMigrationService.cs" />
+    <Compile Include="../../src/OrchidApp.Launcher/Infrastructure/WindowsProgramDataPaths.cs" Link="WindowsProgramDataPaths.cs" />
+  </ItemGroup>
+</Project>

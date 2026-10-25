@@ -2,7 +2,7 @@
 
 This guide covers a general OrchidApp server using MariaDB and systemd. It does not install the owner's bespoke monitoring feeds/importer or EnergyMonitoring. Monitoring defaults off; leave Monitoring:Enabled absent or false. See the [activation boundary](../../environment-summary-platform.md).
 
-Fresh creation uses canonical schema, required seeds and the generated baseline manifest, with no historical migration replay. The non-overwriting creation script is implemented; Linux/MariaDB and native-photo acceptance remain pending. Validate on a disposable target before deployment; see the [creation contract](../../database-creation.md) and [local evidence](../../maintenance/c01-c02-schema-baseline.md).
+Fresh database creation is from canonical schema and required seeds alone, never historical migration replay. Current fresh-creation automation has [C01/C02](../../code-change-backlog.md) blockers. This guide states the prerequisite rather than offering a broken copy-and-run rebuild command. Do not run migrations or a destructive rebuild against restored/live data to work around it.
 
 ## Prerequisites and target
 
@@ -14,7 +14,7 @@ Choose an application service account, app root (examples /opt/orchidapp), exter
 
 1. Install and verify the tools above on the chosen image; enable MariaDB and verify the intended endpoint.
 2. Obtain the trusted repository at the selected app root, owned appropriately for publishing. Use the agreed remote/release revision; do not publish an unknown checkout.
-3. Select an absent/empty target and supply the seven explicit MARIADB_* values in the [schema-only creation contract](../../database-creation.md). Run pwsh ./database/scripts/rebuild.ps1 -ConfirmDatabase $env:MARIADB_DATABASE from the checkout root. The script resolves mariadb on PATH, refuses nonempty targets and records completion only after all seeds. Run the supplied isolated checks on your Linux image before treating platform acceptance as complete.
+3. Provision the target database/account using the reviewed [schema-only creation contract](../../database-creation.md), including dependent views and reference seeds. It must work with the migrations directory absent. **Stop until that implementation is provided and validated.** The current Windows-specific rebuild script is not a Linux recipe. Record the schema baseline needed to accept only later migrations.
 4. Configure the app's runtime account/connection and isolated durable uploads before starting. Runtime privileges and migration/admin privileges differ; do not run the web process as MariaDB root.
 5. Build/publish and register the service below. Verify live application workflows and a real test-photo upload/reopen, then configure backups and validate an isolated recovery.
 
@@ -87,7 +87,7 @@ With verified exported variables and compatible baseline, run:
 pwsh ./database/scripts/Apply-Migrations.ps1
 ```
 
-Require exit code 0 and review output before publishing. The [runner contract](../../migration-runners.md) now enforces checksum, timestamp, chronology and missing-file rules. Failed/uncertain SQL leaves migration:pending and blocks retries. Preserve the error and use a verified recovery path; do not delete that marker to force another attempt. DDL may remain partially applied.
+Require exit code 0 and review output before publishing. Historical checksum/order enforcement is incomplete; [C04](../../code-change-backlog.md#c04) records the required safeguards. DDL failures can leave partial state; do not blindly rerun or promise automatic rollback.
 
 Publish as above, require success, start the app and repeat live checks. Resume only services/timers previously active; do not install an importer on other deployments. Keep the recovery set until the upgraded system has passed validation. Installer/ZIP copying is not a substitute for the maintained platform deployment process.
 

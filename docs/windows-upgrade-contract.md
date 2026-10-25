@@ -134,8 +134,8 @@ wwwroot\uploads
 launcher-settings.json
 ```
 
-The intended sequence is discovery, successful safety backup, migration-state
-`Started`, copy to ProgramData, migration-state `Completed`, then local database
+The sequence is discovery, quiescent source capture, successful safety backup,
+migration-state `Started`, copy from that capture to ProgramData, migration-state `Completed`, then local database
 and web startup. Backup failure aborts before the copy. Copy failure is reported
 and the launcher attempts to write `Failed` state before stopping.
 
@@ -148,26 +148,21 @@ Copying is not transactional. Failure can leave a partial ProgramData destinatio
 there is no automatic cleanup, rollback or resume/reconciliation policy. Source
 preservation provides a recovery option, not proof that the partial destination
 cannot affect later discovery. Raw MariaDB files must be copied from a quiescent
-source; the migration service itself does not stop or lock an independently
-running legacy database or block concurrent writers.
+source. The launcher now captures the source while denying file writes/deletion,
+rejects an active database/writer or changing inventory, and uses the same staged
+data for backup and copying. The migration service alone does not stop a live
+database; callers must use the captured source. C10 still owns reconciliation.
 
-### Safety-backup source gap
+### Source-bound safety backup
 
-The launcher calls the installed `tools/backup-orchidapp.ps1` with
-`-BackupType PreUpgrade` and a destination, but does not pass the discovered legacy
-root. The script derives `AppRoot` from its own location and, in PreUpgrade mode,
-reads `AppRoot\data\mariadb`, `AppRoot\wwwroot\uploads` and root settings.
-Thus the current invocation does not reliably back up the separately discovered
-legacy source before copying it. It may fail on missing paths or target another
-local source. A successful command alone does not prove the selected legacy
-database and uploads were protected.
-
-The script also reuses an existing listener on port 3308 without confirming its
-data directory. An existing listener must not be treated as proof that the dump
-comes from the intended source.
-
-Both issues need source-aware implementation and integration tests before the
-legacy safety backup can be claimed as an end-to-end guarantee.
+The installed backup tool receives the captured root explicitly as
+`-LegacySourceRoot`, separately from its installed runtime location. The original
+legacy path is recorded in capture/backup metadata. Both backup and restore check
+the listener's actual MariaDB data directory before dump/import. An unrelated
+listener fails the operation and is not shut down. Raw copying proceeds only
+after the captured database stops cleanly and a verified completed ZIP exists.
+See the [backup source/archive contract](windows-backup-format.md) and
+[C06/C07 local evidence](maintenance/c06-c07-backup-source-and-format.md).
 
 ## Migration state and completion
 
@@ -192,7 +187,7 @@ successfully started product version.
 
 For a fresh ProgramData deployment, the launcher initialises MariaDB as needed
 and starts the web process. Desktop bootstrap creates the current canonical
-schema and records a baseline plus packaged migration checksums.
+schema and records its schema-contained baseline without scanning historical migrations.
 
 For an existing database, Desktop bootstrap compares recorded migration checksums,
 collects pending files and invokes the normal backup tool before applying them.
@@ -226,9 +221,9 @@ copy. A single-transaction dump protects transactional database reads but does
 not establish a common snapshot with uploads. Concurrent changes need explicit
 consistency testing and operational control.
 
-Retention controls are inconsistent: the launcher passes `-PruneOldBackups 0`
-for legacy backup, while the script declares `SkipOldBackupPruning` and tests an
-undeclared `PruneOldBackups` variable. Do not claim that the nominal
+The legacy launcher now passes the declared `SkipOldBackupPruning` switch.
+General retention remains C09: the script still tests an undeclared
+`PruneOldBackups` variable. Do not claim that the nominal
 `BackupsToKeep` setting is reliably enforced until corrected and tested.
 
 After a successful normal local backup, the launcher can copy the latest ZIP to
@@ -236,21 +231,21 @@ the configured cloud-synchronised folder as `OrchidAppDataBackup.zip`, replacing
 that copy. A copy failure is logged without invalidating the local ZIP. This
 copies to a local folder; it does not verify remote cloud upload or availability.
 
-## Restore behaviour and format mismatch
+## Restore format and validation
 
 The launcher asks for explicit confirmation that restore replaces current data,
 then stops its web process and invokes `tools/restore-orchidapp.ps1`. The script
-requires `manifest.json` and `orchids.sql`, imports the SQL into local MariaDB and
-replaces uploads if an uploads directory is present. If uploads are absent, it
-keeps existing uploads rather than proving the database/filesystem pair matches.
+validates manifest/version, payload inventory, settings and uploads before SQL
+import. Version 2 requires a checksummed payload and an uploads directory even
+when empty. A known older archive may declare omitted uploads empty; imported
+photo references must agree before existing upload files are replaced.
 
-The current restore script looks for `launcher-settings.json` at the archive
-root, but the backup script places it inside `launcher-settings/`. Settings from
-current backups are therefore not restored by that lookup. This needs a format
-compatibility fix and round-trip testing.
+Restore reads `launcher-settings/launcher-settings.json` and supports the older
+root-level file. Conflicting files or missing declared components fail. Successful
+restore replaces the upload set and restores included settings; absent settings
+reset the target to defaults. See [archive compatibility](windows-backup-format.md).
 
-Restore checks file presence, not the full manifest/schema contract. It does not
-automatically take a safety backup of the current data before replacement and
+Restore does not automatically take a safety backup of current data before replacement and
 does not provide atomic rollback across SQL, uploads and settings. Keep a separate
 recovery copy before a deliberate restore. A success message is not a substitute
 for checking restored plants, photos, settings and subsequent startup.
@@ -299,8 +294,8 @@ for the known gaps above.
 
 ## Required follow-up and current operator boundary
 
-The documentation cleanup does not implement [C06–C10 and C18](code-change-backlog.md), which track source-aware backup, restore/settings compatibility, retention, partial migration/state and actual installed-upgrade tests. Preserve a verified off-computer recovery copy before upgrading. Legacy migration requires maintainer support until its source-aware safety path is validated; do not treat a successful backup process alone as proof of source identity.
+Source-bound capture/backup and archive settings compatibility (C06/C07) are implemented and locally tested. New CI and installed-machine acceptance remain pending. [C08–C10 and C18](code-change-backlog.md) retain failure recovery, retention, state reconciliation and installed-upgrade work. Preserve a verified off-computer recovery copy before upgrading and obtain support for busy/ambiguous legacy sources or partial targets.
 
-Before restoring on a replacement PC, preserve the trusted ZIP separately and do not run a new empty-data backup into the only fixed-name cloud copy. A cloud destination is not required to select a restore ZIP. Configure future cloud backups only after verifying plants, photos, settings and subsequent startup. Current restore can omit included settings due to the path mismatch above; reconfigure and verify them.
+Before restoring on a replacement PC, preserve the trusted ZIP separately and do not run a new empty-data backup into the only fixed-name cloud copy. A cloud destination is not required to select a restore ZIP. Configure future cloud backups only after verifying plants, photos, settings and subsequent startup. Included settings now restore through the supported archive layouts; verify them before enabling future backups.
 
-Fresh Desktop creation must meet the owner's [schema-only contract](database-creation.md). The current history initialisation dependency on packaged migration files is pending C02, not an endorsed creation requirement. Bespoke monitoring is not a Windows/general-install dependency.
+Fresh Desktop creation uses the [schema-only contract](database-creation.md) implemented in C01/C02. Bespoke monitoring is not a Windows/general-install dependency.
