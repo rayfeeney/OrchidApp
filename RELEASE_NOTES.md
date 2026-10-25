@@ -1,5 +1,13 @@
 # Release notes
 
+## C08 Windows restore recovery
+
+Restore retains the selected ZIP and requires a verified safety backup before replacing data. Interrupted SQL/photo/settings replacement blocks normal startup and backups until an explicit recovery restores the retained input or original safety copy. Launcher cloud copies preserve recorded recovery inputs after restart. See the [recovery contract](docs/windows-backup-format.md#failure-and-acceptance-boundaries) for sequential replacement limits and support steps.
+
+## C06+C07 - selected legacy source and backup settings compatibility
+
+The launcher captures the detected legacy data without active writers, backs up that explicit captured root and migrates from the same staged data. Backup/restore verify MariaDB data-directory identity and reject unrelated listeners. New archives have versioned payload inventories; restore supports nested and older root settings paths, checks required components and validates photo references. Windows 04/05 passages now describe restored settings. Local source/format/database round trips passed; CI, installed-machine acceptance, partial-failure recovery, retention and migration-state reconciliation retain their stated limits. See [Windows backup contract](docs/windows-backup-format.md).
+
 ## C16 follow-up - ordinary Development startup
 
 Development now reads the repository .env automatically and derives its app connection string from existing MariaDB values, so normal daily startup is dotnet run. An omitted upload setting uses a created per-user development directory. Explicit settings retain precedence. Production/Desktop ignore the development file. The optional configuration wrapper uses the same upload default. See [developer setup](docs/development-setup.md).

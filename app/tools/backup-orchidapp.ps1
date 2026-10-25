@@ -15,6 +15,9 @@ $MariaDbClient = Join-Path $MariaDbRoot 'bin/mariadb.exe'
 $MariaDbDump = Join-Path $MariaDbRoot 'bin/mariadb-dump.exe'
 $MariaDbAdmin = Join-Path $MariaDbRoot 'bin/mariadb-admin.exe'
 $ProgramDataRoot = Join-Path $env:ProgramData 'OrchidApp'
+if ($BackupType -eq 'Normal' -and (Test-Path -LiteralPath (Join-Path $ProgramDataRoot 'restore-pending.json'))) {
+    throw 'An interrupted restore requires recovery. Normal backups are blocked to avoid preserving partial data as a successful backup.'
+}
 if ($BackupType -eq 'PreUpgrade') {
     if ([string]::IsNullOrWhiteSpace($LegacySourceRoot)) { throw 'PreUpgrade requires an explicit LegacySourceRoot captured from the detected installation.' }
     $SourceRoot = (Resolve-Path -LiteralPath $LegacySourceRoot).Path
@@ -49,7 +52,8 @@ Assert-NoPathAlias $BackupsRoot
 $name='OrchidAppBackup_'
 if ($BackupType -eq 'PreUpgrade') { $name='OrchidAppPreUpgradeBackup_' }
 $name += (Get-Date -Format 'yyyyMMdd_HHmmss_fff')+'_'+[guid]::NewGuid().ToString('N').Substring(0,8)
-$BackupWorkingRoot=Join-Path $BackupsRoot $name
+# Keep native MariaDB result-file paths below legacy Windows path limits.
+$BackupWorkingRoot=Join-Path $BackupsRoot ('w-'+[guid]::NewGuid().ToString('N').Substring(0,16))
 New-Item -ItemType Directory -Path $BackupWorkingRoot | Out-Null
 $BackupZip=Join-Path $BackupsRoot ($name+'.zip')
 $PayloadRoot=Join-Path $BackupWorkingRoot 'payload'

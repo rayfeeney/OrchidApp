@@ -11,7 +11,7 @@ Use one current owner for each subject. Other documents link to that owner rathe
 | Contribution and validation | [CONTRIBUTING](../CONTRIBUTING.md) | Feature check commands in feature guides |
 | Architecture and temporal behaviour | [Architecture](architecture.md), [temporal design](temporal-design.md) | Current source limits are explicit |
 | Windows layout and migration contract | [Windows upgrade contract](windows-upgrade-contract.md) | Windows Word guides listed in the index |
-| Windows backup source and archive compatibility | [Windows backup format](windows-backup-format.md) | [C06/C07 evidence](maintenance/c06-c07-backup-source-and-format.md), Windows 04/05 user guides |
+| Windows backup source, archive compatibility and interrupted restore recovery | [Windows backup format](windows-backup-format.md) | [C06/C07 evidence](maintenance/c06-c07-backup-source-and-format.md), [C08 evidence](maintenance/c08-restore-recovery.md), Windows 04/05 user guides |
 | Linux installation and upgrades | [Linux installation](user-guides/linux/installation-upgrade.md) | [Full pre-upgrade backup](user-guides/linux/Full-App-Backup-Pre-Upgrade.md) |
 | Linux routine backup and restore | [Runbook](user-guides/linux/OrchidApp-MariaDB-Backup-and-Restore-Runbook.md) | Distinguish data restore from whole-machine recovery |
 | Shared plant workflows | Windows 03 and Linux 02 Word guides | Maintain shared wording together; platform launch/support details differ |

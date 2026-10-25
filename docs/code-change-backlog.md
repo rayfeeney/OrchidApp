@@ -28,7 +28,7 @@ Record actual evidence at each step.
 | [C05](#c05) | P1 | Confirmed CI coverage gap | Validate schema-only seeded creation and future upgrades in CI |
 | [C06](#c06) | P1 | Confirmed source-selection gap | Bind legacy safety backup to the detected source |
 | [C07](#c07) | P1 | Confirmed backup/restore format mismatch | Restore settings from the format written by backup |
-| [C08](#c08) | P1 | Confirmed recovery handling gap | Make restore failure recoverable and preserve the source ZIP |
+| [C08](#c08) | P1 | Implemented; CI/installed acceptance pending | Make restore failure recoverable and preserve the source ZIP |
 | [C09](#c09) | P2 | Confirmed parameter mismatch | Correct backup retention controls |
 | [C10](#c10) | P1 | Confirmed defect / incomplete state policy | Reconcile interrupted and completed legacy migration state |
 | [C11](#c11) | P1 | Confirmed SQL defect | Correct manual lifecycle closure and its failure handling |
@@ -44,7 +44,7 @@ Record actual evidence at each step.
 
 ## C01
 
-**Make fresh schema creation portable and dependency ordered** — P1; Confirmed defect / agreed requirement; status: Open.
+**Make fresh schema creation portable and dependency ordered** — P1; Confirmed defect / agreed requirement; status: Implemented locally; Linux/native-photo acceptance pending.
 
 Affected files/areas: database/scripts/rebuild.ps1; database/schema/; schema export tooling.
 
@@ -54,9 +54,11 @@ Dependencies: None.
 
 Acceptance: Create on Windows and Linux with database/migrations absent; required reference values and basic app workflows work; repeat safely only on an explicitly disposable target.
 
+Implementation and local validation: [C01/C02 evidence](maintenance/c01-c02-schema-baseline.md). The creation script no longer drops databases. Schema-contained manifest and completion marker replace historical bookkeeping scans; existing history is preserved.
+
 ## C02
 
-**Supply schema-contained baseline identity for future upgrades** — P1; Agreed requirement / current dependency gap; status: Open.
+**Supply schema-contained baseline identity for future upgrades** — P1; Agreed requirement / current dependency gap; status: Implemented locally; Linux/native-photo acceptance pending.
 
 Affected files/areas: src/OrchidApp.Web/Program.cs; database/scripts/Export-MariaDBSchema.ps1; rebuild and migration scripts; schema metadata.
 
@@ -65,6 +67,8 @@ Required work: Choose and implement a baseline/cutover contract carried with the
 Dependencies: C01 design coordination.
 
 Acceptance: Fresh creation succeeds with no migration directory; reintroduce historic and one later migration: only the later change applies once. Existing Desktop baseline rows remain compatible through a reviewed upgrade path.
+
+Implementation and local validation: [C01/C02 evidence](maintenance/c01-c02-schema-baseline.md). The creation script no longer drops databases. Schema-contained manifest and completion marker replace historical bookkeeping scans; existing history is preserved.
 
 ## C03
 
@@ -82,7 +86,7 @@ Implementation: Monitoring:Enabled defaults false and requires Linux ARM/ARM64. 
 
 ## C04
 
-**Reconcile migration runners and enforce compatible history** — P1; Confirmed enforcement gap; status: Open.
+**Reconcile migration runners and enforce compatible history** — P1; Confirmed enforcement gap; status: Implemented; local checks and corrected Linux CI confirmed passed by the owner.
 
 Affected files/areas: database/scripts/Apply-Migrations.ps1; Apply-MariaDBMigrations.ps1; dev-runner.ps1; src/OrchidApp.Web/Program.cs.
 
@@ -91,6 +95,8 @@ Required work: Choose supported routes; enforce format, duplicate timestamps, ch
 Dependencies: C02.
 
 Acceptance: Isolated tests cover tampering, duplicate/backdated names, missing files, baseline compatibility, partial-failure reporting and future-only migration application. No claim of automatic DDL rollback.
+
+Implementation: canonical PowerShell runner plus compatibility alias, matching Desktop validation, complete preflight and a durable pending marker. See [runner contract](migration-runners.md) and [C04 evidence](maintenance/c04-migration-runners.md). No historical migration or applied baseline/checksum rows were rewritten.
 
 ## C05
 
@@ -102,11 +108,13 @@ Required work: Add isolated fresh creation without migration files, required see
 
 Dependencies: C01, C02, C04.
 
-Acceptance: CI proves both empty-environment schema-only creation and upgrade of a representative existing database; missing seed/view dependency/baseline regressions fail meaningfully.
+Acceptance (agreed scope): CI checks empty-environment schema-only creation, then a later migration against that current-schema database with representative test records. Required seeds, view dependencies, baseline identity, record preservation and once-only application are asserted. Older-installation fixtures and historical-version upgrade acceptance are a separate future task, as agreed with the owner.
+
+Implementation: CI uses the production creator from a stage containing scripts/schema and no migration directory, followed by separate disposable creation/upgrade checks and canonical export/drift comparison. The expanded suite passed all 44 checks locally; 18 C# baseline policy checks and the extracted CI creation/export/drift sequence also passed. See [C05 evidence](maintenance/c05-ci-database-acceptance.md). GitHub Actions/Linux acceptance remains pending; next in the agreed order is C06+C07, legacy backup source/settings compatibility.
 
 ## C06
 
-**Bind legacy safety backup to the detected source** — P1; Confirmed source-selection gap; status: Open.
+**Bind legacy safety backup to the detected source** — P1; Confirmed source-selection gap; status: Implemented and locally verified; new CI/installed-machine acceptance pending.
 
 Affected files/areas: src/OrchidApp.Launcher/OrchidAppLauncherForm.cs; app/tools/backup-orchidapp.ps1.
 
@@ -116,9 +124,11 @@ Dependencies: None.
 
 Acceptance: Different install and legacy roots, unrelated 3308 listener, absent paths and concurrent source writers cannot produce a false-success safety gate; the exact intended DB and all uploads/settings are recoverable.
 
+Implementation: launcher captures a quiescent source with writes/deletion denied, passes that captured root to backup and migrates from the same captured data. SQL data-directory identity is checked even for an existing listener, and clean shutdown/verified ZIP are required. See [C06/C07 evidence](maintenance/c06-c07-backup-source-and-format.md). Original legacy data and staging remain available; C10 still owns state reconciliation.
+
 ## C07
 
-**Restore settings from the format written by backup** — P1; Confirmed backup/restore format mismatch; status: Open.
+**Restore settings from the format written by backup** — P1; Confirmed backup/restore format mismatch; status: Implemented and locally verified; new CI/installed-machine acceptance pending.
 
 Affected files/areas: app/tools/backup-orchidapp.ps1; app/tools/restore-orchidapp.ps1.
 
@@ -128,9 +138,11 @@ Dependencies: None.
 
 Acceptance: Round-trip representative old/current archives into isolated fixtures; verify plants, photos across categories and settings. Missing/corrupt/incompatible components fail or report an explicitly supported partial recovery.
 
+Implementation: version 2 payload inventories and original nested settings round-trip; known unversioned/root-settings compatibility is supported. Missing/corrupt/incompatible payloads fail, and restored photo references must match extracted files. See [archive contract](windows-backup-format.md) and [local evidence](maintenance/c06-c07-backup-source-and-format.md). Archive-layout compatibility is not historical-release database acceptance. C08 adds explicit recovery after partial failure.
+
 ## C08
 
-**Make restore failure recoverable and preserve the source ZIP** — P1; Confirmed recovery handling gap; status: Open.
+**Make restore failure recoverable and preserve the source ZIP** — P1; status: Implemented with local recovery checks; CI/installed-machine acceptance pending.
 
 Affected files/areas: src/OrchidApp.Launcher/OrchidAppLauncherForm.cs; app/tools/restore-orchidapp.ps1.
 
@@ -139,6 +151,8 @@ Required work: Preserve trusted recovery input and offer an appropriate safety c
 Dependencies: C07.
 
 Acceptance: Failures after SQL/import/upload/settings phases leave a documented recovery route; launcher actions remain understandable; restart/restore does not lose the preserved input. No claim of atomic cross-filesystem/SQL rollback without implementation.
+
+Implementation: retained input, verified safety backup, persistent phase journal/startup gate, explicit retained-input/safety recovery and cloud destination protection. See [recovery procedure](windows-backup-format.md#failure-and-acceptance-boundaries) and [C08 evidence](maintenance/c08-restore-recovery.md). SQL/filesystem replacement remains sequential, with no automatic rollback.
 
 ## C09
 

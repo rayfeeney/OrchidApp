@@ -33,6 +33,30 @@ try
     Check("Migration uses captured settings",File.Exists(target.LauncherSettingsFile));
     Reject("Existing target not overwritten",()=>new LegacyDataMigrationService(target).MigrateFromLegacyRoot(capture));
     Reject("Absent source not captured",()=>LegacySourceSnapshot.Capture(Path.Combine(root,"absent"),Path.Combine(root,"staging")));
+    var recoveryRoot = Path.Combine(root, "recovery policy");
+    Directory.CreateDirectory(recoveryRoot);
+    var recovery = new RestoreRecovery(recoveryRoot);
+    var cloud = Path.Combine(root, "cloud", "OrchidAppDataBackup.zip");
+    Check("No recovery permits ordinary cloud destination", !recovery.IsPending && !recovery.ProtectsCloudDestination(cloud));
+    var history = Path.Combine(recoveryRoot, "restore-recovery", "attempt");
+    Directory.CreateDirectory(history);
+    var record = System.Text.Json.JsonSerializer.Serialize(new {phase="ReplacingSettings",originalInput=cloud,preservedInput=Path.Combine(history,"recovery-input.zip"),safetyBackup=Path.Combine(history,"safety.zip")});
+    File.WriteAllText(Path.Combine(history,"recovery.json"), record);
+    Check("Completed history protects original cloud input", recovery.ProtectsCloudDestination(cloud));
+    Check("History permits separate cloud folder", !recovery.ProtectsCloudDestination(Path.Combine(root,"other cloud","OrchidAppDataBackup.zip")));
+    File.WriteAllText(recovery.PendingPath, record);
+    Check("Pending marker survives new launcher policy instance", new RestoreRecovery(recoveryRoot).IsPending);
+    Check("Pending restore blocks every cloud destination", recovery.ProtectsCloudDestination(Path.Combine(root,"other.zip")));
+    Check("Recovery description includes phase and input", recovery.DescribePending().Contains("ReplacingSettings") && recovery.DescribePending().Contains("recovery-input.zip"));
+    File.Delete(recovery.PendingPath);
+    Check("Completing restore retains cloud protection", recovery.ProtectsCloudDestination(cloud));
+    var preflightRecord = System.Text.Json.JsonSerializer.Serialize(new {phase="CreatingSafetyBackup", originalInput=cloud, preservedInput=Path.Combine(history,"recovery-input.zip"), safetyBackup=(string?)null});
+    File.WriteAllText(Path.Combine(history,"recovery.json"), preflightRecord);
+    Check("Safety-copy failure still protects selected input", recovery.ProtectsCloudDestination(cloud));
+    Check("Preflight without a safety ZIP permits separate cloud destination", !recovery.ProtectsCloudDestination(Path.Combine(root,"other.zip")));
+    File.WriteAllText(Path.Combine(history,"recovery.json"), "broken");
+    try { recovery.ProtectsCloudDestination(cloud); throw new Exception("Corrupt history allowed cloud overwrite"); }
+    catch (System.Text.Json.JsonException) { count++; }
     Console.WriteLine($"{count} legacy source capture/migration checks passed.");
 }
 finally { Directory.Delete(root,true); }

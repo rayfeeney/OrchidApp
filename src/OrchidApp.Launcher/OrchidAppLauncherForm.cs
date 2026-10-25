@@ -54,6 +54,7 @@ public partial class OrchidAppLauncherForm : Form
     private static readonly TimeSpan AutomaticBackupAgeThreshold = TimeSpan.FromHours(168);
     private const string CloudBackupFileName = "OrchidAppDataBackup.zip";
     private bool _backupInProgress = false;
+    private bool _restoreInProgress;
 
     private Process? _webAppProcess;
     private Process? _mariaDbProcess;
@@ -240,6 +241,12 @@ public partial class OrchidAppLauncherForm : Form
             InitialiseLauncherLogFile();
 
             AppendLog($"Launcher log file: {_programDataPaths.LauncherLogFile}");
+
+            if (GetRestoreRecovery().IsPending)
+            {
+                ShowRestoreRecoveryState();
+                return; // No migrations, web startup or automatic/cloud backups on partial data.
+            }
 
             var layout = OrchidAppLayoutResolver.Resolve(AppContext.BaseDirectory);
             LogLayoutState(layout);
@@ -1144,9 +1151,13 @@ FLUSH PRIVILEGES;
 
     private async Task RunRestoreAsync()
     {
+        _restoreInProgress = true;
         openAppButton.Enabled = false;
         backupButton.Enabled = false;
         restoreButton.Enabled = false;
+        configureCloudBackupButton.Enabled = false;
+        closeAppButton.Enabled = false;
+        bool shutdownAttempted = false;
         SetWindowTitle("Restoring");
         SetLauncherStatus(LauncherStatus.Red);
 
@@ -1154,6 +1165,23 @@ FLUSH PRIVILEGES;
         {
             AppendLog("Restore requested.");
 
+            string? backupZip = null;
+            string? recoveryAction = null;
+            var recovery = GetRestoreRecovery();
+            if (recovery.IsPending)
+            {
+                var choice = MessageBox.Show(
+                    recovery.DescribePending() + "\n\nChoose Yes to restore the retained recovery input.\n" +
+                    "Choose No to restore the safety backup from before the original attempt.\n" +
+                    "Choose Cancel to leave all recovery files for support.\n\n" +
+                    "Either restore replaces the database, photos and settings. Close any other OrchidApp instances first.",
+                    "Recover interrupted restore", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Warning,
+                    MessageBoxDefaultButton.Button3);
+                if (choice == DialogResult.Cancel) return;
+                recoveryAction = choice == DialogResult.Yes ? "RestoreInput" : "RestoreSafety";
+            }
+            else
+            {
             using var dialog = new OpenFileDialog
             {
                 Title = "Select OrchidApp backup ZIP",
@@ -1168,10 +1196,11 @@ FLUSH PRIVILEGES;
                 return;
             }
 
-            var backupZip = dialog.FileName;
+            backupZip = dialog.FileName;
 
             var confirm = MessageBox.Show(
                 "Restoring a backup will replace the current OrchidApp database and uploaded files.\n\n" +
+                "A verified safety backup of the current collection and a retained copy of the selected ZIP will be made first. If that fails, replacement will stop.\n\n" +
                 "Only continue if you are recovering from a backup or intentionally reverting OrchidApp to a previous backup.\n\n" +
                 "Do you want to continue?",
                 "Confirm Restore from Backup",
@@ -1187,7 +1216,9 @@ FLUSH PRIVILEGES;
             }
 
             AppendLog($"Restore confirmed. Backup selected: {backupZip}");
+            }
 
+            shutdownAttempted = true;
             await StopWebAppForRestoreAsync();
 
             AppendLog("Starting restore...");
@@ -1208,15 +1239,11 @@ FLUSH PRIVILEGES;
                 );
             }
 
-            var process = new Process
+            using var process = new Process
             {
                 StartInfo = new ProcessStartInfo
                 {
                     FileName = "powershell.exe",
-                    Arguments =
-                        "-NoProfile -ExecutionPolicy Bypass " +
-                        $"-File \"{restoreScript}\" " +
-                        $"-BackupZip \"{backupZip}\"",
                     WorkingDirectory = baseDir,
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
@@ -1224,6 +1251,10 @@ FLUSH PRIVILEGES;
                     CreateNoWindow = true
                 }
             };
+            foreach (var argument in new[] { "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", restoreScript })
+                process.StartInfo.ArgumentList.Add(argument);
+            process.StartInfo.ArgumentList.Add(recoveryAction is null ? "-BackupZip" : "-RecoveryAction");
+            process.StartInfo.ArgumentList.Add(recoveryAction ?? backupZip!);
 
             process.OutputDataReceived += (s, e) =>
             {
@@ -1275,15 +1306,55 @@ FLUSH PRIVILEGES;
         }
         finally
         {
-            if (_webAppProcess != null && !_webAppProcess.HasExited)
+            _restoreInProgress = false;
+            if (!IsDisposed && !Disposing)
             {
-                SetLauncherStatus(LauncherStatus.Green);
-                SetWindowTitle("Running");
-                openAppButton.Enabled = true;
-                backupButton.Enabled = true;
-                restoreButton.Enabled = true;
+                closeAppButton.Enabled = true;
+                RestoreLauncherControls(shutdownAttempted);
             }
         }
+    }
+
+    private void RestoreLauncherControls(bool shutdownAttempted)
+    {
+        if (GetRestoreRecovery().IsPending)
+        {
+            ShowRestoreRecoveryState();
+        }
+        else if (_webAppProcess != null && !_webAppProcess.HasExited)
+        {
+            SetLauncherStatus(shutdownAttempted ? LauncherStatus.Red : LauncherStatus.Green);
+            SetWindowTitle(shutdownAttempted ? "Restore stopped" : "Running");
+            statusLabel.Text = shutdownAttempted ? "The web app could not be stopped. No restore was started. Close OrchidApp before trying again." : "OrchidApp is running.";
+            openAppButton.Enabled = true;
+            backupButton.Enabled = true;
+            restoreButton.Enabled = true;
+            configureCloudBackupButton.Enabled = true;
+        }
+        else
+        {
+            SetLauncherStatus(LauncherStatus.Red);
+            SetWindowTitle("Stopped");
+            statusLabel.Text = "The web app is stopped. Restore is available; close and reopen OrchidApp to resume normal startup.";
+            openAppButton.Enabled = false;
+            backupButton.Enabled = false;
+            restoreButton.Enabled = true;
+            configureCloudBackupButton.Enabled = false;
+        }
+    }
+
+    private RestoreRecovery GetRestoreRecovery() => new(_programDataPaths.Root);
+
+    private void ShowRestoreRecoveryState()
+    {
+        SetLauncherStatus(LauncherStatus.Red);
+        SetWindowTitle("Recovery required");
+        statusLabel.Text = "An interrupted restore needs recovery. Select Restore from backup, or close OrchidApp and contact support. Normal startup and backups are blocked.";
+        openAppButton.Enabled = false;
+        backupButton.Enabled = false;
+        restoreButton.Enabled = true;
+        configureCloudBackupButton.Enabled = false;
+        AppendLog("Restore recovery required. Do not remove restore-pending.json. Use the retained input or original safety copy.");
     }
 
     private FileInfo? GetLatestBackupFile()
@@ -1346,6 +1417,11 @@ FLUSH PRIVILEGES;
 
         try
         {
+            if (GetRestoreRecovery().ProtectsCloudDestination(cloudBackupPath))
+            {
+                AppendLog("Cloud backup copy skipped to preserve a selected restore input. Choose a different cloud backup folder after verifying recovery.");
+                return;
+            }
             File.Copy(
                 latestBackup.FullName,
                 cloudBackupPath,
@@ -1532,6 +1608,12 @@ FLUSH PRIVILEGES;
 
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
+        if (_restoreInProgress && !_closeConfirmed)
+        {
+            e.Cancel = true;
+            AppendLog("Restore is running. Keep this launcher open until it completes or reports a failure.");
+            return;
+        }
         if (!_closeConfirmed)
         {
             var confirm = MessageBox.Show(

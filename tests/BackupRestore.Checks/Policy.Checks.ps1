@@ -1,6 +1,7 @@
 param([string]$RepoRoot=(Join-Path $PSScriptRoot '../..'))
 $ErrorActionPreference='Stop'
 . (Join-Path $RepoRoot 'app/tools/Backup-Contract.ps1')
+. (Join-Path $RepoRoot 'app/tools/Restore-Recovery.ps1')
 $root=Join-Path ([IO.Path]::GetTempPath()) ('orchids-payload-'+[guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $root | Out-Null
 $checks=0
@@ -78,7 +79,24 @@ try {
     try { $entry=$z.CreateEntry('../escape.txt'); $stream=$entry.Open(); $stream.Dispose() } finally { $z.Dispose() }
     Reject 'ZIP traversal rejected before extraction' { Expand-CheckedBackup $zip (Join-Path $root 'extracted') }
     Check 'ZIP traversal wrote no file' (-not (Test-Path (Join-Path $root 'escape.txt')))
-    Write-Host "$checks backup/restore payload policy checks passed."
+    $ProgramDataRoot=$root
+    $RestoreRoot=Join-Path $root 'journal'
+    New-Item -ItemType Directory -Path $RestoreRoot | Out-Null
+    $RecoveryMarker=Join-Path $root 'restore-pending.json'
+    $RecoveryRecord=[ordered]@{status='Prepared';phase='Validated';updatedUtc='';error=$null}
+    $RestoreHasStarted=$false
+    Save-RestorePhase 'Validated'
+    Check 'Preflight history does not block normal startup' (-not (Test-Path -LiteralPath $RecoveryMarker))
+    $RestoreHasStarted=$true
+    $RecoveryRecord.status='Pending'
+    Save-RestorePhase 'ImportingDatabase'
+    Check 'Pending marker persisted before SQL' ((Read-BackupJsonObject $RecoveryMarker).phase -eq 'ImportingDatabase')
+    Save-RestorePhase 'ReplacingSettings'
+    Check 'Atomic journal replacement works on this PowerShell runtime' ((Read-BackupJsonObject $RecoveryMarker).phase -eq 'ReplacingSettings')
+    $RecoveryRecord.status='Failed';$RecoveryRecord.error='fixture failure'
+    Save-RestorePhase 'ReplacingSettings'
+    Check 'Failed phase and cause survive journal reload' ((Read-BackupJsonObject $RecoveryMarker).error -eq 'fixture failure' -and (Read-BackupJsonObject (Join-Path $RestoreRoot 'recovery.json')).status -eq 'Failed')
+    Write-Host "$checks backup/restore payload and recovery policy checks passed."
 }
 finally {
     $parent=[IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\','/')+'\'
