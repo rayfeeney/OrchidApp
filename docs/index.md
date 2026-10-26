@@ -14,6 +14,7 @@ Use current guides below. For each procedure, check its stated implementation li
 - [Windows backup source and archive compatibility](windows-backup-format.md)
 - [Windows restore recovery evidence](maintenance/c08-restore-recovery.md)
 - [Protected backup retention evidence](maintenance/c09-backup-retention.md)
+- [Linux paired backup and recovery evidence](maintenance/c17-linux-paired-backup.md)
 - [Documentation ownership and maintenance](documentation-map.md)
 - [Code change backlog](code-change-backlog.md)
 - [Release notes](../RELEASE_NOTES.md) and [third-party notices](../THIRD_PARTY_NOTICES.md)

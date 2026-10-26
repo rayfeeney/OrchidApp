@@ -1,56 +1,50 @@
-# C09 protected backup retention
+# C17 Linux paired backup and recovery
 
-Changes only: 17 modified and 4 added repository files plus this CHANGELOG.md. No deletions or moves. No private .env, collection data, photos or runtime binaries are included.
+Changes only: 10 modified and 6 added repository files, plus this CHANGELOG.md. No deletions/moves. No credentials, private .env, collection data, backup archives or runtime binaries are included.
 
 ## Apply
 
-1. Extract over the source repository root containing OrchidApp.sln, accepting replacement of the listed files. This follows C10 and the working C16 startup fix. Keep private configuration/data unchanged.
-2. Review docs/windows-backup-format.md and docs/maintenance/c09-backup-retention.md. Rebuild/repackage Windows from source; this is not a deployed installer ZIP.
-3. Keep Backup-Retention.ps1, Backup-Contract.ps1 and Restore-Recovery.ps1 with the tool scripts. Packaging now requires all three helpers. Run CI; the workflow adds dual-PowerShell retention checks.
+1. Extract over the source root containing OrchidApp.sln, replacing only the listed files. This follows C09. It does not install software, change credentials, schedule a job or operate a collection.
+2. Run CI. The new Linux job requires its first GitHub Actions run. Keep backup_orchids.sh, restore_orchids.sh and orchid_backup.py together.
+3. Existing Linux deployments must configure the new explicit JSON/client/rclone paths and Python dependency before invoking/scheduling the replacement backup script. An old no-argument cron invocation now fails safely; update/test it rather than restoring personal hard-coded defaults.
+4. Follow docs/user-guides/linux/OrchidApp-MariaDB-Backup-and-Restore-Runbook.md. Test a manual backup and isolated recovery before scheduling --stop-writers. The scheduled account needs all listed tool, file and service-control permissions.
 
-Routine Normal backups now prune after a new verified ZIP, keeping three verified unprotected routine archives by default and never fewer than one. SkipOldBackupPruning disables pruning. PreUpgrade and protected safety directories never prune; recorded recovery/migration inputs and unrecognised files remain. These extras can exceed the nominal count. Desktop database-update safety backups move to backups/pre-migration with pruning disabled. No existing backup files are moved by applying this source ZIP.
+Each new archive carries its own SQL, uploads and external settings. The tool requires quiescent application writers and holds a server-wide database read lock during capture. Verified immutable remote copy/read-back precedes local retention (default 14, minimum 1). Pinned, foreign/unknown/corrupt and legacy files remain. Remote deletion is manual; previous SQL-only snapshots/current uploads mirror are not converted or deleted.
 
-All 333 schema/checksum/historical SQL artifacts were verified unchanged. No migration is required. Development configuration, restore recovery and migration reconciliation files are unchanged. Reconstructing the two previous backup-call blocks reproduces their pre-C09 file hashes, confirming Program.cs/launcher edits are confined to those invocations.
+Restore requires one trusted archive, an absent output directory and an explicitly confirmed isolated existing empty database with the source name. It does not overwrite current uploads/settings or activate captured configuration. Failed SQL may be partially applied; input and RESTORE-PENDING.json are preserved. After data verification, application/replacement acceptance remains necessary.
+
+All 333 schema/checksum/historical SQL artifacts are unchanged. No migration is required. Every src/ file, Windows backup/restore tool and Windows guide is unchanged, including the working Development startup configuration and C09 safeguards.
 
 ## Files
 
-| Change | Repository path | Description |
+| Change | Repository path | Purpose |
 | --- | --- | --- |
-| Modified | .github/workflows/ci.yml | Run retention fixtures under both PowerShell versions before Windows packaging. |
-| Modified | CONTRIBUTING.md | Document retention/native and Desktop argument checks. |
-| Modified | RELEASE_NOTES.md | Record effective retention controls, protected safety copies and complete ZIP payloads. |
-| Modified | app/tools/Backup-Contract.ps1 | Add shared ZIP creation preserving empty directories and hidden files. |
-| Added | app/tools/Backup-Retention.ps1 | Add verified routine retention with recovery/migration pins, protected directories and fail-closed history handling. |
-| Modified | app/tools/backup-orchidapp.ps1 | Validate minimum count, serialise same-directory runs and prune only after new ZIP verification using the declared controls. |
-| Modified | docs/code-change-backlog.md | Record C09 implementation and pending CI/installed acceptance. |
-| Modified | docs/documentation-map.md | Identify the maintained retention contract and evidence. |
-| Modified | docs/index.md | Link C09 evidence. |
-| Added | docs/maintenance/c09-backup-retention.md | Record changes, validation evidence and operating limits. |
-| Modified | docs/migration-runners.md | Document protected pre-migration safety placement and the Desktop recording fixture. |
-| Modified | docs/user-guides/windows/04-ConfigureCloudBackupFolderInOrchidAppForWindows.docx | Explain the default local routine count and protected/review extras; preserve illustrations. |
-| Modified | docs/windows-backup-format.md | Describe actual retention scope, exclusions, ordering, warnings and archive creation. |
-| Modified | docs/windows-upgrade-contract.md | Replace the old undeclared-variable gap with the implemented retention boundary. |
-| Modified | scripts/package-windows.ps1 | Require all three shared backup/restore helper files in the package inventory. |
-| Modified | src/OrchidApp.Launcher/OrchidAppLauncherForm.cs | Pass declared Normal/root/count arguments for routine backups through ArgumentList. |
-| Modified | src/OrchidApp.Web/Program.cs | Send Desktop migration safety backups to the protected pre-migration directory with pruning disabled. |
-| Modified | tests/BackupRestore.Checks/Database.Checks.ps1 | Add native routine pruning, skip, unrelated-copy preservation and failure-before-pruning checks. |
-| Added | tests/BackupRestore.Checks/Retention.Checks.ps1 | Add disposable archive fixtures for effective retention, protected files, invalid inputs, locks and complete ZIP payloads. |
-| Added | tests/MigrationHistory.Checks/BackupFixture.ps1 | Record Desktop safety arguments only in a temporary stage; never write the supplied backup directory. |
-| Modified | tests/MigrationHistory.Checks/Desktop.Checks.ps1 | Use the named recording fixture and verify the real Desktop caller passes protected declared arguments. |
+| Modified | .github/workflows/ci.yml | Add isolated Linux archive/MariaDB/crypt checks and wrapper smoke checks. |
+| Modified | CONTRIBUTING.md | Document executable checks, disposable-server requirements and remaining platform acceptance. |
+| Modified | RELEASE_NOTES.md | Record paired Linux snapshots and required deployment reconfiguration. |
+| Modified | docs/code-change-backlog.md | Record C17 implementation, evidence and pending Linux/installation acceptance. |
+| Modified | docs/documentation-map.md | Link Linux snapshot ownership/evidence. |
+| Modified | docs/index.md | Link C17 evidence. |
+| Added | docs/maintenance/c17-linux-paired-backup.md | Record actual checks, skipped platforms and operating limits. |
+| Modified | docs/user-guides/linux/Full-App-Backup-Pre-Upgrade.md | Distinguish paired data snapshots from whole-app/OS rollback. |
+| Modified | docs/user-guides/linux/OrchidApp-MariaDB-Backup-and-Restore-Runbook.md | Replace obsolete mirror instructions with configuration, scheduling, paired capture, retention and isolated recovery. |
+| Modified | docs/user-guides/linux/installation-upgrade.md | Add Python requirement and distinguish routine/full-backup dependencies. |
+| Added | infrastructure/backups/backup.example.json | Supply non-secret explicit configuration template requiring a stable collection UUID. |
+| Modified | infrastructure/backups/backup_orchids.sh | Replace personal-path SQL/mirror script with explicit paired backup entry point. |
+| Added | infrastructure/backups/orchid_backup.py | Implement private configuration, writer control/read lock, checked snapshot capture, remote read-back, local retention and failed-restore marker. |
+| Added | infrastructure/backups/restore_orchids.sh | Add matching isolated recovery entry point. |
+| Added | tests/LinuxBackup.Checks/Database.Checks.ps1 | Create/drop only a generated canonical database with protected temporary client defaults for native checks. |
+| Added | tests/LinuxBackup.Checks/checks.py | Add policy fixtures, actual optional crypt backend and generated canonical-schema MariaDB round trip. |
 
-## Validation actually performed
+## Validation actually completed
 
-- All 29 retention checks passed under PowerShell 7 and Windows PowerShell 5.1, including default/minimum/disabled/pre-upgrade modes, invalid counts, old/current names, timestamp skew, unrelated/foreign/corrupt/nested ZIPs, pinned/protected inputs, unreadable history, pending restore, locked deletion and complete hidden/empty payloads.
-- All 28 existing archive/journal policy checks passed under both versions.
-- All 77 native Windows/MariaDB checks passed, including actual backup pruning, skip mode, unrelated-copy preservation and no deletion after a failed new backup, alongside migration/restore regressions.
-- All 13 staged Desktop migration checks passed. The real C# caller invoked the recording-only synthetic backup with declared Normal/root/skip arguments. This fixture never writes the supplied real ProgramData path and does not substitute for a real safety archive test.
-- Web and launcher Release builds: zero warnings/errors. All 14 development startup configuration checks passed.
-- Changed PowerShell syntax and actionlint workflow checks passed (optional ShellCheck/Pyflakes integrations disabled). Required helper source files and changed Markdown links were verified.
-- Windows guide 04 retained all five embedded media files. All six rendered pages were visually inspected. Existing screenshots illustrate buttons; historic log text is not the new policy. QA PDF/PNGs remain outside this ZIP.
-- Archived file list/bytes, merge markers, unchanged SQL/startup/reconciliation/restore artifacts and backup-only C# edits were checked. Generated database processes were shut down; diagnostic fixture directories remain. No live collection or private credential file was used.
+- Final local suite: 31 discovered tests, 28 passed and 3 explicit platform skips (POSIX permissions, source symlink creation and actual rclone crypt backend).
+- Actual MariaDB 10.11.16 round trip on a newly generated Windows instance and canonical schema/seeds, with no migration replay. It checked old rows/photos/hidden uploads/configuration, blocked concurrent SQL writer, missing photo rejection and persistent partial-DDL recovery state. Service/cloud adapters were simulated; no live data or private environment file was used. The generated database was dropped and owned server shut down.
+- Both Bash wrappers passed installed Git Bash syntax checks. Changed PowerShell parsed without errors. actionlint passed with optional ShellCheck/Pyflakes integrations disabled.
+- Exact changed-file list/ZIP bytes, Markdown links, merge markers, Python syntax, template JSON and unchanged SQL/Windows/startup artifacts were checked. Existing Linux Word guides have no affected script instructions; no Word edit/render was required.
 
-Copying is not a cross-directory transaction. Failed or mismatched partial state is retained for resume/review; no automatic deletion or rollback is claimed. Do not run the old database again while relying on its preserved-source fingerprint. Original raw files can change during a database restart even when plant records appear unchanged.
+## Limits and next work
 
-Retention is not an exact disk-space cap or cloud version history. Validation may need temporary space and time; unknown/protected files and cleanup warnings can leave extra archives. This does not add atomic SQL/filesystem backup consistency or certify a real installer/interactive recovery. Keep a verified off-computer copy.
+Linux CI, real systemd/cron/provider credentials, Pi hardware and compatible application save/reopen/replacement acceptance remain pending. CI adds an actual rclone crypt test on local disposable storage; that is not a real cloud-provider test. Direct filesystem writers outside configured units must also be paused. Source hashes cannot detect all transient writes. Database read locks affect the entire selected server, and restored secret configuration needs private review. Interrupted operations can leave stopped units/stale locks; investigate before clearing. Remote retention is manual and local count is not a storage cap.
 
-GitHub Actions and real installed-machine acceptance remain pending. Next in the agreed order is C17 Linux backup/restore portability and pairing.
+Next in the agreed sequence: phase 3, C11 manual lifecycle closure/failure handling.

@@ -10,6 +10,8 @@ For routine encrypted cloud backups and database recovery, use the
 [backup and restore runbook](OrchidApp-MariaDB-Backup-and-Restore-Runbook.md).
 This full application backup complements that process.
 
+C17 routine snapshots now contain their own SQL, uploads and external configuration with verified remote read-back. They do not replace the app binaries, systemd definitions, OS metadata or account/grant capture below. Old SQL-only cloud snapshots and the latest uploads mirror are not automatically historical recovery pairs.
+
 Run Pi commands in the same Bash terminal so `backup_dir` remains available.
 Stop at any failed command. Never proceed to an upgrade with an incomplete backup.
 

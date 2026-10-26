@@ -1,5 +1,9 @@
 # Release notes
 
+## C17 Linux paired backup and recovery
+
+Linux backups use explicit protected configuration and preserve each SQL snapshot with its own uploads and external settings. Stopped writers and a database read lock replace the previous online SQL/current-photo mirror assumption. Remote read-back precedes local retention; old cloud objects are not deleted. The matching isolated restore validates payloads, refuses nonempty targets and preserves a pending marker after partial failures. Existing deployments must configure the new entry points before scheduling; see the [Linux runbook](docs/user-guides/linux/OrchidApp-MariaDB-Backup-and-Restore-Runbook.md).
+
 ## C09 protected backup retention
 
 Normal backups now retain three verified routine ZIPs by default, with a minimum of one and an effective skip switch. Pre-upgrade, migration/restore safety copies and recorded recovery inputs are protected; unrelated or unrecognised files remain for review. Desktop database-update backups use a separate non-pruning directory. ZIP creation preserves empty directories and hidden files. See the [retention contract](docs/windows-backup-format.md#routine-backup-retention).

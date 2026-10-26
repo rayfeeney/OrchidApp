@@ -37,7 +37,7 @@ Record actual evidence at each step.
 | [C14](#c14) | P2 | Agreed guarantee needs design | Define deterministic history ordering if required |
 | [C15](#c15) | P2 | Confirmed option/implementation mismatch | Implement or retire metadata-stripping configuration |
 | [C16](#c16) | P1 | Confirmed portability/setup gaps | Make developer setup and native dependencies reproducible |
-| [C17](#c17) | P1 | Confirmed personal-path and recovery consistency gap | Make Linux backup/restore portable and paired |
+| [C17](#c17) | P1 | Implemented with local archive/native checks; Linux CI/installation acceptance pending | Make Linux backup/restore portable and paired |
 | [C18](#c18) | P2 | Validation gap / required operational contract | Validate packaged upgrades and recovery including app-only updates |
 | [C19](#c19) | P2 | Documented consistency/readiness gap | Validate database/filesystem/native readiness and photo consistency |
 | [C20](#c20) | P2 | Confirmed test inventory/evidence gap | Keep feature checks and build evidence reproducible |
@@ -260,7 +260,7 @@ Implementation: one explicit MARIADB target generates app configuration; committ
 
 ## C17
 
-**Make Linux backup/restore portable and paired** — P1; Confirmed personal-path and recovery consistency gap; status: Open.
+**Make Linux backup/restore portable and paired** — P1; status: Implemented with local archive/native checks; Linux CI/installation acceptance pending.
 
 Affected files/areas: infrastructure/backups/backup_orchids.sh; Linux deployment/support tooling.
 
@@ -269,6 +269,8 @@ Required work: Replace fixed personal home paths with explicit configuration; va
 Dependencies: None.
 
 Acceptance: Isolated account and cron share intended credentials/rclone config; backup/restore round trip checks rows/files/config; old snapshot, concurrent writes and missing files cannot falsely report full recovery.
+
+Implementation: explicit private JSON/client/rclone paths, configured writer stop/restart, persistent database read lock, checked historical SQL/upload/configuration pairs, immutable remote upload/read-back, scoped local retention and isolated non-overwriting restore with a persistent failed-import marker. Legacy remote SQL/mirrors remain untouched. Native MariaDB checks restore an old pair and verify blocked concurrent SQL writes, missing-photo rejection and partial-DDL failure; service/cloud adapters do not certify real systemd/cron/provider/Pi operation. See the [runbook](user-guides/linux/OrchidApp-MariaDB-Backup-and-Restore-Runbook.md) and [C17 evidence](maintenance/c17-linux-paired-backup.md).
 
 ## C18
 
