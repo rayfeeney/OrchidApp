@@ -151,12 +151,12 @@ class Closure(unittest.TestCase):
         self.assertEqual(sql(f"SELECT acquisitionDate,endDate IS NULL FROM plant WHERE plantId={self.plant};"), ['2020-01-02 12:34:56\t1'])
         self.assertEqual(sql(f'SELECT COUNT(*) FROM flowering WHERE plantId={self.plant} AND endDate IS NULL;'), ['1'])
 
-    def test_existing_end_time_preserved_without_reopening_intervals(self):
+    def test_ended_details_and_reactivation_are_refused(self):
         sql(self.call())
-        sql(f"UPDATE plant SET endDate='2021-03-01 11:22:33' WHERE plantId={self.plant};")
-        sql(self.call(ended="'2021-03-02'"))
-        self.assertEqual(sql(f'SELECT endDate FROM plant WHERE plantId={self.plant};'), ['2021-03-02 11:22:33'])
-        sql(self.call(ended='NULL'))
+        before = self.state()
+        sql(self.call(ended="'2021-03-02'"), error='Ended plants are read-only.')
+        sql(self.call(ended='NULL'), error='Ended plants are read-only.')
+        self.assertEqual(self.state(), before)
         self.assertEqual(sql(f'SELECT COUNT(*) FROM flowering WHERE plantId={self.plant} AND endDate IS NULL;'), ['0'])
 
     def test_split_parent_and_child_boundaries_remain_protected(self):
@@ -165,7 +165,7 @@ class Closure(unittest.TestCase):
             f"INSERT INTO plantsplitchild(plantSplitId,childPlantId) SELECT plantSplitId,{child} FROM plantsplit WHERE parentPlantId={self.plant}; "
             f"UPDATE plant SET endDate='2020-08-01 10:00:00' WHERE plantId={self.plant};")
         before = self.state()
-        sql(self.call(), error='Cannot modify end date: plant has been split.')
+        sql(self.call(), error='Ended plants are read-only.')
         self.assertEqual(self.state(), before)
         sql(self.call(plant=child, acquired="'2020-08-02'"), error='Cannot modify acquisition date: plant was created via split.')
         self.assertEqual(sql(f'SELECT acquisitionDate FROM plant WHERE plantId={child};')[0][:10], '2020-08-01')

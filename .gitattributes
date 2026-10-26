@@ -7,3 +7,4 @@
 
 # C11 is new history: keep its raw migration checksum identical on every platform.
 database/migrations/202610261200_AtomicManualPlantClosure.sql text eol=lf
+database/migrations/202610261800_EndedPlantReadOnly.sql text eol=lf

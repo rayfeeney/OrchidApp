@@ -137,6 +137,8 @@ public class SplitModel : PageModel
     public async Task<IActionResult> OnPostAddChildAsync()
     {
         await LoadPageStateAsync();
+        if (EndDate != null)
+            return BadRequest("Ended plants are read-only.");
 
         if (ChildCount < 2)
             ChildCount = 2;

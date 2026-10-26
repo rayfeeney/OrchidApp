@@ -54,6 +54,14 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Plant not found.';
     END IF;
 
+    IF vExistingEndDate IS NOT NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Ended plants are read-only.';
+    END IF;
+    IF (DATE(pAcquisitionDate) <=> DATE(vExistingAcquisitionDate)) = 0
+       AND EXISTS (SELECT 1 FROM plantpropagation WHERE childPlantId = pPlantId) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cannot modify acquisition date: plant was created via propagation.';
+    END IF;
+
     SELECT EXISTS (SELECT 1 FROM plantsplitchild WHERE childPlantId = pPlantId)
       INTO vIsSplitChild;
     SELECT EXISTS (SELECT 1 FROM plantsplit WHERE parentPlantId = pPlantId)

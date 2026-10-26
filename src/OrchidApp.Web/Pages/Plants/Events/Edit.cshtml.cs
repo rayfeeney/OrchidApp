@@ -14,17 +14,17 @@ using OrchidApp.Web.Infrastructure;
 namespace OrchidApp.Web.Pages.Plants.Events;
 
 /*
-    EDIT LIFECYCLE EVENTS — DESIGN NOTES
+    EDIT LIFECYCLE EVENTS â€” DESIGN NOTES
 
     Lifecycle events in OrchidApp are intentionally stored in
     DIFFERENT TABLES based on their semantics.
 
     Tables involved:
-    - plantevent              → Observations (atomic)
-    - repotting               → Repotting events (atomic)
-    - flowering               → Flowering events (atomic, bounded)
-    - plantlocationhistory    → Location changes (structural)
-    - vplantlifecyclehistory  → Read-only UNION of all lifecycle events
+    - plantevent              â†’ Observations (atomic)
+    - repotting               â†’ Repotting events (atomic)
+    - flowering               â†’ Flowering events (atomic, bounded)
+    - plantlocationhistory    â†’ Location changes (structural)
+    - vplantlifecyclehistory  â†’ Read-only UNION of all lifecycle events
 
     There are TWO categories of events:
 
@@ -164,6 +164,8 @@ public class EditModel : PageModel
 
     public async Task<IActionResult> OnGetAsync()
     {
+        if (await _db.Plants.AnyAsync(p => p.PlantId == PlantId && p.EndDate != null))
+            return RedirectToPage("/Plants/Details", new { plantId = PlantId });
         // Plant context
         var plant = _db.PlantActiveSummaries.FirstOrDefault(p => p.PlantId == PlantId);
         if (plant != null)
@@ -193,7 +195,7 @@ public class EditModel : PageModel
         {
             case "Observation":
                 var observation = _db.PlantEvent
-                    .FirstOrDefault(e => e.PlantEventId == SourceId && e.IsActive);
+                    .FirstOrDefault(e => e.PlantEventId == SourceId && e.PlantId == PlantId && e.IsActive);
 
                 if (observation == null)
                     return NotFound();
@@ -213,8 +215,8 @@ public class EditModel : PageModel
                             plantLocationNotes
                         FROM plantlocationhistory
                         WHERE plantLocationHistoryId = {0}
-                            AND isActive = 1",
-                        SourceId)
+                            AND plantId = {1} AND isActive = 1",
+                        SourceId, PlantId)
                     .AsNoTracking()
                     .SingleOrDefaultAsync();
 
@@ -250,7 +252,7 @@ public class EditModel : PageModel
             case "Repotting":
 
                 var repotting = _db.Repotting
-                    .FirstOrDefault(r => r.RepottingId == SourceId && r.IsActive);
+                    .FirstOrDefault(r => r.RepottingId == SourceId && r.PlantId == PlantId && r.IsActive);
 
                 if (repotting == null)
                 {
@@ -291,13 +293,15 @@ public class EditModel : PageModel
             .Select(p => new { p.AcquisitionDate, p.EndDate })
             .SingleAsync();
 
+        if (plant.EndDate != null)
+            return BadRequest("Ended plants are read-only.");
         var eventDate = EventDate.Date;
 
         switch (EventType)
         {
             case "Observation":
                 var observation = _db.PlantEvent
-                    .FirstOrDefault(e => e.PlantEventId == SourceId && e.IsActive);
+                    .FirstOrDefault(e => e.PlantEventId == SourceId && e.PlantId == PlantId && e.IsActive);
 
                 if (observation == null)
                     return NotFound();
@@ -365,6 +369,12 @@ public class EditModel : PageModel
                 if (!ModelState.IsValid)
                     return ReloadPage();
 
+                var location = await _db.LocationChangeEditRows
+                    .FromSqlRaw(@"SELECT plantLocationHistoryId, startDateTime, moveReasonNotes, plantLocationNotes
+                        FROM plantlocationhistory WHERE plantLocationHistoryId={0} AND plantId={1} AND isActive=1",
+                        SourceId, PlantId).AsNoTracking().SingleOrDefaultAsync();
+                if (location == null) return NotFound();
+
                 // =========================
                 // Call stored procedure
                 // =========================
@@ -374,7 +384,7 @@ public class EditModel : PageModel
                     var parameters = new object?[]
                     {
                         SourceId,
-                        eventDate,
+                        eventDate.Add(location.StartDateTime.TimeOfDay),
                         string.IsNullOrWhiteSpace(EventDetails) ? null : EventDetails,
                         string.IsNullOrWhiteSpace(PlantLocationNotes) ? null : PlantLocationNotes
                     };
@@ -462,56 +472,25 @@ public class EditModel : PageModel
                 // Overlap validation (Edit version)
                 // =========================
 
-                var newStart = startDate;
-                var newEnd = endDate ?? startDate;
-
-                var hasConflict = await _db.Flowering
-                    .AnyAsync(f =>
-                        f.PlantId == PlantId &&
-                        f.IsActive &&
-                        f.FloweringId != SourceId &&
-                        (
-                            // existing start <= new end
-                            f.StartDate <= newEnd &&
-
-                            // existing end >= new start (or open)
-                            (
-                                f.EndDate == null ||
-                                f.EndDate >= newStart
-                            )
-                        ));
-
+                var newStart = startDate.Add(flowering.StartDate.TimeOfDay);
+                var newEnd = endDate?.Add(flowering.EndDate?.TimeOfDay ??
+                    (endDate == startDate ? flowering.StartDate.TimeOfDay : DateTime.Now.TimeOfDay));
+                if (newEnd.HasValue && newEnd.Value < newStart)
+                {
+                    ModelState.AddModelError(nameof(EndDate), "End date cannot precede the flowering start time.");
+                    return ReloadPage();
+                }
+                var lastDay = endDate ?? DateTime.MaxValue.Date;
+                var hasConflict = await _db.Flowering.AnyAsync(f =>
+                    f.PlantId == PlantId && f.IsActive && f.FloweringId != SourceId &&
+                    f.StartDate.Date <= lastDay && (f.EndDate == null || f.EndDate.Value.Date >= startDate));
                 if (hasConflict)
                 {
-                    ModelState.AddModelError(string.Empty,
-                        "This flowering overlaps an existing flowering period.");
-
-                    return ReloadPage();   // 🚨 hard stop
+                    ModelState.AddModelError(string.Empty, "This flowering overlaps an existing flowering period.");
+                    return ReloadPage();
                 }
-
-                // =========================
-                // Apply changes
-                // =========================
-
-                var now = DateTime.Now;
-
-                flowering.StartDate = new DateTime(
-                    startDate.Year,
-                    startDate.Month,
-                    startDate.Day,
-                    now.Hour,
-                    now.Minute,
-                    now.Second);
-
-                flowering.EndDate = endDate.HasValue
-                    ? new DateTime(
-                        endDate.Value.Year,
-                        endDate.Value.Month,
-                        endDate.Value.Day,
-                        now.Hour,
-                        now.Minute,
-                        now.Second)
-                    : null;
+                flowering.StartDate = newStart;
+                flowering.EndDate = newEnd;
 
                 flowering.SpikeCount = SpikeCount;
                 flowering.FlowerCount = FlowerCount;
@@ -528,12 +507,18 @@ public class EditModel : PageModel
             case "Repotting":
 
                 var repotting = _db.Repotting
-                    .FirstOrDefault(r => r.RepottingId == SourceId && r.IsActive);
+                    .FirstOrDefault(r => r.RepottingId == SourceId && r.PlantId == PlantId && r.IsActive);
 
                 if (repotting == null)
                 {
                     return NotFound();
                 }
+
+                if (eventDate > DateTime.Today)
+                    ModelState.AddModelError(nameof(EventDate), "Repotting date cannot be in the future.");
+                if (plant.AcquisitionDate.HasValue && eventDate < plant.AcquisitionDate.Value.Date)
+                    ModelState.AddModelError(nameof(EventDate), "Repotting date cannot be before the plant was acquired.");
+                if (!ModelState.IsValid) return ReloadPage();
 
                 repotting.RepotDate = EventDate.Date.Add(repotting.RepotDate.TimeOfDay);
                 repotting.OldGrowthMediumId = OldGrowthMediumId;

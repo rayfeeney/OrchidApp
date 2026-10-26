@@ -1,5 +1,9 @@
 # Release notes
 
+## C12 ended plants are read-only
+
+Ended plants remain viewable but their details, events, photos and lifecycle dates cannot be changed through normal workflows. Event writes are checked on the server and scoped to the owning plant. Active-plant repotting date validation and flowering/location time preservation are corrected. Migration `202610261800_EndedPlantReadOnly.sql` also rejects ended detail/reactivation calls and protects propagation-origin acquisition dates. No historical dates are rewritten. See [C12 guidance](docs/maintenance/c12-ended-plant-policy.md) and the [upgrade checklist](docs/upgrade-checklist.md).
+
 ## Development database updates use existing .env credentials
 
 With the development app stopped, `pwsh ./scripts/DevSetup/update-database.ps1` reads the repository `.env`, backs up the database outside the checkout and applies pending migrations. Retry the commit afterwards. The hook reads the same file through the developer export wrapper, so GUI credentials do not depend on terminal inheritance. The hook still blocks pending migrations and never applies them automatically. Production/Desktop configuration is unchanged. See [developer setup](docs/development-setup.md).

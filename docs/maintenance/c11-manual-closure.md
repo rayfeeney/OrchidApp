@@ -1,5 +1,7 @@
 # C11 manual plant closure
 
+This report records C11 at delivery. [C12](c12-ended-plant-policy.md) now supersedes the earlier direct end-date correction/clearing behavior: ended plants cannot be edited or reactivated through normal workflows or spUpdatePlantDetails. Atomic first closure is preserved. The lifecycle suite now upgrades through the current migration package and checks the C12 policy on both upgraded and fresh databases.
+
 ## Change and upgrade action
 
 Migration **202610261200_AtomicManualPlantClosure.sql** replaces only spUpdatePlantDetails. It corrects flowering.endDateTime to flowering.endDate and makes the plant/details, first location closure and first flowering closure atomic. A standalone call owns/commits its transaction; a call inside an existing transaction uses the reserved orchidapp_update_plant_details savepoint and does not commit prior caller work. SQL failures roll back the operation and rethrow the original error. MariaDB deadlocks can abort an entire caller transaction; this procedure does not override engine deadlock semantics or establish C13's broader concurrency guarantees.

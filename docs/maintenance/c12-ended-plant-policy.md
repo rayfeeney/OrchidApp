@@ -1,0 +1,30 @@
+# C12 ended plants and temporal corrections
+
+## Agreed rule and implementation
+
+The owner confirmed that ending a plant should not allow editing. Ended plants are therefore read-only through normal workflows: details, acquisition/end dates, events and photos cannot be changed or reactivated, and split/propagation cannot create descendants. History and photographs remain viewable. No exceptional repair/reactivation workflow is added.
+
+Event Add/Edit/Remove handlers check the plant's current end state before writes. Direct mutating form GETs redirect ended plants to Details; plant detail/Photos viewing remains available. Existing plant-detail and photo guards are retained. Observation, repotting and location lookups now include the route plant ID, preventing an unended parent ID from being substituted to change another plant's records. Existing split/propagation protections are tested, and the split add-child form now rejects ended requests as well.
+
+For unended plants, repotting edits reject future dates and dates before a known acquisition calendar day, preserving the previous time. The acquisition day itself is allowed; unknown acquisition supplies no lower date bound. Flowering edits preserve existing start/end times, validate the resulting exact interval and use inclusive calendar overlap checks with an unbounded open end. A newly entered end time uses the existing start time on the same calendar day, otherwise the current time. Location corrections pass the original time with the corrected date instead of midnight. Photos-page creation rejects an imported future acquisition date before creating an Observation or writing files.
+
+Migration **202610261800_EndedPlantReadOnly.sql** preserves C11's atomic first closure and adds two procedure protections: spUpdatePlantDetails rejects any call for an already-ended plant, and a propagation child's acquisition calendar date cannot change or be cleared. The migration replaces the procedure only; it does not rewrite historical rows, timestamps, photo files or lineage. Generated routine/checksum/bootstrap output comes from the official exporter after the canonical runner applies the migration. The new migration alone is pinned to LF for raw checksum portability; historical SQL is unchanged.
+
+## Upgrade actions
+
+- Development: stop the app, extract the source delivery and run `pwsh ./scripts/DevSetup/update-database.ps1`, then commit normally. The existing .env supplies credentials and the command takes its normal SQL backup. The hook must export the migrated definition; do not bypass the export guard.
+- Windows Desktop: build/test the full installer/package, preserve a verified pre-upgrade backup and let normal Desktop preflight/backup/migration apply the new file once.
+- Linux/manual deployment: keep writers stopped, preserve a verified recoverable backup, use the explicit target with canonical PlanOnly/application, deploy the updated app and restart/verify. Do not rebuild an existing database. No new site setting is required.
+- On each platform verify ended details/photos/history remain viewable, editing is blocked, and disposable unended date corrections save/reopen while preserving existing times. Record the release/machine evidence in the [upgrade checklist](../upgrade-checklist.md). Existing historical review findings remain separate; the migration does not automatically repair them.
+
+## Validation
+
+On new Windows MariaDB 10.11.16 fixtures, the final run passed 16 closure scenarios and 16 C12 policy/date scenarios against each of an upgraded and a fresh schema-only database: 64 SQL/actual HTTP executions, with no skips. Subcases cover all four event kinds, detail/taxonomy/photo posts, direct cross-parent edit/remove attempts, split/propagation blocking, read-only page viewing, active repotting invalid/same-day/unknown-acquisition dates, flowering time/overlap behavior, location time preservation, future-acquisition photo rejection and propagation-origin protection. Failed ended writes leave scoped DB records and synthetic photo-file hashes unchanged. Forms use real antiforgery/cookies and the actual Release Razor application.
+
+The upgrade fixture remains a targeted synthetic prior-procedure fixture, not a real historical installation. It verifies the original partial failure remains preserved, existing ledger rows remain unchanged, C11/C12 apply once and guarded export works. Fresh creation has scripts/schema only and no migration replay. All 44 existing creation/baseline, 53 migration/export and 10 child-process protocol checks passed. The Release web build passed with zero warnings/errors.
+
+All 18 schema baseline policy checks and 24 Desktop migration policy scenarios passed, validating 246 packaged migration files. The policy project run reported NU1900 because NuGet vulnerability metadata was unavailable; this is not a completed vulnerability audit. Changed PowerShell syntax and actionlint passed (optional ShellCheck/Pyflakes integrations disabled). The Linux workflow reuses the expanded suite and prints `Lifecycle checks revision: c12-read-only-v1` to identify the new source.
+
+Both Windows and Linux plant-management Word guides have the agreed rule. Their 22 embedded media files each are byte-identical before/after. Both final guides rendered to 17 pages; all 34 pages were visually inspected, including the changed text on pages 2, 13 and 14. Existing screenshots remain relevant to the active-plant workflow. Rendering used hidden native Word PDF conversion with the packaged renderer/rasterizer; QA images/PDFs are not separate deliverables.
+
+Linux CI, installed Windows/Pi acceptance and real older-installation coverage remain pending. No live collection or owner .env was modified. Application guards and the stated procedure checks implement the user workflow; structural rollback/concurrent mutation guarantees remain C13, and direct administrative SQL is outside normal editing. Clock/timezone ambiguity and a strict total history order remain separate C14 concerns. The change does not comprehensively repair or revalidate historical imported data.

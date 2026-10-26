@@ -17,30 +17,32 @@ ASP.NET Core loads shared/environment-specific JSON, environment variables and c
 - Upload services bind Storage:UploadRoot. Desktop overrides it with ORCHIDAPP_UPLOAD_ROOT or falls back to runtime wwwroot/uploads; the packaged launcher supplies ProgramData uploads.
 - Media options bind from MediaIngestion, but StripGpsMetadata is currently unused by the image saver.
 
-Development does not run Desktop schema bootstrap. Ordinary Production hosting lacks comprehensive startup database/filesystem/native readiness checks and a dedicated health endpoint. EF server autodetection and errors may occur when a request resolves the context. External uploads are served only if the configured directory exists at middleware setup. A listening HTTP service is not proof of working database pages or photo processing. [C16/C19](code-change-backlog.md) cover setup and readiness work.
+Development does not run Desktop schema bootstrap. The supported source-run wrapper now aligns app/script configuration and probes native photo save/reopen before startup; see [developer setup](development-setup.md). Ordinary Production hosting lacks comprehensive startup database/filesystem/native readiness checks and a dedicated health endpoint. EF server autodetection and errors may occur when a request resolves the context. External uploads are served only if the configured directory exists at middleware setup. A listening HTTP service is not proof of working database pages or photo processing. [C16/C19](code-change-backlog.md) cover setup and readiness work.
 
 ## Database creation and evolution
 
 A fresh database must be built from database/schema/ and required seeds alone. It must not need historic migration SQL, including for baseline bookkeeping. Migrations apply only to changes after creation. The [creation contract](database-creation.md) is authoritative. Baseline metadata belongs with the schema export so a fresh installation can later accept only subsequent compatible changes.
 
-Current rebuild portability/view ordering, Desktop history initialisation and baseline compatibility need [C01/C02](code-change-backlog.md). Do not replay migrations to work around creation gaps, manually edit applied history, or use a destructive rebuild as an upgrade.
+Creation now validates schema/bootstrap.json, imports required seeds in dependency order and records a completion marker last. The retained rebuild.ps1 filename creates only absent/empty targets and never drops a database. Desktop no longer scans historic SQL for creation. See [C01/C02 evidence and remaining platform acceptance](maintenance/c01-c02-schema-baseline.md). Do not manually edit applied history or use creation as an upgrade.
 
 ## Implemented migration paths
 
 | Path | Current behaviour and limit |
 | --- | --- |
-| database/scripts/Apply-Migrations.ps1 | Sorts files, skips recorded names, records new checksums. Does not enforce skipped-file checksum integrity, unique timestamp chronology or universal pre-execution schema drift. |
-| Desktop in src/OrchidApp.Web/Program.cs | Imports schema for a new DB, but currently scans packaged migrations to populate history; checks recorded checksums for existing DBs and requires a backup command for pending SQL. |
-| database/scripts/Apply-MariaDBMigrations.ps1 | Separate developer runner with extra checks and different defaults; baseline-row and case-sensitive export-path compatibility need reconciliation. |
-| database/scripts/dev-runner.ps1 | Export/drift wrapper with additional working-tree assumptions; not interchangeable with the documented simple runner. |
+| database/scripts/Apply-Migrations.ps1 | Canonical runner with full history preflight, duplicate/chronology/checksum/missing-file validation and durable incomplete markers. Requires an explicit target; no Git/export dependency. |
+| Desktop in src/OrchidApp.Web/Program.cs | Matching C# policy; schema-only first use, legacy ledger preservation and backup before pending SQL. |
+| database/scripts/Apply-MariaDBMigrations.ps1 | Compatibility entry point delegating to the canonical runner. |
+| database/scripts/dev-runner.ps1 | Maintainer apply-then-export workflow; generated differences are reviewed rather than treated as failed SQL. |
 
-There is no universal duplicate-timestamp/history or live schema-drift guarantee across all routes. DDL failures may leave partial state. Keep backup and controlled upgrade tests. [C04](code-change-backlog.md#c04) defines runner reconciliation.
+See [migration runners](migration-runners.md) for exact baseline exceptions, parameters, pending-marker recovery and intentional backup/export differences. These rules validate history, not universal live schema drift; DDL failures can leave partial state. Cooperating runners use the existing schemaversion unique key and pending marker; no new schema table or rewritten applied history is needed.
 
-Schema and checksum files are generated; do not edit them manually. The hook exports/stages the configured development DB on every commit. CI reconstructs/exports a schema, which differs from proving seeds, future-only baseline behaviour or migration replay. See [contributor checks](../CONTRIBUTING.md) and [C05](code-change-backlog.md#c05).
+Schema and checksum files are generated; do not edit them manually. The hook exports/stages the configured development DB on every commit. CI reconstructs/exports a schema and is now configured for C04 policy and disposable runner checks. Broader seeded application first-use/upgrade acceptance and representative history replay remain separate. See [contributor checks](../CONTRIBUTING.md) and [C05](code-change-backlog.md#c05).
 
 ## Lifecycle and writes
 
 Plant acquisition/end timestamps describe a correctable collection history, not a universally immutable event log. A split closes one parent and creates at least two independently tagged children; propagation creates a child without ending its parent. Location changes adjust intended contiguous intervals. DB unique keys, constraints and procedures enforce important parts of these rules; handlers also perform checks, with documented gaps. Use [temporal design](temporal-design.md) for exact date/time and rollback limits.
+
+C12 makes ended plants read-only through normal application workflows: details, events, photos and lifecycle dates cannot be changed or reactivated. Their history/photos remain viewable. Corrections on unended plants retain existing times when changing calendar dates; handler ownership and date checks apply before writes. Structural concurrency/rollback remains the separate C13 work.
 
 Keep parameterised values, trusted procedure identifiers, async I/O and shared procedure-execution infrastructure. Surface expected validation errors appropriately and log operational failures without exposing secrets.
 
@@ -60,7 +62,7 @@ Environmental summaries, greenhouse charts and net-cost reporting are bespoke to
 
 ## Windows and Linux operations
 
-The Windows installer owns replaceable app files, normally under Program Files, using the actual selected root. The launcher resolves ProgramData data/settings paths and legacy migration; Desktop web startup handles database setup/upgrades. Normal local backups are logical SQL plus uploads/settings, not a raw live database archive. The [Windows contract](windows-upgrade-contract.md) records source-selection, retention, restore-format and partial-migration gaps; app-only updates do not universally trigger a backup gate.
+The Windows installer owns replaceable app files, normally under Program Files, using the actual selected root. The launcher resolves ProgramData data/settings paths and legacy migration; Desktop web startup handles database setup/upgrades. Normal local backups are logical SQL plus uploads/settings, not a raw live database archive. C06/C07 add a quiescent captured legacy source, database-directory identity checks and versioned archive/settings validation; see the [Windows backup contract](windows-backup-format.md). Recovery, retention, state reconciliation and installed-upgrade limits remain in the [Windows contract](windows-upgrade-contract.md); app-only updates do not universally trigger a backup gate.
 
 Linux uses externally managed MariaDB and systemd. The general install does not include the owner's importer/monitoring feeds. Routine backup currently uses SQL snapshots plus a current uploads mirror, which is not a guaranteed matched historical recovery set. The [Linux runbook](user-guides/linux/OrchidApp-MariaDB-Backup-and-Restore-Runbook.md) and [full backup](user-guides/linux/Full-App-Backup-Pre-Upgrade.md) distinguish present tooling from required validation.
 
@@ -70,4 +72,4 @@ Keep trusted-network access: there is no built-in multi-user authentication, and
 
 Directory.Build.props currently carries public version 1.3.0 and internal build metadata. Launcher version metadata drives Windows packaging/operational decisions; matching web metadata is for display/diagnostics. Package scripts update versions before building; empty version input increments the internal build, while explicit input resets it. Do not derive app version from user data or invent a release date from a documentation review.
 
-CI cross-publishes linux-arm64, reconstructs/exports a MariaDB 10.11 schema and builds a Windows package. It does not run all five feature check projects, prove schema-only seeded first run, test all migration history, build the Inno installer or perform device recovery. Requirements and acceptance remain in [the code backlog](code-change-backlog.md). Code changes must update the affected [document owner](documentation-map.md) in the same change.
+CI cross-publishes linux-arm64, reconstructs/exports a MariaDB 10.11 schema and builds a Windows package. It does not run all executable feature check projects, prove schema-only seeded first run, test all migration history, build the Inno installer or perform device recovery. Requirements and acceptance remain in [the code backlog](code-change-backlog.md). Code changes must update the affected [document owner](documentation-map.md) in the same change.

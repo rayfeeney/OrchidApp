@@ -32,7 +32,7 @@ Record actual evidence at each step.
 | [C09](#c09) | P2 | Implemented; CI/installed acceptance pending | Correct backup retention controls |
 | [C10](#c10) | P1 | Implemented; CI/installed acceptance pending | Reconcile interrupted and completed legacy migration state |
 | [C11](#c11) | P1 | Implemented with local DB/HTTP checks; Linux CI/installation acceptance pending | Correct manual lifecycle closure and its failure handling |
-| [C12](#c12) | P2 | Confirmed inconsistency / policy decision required | Make temporal and ended-plant restrictions deliberate |
+| [C12](#c12) | P2 | Implemented with local SQL/HTTP checks; Linux CI/installed acceptance pending | Make temporal and ended-plant restrictions deliberate |
 | [C13](#c13) | P2 | Investigation / documented transaction gap | Verify structural transaction rollback and concurrency |
 | [C14](#c14) | P2 | Agreed guarantee needs design | Define deterministic history ordering if required |
 | [C15](#c15) | P2 | Confirmed option/implementation mismatch | Implement or retire metadata-stripping configuration |
@@ -198,7 +198,7 @@ Implementation: new migration `202610261200_AtomicManualPlantClosure.sql` correc
 
 ## C12
 
-**Make temporal and ended-plant restrictions deliberate** — P2; Confirmed inconsistency / policy decision required; status: Open.
+**Make temporal and ended-plant restrictions deliberate** — P2; status: Implemented with local SQL/HTTP checks; Linux CI/installed acceptance pending.
 
 Affected files/areas: Pages/Plants/Events/Add.cshtml.cs, Edit.cshtml.cs, Remove.cshtml.cs; Photos/Index.cshtml.cs; plant Edit; relevant SQL.
 
@@ -206,13 +206,19 @@ Required work: Agree the supported corrections on ended plants and enforce consi
 
 Dependencies: C11; owner confirms policy before behaviour change.
 
+Approved policy: ended plants are read-only, including details, lifecycle dates, events and photos. History/photos remain viewable; normal reactivation is not allowed.
+
 Acceptance: Live save/reopen tests cover Add/Edit/Remove/photo routes, ended plants, exact versus calendar boundaries and validation failures, matching the approved policy.
+
+Implementation: event handlers reject ended writes and scope source IDs to their plant; mutating form GETs redirect to Details. Repotting edits validate calendar dates, flowering/location corrections preserve existing times, open flowering overlap checks cover later periods, and photo uploads reject future acquisition. Migration `202610261800_EndedPlantReadOnly.sql` rejects ended detail/reactivation calls and protects propagation-child acquisition dates. Both generated schema and platform guides/checklists are updated. See [C12 evidence](maintenance/c12-ended-plant-policy.md). Concurrency/structural rollback remains C13; historical records are not rewritten.
 
 ## C13
 
 **Verify structural transaction rollback and concurrency** — P2; Investigation / documented transaction gap; status: Open.
 
 Affected files/areas: location/split/propagation stored procedures via new migrations; DB integration tests.
+
+C12 follow-up scope: include event/photo writes racing with plant closure and the handler/transaction coordination needed to preserve the ended read-only rule. Sequential request checks do not establish this concurrency guarantee.
 
 Required work: Test actual connection transaction/error behaviour; add appropriate rollback handlers and locking where required. START TRANSACTION/COMMIT alone is insufficient evidence.
 

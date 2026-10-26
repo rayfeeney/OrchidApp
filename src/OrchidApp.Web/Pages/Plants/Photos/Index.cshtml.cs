@@ -109,6 +109,10 @@ public class IndexModel : PageModel
         if (await IsPlantEndedAsync(plantId, ct))
             return BadRequest();
 
+        var acquired = await _context.Plants.Where(p => p.PlantId == plantId)
+            .Select(p => p.AcquisitionDate).SingleAsync(ct);
+        if (acquired.HasValue && DateTime.Today < acquired.Value.Date)
+            return BadRequest("Photos cannot be added before the plant was acquired.");
         PlantId = plantId;
         ReturnUrl = returnUrl;
 

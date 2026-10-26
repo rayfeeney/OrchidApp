@@ -10,8 +10,9 @@ See [architecture](architecture.md) for component responsibilities and
 
 ## Model and terminology
 
-OrchidApp records a correctable horticultural history rather than an immutable
-event log. Observations, repotting and flowering are narrative records. Location
+OrchidApp permits corrections while a plant has not ended. Once ended, its
+details, events, photos and lifecycle dates are read-only; its history and
+photographs remain viewable. There is no normal reactivation workflow. Observations, repotting and flowering are narrative records. Location
 intervals, split boundaries and propagation origins carry structural relationships
 and must be changed through the relevant workflows and procedures.
 
@@ -51,17 +52,17 @@ are separate from horticultural event dates.
 | Workflow | Creation | Editing |
 | --- | --- | --- |
 | Normal plant acquisition | `spAddPlant` combines the supplied date with database current time; unknown date stays NULL | `spUpdatePlantDetails` keeps the existing time when present, otherwise assigns database current time |
-| Manual plant end | Procedure assigns database current time when first setting an end date | Existing end time is preserved when changing the date; clearing the value is supported by the procedure, subject to split rules |
+| Manual plant end | Procedure assigns database current time when first setting an end date | Ended plants cannot have their end date changed or cleared |
 | Observation | Event Add combines selected date with web-server current hour/minute/second; the Photos page uses current server time | Event Edit preserves the previous time-of-day |
 | Repotting | Event Add combines selected date with web-server current hour/minute/second | Event Edit preserves the previous time-of-day |
-| Flowering | Event Add combines selected start/end dates with current server hour/minute/second | Event Edit assigns current server time again to both supplied dates; it does not preserve the original time |
-| Location move | `spMovePlantToLocation` combines the selected date with database current time | Event Edit passes `EventDate.Date` to `spEditPlantLocation`, replacing the start time with midnight |
+| Flowering | Event Add combines selected start/end dates with current server hour/minute/second | Event Edit preserves existing start/end times; a newly supplied end uses the start time on the same day, otherwise current time |
+| Location move | `spMovePlantToLocation` combines the selected date with database current time | Event Edit combines the corrected date with the existing start time before calling spEditPlantLocation |
 | Split | Page handler combines selected date with current server hour/minute, setting seconds to zero | No general split-edit workflow |
 | Propagation | Procedure combines selected date with database current time | No general propagation-edit workflow |
 
-The location procedure accepts a full DATETIME, but its current caller supplies
-date-only midnight. The Split property is named `SplitDateTime`, but the form is
-date-only and the handler assigns the time. Do not infer UI capabilities from
+Location corrections preserve the existing time rather than resetting it to
+midnight. The Split property is named `SplitDateTime`, but the form is date-only
+and the handler assigns the time. Do not infer UI capabilities from
 parameter or property names.
 
 ## Ordering and same-day events
@@ -76,10 +77,9 @@ There is no universal insertion-order guarantee for events on the same day:
 - DATETIME values can collide within a second; split times have minute precision.
 - Source IDs are table-local, so different event types can have equal timestamps
   and equal IDs. The current sort is not a total order across those ties.
-- Changing a calendar date changes placement in the history. Flowering edits
-  also replace the time and can reorder same-day records; location edits reset it.
-- Preserving time in Observation and Repotting edits does not make all event
-  ordering immutable.
+- Changing a calendar date changes placement in history. Observation, Repotting,
+  existing Flowering timestamps and LocationChange corrections preserve their
+  previous times; this does not provide a total order or immutable history.
 
 No user-controlled sequence field or explicit same-day reorder tool is implemented.
 Any future ordering guarantee needs an explicit cross-domain tie-breaking policy
@@ -104,12 +104,26 @@ The update procedure checks split lineage before allowing changes to the calenda
 date of a split child's acquisition or split parent's end. It preserves the
 existing time for an unchanged or edited non-null date. This protects boundaries
 through that procedure; it is not a universal immutable-column constraint.
-Propagation-child acquisition dates do not receive the same lineage-specific
-protection in this procedure.
+C12 also prevents changing a propagation child's acquisition calendar date,
+including clearing a known origin date. This retains propagation lineage alignment.
 
-The plant Edit POST rejects a plant whose existing end date is non-null. Thus the
-procedure's ability to clear an end date does not establish a working reactivation
-workflow in the current Edit page. Do not promise users general reactivation.
+### Ended plant policy (C12)
+
+The owner-approved rule is read-only after ending. The main Edit page, event
+Add/Edit/Remove handlers and photo handlers reject writes to an ended plant.
+Split and propagation cannot create descendants from it. Direct event-form GETs
+redirect to Details; the Details, read-only plant details and Photos pages remain
+available. Server checks enforce this even when buttons are bypassed.
+
+Event lookups and mutations are scoped to the requested plant, so substituting an
+unended plant ID cannot modify another plant's ended history. The updated
+spUpdatePlantDetails also rejects any call for an already-ended plant, including
+attempts to clear its end date. Migration 202610261800_EndedPlantReadOnly.sql adds
+that guard and propagation-origin protection without rewriting historical rows.
+
+These are application request checks and the stated procedure guards. Structural
+transaction/concurrency acceptance remains C13; direct administrative SQL is
+outside this user workflow. See [C12 evidence](maintenance/c12-ended-plant-policy.md).
 
 ### Atomic manual closure (C11)
 
@@ -119,7 +133,8 @@ its open location/flowering intervals at the same timestamp in one transaction.
 The existing time-assignment and split/date protections remain. Closure is refused
 if it would end an open flowering before its start or a location at/before its
 start. Already closed intervals are unchanged. As before, closure updates all
-open rows for that plant, including inactive open rows; C12 owns broader policy.
+open rows for that plant, including inactive open rows. C12 prevents later
+normal editing or reactivation of the ended plant.
 
 The procedure owns/commits a transaction only when none is active. Otherwise it
 uses the reserved savepoint `orchidapp_update_plant_details`, releasing it on
@@ -134,9 +149,9 @@ Local native database and actual Edit-page save/reopen checks are recorded in
 closures are not repaired automatically; use the read-only adoption review in
 that guide. The current Edit page still rejects already-ended plants.
 
-The procedure also does not comprehensively validate existing narrative history
-against revised lifecycle dates. Clearing an end date does not automatically
-reopen old location rows or create a new location assignment.
+The procedure does not automatically repair existing narrative history. C12
+refuses clearing an ended plant's end date; it does not reopen old location rows
+or create a replacement assignment.
 
 ## Narrative events
 
@@ -146,15 +161,17 @@ Event Add/Edit checks calendar dates against today and the plant's known
 acquisition/end dates, then writes through EF Core. Same-calendar-day events can
 still lie outside exact lifecycle timestamps because these checks compare dates.
 The Photos page creates an Observation at current server time through a separate
-handler; do not assume it shares every Event Add validation.
+handler. C12 blocks ended plants and refuses an imported future acquisition date
+before creating a photo Observation or writing files.
 
 ### Repotting
 
 Repotting records cultivation history without itself ending a lifecycle. Event
 Add validates future/acquisition/end calendar boundaries and assigns a time.
-Event Edit preserves the existing time but its Repotting branch does not repeat
-those date-boundary validations before saving. Therefore uniform lifecycle-date
-validation across Add/Edit is a requirement to address, not an existing guarantee.
+Event Edit now repeats future/acquisition calendar-date validation and preserves
+the existing time when saving a correction. The acquisition calendar day is
+allowed, and an unknown acquisition date supplies no lower calendar bound. Ended
+plants cannot be edited even when the requested event date precedes ending.
 
 Split and propagation procedures can also create an initial repotting record
 when a growth medium is supplied. That record uses the structural operation's
@@ -168,17 +185,19 @@ start/end relationships and conflicts with other active flowering periods before
 writing through EF Core. They use date-level overlap comparisons; do not infer
 full timestamp interval semantics or database-wide overlap enforcement from them.
 
-Add and Edit both assign current server time to supplied dates. The previous
-document's promise that all narrative edits preserve the original time was
-incorrect for flowering.
+Add assigns current server time to supplied dates. Edit preserves existing
+start/end times, checks the resulting exact interval and uses inclusive calendar
+overlap checks. An open edited flowering extends forward without an artificial
+one-day end, so it cannot bypass a later existing flowering period.
 
 ### Removal and enforcement limits
 
 Event Remove soft-deletes narrative records by changing `isActive`; location
 removal calls its structural procedure. This preserves rows rather than physically
 erasing event history. Each workflow's lifecycle/taxonomy checks must be assessed
-separately. There is no common database constraint enforcing all narrative date
-boundaries or an identical ended-plant restriction across every handler.
+separately. C12 rejects event removals for ended plants and scopes source IDs to
+the route plant. There is no universal database constraint enforcing all narrative
+date boundaries; broader transaction/concurrency work remains C13.
 
 ## Location timeline
 
@@ -242,20 +261,21 @@ statements alone do not establish complete error rollback coverage.
 
 ## Requirements for future changes
 
-Keep narrative correction available without bypassing structural procedures.
+Keep narrative correction available on unended plants without bypassing structural
+procedures. Ended plants remain read-only under the agreed C12 policy.
 Preserve lineage alignment and consistent location intervals. For any temporal
 change, review calendar comparisons versus exact timestamps, unknown dates,
 same-day boundaries, ended plants, neighbouring intervals and timezone assumptions.
 
 The following need explicit implementation and tests before becoming guarantees:
 
-- Reliable manual lifecycle closure with the correct flowering column and atomic
-  failure handling.
-- Consistent lifecycle/date validation across all narrative and photo handlers.
-- A deliberate policy for preserving or replacing times on edits.
+- C11 atomic manual closure and C12 request/date policy are implemented locally;
+  their Linux/installed acceptance and representative older DB checks remain.
+- Additional diagnostics/compensation for photo/database failures remain C19.
 - A deterministic cross-domain history tie-breaker if strict ordering is required.
 - Transaction rollback/concurrency behaviour for structural procedures.
-- A supported reactivation workflow and protection of propagation origin dates.
+- C12 protects propagation origin dates and forbids normal reactivation. Any
+  future exceptional correction workflow would require a separate approved design.
 
 Do not edit generated schema files to repair these issues. Use new migrations and
 the normal export process for database changes.
