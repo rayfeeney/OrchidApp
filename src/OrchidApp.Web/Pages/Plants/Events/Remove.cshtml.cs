@@ -96,6 +96,8 @@ public class RemoveModel : PageModel
 
     public IActionResult OnGet()
     {
+        if (_db.Plants.Any(p => p.PlantId == PlantId && p.EndDate != null))
+            return RedirectToPage("/Plants/Details", new { plantId = PlantId });
         // Load plant context + taxonomy state FIRST
         var plant = _db.PlantActiveSummaries
             .FirstOrDefault(p => p.PlantId == PlantId);
@@ -124,22 +126,22 @@ public class RemoveModel : PageModel
             "Observation" =>
                 _db.PlantLifecycleHistory.FirstOrDefault(e =>
                     e.SourceId == SourceId &&
-                    e.SourceTable == "plantevent"),
+                    e.SourceTable == "plantevent" && e.PlantId == PlantId),
 
             "LocationChange" =>
                 _db.PlantLifecycleHistory.FirstOrDefault(e =>
                     e.SourceId == SourceId &&
-                    e.SourceTable == "plantlocationhistory"),
+                    e.SourceTable == "plantlocationhistory" && e.PlantId == PlantId),
 
             "Flowering" =>
                 _db.PlantLifecycleHistory.FirstOrDefault(e =>
                     e.SourceId == SourceId &&
-                    e.SourceTable == "flowering"),
+                    e.SourceTable == "flowering" && e.PlantId == PlantId),
 
             "Repotting" =>
                 _db.PlantLifecycleHistory.FirstOrDefault(e =>
                     e.SourceId == SourceId &&
-                    e.SourceTable == "repotting"),
+                    e.SourceTable == "repotting" && e.PlantId == PlantId),
 
             _ => null
         };
@@ -152,12 +154,20 @@ public class RemoveModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
+        var plant = await _db.Plants.AsNoTracking().SingleOrDefaultAsync(p => p.PlantId == PlantId);
+        if (plant == null) return NotFound();
+        if (plant.EndDate != null) return BadRequest("Ended plants are read-only.");
+        var table = EventType switch {
+            "Observation" => "plantevent", "LocationChange" => "plantlocationhistory",
+            "Flowering" => "flowering", "Repotting" => "repotting", _ => null };
+        if (table == null || !await _db.PlantLifecycleHistory.AnyAsync(e =>
+                e.PlantId == PlantId && e.SourceId == SourceId && e.SourceTable == table)) return NotFound();
         switch (EventType)
         {
             case "Observation":
             {
                 var plantEvent = await _db.PlantEvent
-                    .FirstOrDefaultAsync(e => e.PlantEventId == SourceId);
+                    .FirstOrDefaultAsync(e => e.PlantEventId == SourceId && e.PlantId == PlantId);
 
                 if (plantEvent == null)
                     return NotFound();
@@ -182,7 +192,7 @@ public class RemoveModel : PageModel
                     Event = await _db.PlantLifecycleHistory
                         .FirstOrDefaultAsync(e =>
                             e.SourceId == SourceId &&
-                            e.SourceTable == "plantlocationhistory");
+                            e.SourceTable == "plantlocationhistory" && e.PlantId == PlantId);
 
                     return Page();
                 }
@@ -210,7 +220,7 @@ public class RemoveModel : PageModel
                 var repotting = await _db.Repotting
                     .FirstOrDefaultAsync(r =>
                         r.RepottingId == SourceId &&
-                        r.IsActive);
+                        r.PlantId == PlantId && r.IsActive);
 
                 if (repotting == null)
                     return NotFound();

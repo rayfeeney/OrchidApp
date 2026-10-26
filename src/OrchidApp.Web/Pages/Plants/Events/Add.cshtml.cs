@@ -150,11 +150,15 @@ public class AddModel : PageModel
         if (EventType is not ("Observation" or "LocationChange" or "Flowering" or "Repotting"))
             return NotFound();
 
+        if (_db.Plants.Any(p => p.PlantId == PlantId && p.EndDate != null))
+            return RedirectToPage("/Plants/Details", new { plantId = PlantId });
         return ReloadPageWithLookups();
     }
 
     public async Task<IActionResult> OnPostAsync(string? quickAction)
     {
+        if (await _db.Plants.AnyAsync(p => p.PlantId == PlantId && p.EndDate != null))
+            return BadRequest("Ended plants are read-only.");
         var now = DateTime.Now;
 
         if (EventType is not ("Observation" or "LocationChange" or "Flowering" or "Repotting"))
