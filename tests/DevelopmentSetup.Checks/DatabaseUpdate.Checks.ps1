@@ -6,6 +6,9 @@ foreach($name in @('MARIADB_HOST','MARIADB_PORT','MARIADB_USER','MARIADB_PASSWOR
 $hostValue=$env:MARIADB_HOST;$portValue=$env:MARIADB_PORT;$userValue=$env:MARIADB_USER;$passwordValue=$env:MARIADB_PASSWORD
 $client=Resolve-MariaDbTool -Override $env:MARIADB_EXE
 $database='orchids_env_'+[guid]::NewGuid().ToString('N')
+$fixtureUser='orchid_env_'+[guid]::NewGuid().ToString('N')
+$fixturePassword='env-fixture-'+[guid]::NewGuid().ToString('N')
+$fixtureAccountCreated=$false
 $root=Join-Path ([IO.Path]::GetTempPath()) $database
 $stage=Join-Path $root 'source';$backups=Join-Path $root 'backups'
 $null=New-Item -ItemType Directory -Path (Join-Path $stage 'database'),(Join-Path $stage 'scripts')
@@ -26,13 +29,13 @@ function Query([string]$Statement,[switch]$Global){
 function Child([string[]]$Arguments){
     $output=& pwsh -NoProfile -File (Join-Path $stage 'scripts/DevSetup/update-database.ps1') -BackupRoot $backups @Arguments 2>&1
     $code=$LASTEXITCODE;$text=$output -join "`n"
-    Check 'Credentials not printed by update command' (-not $text.Contains($passwordValue) -and -not $text.Contains('wrong-ambient-secret'))
+    Check 'Credentials not printed by update command' (-not $text.Contains($fixturePassword) -and -not $text.Contains('wrong-ambient-secret'))
     @{code=$code;text=$text}
 }
 function Commit-Fixture {
     $output=& git -C $stage -c core.hooksPath=.githooks -c commit.gpgSign=false -c user.name=Fixture -c user.email=fixture@example.invalid commit --allow-empty -m 'Disposable env hook check' 2>&1
     $code=$LASTEXITCODE;$text=$output -join "`n"
-    Check 'Credentials not printed by commit hook' (-not $text.Contains($passwordValue) -and -not $text.Contains('wrong-ambient-secret'))
+    Check 'Credentials not printed by commit hook' (-not $text.Contains($fixturePassword) -and -not $text.Contains('wrong-ambient-secret'))
     @{code=$code;text=$text}
 }
 try {
@@ -42,11 +45,16 @@ try {
     if(-not $IsWindows){& chmod 700 -- (Join-Path $stage '.githooks/pre-commit');if($LASTEXITCODE -ne 0){throw 'Hook fixture permission failed.'}}
     $env:MARIADB_DATABASE=$database;$env:MARIADB_CHARSET='utf8mb4';$env:MARIADB_COLLATION='utf8mb4_unicode_ci'
     & (Join-Path $stage 'database/scripts/rebuild.ps1') -ConfirmDatabase $database
+    # A common CI admin password such as "root" occurs in Git's "root-commit".
+    # Test the wrappers with their own unique secret, not a generic substring.
+    Query "CREATE USER '$fixtureUser'@'%' IDENTIFIED BY '$fixturePassword';" -Global | Out-Null
+    $fixtureAccountCreated=$true
+    Query "GRANT ALL PRIVILEGES ON ``$database``.* TO '$fixtureUser'@'%'; GRANT SELECT ON mysql.proc TO '$fixtureUser'@'%';" -Global | Out-Null
     Query 'CREATE TABLE before_update(id INT PRIMARY KEY); INSERT INTO before_update VALUES(1);' | Out-Null
     $migration=Join-Path $stage 'database/migrations/209901010000_EnvUpdateFixture.sql'
     [IO.File]::WriteAllText($migration,'CREATE TABLE env_update_witness(id INT PRIMARY KEY); INSERT INTO env_update_witness VALUES(42);',[Text.UTF8Encoding]::new($false))
     $envFile=Join-Path $stage '.env'
-    [IO.File]::WriteAllLines($envFile,@("MARIADB_HOST=$hostValue","MARIADB_PORT=$portValue","MARIADB_DATABASE=$database","MARIADB_USER=$userValue",("MARIADB_PASSWORD='"+$passwordValue+"'")),[Text.UTF8Encoding]::new($false))
+    [IO.File]::WriteAllLines($envFile,@("MARIADB_HOST=$hostValue","MARIADB_PORT=$portValue","MARIADB_DATABASE=$database","MARIADB_USER=$fixtureUser",("MARIADB_PASSWORD='"+$fixturePassword+"'")),[Text.UTF8Encoding]::new($false))
     if(-not $IsWindows){& chmod 600 -- $envFile}
     # A GUI's stale inherited credentials must not choose the target.
     $env:MARIADB_HOST='wrong-host';$env:MARIADB_PORT='1';$env:MARIADB_DATABASE='wrong_db';$env:MARIADB_USER='wrong-user';$env:MARIADB_PASSWORD='wrong-ambient-secret';$env:MYSQL_PWD='wrong-ambient-secret';$env:MARIADB_EXE=$client
@@ -89,6 +97,10 @@ try {
 finally {
     if($database -cnotmatch '^orchids_env_[0-9a-f]{32}$'){throw 'Unsafe fixture cleanup.'}
     Query "DROP DATABASE IF EXISTS ``$database``;" -Global | Out-Null
+    if($fixtureAccountCreated){
+        if($fixtureUser -cnotmatch '^orchid_env_[0-9a-f]{32}$'){throw 'Unsafe fixture account cleanup.'}
+        Query "DROP USER IF EXISTS '$fixtureUser'@'%';" -Global | Out-Null
+    }
     $envFile=Join-Path $stage '.env'
     if(Test-Path -LiteralPath $envFile){Remove-Item -LiteralPath $envFile -Force}
     foreach($name in $previous.Keys){[Environment]::SetEnvironmentVariable($name,$previous[$name])}
