@@ -31,4 +31,4 @@ if ($LASTEXITCODE -ne 0) { throw 'Could not configure hooks: use a Git checkout.
 $hooks = & git -C $repositoryRoot config --local --get core.hooksPath
 if ($LASTEXITCODE -ne 0 -or $hooks -ne '.githooks') { throw 'Git hook configuration failed.' }
 Write-Host 'Prerequisites verified; repository hooks activated. No database objects changed.'
-Write-Host 'Use this configured terminal for Git commits; a previously opened GUI does not inherit its environment.'
+Write-Host 'Git commits read database credentials from the repository .env through the development export wrapper.'

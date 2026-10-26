@@ -15,6 +15,7 @@ foreach($name in @('MARIADB_DATABASE','MARIADB_CHARSET','MARIADB_COLLATION','C11
     $prior[$name]=[Environment]::GetEnvironmentVariable($name)
 }
 $process=$null;$cleanupCode=0
+& (Join-Path $PSScriptRoot 'ExportPreflight.Checks.ps1')
 function Quote-Option([string]$Value) {
     if($Value.Contains("`r") -or $Value.Contains("`n")){throw 'Fixture credential newline unsupported.'}
     '"'+$Value.Replace('\','\\').Replace('"','\"')+'"'
@@ -60,6 +61,19 @@ try {
     if($LASTEXITCODE -eq 0 -or ($oldFailure -join "`n") -notmatch 'endDateTime'){throw 'Original closure failure was not reproduced.'}
     if([int](Query "SELECT COUNT(*) FROM plant WHERE plantId=$witnessPlant AND endDate IS NOT NULL;") -ne 1){throw 'Original partial plant save was not reproduced.'}
     $historicalState=@(Query "SELECT p.endDate,f.endDate IS NULL FROM plant p JOIN flowering f ON f.plantId=p.plantId WHERE p.plantId=$witnessPlant;")
+    # Reproduce the failed pre-commit route in a disposable copy of CURRENT source.
+    $exportSource=Join-Path $root 'export-source/database';$null=New-Item -ItemType Directory -Path $exportSource
+    foreach($directory in @('scripts','schema','checksums','migrations')){Copy-Item -LiteralPath (Join-Path $repo "database/$directory") -Destination $exportSource -Recurse}
+    $exporter=Join-Path $exportSource 'scripts/Export-MariaDBSchema.ps1'
+    function Export-SourceHashes {
+        @(foreach($folder in @('schema','checksums')){Get-ChildItem -LiteralPath (Join-Path $exportSource $folder) -Recurse -File | Sort-Object FullName | ForEach-Object { (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash }}) -join '|'
+    }
+    $beforeExport=Export-SourceHashes
+    $blocked=& pwsh -NoProfile -File $exporter 2>&1
+    $blockedText=($blocked -join ' ') -replace '\s+',' '
+    if($LASTEXITCODE -eq 0 -or $blockedText -notmatch 'Pending database migrations'){throw 'Unmigrated export was not refused with its recovery instruction.'}
+    if((Export-SourceHashes) -ne $beforeExport){throw 'Blocked export changed schema/checksum bytes.'}
+    Write-Host 'Unmigrated export refused; schema/checksum files unchanged.'
     & (Join-Path $repo 'database/scripts/Apply-Migrations.ps1') -MigrationFolder $migrationFolder -PlanOnly
     & (Join-Path $repo 'database/scripts/Apply-Migrations.ps1') -MigrationFolder $migrationFolder
     & (Join-Path $repo 'database/scripts/Apply-Migrations.ps1') -MigrationFolder $migrationFolder
@@ -72,6 +86,11 @@ try {
     if([int](Query "SELECT COUNT(*) FROM schemaversion WHERE scriptName='$migration';") -ne $expectedApplied){throw 'Migration was not applied/skipped exactly once as expected.'}
     $rawHash=(Get-FileHash -LiteralPath (Join-Path $migrationFolder $migration) -Algorithm SHA256).Hash.ToLowerInvariant()
     if((Query "SELECT checksum FROM schemaversion WHERE scriptName='$migration';") -cne $rawHash){throw 'Recorded migration checksum differs from raw file bytes.'}
+    $exported=& pwsh -NoProfile -File $exporter 2>&1
+    if($LASTEXITCODE -ne 0){throw "Migrated export failed: $($exported -join "`n")"}
+    $exportCutoff=(Get-Content -LiteralPath (Join-Path $exportSource 'schema/bootstrap.json') -Raw | ConvertFrom-Json).throughMigration
+    if($exportCutoff -ne '202610261200'){throw 'Migrated export did not preserve C11 cutoff.'}
+    Write-Host 'Migrated export succeeded with C11 cutoff.'
     foreach($row in $oldBaseline){if(@(Query "SELECT CONCAT(scriptName,':',checksum) FROM schemaversion ORDER BY scriptName;") -notcontains $row){throw 'Existing baseline/history changed.'}}
     if($ExportSchema){& (Join-Path $repo 'database/scripts/Export-MariaDBSchema.ps1')}
 
@@ -85,9 +104,9 @@ try {
             $fresh=Join-Path $root 'fresh-schema-only/database';$null=New-Item -ItemType Directory -Path $fresh
             foreach($directory in @('scripts','schema')){Copy-Item -LiteralPath (Join-Path $repo "database/$directory") -Destination $fresh -Recurse}
             if(Test-Path -LiteralPath (Join-Path $fresh 'migrations')){throw 'Fresh fixture contains migration SQL.'}
-            & (Join-Path $fresh 'scripts/rebuild.ps1') -ConfirmDatabase $database
             $freshCutoff=(Get-Content -LiteralPath (Join-Path $fresh 'schema/bootstrap.json') -Raw | ConvertFrom-Json).throughMigration
-            if($freshCutoff -lt '202610261200'){throw 'Fresh schema has not been exported through the C11 migration.'}
+            if($freshCutoff -lt '202610261200'){throw "Fresh schema cutoff is '$freshCutoff'; expected at least 202610261200. Restore the matching generated C11 routine/bootstrap/checksum files and migrate the isolated export database before committing. Do not edit the cutoff by hand."}
+            & (Join-Path $fresh 'scripts/rebuild.ps1') -ConfirmDatabase $database
             if([int](Query "SELECT COUNT(*) FROM schemaversion WHERE scriptName='$migration';") -ne 0){throw 'Fresh creation replayed C11 migration.'}
         }
         $builder=[MySqlConnector.MySqlConnectionStringBuilder]::new()

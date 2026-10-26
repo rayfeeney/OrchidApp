@@ -39,7 +39,9 @@ jobs:
           MARIADB_PORT: 3306
           MARIADB_USER: root
           MARIADB_PASSWORD: root
-        run: ./tests/LifecycleClosure.Checks/Database.Checks.ps1
+        run: |
+          ./tests/LifecycleClosure.Checks/Database.Checks.ps1
+          ./tests/DevelopmentSetup.Checks/DatabaseUpdate.Checks.ps1
 
   linux-backup:
     name: Linux paired backup and recovery
@@ -124,7 +126,9 @@ jobs:
 
       - name: Check development configuration
         shell: pwsh
-        run: ./tests/DevelopmentSetup.Checks/Configuration.Checks.ps1
+        run: |
+          ./tests/DevelopmentSetup.Checks/Configuration.Checks.ps1
+          ./tests/DevelopmentSetup.Checks/DotEnv.Checks.ps1
 
       - name: Check direct Development startup configuration
         run: dotnet run --configuration Release --project tests/DevelopmentConfiguration.Checks/DevelopmentConfiguration.Checks.csproj
@@ -254,7 +258,9 @@ jobs:
       
       - name: Check development configuration
         shell: pwsh
-        run: ./tests/DevelopmentSetup.Checks/Configuration.Checks.ps1
+        run: |
+          ./tests/DevelopmentSetup.Checks/Configuration.Checks.ps1
+          ./tests/DevelopmentSetup.Checks/DotEnv.Checks.ps1
 
       - name: Check direct Development startup configuration
         run: dotnet run --configuration Release --project tests/DevelopmentConfiguration.Checks/DevelopmentConfiguration.Checks.csproj
