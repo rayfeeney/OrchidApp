@@ -1,58 +1,98 @@
-# MariaDB and uploads backup and recovery
+# Linux paired backup and recovery
 
-This runbook covers Linux OrchidApp data backup and isolated recovery. Operators own scheduling, monitoring, credentials and restore verification. Application binaries are replaceable; the database, complete uploads, external configuration and required service/account settings must remain recoverable. Use the [full backup guide](Full-App-Backup-Pre-Upgrade.md) before upgrades.
+Routine backups now keep SQL, complete uploads and external configuration in one snapshot. An older snapshot carries its own older photos; it does not depend on the current uploads mirror. Keep `backup_orchids.sh`, `restore_orchids.sh` and their shared `orchid_backup.py` together under `infrastructure/backups/`. Required tools are Python 3.9+, Bash, MariaDB 10.11 client/dump, systemd and rclone. All must be on the scheduling account's PATH.
 
-## Current routine backup and its limits
+This is data recovery, not a whole-machine image. Retain compatible app binaries/source, OS/service definitions, MariaDB grants and encryption keys separately. Use the [full pre-upgrade guide](Full-App-Backup-Pre-Upgrade.md) for application/service rollback. See [C17 evidence](../../maintenance/c17-linux-paired-backup.md) for local checks and pending Linux/Pi acceptance.
 
-infrastructure/backups/backup_orchids.sh dumps orchids through MariaDB's mysqldump alias with routines/triggers and a single-transaction snapshot, compresses it, copies it to orchidcrypt:, applies remote SQL retention of 14 days, syncs uploads to orchiduploadscrypt: and removes the successful local archive. It uses Bash pipefail/error handling. It does not implement continuous point-in-time log replay or versioned historical photo snapshots.
+## Configure one account and collection
 
-The SQL snapshot and current uploads mirror are not an atomic common snapshot while writes continue. An older SQL dump may refer to files absent from the current mirror. Do not describe any retained DB snapshot as guaranteed full historical collection recovery. [C17](../../code-change-backlog.md#c17) requires portable configuration and a paired DB/filesystem strategy. For an upgrade, use the full stopped-writer backup rather than rely solely on the mirror.
+Choose the operator account, often root when service control and protected settings require it. Test as that account. Copy `infrastructure/backups/backup.example.json` to an absolute private path such as `/etc/orchidapp/backup.json`, owned by root/operator and mode 600. The example must be edited before use.
 
-## Configure and test before scheduling
+- Generate a stable UUID once with `python3 -c 'import uuid; print(uuid.uuid4())'` and set `collection_id`. Keep it with the collection/recovery records; different collections require different identities.
+- Set explicit database, `client_defaults_file`, `uploads_root`, `configuration_root`, `backup_root` and `log_file`. Source trees must be separate from backup/log storage and each other. Source directories must exist. Symlinks and special files are rejected; consolidate external targets deliberately.
+- `configuration_root` holds the external settings/secrets to capture as bytes. Include other required files separately if outside that tree. The restore script stages these settings without activating them.
+- Set an explicit private `rclone_config` and existing dedicated remote directory such as `orchidcrypt:paired`. Configure/test the provider and crypt remote first. Name/access checks do not prove encryption was configured correctly. Preserve the crypt keys and provider credentials off-device.
+- List every writer service and timer in `writer_units`, including importers only where actually installed. Pause other accounts' jobs and ad hoc writers too. Do not list MariaDB itself: it must remain running. Unknown, unloaded, running, failed or transitioning units block manual capture.
+- `keep_local` defaults to 14 and must be at least 1. `timeout_seconds` defaults to 600 per tool/read-lock acquisition. `max_unpack_bytes` defaults to 20 GiB; raise it deliberately for larger collections. Archives allow at most one million entries and 16 MiB of manifest metadata.
 
-1. Choose the backup operator account and one installed script location. For consistency with the installation guide, the working example is /opt/orchidapp/infrastructure/backups/backup_orchids.sh; if installing a separate /usr/local/bin copy, record/update that copy and schedule explicitly.
-2. Inspect the script's current fixed /home/raymond-23 paths and replace/configure the intended backup/log directories through a separately reviewed code change (C17). Ensure those directories are writable before its first log call. The shipped personal defaults are not portable setup.
-3. Verify Bash, the MariaDB client/dump aliases, gzip and rclone. Configure DB credentials for the scheduling account using its protected client configuration or approved local secret mechanism; use mode 600 and the privileges required for the actual dump, not an assumed root account/password. Do not place secrets in command arguments/output.
-4. Configure and test the encrypted rclone remotes orchidcrypt: for SQL and orchiduploadscrypt: for uploads using the selected provider. Preserve the protected rclone config/encryption keys off-device. Remote names alone do not create/configure encryption or prove upload completion.
-5. Confirm the actual database endpoint/name and complete upload root. Test a backup, review exit/logs and verify the exact remote object. Test recovery in an isolated server before depending on it. Cron must run as the account whose credentials/config were tested.
+The backup root must be owned by root/operator and mode 700. Config JSON, MariaDB defaults, rclone config and logs must be mode 600 or stricter. Missing backup/log directories are created before logging, with private permissions; broad existing permissions fail validation. Protect parent directories from untrusted writers. Allow space for copied payload, archive, extraction and downloaded verification copy. Retention extracts one candidate at a time.
 
-**Do not schedule the unconfigured personal-path script.** Once those prerequisites and the reviewed script change are complete, a user crontab can invoke that exact installed script daily. Record its path/account and log destination, and monitor failures. No scheduled run exists merely because this guide contains an example. Configure rotation for the actual logs and permissions; do not blindly copy another user's home path.
+Use options understood by both MariaDB client and dump in the shared defaults file:
 
-## Select one exact recovery object
-
-Use an isolated MariaDB instance/server for testing, not production. A dump can contain CREATE DATABASE/USE statements, routines and definers: a client database argument does not override SQL inside the dump. The routine script currently creates a single-database dump without --databases; the full pre-upgrade dump includes database-selection statements. Always inspect/trust the source and isolate the server regardless of format.
-
-Choose one trusted filename from the remote. The routine script uses orchids_<date>_<time>.sql.gz, not backup.sql.gz. Substitute the exact object below; do not feed a wildcard of multiple backups into an import:
-
-```bash
-set -o pipefail
-restore_dir="$(mktemp -d)"
-chmod 700 "$restore_dir"
-backup_name='orchids_YYYY-MM-DD_HH-MM-SS.sql.gz'
-rclone copyto "orchidcrypt:${backup_name}" "$restore_dir/$backup_name"
-gzip -t "$restore_dir/$backup_name"
-gzip -dc "$restore_dir/$backup_name" > "$restore_dir/selected.sql"
+```ini
+[client]
+protocol=tcp
+host=127.0.0.1
+port=3306
+user=YOUR_BACKUP_ACCOUNT
+password="YOUR_PRIVATELY_CONFIGURED_PASSWORD"
 ```
 
-Stop on every failed command; the filename above is a placeholder to replace, not a request to fetch all objects. Preserve the original archive. Verify its integrity/provenance and determine which upload snapshot matches it. A current mirror is not automatically the right match for an old DB snapshot.
+These are placeholders; use MariaDB option-file escaping for real values. Do not put client-only options in shared `[client]`. The backup account needs tested access to tables/views/routines/triggers/events and permission to acquire a global read lock. Runtime app grants are insufficient. Validate the actual grants on an isolated server. Passwords come from the protected file, never command arguments or routine logs.
 
-## Isolated restore and acceptance
+## Capture and scheduling
 
-Provision a disposable MariaDB target and protected client credentials that cannot reach the live instance. Create an empty recovery database with utf8mb4/utf8mb4_unicode_ci if the chosen dump does not create its own. Import exactly selected.sql using the isolated endpoint and intended database; if its SQL selects orchids, isolate the whole instance rather than assuming orchids_restore_test overrides it.
+For an installation where you already stopped all writers:
 
-Recover the matching complete uploads into a separate test directory, never sync over production as a test. Restore necessary account grants/configuration separately; database dumps do not generally include server accounts or OS services. Point an isolated compatible OrchidApp build at that data and check:
+```bash
+sudo bash /opt/orchidapp/infrastructure/backups/backup_orchids.sh \
+  --config /etc/orchidapp/backup.json --writers-stopped
+```
 
-- Schema, required reference values, representative row counts and no import errors.
-- Plants, tags, taxonomy, events/lineage, actual plant/taxon photos and writable paths.
-- Correct settings, a successful restart and a new disposable save/reopen/photo operation.
-- No unexpected monitoring dependency on a general install; bespoke feeds only on the owner's configured installation with explicit Monitoring:Enabled opt-in.
+The flag confirms all writers, including unsupervised jobs, are stopped. Configured units must be loaded, inactive and dead before and after capture. Alternatively, `--stop-writers` stops configured units and restores only those previously active. Timers stop before services; services restart before timers. Previously inactive units remain inactive. A restart failure returns nonzero even when an archive already exists; inspect unit state. The script does not start an optional importer that was absent/inactive.
 
-SHOW TABLES, a nonempty dump, matching hash or process success is not a full restore test. Preserve evidence and the trusted input until acceptance is recorded. Dispose of isolated fixtures through your approved local process only after verification; no production cleanup command is part of this guide.
+One persistent MariaDB connection holds `FLUSH TABLES WITH READ LOCK` throughout file copying/hashing, active plant/taxon photo/thumbnail checks and SQL export including routines, triggers and events. It blocks database writes/DDL across the selected server, so plan the outage. Upload/config inventories are compared before copying, against the copies, and again after export. Missing/changed files/references or a lost lock prevent a completed snapshot. Closing the connection releases its own lock even on failure.
 
-## Recovery onto a replacement Linux system
+This remains a stopped-writer operating contract: direct filesystem writers outside the configured units must be paused. Before/after hashes cannot prove no transient write was made and reverted. Do not run it as an online backup while uploads continue. A killed process or host shutdown can leave units stopped and a stale `.paired-operation.lock`; inspect the owner, processes and temporary directories before manually clearing it. Stale locks are never removed automatically.
 
-Use the [installation guide](installation-upgrade.md) only for tools, account/configuration, compatible app publication and service registration. **Do not run its fresh schema creation over restored data.** Restore one selected DB/upload pair and external configuration into the replacement environment, re-establish required grants/service permissions, then start the compatible app and run the acceptance checks above. A subsequent upgrade is a separate controlled operation after recoverability is proven.
+After manual capture and isolated recovery pass, a root crontab could use:
 
-For a full pre-upgrade bundle, restore the app/config/service definitions appropriate to the captured revision in an isolated replacement environment, checking actual paths, ownership, service account and MariaDB grants. The bundle records effective units as text plus original local definitions; text output is reference material, not a drop-in service installer. Validate which metadata/symlink targets must be restored. Whole-machine recovery remains operational acceptance work, not an automated guarantee.
+```cron
+0 2 * * * /bin/bash /opt/orchidapp/infrastructure/backups/backup_orchids.sh --config /etc/orchidapp/backup.json --stop-writers
+```
 
-Protect backups and keys, verify off-device availability, review logs and test recovery at least quarterly and after backup/restore changes. Investigate missing files or partial recovery before using the recovered collection or replacing the only trusted backup. See [C17/C19](../../code-change-backlog.md) for pending consistency/readiness work.
+This does not install a schedule. Set/test the cron PATH, service-control rights and failure notification, rotate the configured log and test with a minimal environment as the scheduling account. Absolute credentials/rclone config keep interactive and scheduled runs consistent. Check the latest run's exit and remote read-back/restart messages; an old successful log line proves nothing about today's job. Real cron/systemd/Pi acceptance remains required.
+
+## Snapshot format, remote verification and retention
+
+`orchidpair-<UTC timestamp>-<UUID>.tar.gz` contains `manifest.json`, `database.sql`, `uploads/` and `configuration/`. Hidden files and empty directories are included. SHA-256/size inventories and active photo references are checked after archive creation. Older unsupported photo schemas fail rather than skipping reference checks. OS ownership/modes/ACLs are not restored.
+
+The exact archive is uploaded with `rclone copyto --immutable`, downloaded again and compared byte-for-byte by SHA-256 before success or pruning. Upload/read-back failure returns nonzero and retains the verified local archive. The tool never syncs/deletes the current uploads mirror. Hashes detect corruption, not authenticity: accept only trusted snapshots from protected storage.
+
+Local retention runs only after verified remote read-back. It keeps the current and newest verified same-collection snapshots up to `keep_local`; candidates must be direct files matching the new generated pattern. Each is privately extracted and verified, then rehashed immediately before deletion. Unknown, corrupt, foreign-collection, nested and legacy files remain. A sibling `<archive>.keep` pins a snapshot outside the count. Restore automatically pins a direct input inside its configured backup root before SQL changes. Remove pins only after recovery acceptance and another trusted copy exist. The count is not a disk-space cap.
+
+There is no automatic remote deletion. Review provider capacity and manually retain/remove complete paired objects according to the recovery policy, preserving recovery inputs and verified off-device copies. The previous 14-day remote SQL deletion is removed. Legacy SQL objects and the old uploads mirror are untouched and are not retroactively historical pairs.
+
+## Restore one exact trusted snapshot
+
+Provision an isolated MariaDB server unreachable by the live application, disable its event scheduler, and create an empty database with the same name as the snapshot. SQL may contain qualified routines/definers; passing another client database name does not redirect arbitrary SQL. Never test on the live server, and never run fresh schema creation over recovered data.
+
+Create a separate protected target JSON: source collection UUID/database name, isolated target client defaults, target's stopped writer units, a private backup/scratch root and log. Restore uses those common fields; source upload/configuration/remotes are not used. Fetch one exact object with the explicit protected rclone config and preserve it:
+
+```bash
+rclone --config /etc/orchidapp/rclone.conf copyto \
+  'orchidcrypt:paired/EXACT_SELECTED_SNAPSHOT.tar.gz' \
+  '/private/recovery/EXACT_SELECTED_SNAPSHOT.tar.gz'
+
+bash /opt/orchidapp/infrastructure/backups/restore_orchids.sh \
+  --config /private/recovery/target.json \
+  --archive /private/recovery/EXACT_SELECTED_SNAPSHOT.tar.gz \
+  --destination /private/recovery/recovered-data \
+  --confirm-isolated --confirm-database orchids
+```
+
+Replace placeholders/database name explicitly; never use wildcards. Destination must be absent, with an existing parent, separate from archive/backup storage. Existing uploads/settings are never overwritten. Target database must already exist and have no tables/views/routines/events. Isolation confirmation is the operator's assertion, not automatic proof of network isolation.
+
+Before import, restore rejects traversal, duplicate/link/special entries, oversized metadata/payloads, unsupported formats, hash/inventory mismatches, missing active photos, wrong collection or database name, and an input that changes during validation. It creates private plain files/directories and ignores archived owners/modes.
+
+`RESTORE-PENDING.json` is written in the new destination before SQL import. Failure preserves input and marker and returns nonzero with a warning that SQL may be partially applied. DDL is not automatically rolled back. Inspect the disposable target/input before any retry; do not clear a marker and retry into partial tables. Private tool stderr is retained in mode-600 `.tool-error-*.log` files under the scratch/backup root; it can contain secrets/SQL and must be reviewed privately before sharing.
+
+Successful file/import/reference checks rename the marker to `RESTORED-VERIFY-APPLICATION.json`. This means data was staged, not that the application is ready. Settings remain in `destination/configuration`: privately adjust endpoint/upload/account paths and deploy only the needed settings. Do not activate captured source credentials against the live installation. Recreate database grants/service definitions and appropriate ownership/modes separately. Backup credentials, OS ACLs/xattrs and MariaDB server accounts are not automatically installed.
+
+## Application and replacement acceptance
+
+Point a compatible isolated publication at the recovered database and `destination/uploads`. Check required seeds, representative rows and procedures, plant/taxon photos/thumbnails, settings, restart and a new disposable save/upload/reopen. Re-establish runtime permissions; files initially belong to the backup operator. Keep monitoring off on general installations; bespoke feeds belong only to the owner's installation.
+
+Keep input/pin/evidence until another verified recovery route exists. An old paired archive carries its own files; old standalone `.sql.gz` files require separate proof of matching uploads and remain a manual recovery format. Use the [installation guide](installation-upgrade.md) for replacement tools/accounts/compatible binaries and service registration without schema creation over restored data. Apply later migrations only as a separate controlled upgrade after recovery acceptance.
+
+Test recovery quarterly and after changing scripts, credentials, providers or runtime. Process success, hashes and row counts alone do not certify whole-machine recovery.

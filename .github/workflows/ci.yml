@@ -8,6 +8,41 @@ on:
 
 jobs:
 
+  linux-backup:
+    name: Linux paired backup and recovery
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install backup test tools
+        run: sudo apt-get update && sudo apt-get install -y mariadb-client rclone
+      - name: Check Linux backup wrapper syntax
+        run: |
+          bash -n infrastructure/backups/backup_orchids.sh
+          bash -n infrastructure/backups/restore_orchids.sh
+          bash infrastructure/backups/backup_orchids.sh --help
+          bash infrastructure/backups/restore_orchids.sh --help
+      - name: Check paired snapshots and isolated recovery
+        shell: pwsh
+        env:
+          MARIADB_HOST: 127.0.0.1
+          MARIADB_PORT: 3306
+          MARIADB_USER: root
+          MARIADB_PASSWORD: root
+        run: ./tests/LinuxBackup.Checks/Database.Checks.ps1
+
   build:
     name: Build (linux-arm64)
     runs-on: ubuntu-latest
@@ -207,6 +242,13 @@ jobs:
         run: |
           ./tests/BackupRestore.Checks/Policy.Checks.ps1
           & powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tests/BackupRestore.Checks/Policy.Checks.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Check Windows backup retention
+        shell: pwsh
+        run: |
+          ./tests/BackupRestore.Checks/Retention.Checks.ps1
+          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tests/BackupRestore.Checks/Retention.Checks.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Check Windows backup and restore round trip

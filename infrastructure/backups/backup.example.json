@@ -1,0 +1,15 @@
+{
+  "collection_id": "REPLACE-WITH-A-STABLE-UUID",
+  "database": "orchids",
+  "client_defaults_file": "/etc/orchidapp/backup-client.cnf",
+  "uploads_root": "/opt/orchidapp/uploads",
+  "configuration_root": "/etc/orchidapp",
+  "backup_root": "/var/backups/orchidapp",
+  "log_file": "/var/log/orchidapp/backup.log",
+  "writer_units": ["orchidapp.service"],
+  "rclone_config": "/etc/orchidapp/rclone.conf",
+  "remote": "orchidcrypt:paired",
+  "keep_local": 14,
+  "timeout_seconds": 600,
+  "max_unpack_bytes": 21474836480
+}

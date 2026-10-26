@@ -29,7 +29,7 @@ Record actual evidence at each step.
 | [C06](#c06) | P1 | Confirmed source-selection gap | Bind legacy safety backup to the detected source |
 | [C07](#c07) | P1 | Confirmed backup/restore format mismatch | Restore settings from the format written by backup |
 | [C08](#c08) | P1 | Implemented; CI/installed acceptance pending | Make restore failure recoverable and preserve the source ZIP |
-| [C09](#c09) | P2 | Confirmed parameter mismatch | Correct backup retention controls |
+| [C09](#c09) | P2 | Implemented; CI/installed acceptance pending | Correct backup retention controls |
 | [C10](#c10) | P1 | Implemented; CI/installed acceptance pending | Reconcile interrupted and completed legacy migration state |
 | [C11](#c11) | P1 | Confirmed SQL defect | Correct manual lifecycle closure and its failure handling |
 | [C12](#c12) | P2 | Confirmed inconsistency / policy decision required | Make temporal and ended-plant restrictions deliberate |
@@ -37,7 +37,7 @@ Record actual evidence at each step.
 | [C14](#c14) | P2 | Agreed guarantee needs design | Define deterministic history ordering if required |
 | [C15](#c15) | P2 | Confirmed option/implementation mismatch | Implement or retire metadata-stripping configuration |
 | [C16](#c16) | P1 | Confirmed portability/setup gaps | Make developer setup and native dependencies reproducible |
-| [C17](#c17) | P1 | Confirmed personal-path and recovery consistency gap | Make Linux backup/restore portable and paired |
+| [C17](#c17) | P1 | Implemented with local archive/native checks; Linux CI/installation acceptance pending | Make Linux backup/restore portable and paired |
 | [C18](#c18) | P2 | Validation gap / required operational contract | Validate packaged upgrades and recovery including app-only updates |
 | [C19](#c19) | P2 | Documented consistency/readiness gap | Validate database/filesystem/native readiness and photo consistency |
 | [C20](#c20) | P2 | Confirmed test inventory/evidence gap | Keep feature checks and build evidence reproducible |
@@ -156,7 +156,7 @@ Implementation: retained input, verified safety backup, persistent phase journal
 
 ## C09
 
-**Correct backup retention controls** — P2; Confirmed parameter mismatch; status: Open.
+**Correct backup retention controls** — P2; status: Implemented with local retention/native/Desktop checks; CI/installed-machine acceptance pending.
 
 Affected files/areas: app/tools/backup-orchidapp.ps1; src/OrchidApp.Launcher/OrchidAppLauncherForm.cs.
 
@@ -165,6 +165,8 @@ Required work: Reconcile PruneOldBackups, SkipOldBackupPruning and BackupsToKeep
 Dependencies: C06 coordination.
 
 Acceptance: Test retention enabled/disabled, minimum counts, unrelated files and pre-upgrade archives; launcher arguments match declared script parameters.
+
+Implementation: declared skip/count controls, minimum one backup, validated top-level routine candidates, pinned recovery/migration copies, protected safety directories and same-destination backup lock. The Desktop update backup now uses a separate non-pruning directory. Empty/hidden payload entries are preserved during ZIP creation. See [retention contract](windows-backup-format.md#routine-backup-retention) and [C09 evidence](maintenance/c09-backup-retention.md).
 
 ## C10
 
@@ -258,7 +260,7 @@ Implementation: one explicit MARIADB target generates app configuration; committ
 
 ## C17
 
-**Make Linux backup/restore portable and paired** — P1; Confirmed personal-path and recovery consistency gap; status: Open.
+**Make Linux backup/restore portable and paired** — P1; status: Implemented with local archive/native checks; Linux CI/installation acceptance pending.
 
 Affected files/areas: infrastructure/backups/backup_orchids.sh; Linux deployment/support tooling.
 
@@ -267,6 +269,8 @@ Required work: Replace fixed personal home paths with explicit configuration; va
 Dependencies: None.
 
 Acceptance: Isolated account and cron share intended credentials/rclone config; backup/restore round trip checks rows/files/config; old snapshot, concurrent writes and missing files cannot falsely report full recovery.
+
+Implementation: explicit private JSON/client/rclone paths, configured writer stop/restart, persistent database read lock, checked historical SQL/upload/configuration pairs, immutable remote upload/read-back, scoped local retention and isolated non-overwriting restore with a persistent failed-import marker. Legacy remote SQL/mirrors remain untouched. Native MariaDB checks restore an old pair and verify blocked concurrent SQL writes, missing-photo rejection and partial-DDL failure; service/cloud adapters do not certify real systemd/cron/provider/Pi operation. See the [runbook](user-guides/linux/OrchidApp-MariaDB-Backup-and-Restore-Runbook.md) and [C17 evidence](maintenance/c17-linux-paired-backup.md).
 
 ## C18
 

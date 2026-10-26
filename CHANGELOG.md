@@ -1,57 +1,50 @@
-# C10 legacy migration reconciliation
+# C17 Linux paired backup and recovery
 
-Changes only: 17 modified and 4 added repository files, plus this CHANGELOG.md. No deletions or moves. No private configuration, credentials, database contents, photos or runtime binaries are included.
+Changes only: 10 modified and 6 added repository files, plus this CHANGELOG.md. No deletions/moves. No credentials, private .env, collection data, backup archives or runtime binaries are included.
 
 ## Apply
 
-1. Extract over the source repository root containing OrchidApp.sln, accepting replacement of the listed files. This follows C08 and the working C16 .env startup fix. Keep private .env and collection data unchanged.
-2. Review docs/windows-upgrade-contract.md and docs/maintenance/c10-migration-reconciliation.md. Rebuild/repackage Windows from source; this ZIP is not a deployed installer.
-3. Run CI and perform installed-machine acceptance on disposable data. Existing Windows check steps execute the expanded suites without a workflow change.
+1. Extract over the source root containing OrchidApp.sln, replacing only the listed files. This follows C09. It does not install software, change credentials, schedule a job or operate a collection.
+2. Run CI. The new Linux job requires its first GitHub Actions run. Keep backup_orchids.sh, restore_orchids.sh and orchid_backup.py together.
+3. Existing Linux deployments must configure the new explicit JSON/client/rclone paths and Python dependency before invoking/scheduling the replacement backup script. An old no-argument cron invocation now fails safely; update/test it rather than restoring personal hard-coded defaults.
+4. Follow docs/user-guides/linux/OrchidApp-MariaDB-Backup-and-Restore-Runbook.md. Test a manual backup and isolated recovery before scheduling --stop-writers. The scheduled account needs all listed tool, file and service-control permissions.
 
-Old version 1 migration state requires support review. Do not delete migration-state.json, the old installation, migration-target-id or partial destination files to bypass a stop. Version 2 copying can resume only matching recorded ownership; readiness retry never blindly recopies raw database files.
+Each new archive carries its own SQL, uploads and external settings. The tool requires quiescent application writers and holds a server-wide database read lock during capture. Verified immutable remote copy/read-back precedes local retention (default 14, minimum 1). Pinned, foreign/unknown/corrupt and legacy files remain. Remote deletion is manual; previous SQL-only snapshots/current uploads mirror are not converted or deleted.
 
-All 333 existing schema/checksum/historical migration artifacts were verified unchanged. No database migration is required. Development web startup files and C08 backup/restore tools were also verified unchanged.
+Restore requires one trusted archive, an absent output directory and an explicitly confirmed isolated existing empty database with the source name. It does not overwrite current uploads/settings or activate captured configuration. Failed SQL may be partially applied; input and RESTORE-PENDING.json are preserved. After data verification, application/replacement acceptance remains necessary.
+
+All 333 schema/checksum/historical SQL artifacts are unchanged. No migration is required. Every src/ file, Windows backup/restore tool and Windows guide is unchanged, including the working Development startup configuration and C09 safeguards.
 
 ## Files
 
-| Change | Repository path | Description |
+| Change | Repository path | Purpose |
 | --- | --- | --- |
-| Modified | CONTRIBUTING.md | Document migration interruption/readiness checks and source fingerprint precautions. |
-| Modified | RELEASE_NOTES.md | Record C10 missing-file resume, readiness-aware completion and review boundaries. |
-| Modified | docs/code-change-backlog.md | Record implemented C10 reconciliation with CI/installed acceptance still pending. |
-| Modified | docs/documentation-map.md | Link migration reconciliation evidence to the Windows contract. |
-| Modified | docs/index.md | Link C10 evidence. |
-| Added | docs/maintenance/c10-migration-reconciliation.md | Record implementation, local evidence and remaining acceptance limits. |
-| Modified | docs/user-guides/windows/01-InstallOrUpgradeOrchidAppOnWindows.docx | Explain the resume prompt, retained original and support boundaries; preserve all illustrations. |
-| Modified | docs/windows-backup-format.md | Replace the deferred reconciliation pointer with the implemented C10 contract. |
-| Modified | docs/windows-upgrade-contract.md | Document version 2 ownership, atomic writes, copy/readiness phases, source precedence and unsupported old-state handling. |
-| Modified | src/OrchidApp.Launcher/Infrastructure/LegacyDataMigrationService.cs | Reject all existing target MariaDB files, including partial system databases, in the older copy helper. |
-| Added | src/OrchidApp.Launcher/Infrastructure/LegacyMigrationCoordinator.cs | Add ownership-bound, checksum-verified missing-file resume and readiness completion without source deletion or target overwrite. |
-| Modified | src/OrchidApp.Launcher/Infrastructure/LegacySourceSnapshot.cs | Record the original source fingerprint while capture read locks are held. |
-| Added | src/OrchidApp.Launcher/Infrastructure/MigrationFiles.cs | Add safe inventory, SHA-256 fingerprint and contained path helpers. |
-| Modified | src/OrchidApp.Launcher/Infrastructure/MigrationState.cs | Add operation ID, phase, capture path, source fingerprint and copy inventory. |
-| Modified | src/OrchidApp.Launcher/Infrastructure/MigrationStateService.cs | Reject empty/null state and save through a flushed temporary file plus atomic replacement. |
-| Modified | src/OrchidApp.Launcher/OrchidAppLauncherForm.cs | Resume recorded migration under lock; mark completion after database identity/web readiness; block occupied ports/ordinary close and re-read state after locking; guard shutdown identity. |
-| Modified | src/OrchidApp.Launcher/OrchidAppLayoutResolver.cs | Use validated migration ownership to distinguish the exact preserved source from unrelated/changed legacy sources; allow isolated discovery fixtures. |
-| Modified | tests/BackupRestore.Checks/BackupRestore.Checks.csproj | Compile shared migration and layout policy into the existing Windows executable checks. |
-| Modified | tests/BackupRestore.Checks/Database.Checks.ps1 | Test real interrupted raw copy, resume, native startup failure/retry, database identity/completion and next-launch source precedence alongside restore regressions. |
-| Added | tests/BackupRestore.Checks/Migration.Checks.cs | Add disposable migration policy fixtures and integration CLI modes. |
-| Modified | tests/BackupRestore.Checks/Program.cs | Run migration reconciliation scenarios and dispatch fixture CLI modes. |
+| Modified | .github/workflows/ci.yml | Add isolated Linux archive/MariaDB/crypt checks and wrapper smoke checks. |
+| Modified | CONTRIBUTING.md | Document executable checks, disposable-server requirements and remaining platform acceptance. |
+| Modified | RELEASE_NOTES.md | Record paired Linux snapshots and required deployment reconfiguration. |
+| Modified | docs/code-change-backlog.md | Record C17 implementation, evidence and pending Linux/installation acceptance. |
+| Modified | docs/documentation-map.md | Link Linux snapshot ownership/evidence. |
+| Modified | docs/index.md | Link C17 evidence. |
+| Added | docs/maintenance/c17-linux-paired-backup.md | Record actual checks, skipped platforms and operating limits. |
+| Modified | docs/user-guides/linux/Full-App-Backup-Pre-Upgrade.md | Distinguish paired data snapshots from whole-app/OS rollback. |
+| Modified | docs/user-guides/linux/OrchidApp-MariaDB-Backup-and-Restore-Runbook.md | Replace obsolete mirror instructions with configuration, scheduling, paired capture, retention and isolated recovery. |
+| Modified | docs/user-guides/linux/installation-upgrade.md | Add Python requirement and distinguish routine/full-backup dependencies. |
+| Added | infrastructure/backups/backup.example.json | Supply non-secret explicit configuration template requiring a stable collection UUID. |
+| Modified | infrastructure/backups/backup_orchids.sh | Replace personal-path SQL/mirror script with explicit paired backup entry point. |
+| Added | infrastructure/backups/orchid_backup.py | Implement private configuration, writer control/read lock, checked snapshot capture, remote read-back, local retention and failed-restore marker. |
+| Added | infrastructure/backups/restore_orchids.sh | Add matching isolated recovery entry point. |
+| Added | tests/LinuxBackup.Checks/Database.Checks.ps1 | Create/drop only a generated canonical database with protected temporary client defaults for native checks. |
+| Added | tests/LinuxBackup.Checks/checks.py | Add policy fixtures, actual optional crypt backend and generated canonical-schema MariaDB round trip. |
 
-## Validation actually performed
+## Validation actually completed
 
-- Release launcher and fixture builds: zero warnings/errors.
-- All 57 combined source, restore recovery and migration reconciliation executable checks passed. New cases include interrupted copy and matching-file resume; unknown/changed destination rejection; incomplete/full copy with failed state writes; locked completion commit retaining previous JSON; readiness failure without raw recopy; target/source identity, ambiguous roots and unsupported/corrupt/empty state; missing backup, changed capture and residual system database rejection.
-- All 69 Windows/MariaDB 10.11 database checks passed. The suite interrupts an actual raw copy, resumes it, reports a real native server startup failure, retries readiness without recopying, starts/queries the migrated database, records completion and resolves the target with the original retained. The C06/C07/C08 archive, photo/settings byte, failed SQL/import and explicit restore recovery regressions also pass.
-- The fixture database completion test checks database identity and state transitions. The full interactive launcher/web startup path has not been exercised as an installed application here.
-- Windows guide 01 retains all 11 embedded media files. All 12 rendered pages were visually inspected. QA PDF/PNGs remain outside this ZIP.
-- Changed Markdown links, merge-marker checks, unchanged database/startup/restore artifact hashes, ZIP entry list and archived source bytes were checked.
-- Generated database processes were shut down; fixture/log directories remain for diagnosis. No live collection, actual ProgramData collection or user credential file was used. Antivirus remained enabled.
+- Final local suite: 31 discovered tests, 28 passed and 3 explicit platform skips (POSIX permissions, source symlink creation and actual rclone crypt backend).
+- Actual MariaDB 10.11.16 round trip on a newly generated Windows instance and canonical schema/seeds, with no migration replay. It checked old rows/photos/hidden uploads/configuration, blocked concurrent SQL writer, missing photo rejection and persistent partial-DDL recovery state. Service/cloud adapters were simulated; no live data or private environment file was used. The generated database was dropped and owned server shut down.
+- Both Bash wrappers passed installed Git Bash syntax checks. Changed PowerShell parsed without errors. actionlint passed with optional ShellCheck/Pyflakes integrations disabled.
+- Exact changed-file list/ZIP bytes, Markdown links, merge markers, Python syntax, template JSON and unchanged SQL/Windows/startup artifacts were checked. Existing Linux Word guides have no affected script instructions; no Word edit/render was required.
 
-## Operating boundary and next work
+## Limits and next work
 
-Copying is not a cross-directory transaction. Failed or mismatched partial state is retained for resume/review; no automatic deletion or rollback is claimed. Do not run the old database again while relying on its preserved-source fingerprint. Original raw files can change during a database restart even when plant records appear unchanged.
+Linux CI, real systemd/cron/provider credentials, Pi hardware and compatible application save/reopen/replacement acceptance remain pending. CI adds an actual rclone crypt test on local disposable storage; that is not a real cloud-provider test. Direct filesystem writers outside configured units must also be paused. Source hashes cannot detect all transient writes. Database read locks affect the entire selected server, and restored secret configuration needs private review. Interrupted operations can leave stopped units/stale locks; investigate before clearing. Remote retention is manual and local count is not a storage cap.
 
-Completed version 2 ownership distinguishes only the recorded preserved source. Unrelated or changed legacy sources still stop. Old version 1 copy-only state is not promoted automatically. Readiness is database identity plus a successful web response, not proof of every record/photo/device workflow. Missing permissions, incompatible runtime/credentials or damaged inputs may require support.
-
-GitHub Actions, actual installer/interactive acceptance and reviewed real historical installations remain pending. Next in the agreed order is C09 backup retention, then C17 Linux backup/restore.
+Next in the agreed sequence: phase 3, C11 manual lifecycle closure/failure handling.

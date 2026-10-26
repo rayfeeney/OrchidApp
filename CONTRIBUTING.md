@@ -65,11 +65,15 @@ C08 extends those checks with persistent recovery/cloud-copy policy, partial SQL
 
 C10 extends the same executable and database suites with atomic migration state, interrupted-copy reconciliation, ownership/source precedence and readiness-aware completion. Keep the original quiescent: even restarting its database changes raw fingerprint evidence. Missing/changed target files after readiness must not be repaired by blindly recopying a raw database. See [C10 evidence](docs/maintenance/c10-migration-reconciliation.md).
 
+C09 adds tests/BackupRestore.Checks/Retention.Checks.ps1 on both PowerShell versions and real backup retention cases in the disposable database suite. Desktop.Checks.ps1 also checks the protected pre-migration invocation using its recording-only BackupFixture.ps1. Verify unrelated/pinned/pre-upgrade files survive before changing retention. See [C09 evidence](docs/maintenance/c09-backup-retention.md).
+
 Default checks use isolated/substitute data and SQL translation where designed. Optional greenhouse DB/benchmark modes require a disposable instance, never the owner's production database; see the [local guide](docs/local-installation/greenhouse-monitoring.md). Passing these does not prove live save/reopen, native image processing, device behaviour, installer safety or restore completeness.
 
 For docs-only work, check paths, links, commands, setting names, platform scope and Word rendering rather than requiring an app build. For database, backup/restore and package changes, validate the actual affected workflow on an isolated supported target. Preserve the recovery input and verify records, photos, settings and restart behaviour. Inspect git diff --check, staged changes and the completed commit.
 
 ## Current CI limits
+
+C17 provides `python3 tests/LinuxBackup.Checks/checks.py` for archive/service/retention policy and `pwsh ./tests/LinuxBackup.Checks/Database.Checks.ps1` for a generated canonical-schema database on an explicitly selected disposable MariaDB server. Supply explicit MARIADB_HOST, MARIADB_PORT, MARIADB_USER and MARIADB_PASSWORD. The latter drops only its generated database but acquires a server-wide read lock; never target a collection server. Native checks use service/cloud adapters, while an additional rclone crypt test uses local disposable encrypted storage when rclone is installed. The new Linux CI job runs both paths; real systemd/cron/provider/Pi acceptance remains pending. See [C17 evidence](docs/maintenance/c17-linux-paired-backup.md).
 
 C05 replaces CI's duplicated schema assembly loops with the production schema-only creator in a stage without migration SQL. A separate 44-check disposable suite verifies seeds, baseline identity, usable views/plant records, a once-only later migration and negative creation cases. The canonical database is exported and checked for drift separately. See [creation/CI checks](docs/database-creation.md) and [C05 evidence](docs/maintenance/c05-ci-database-acceptance.md). The updated workflow still needs a GitHub Actions run. Real older-release fixtures remain a separate future task.
 
