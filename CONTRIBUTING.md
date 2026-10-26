@@ -81,4 +81,6 @@ The [workflow](.github/workflows/ci.yml) builds/publishes linux-arm64, reconstru
 
 ## Pull requests
 
+For C01–C20 and deployment-affecting work, update the [upgrade action checklist](docs/upgrade-checklist.md) in the same change. Fill the relevant Windows/Linux steps and coverage row with actual migration names, changed settings/defaults, configuration timing and failure/recovery instructions. Pending design must stay visibly pending. Before release, retain a revision-specific checklist and private machine acceptance record; the eventual tracking tool is not yet selected.
+
 Describe the concrete problem and resulting behaviour, operational/compatibility effects, docs updated and checks actually run with their limits. Include new migrations and generated exports for DB changes. Review licences for dependency/distribution changes. Require appropriate CI and local checks; do not describe planned safeguards or unrun tests as completed. Keep credentials, private data, local uploads and unrelated generated changes out of the contribution.

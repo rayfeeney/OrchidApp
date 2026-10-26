@@ -6,6 +6,8 @@ Read [docs/index.md](docs/index.md) and [CONTRIBUTING.md](CONTRIBUTING.md) befor
 
 ## Documentation is part of every code change
 
+Maintain docs/upgrade-checklist.md with every C01–C20 implementation or deployment-affecting change. Update its Windows/Linux actions and issue coverage together; record new settings, exact migrations, one-time actions, recurring verification and recovery implications. Keep unfinished requirements explicitly pending. Release preparation must produce a release-specific checklist and acceptance record; source/CI success alone does not certify an installed upgrade.
+
 - For each code, SQL, script, configuration, dependency, packaging or UI change, review the affected current guides and update them in the same change. Check this even when the code change appears small.
 - Check referenced files, links, commands, setting names/defaults and platform scope against the implementation. Record what was actually validated. Do not claim a build proves install, database, device or recovery behaviour.
 - Keep general installation independent of the owner's bespoke monitoring installation. New databases must be created from database/schema/ and its required reference seeds alone; never create one by replaying database/migrations/. Migrations apply only to changes after creation. Keep baseline metadata compatible without requiring historical migration SQL for creation.
