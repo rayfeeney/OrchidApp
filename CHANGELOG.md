@@ -1,64 +1,66 @@
-# C12 ended plants are read-only
+# C13 structural transaction rollback and concurrency
 
-Changes only: 23 modified and 3 added repository files plus this CHANGELOG.md. No deletions or moves. No private .env, collection data/DB backups or runtime binaries are included. Existing documentation illustrations remain embedded in the two edited Word guides.
+Changes only: 24 modified and 5 added repository files plus this CHANGELOG.md. No deletions or moves. No private .env, collection data, backups or runtime binaries. The existing guide illustrations remain embedded in the two edited Word files.
 
-## Apply to development
+## Apply to source development
 
-1. Extract over the repository root containing OrchidApp.sln, replacing only the listed files. This follows C11 and its .env/CI fixes. It is source, not a Windows installer.
-2. Stop the development app and run this same command from the repository root:
+1. Extract over the repository root containing OrchidApp.sln, replacing the listed files. This follows merged C12. It is source, not a Windows installer.
+2. Stop the development app and run the existing command from the repository root:
 
    pwsh ./scripts/DevSetup/update-database.ps1
 
-3. Retry the normal commit and run CI. The existing repository .env supplies credentials, the command takes its normal SQL backup and applies pending migrations. Do not bypass the hook or edit the generated cutoff. Normal dotnet run and the .env workflow are unchanged.
+3. Commit normally and run CI. The repository .env supplies credentials; the existing wrapper takes its logical backup and applies pending migrations. Keep the pre-commit export guard. Normal dotnet run is unchanged.
 
-## Deploy/upgrade
+## Upgrade Windows or Linux
 
-Existing DBs require 202610261800_EndedPlantReadOnly.sql after C11, through the canonical migration ledger once. Fresh creation uses the regenerated schema/bootstrap and does not replay migrations. Windows uses a fully rebuilt/tested package and its normal Desktop backup/preflight gate. Linux/manual administration requires stopped writers, a verified backup, explicit target and canonical PlanOnly/application, followed by the updated app. No new site setting or historical data conversion is required. Both platform action lists are in docs/upgrade-checklist.md.
+Existing DBs require 202610262000_StructuralTransactions.sql through the canonical migration ledger once. Stop writers and retain a verified recoverable backup. Deploy the matching rebuilt app and generated schema assets together: the preceding procedures can commit the new filter's caller transaction. Windows uses the normal Desktop backup/preflight gate and a fully rebuilt/tested package. Linux/manual administration uses PlanOnly and the canonical runner with its explicit target and operator backup. Fresh creation uses schema/seeds without replaying migrations. No setting change or historical data backfill is required. Exact platform steps are in docs/upgrade-checklist.md.
 
-Ended details, dates, events and photos are read-only through normal workflows, including direct POSTs bypassing buttons; history/photos stay viewable. The procedure also rejects ended detail/reactivation calls and changes to a propagation child's acquisition date. For unended plants, repotting dates are checked, flowering/location corrections preserve existing times, and open flowering overlap checks include later periods. Existing rows/timestamps/photos are not rewritten by the migration.
+Structural failures roll back earlier operation writes and do not commit prior caller work. Normal event/photo/details requests share the parent lock with closure; a waiting writer rechecks the committed end state. Same-second zero-length moves and split interval inversion are refused. Hero selection uses the configured database. Refresh current plant history after a failed save before retrying; no automatic retry is introduced.
 
 ## Files
 
 | Change | Repository path | Purpose |
 | --- | --- | --- |
-| Modified | .gitattributes | Pin the new C12 migration to LF without changing historical migration bytes. |
-| Modified | .github/workflows/ci.yml | Identify the expanded lifecycle/read-only SQL and HTTP job. |
-| Modified | CONTRIBUTING.md | Document the combined C11/C12 acceptance suite. |
-| Modified | RELEASE_NOTES.md | Record the read-only rule, temporal fixes and exact migration. |
-| Modified | database/checksums/schema.json | Official exporter checksum output. |
-| Added | database/migrations/202610261800_EndedPlantReadOnly.sql | Reject ended detail/reactivation calls and protect propagation-origin dates while preserving C11 atomic closure. |
-| Modified | database/schema/bootstrap.json | Official regenerated input hashes and cutoff through C12. |
-| Modified | database/schema/routines/spUpdatePlantDetails.sql | Official exporter output for fresh creation. |
-| Modified | docs/architecture.md | Record the approved ended read-only policy and scope. |
-| Modified | docs/code-change-backlog.md | Record C12 implementation/results and retain C13 concurrency follow-up. |
-| Modified | docs/documentation-map.md | Link the C12 policy/evidence owner. |
-| Modified | docs/index.md | Link C12 acceptance and upgrade guidance. |
-| Modified | docs/maintenance/c11-manual-closure.md | Clarify that C12 supersedes earlier direct end-date correction behavior. |
-| Added | docs/maintenance/c12-ended-plant-policy.md | Record approved rule, implementation, actual tests, guide review and pending targets. |
-| Modified | docs/temporal-design.md | Describe current read-only, lineage, calendar and time-preservation behavior. |
-| Modified | docs/upgrade-checklist.md | List exact Windows/Linux C12 adoption and verification actions. |
-| Modified | docs/user-guides/linux/02-AddAndManagePlantsInOrchidApp-LinuxPi.docx | Apply the same read-only wording with platform guidance preserved. |
-| Modified | docs/user-guides/windows/03-AddAndManagePlantsInOrchidApp.docx | State ended plants are read-only and retain screenshots. |
-| Modified | src/OrchidApp.Web/Pages/Plants/Events/Add.cshtml.cs | Reject ended event POSTs and redirect ended mutating forms to Details. |
-| Modified | src/OrchidApp.Web/Pages/Plants/Events/Edit.cshtml.cs | Reject ended/cross-parent edits, validate repotting dates, preserve existing flowering/location times and correct open overlap checks. |
-| Modified | src/OrchidApp.Web/Pages/Plants/Events/Remove.cshtml.cs | Reject ended/cross-parent removals and scope confirmation/reload queries. |
-| Modified | src/OrchidApp.Web/Pages/Plants/Events/Split.cshtml.cs | Block add-child form requests for ended plants. |
-| Modified | src/OrchidApp.Web/Pages/Plants/Photos/Index.cshtml.cs | Reject photo creation before an imported future acquisition date, retaining ended guards. |
-| Modified | tests/LifecycleClosure.Checks/Database.Checks.ps1 | Upgrade through current migration package and test both policy suites on migrated/fresh DBs; label the new revision. |
-| Added | tests/LifecycleClosure.Checks/EndedPlant.Checks.py | Add 16 actual SQL/HTTP read-only, ownership, lineage and temporal scenarios with unchanged file/DB checks. |
-| Modified | tests/LifecycleClosure.Checks/checks.py | Retain closure regression coverage and assert the new no-reactivation policy. |
+| Modified | .gitattributes | Pin only the new C13 migration to LF for cross-platform raw checksums. |
+| Modified | .github/workflows/ci.yml | Identify the expanded structural transaction/concurrency acceptance job. |
+| Modified | CONTRIBUTING.md | Document the combined lifecycle and structural acceptance checks. |
+| Modified | RELEASE_NOTES.md | Describe C13 behavior and migration/deployment requirements. |
+| Modified | database/checksums/schema.json | Official regenerated checksums. |
+| Added | database/migrations/202610262000_StructuralTransactions.sql | Add parent locking, caller-preserving rollback/savepoints, interval validation and current-database hero selection. |
+| Modified | database/schema/bootstrap.json | Official regenerated manifest and C13 cutoff. |
+| Modified | database/schema/routines/spEditPlantLocation.sql | Official exporter output for fresh schema creation. |
+| Modified | database/schema/routines/spMovePlantToLocation.sql | Official exporter output for fresh schema creation. |
+| Modified | database/schema/routines/spPropagatePlant.sql | Official exporter output for fresh schema creation. |
+| Modified | database/schema/routines/spRemovePlantLocation.sql | Official exporter output for fresh schema creation. |
+| Modified | database/schema/routines/spSetHeroPhoto.sql | Official exporter output for fresh schema creation. |
+| Modified | database/schema/routines/spSplitPlant.sql | Official exporter output for fresh schema creation. |
+| Modified | docs/architecture.md | Record current transaction boundaries and remaining photo-file limits. |
+| Modified | docs/code-change-backlog.md | Record implementation and pending Linux/installed acceptance. |
+| Modified | docs/documentation-map.md | Link C13 evidence to its authoritative owners. |
+| Modified | docs/index.md | Link the C13 acceptance and deployment report. |
+| Added | docs/maintenance/c13-structural-transactions.md | Explain transaction/savepoint rules, actual checks, migration and pending targets. |
+| Modified | docs/temporal-design.md | Replace prior structural transaction gaps with the implemented protocol and limits. |
+| Modified | docs/upgrade-checklist.md | Add exact Windows/Linux C13 adoption, backup, matched-app and acceptance actions. |
+| Modified | docs/user-guides/linux/02-AddAndManagePlantsInOrchidApp-LinuxPi.docx | Apply the same guidance to the Linux/Pi guide. |
+| Modified | docs/user-guides/windows/03-AddAndManagePlantsInOrchidApp.docx | Add refresh-before-retry guidance while preserving all illustrations. |
+| Modified | src/OrchidApp.Web/Pages/Plants/Events/Add.cshtml.cs | Use the enclosing request transaction instead of starting a nested observation transaction. |
+| Modified | src/OrchidApp.Web/Program.cs | Register the scoped plant-write filter alongside existing navigation normalization. |
+| Added | src/OrchidApp.Web/Services/PlantWriteFilter.cs | Hold a parent lock through the write request; reject conflicting IDs; commit only successful handlers. |
+| Modified | src/OrchidApp.Web/infrastructure/StoredProcedureExecutor.cs | Enlist commands in EF transactions and surface trailing CALL errors. |
+| Modified | tests/LifecycleClosure.Checks/Database.Checks.ps1 | Stage genuine preceding definitions and run all three suites on upgraded/fresh fixtures. |
+| Added | tests/LifecycleClosure.Checks/PreC13Structural.sql | Retain the six verified preceding procedure definitions as read-only test input. |
+| Added | tests/LifecycleClosure.Checks/Structural.Checks.py | Add persistent-session failure, caller transaction, concurrency and actual HTTP scenarios. |
 
 ## Validation actually completed
 
-- New Windows MariaDB 10.11.16 fixtures and actual Release web hosts: 16 closure plus 16 C12 scenarios on each upgraded/fresh database, 64 scenario executions with no skips. Subcases cover all event types, details/taxonomy/photo/split/propagation writes, cross-parent IDs, read-only views, temporal invalid/same-day/unknown bounds, time preservation, open overlap and lineage. Failed writes preserved scoped DB values and photo-file hashes.
-- All 44 creation/baseline, 53 migration/export and 10 child-process protocol checks passed. All 18 baseline policy checks and 24 Desktop migration policy scenarios passed, validating 246 migration files.
-- Release build: zero warnings/errors. Policy-project runs reported NU1900 because NuGet vulnerability metadata was unavailable; no completed vulnerability audit is claimed. PowerShell syntax/actionlint passed (optional ShellCheck/Pyflakes disabled).
-- Routine/checksum/bootstrap were regenerated by the official exporter from the migrated pristine schema. All 245 prior migration files, other schema inputs, developer .env helpers, startup configuration and Windows/Linux backup tools are unchanged. ZIP bytes/list, bootstrap hashes, exported routine/migration equivalence, local Markdown links and merge markers were checked.
-- Both platform Word guides retain all 22 media files each byte-for-byte. Both render to 17 pages; all 34 pages were visually inspected, including changes on pages 2, 13 and 14. QA PDFs/PNGs are not separate deliverables.
-- Owned generated DBs/server/web processes were cleaned up; diagnostic fixture directories remain. No owner .env or live/development collection was modified by this work.
+- Windows MariaDB 10.11.16 with actual Release web hosts: 16 closure + 16 C12 + 21 C13 scenarios on each upgraded/fresh database, 106 executions. Additional subcases exercise injected mid-write failures for six operations in owned and caller transactions, caller rollback/connection reuse, observed server lock waits, old repeatable-read snapshots, competing moves/splits/propagations, closure/writer ordering, actual HTTP structural/hero saves, late procedure errors and failed photo-processing database rollback.
+- All 44 creation/baseline, 53 migration/export and 10 child-process protocol checks passed. All 18 baseline policy checks and 24 Desktop migration policy scenarios passed; 247 packaged migrations validated. Release build and workflow/PowerShell syntax checks passed. NU1900 indicates unavailable NuGet vulnerability metadata; no completed vulnerability audit is claimed. Optional ShellCheck/Pyflakes were disabled for actionlint.
+- Genuine preceding definitions were restored before generating the upgrade fixture's manifest. Current canonical routines/checksums/bootstrap were regenerated only through the official exporter. All 246 historical migration files and other schema inputs are unchanged. ZIP file list/bytes, normalized manifest hashes, routine definitions, links, Python syntax and merge markers checked.
+- Both guides remain 17 pages. All 34 rendered pages were visually inspected; page 13 adds refresh-before-retry guidance. All 22 embedded media files per guide are byte-identical. QA PDFs/PNGs are not separate deliverables.
+- Only owned disposable server/DB/web fixtures were used and cleaned up. Diagnostic fixture folders remain. No owner's .env or collection/development DB/photos were changed.
 
-## Remaining acceptance
+## Remaining acceptance and limits
 
-Linux CI, real older-installation/device/installer acceptance remain pending. C13 owns structural rollback and concurrent write/closure coordination; application request guards are not a universal table immutability constraint. Direct administrative SQL is outside normal editing. C14 owns any stronger ordering guarantee; C19 owns broader photo compensation/readiness. No automatic retrospective repair or reactivation path is included.
+Linux CI, installed Windows/Pi and representative old-installation acceptance remain pending. Direct administrative SQL and taxonomy administration are outside the parent-write protocol. Deadlocks can abort a caller's whole transaction. Database rollback does not make filesystem changes atomic: broader photo compensation/readiness remains C19. No historical partial operation is repaired automatically. Migration DDL failures retain their normal pending-marker recovery contract; do not clear markers or downgrade binaries alone to force retry.
 
-Next in the agreed order: C13 structural transaction rollback and concurrency.
+Next in the agreed order: C14 history ordering.

@@ -1,5 +1,9 @@
 # Release notes
 
+## C13 structural transaction rollback and concurrency
+
+Plant writes now hold a shared parent-row lock through their request transaction, including event/photo operations racing with closure. Structural location, split, propagation and hero-photo procedures roll back failures without committing caller work. Existing databases require `202610262000_StructuralTransactions.sql` and the matching app; fresh creation uses the regenerated schema. No settings change or historical data repair is required. See [C13 evidence](docs/maintenance/c13-structural-transactions.md) and [Windows/Linux upgrade actions](docs/upgrade-checklist.md).
+
 ## C12 ended plants are read-only
 
 Ended plants remain viewable but their details, events, photos and lifecycle dates cannot be changed through normal workflows. Event writes are checked on the server and scoped to the owning plant. Active-plant repotting date validation and flowering/location time preservation are corrected. Migration `202610261800_EndedPlantReadOnly.sql` also rejects ended detail/reactivation calls and protects propagation-origin acquisition dates. No historical dates are rewritten. See [C12 guidance](docs/maintenance/c12-ended-plant-policy.md) and the [upgrade checklist](docs/upgrade-checklist.md).

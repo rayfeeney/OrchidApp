@@ -6,7 +6,7 @@ This reference describes the .NET 8 Razor Pages app, MariaDB data model and Wind
 
 The database owns structural integrity and intended lifecycle operations. The app collects/validates input and orchestrates workflows. Tooling exports schema, builds packages and performs checks. Operators configure trusted access, back up durable state and validate recovery. A rule is not proven merely because it is assigned to a layer.
 
-Structural operations should use stored procedures; other entities use established EF Core patterns. Not every procedure is fully failure-atomic or every lifecycle restriction independently enforced in SQL. [C11–C14](code-change-backlog.md) track confirmed defects, policy decisions and integration work. Treat transactional/rollback claims as testable behaviour, not consequences of a START TRANSACTION statement alone.
+Structural lifecycle operations use stored procedures; narrative writes use EF Core. C13 adds rollback handlers and caller-preserving savepoints to move/edit/remove location, split, propagation and hero-photo selection. Normal plant POST handlers hold the same parent-row lock until their database transaction completes, coordinating them with manual closure. Direct administrative writes remain outside this protocol. [C11–C14](code-change-backlog.md) track implementation and platform acceptance; see [C13 evidence](maintenance/c13-structural-transactions.md).
 
 ## Configuration and readiness
 
@@ -42,7 +42,7 @@ Schema and checksum files are generated; do not edit them manually. The hook exp
 
 Plant acquisition/end timestamps describe a correctable collection history, not a universally immutable event log. A split closes one parent and creates at least two independently tagged children; propagation creates a child without ending its parent. Location changes adjust intended contiguous intervals. DB unique keys, constraints and procedures enforce important parts of these rules; handlers also perform checks, with documented gaps. Use [temporal design](temporal-design.md) for exact date/time and rollback limits.
 
-C12 makes ended plants read-only through normal application workflows: details, events, photos and lifecycle dates cannot be changed or reactivated. Their history/photos remain viewable. Corrections on unended plants retain existing times when changing calendar dates; handler ownership and date checks apply before writes. Structural concurrency/rollback remains the separate C13 work.
+C12 makes ended plants read-only through normal application workflows: details, events, photos and lifecycle dates cannot be changed or reactivated. Their history/photos remain viewable. Corrections on unended plants retain existing times when changing calendar dates; handler ownership and date checks apply before writes. C13 serializes plant writes with closure through a shared parent-row lock; error/validation pages roll back request database changes. Photo files and database rows still require the separate C19 compensation work.
 
 Keep parameterised values, trusted procedure identifiers, async I/O and shared procedure-execution infrastructure. Surface expected validation errors appropriately and log operational failures without exposing secrets.
 

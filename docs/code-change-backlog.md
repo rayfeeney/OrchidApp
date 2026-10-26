@@ -33,7 +33,7 @@ Record actual evidence at each step.
 | [C10](#c10) | P1 | Implemented; CI/installed acceptance pending | Reconcile interrupted and completed legacy migration state |
 | [C11](#c11) | P1 | Implemented with local DB/HTTP checks; Linux CI/installation acceptance pending | Correct manual lifecycle closure and its failure handling |
 | [C12](#c12) | P2 | Implemented with local SQL/HTTP checks; Linux CI/installed acceptance pending | Make temporal and ended-plant restrictions deliberate |
-| [C13](#c13) | P2 | Investigation / documented transaction gap | Verify structural transaction rollback and concurrency |
+| [C13](#c13) | P2 | Implemented; CI/installed acceptance pending | Verify structural transaction rollback and concurrency |
 | [C14](#c14) | P2 | Agreed guarantee needs design | Define deterministic history ordering if required |
 | [C15](#c15) | P2 | Confirmed option/implementation mismatch | Implement or retire metadata-stripping configuration |
 | [C16](#c16) | P1 | Confirmed portability/setup gaps | Make developer setup and native dependencies reproducible |
@@ -214,7 +214,7 @@ Implementation: event handlers reject ended writes and scope source IDs to their
 
 ## C13
 
-**Verify structural transaction rollback and concurrency** — P2; Investigation / documented transaction gap; status: Open.
+**Verify structural transaction rollback and concurrency** — P2; implemented in source; CI/Linux and installed acceptance pending.
 
 Affected files/areas: location/split/propagation stored procedures via new migrations; DB integration tests.
 
@@ -225,6 +225,8 @@ Required work: Test actual connection transaction/error behaviour; add appropria
 Dependencies: C11/C12 coordination.
 
 Acceptance: Injected errors and concurrent moves/splits/propagations preserve lineage and nonoverlapping intended intervals, with no partial commit or lingering transaction.
+
+Implementation: migration `202610262000_StructuralTransactions.sql` adds caller-preserving rollback/savepoints and parent-row locking to structural location/split/propagation and hero-photo procedures. A scoped page filter coordinates plant event/photo/details writes with closure, rolls back unsuccessful handlers and rejects route-ID overrides. The procedure executor enlists in the EF transaction and consumes trailing results. Same-second moves and split interval inversion are refused. See [C13 evidence](maintenance/c13-structural-transactions.md) and the platform [upgrade checklist](upgrade-checklist.md). No historical repair or filesystem/database atomicity is claimed.
 
 ## C14
 

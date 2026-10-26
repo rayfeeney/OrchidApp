@@ -9,7 +9,7 @@ on:
 jobs:
 
   lifecycle-closure:
-    name: Lifecycle closure and ended plant policy
+    name: Lifecycle closure, read-only and structural transactions
     runs-on: ubuntu-latest
     services:
       mariadb:
