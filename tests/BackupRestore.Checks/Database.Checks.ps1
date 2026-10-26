@@ -233,6 +233,35 @@ try {
     Check 'Owned-process completion clears pending marker' (-not (Test-Path -LiteralPath $pendingPath))
     Start-Fixture (Join-Path $target 'data/mariadb') $TargetPort
     Check 'Restored database restarts with expected records' ((Query $TargetPort 'SELECT plantNotes FROM orchids.plant;') -ceq 'Round trip café')
+    $retentionRoot=Join-Path $root 'routine retention'
+    New-Item -ItemType Directory -Path $retentionRoot | Out-Null
+    $retentionPayload=Join-Path $root 'retention payload'
+    Expand-Archive -LiteralPath $normalZip -DestinationPath $retentionPayload
+    . (Join-Path $RepoRoot 'app/tools/Backup-Contract.ps1')
+    $oldRoutines=@()
+    foreach ($number in @(1,2)) {
+        $archiveName='OrchidAppBackup_20000101_'+$number.ToString('000000')
+        $retentionManifest=Get-Content -LiteralPath (Join-Path $retentionPayload 'manifest.json') -Raw | ConvertFrom-Json
+        $retentionManifest.backupName=$archiveName
+        $retentionManifest | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $retentionPayload 'manifest.json') -Encoding UTF8
+        $archive=Join-Path $retentionRoot ($archiveName+'.zip')
+        New-OrchidBackupArchive $retentionPayload $archive
+        $oldRoutines+=$archive
+    }
+    $unrelatedZip=Join-Path $retentionRoot 'trusted-separate-copy.zip';Copy-Item -LiteralPath $normalZip -Destination $unrelatedZip
+    Run-Tool 'backup-orchidapp.ps1' @('-BackupsRoot',$retentionRoot,'-MariaDbPort',"$TargetPort",'-BackupsToKeep','1')
+    Check 'Native normal backup prunes only old routine archives' (-not (Test-Path -LiteralPath $oldRoutines[0]) -and -not (Test-Path -LiteralPath $oldRoutines[1]))
+    Check 'Native retention leaves unrelated recovery ZIP intact' ((Get-FileHash -LiteralPath $unrelatedZip).Hash -eq (Get-FileHash -LiteralPath $normalZip).Hash)
+    $latestRoutine=@(Get-ChildItem -LiteralPath $retentionRoot -Filter 'OrchidAppBackup_*.zip' -File)
+    Check 'Native minimum count retains the new verified archive' ($latestRoutine.Count -eq 1)
+    Run-Tool 'backup-orchidapp.ps1' @('-BackupsRoot',$retentionRoot,'-MariaDbPort',"$TargetPort",'-BackupsToKeep','1','-SkipOldBackupPruning')
+    Check 'Native skip switch preserves previous routine backup' (@(Get-ChildItem -LiteralPath $retentionRoot -Filter 'OrchidAppBackup_*.zip' -File).Count -eq 2 -and (Test-Path -LiteralPath $latestRoutine[0].FullName))
+    $beforeFailure=@(Get-ChildItem -LiteralPath $retentionRoot -Filter '*.zip' -File).Count
+    $retentionPhoto=Join-Path $target "uploads/plants/$plantId/photo.jpg"
+    $retentionHeld=[IO.File]::Open($retentionPhoto,[IO.FileMode]::Open,[IO.FileAccess]::Read,[IO.FileShare]::None)
+    try { Run-Tool 'backup-orchidapp.ps1' @('-BackupsRoot',$retentionRoot,'-MariaDbPort',"$TargetPort",'-BackupsToKeep','1') 'another process' }
+    finally { $retentionHeld.Dispose() }
+    Check 'Failed new backup does not prune existing archives' (@(Get-ChildItem -LiteralPath $retentionRoot -Filter '*.zip' -File).Count -eq $beforeFailure)
     Run-Tool 'backup-orchidapp.ps1' @('-BackupType','PreUpgrade','-BackupsRoot',$backups,'-MariaDbPort',"$SourcePort") 'explicit LegacySourceRoot'
     Remove-Item -LiteralPath (Join-Path $snapshot "wwwroot/uploads/plants/$plantId/photo.jpg")
     Run-Tool 'backup-orchidapp.ps1' @('-BackupType','PreUpgrade','-LegacySourceRoot',$snapshot,'-BackupsRoot',$backups,'-MariaDbPort',"$SourcePort",'-SkipOldBackupPruning') 'photo is missing'

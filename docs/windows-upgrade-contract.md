@@ -243,10 +243,17 @@ copy. A single-transaction dump protects transactional database reads but does
 not establish a common snapshot with uploads. Concurrent changes need explicit
 consistency testing and operational control.
 
-The legacy launcher now passes the declared `SkipOldBackupPruning` switch.
-General retention remains C09: the script still tests an undeclared
-`PruneOldBackups` variable. Do not claim that the nominal
-`BackupsToKeep` setting is reliably enforced until corrected and tested.
+Routine backup now retains three verified unprotected archives by default,
+always including the new current ZIP. `BackupsToKeep` must be at least one;
+`SkipOldBackupPruning` disables deletion. PreUpgrade backups and protected
+recovery directories never participate in routine pruning. Recorded restore
+inputs and migration/safety copies are pinned; unrelated, unsupported or corrupt
+files remain for review. These extras may exceed the requested count.
+See the [retention contract](windows-backup-format.md#routine-backup-retention).
+
+The Desktop database-update backup goes to `backups/pre-migration` with pruning
+disabled. Routine retention cannot remove those safety copies. Archive creation
+also preserves empty upload directories and hidden payload files.
 
 After a successful normal local backup, the launcher can copy the latest ZIP to
 the configured cloud-synchronised folder as `OrchidAppDataBackup.zip`, replacing
@@ -318,7 +325,7 @@ for the known gaps above.
 
 ## Required follow-up and current operator boundary
 
-Source-bound capture/backup and archive settings compatibility (C06/C07), explicit restore recovery (C08) and migration reconciliation (C10) are implemented with local checks. New CI and installed-machine acceptance remain pending. [C09 and C18](code-change-backlog.md) retain retention and installed-upgrade work. Preserve a verified off-computer recovery copy before upgrading and obtain support for busy/ambiguous sources, changed partial targets or unsupported old state. See [C10 evidence](maintenance/c10-migration-reconciliation.md).
+Source-bound capture/backup and archive settings compatibility (C06/C07), explicit restore recovery (C08), migration reconciliation (C10) and protected routine retention (C09) are implemented with local checks. New CI and installed-machine acceptance remain pending under [C18](code-change-backlog.md#c18). Preserve a verified off-computer recovery copy before upgrading and obtain support for busy/ambiguous sources, changed partial targets or unsupported old state. See [C10 evidence](maintenance/c10-migration-reconciliation.md) and [C09 evidence](maintenance/c09-backup-retention.md).
 
 Before restoring on a replacement PC, preserve the trusted ZIP separately and do not run a new empty-data backup into the only fixed-name cloud copy. A cloud destination is not required to select a restore ZIP. Configure future cloud backups only after verifying plants, photos, settings and subsequent startup. Included settings now restore through the supported archive layouts; verify them before enabling future backups.
 

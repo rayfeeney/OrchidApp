@@ -63,7 +63,23 @@ Completed operation journals remain. The launcher refuses to copy a later fixed-
 
 If web shutdown fails before restore starts, the launcher reports that no restore began and restores usable controls. If the web app has stopped but preflight fails, Open and Backup stay disabled and Restore remains available; close and reopen for normal startup when no pending marker exists. After a destructive failure, the persistent recovery state takes precedence.
 
-Retention remains C09. The legacy invocation now passes the declared SkipOldBackupPruning switch; the existing general pruning condition is still unresolved and is not certified here.
+## Routine backup retention
+
+Normal backup prunes only after the newly written ZIP has passed the supported archive checks. BackupsToKeep defaults to 3 and must be at least 1. SkipOldBackupPruning disables deletion. PreUpgrade always disables pruning, whether or not that switch is supplied. There is no PruneOldBackups parameter or ambient-variable control.
+
+The current verified ZIP is always kept, even if clocks/timestamps put it before older files. Other unprotected routine archives are considered by LastWriteTimeUtc descending, then filename descending. Retention keeps up to the requested count of verified unprotected archives, plus all protected or unrecognised files. It validates candidates using the existing archive contract (including hashes when the format provides them) before counting/removing them, and checks ZIP hashes again before deletion.
+
+Candidates must be direct files in the selected backup directory, have the known OrchidAppBackup timestamp filename, matching Normal backup metadata/name and compatible collection paths. Both the original timestamp names and current millisecond/GUID names are supported. No recursion occurs. Unrelated names, pre-upgrade archives, other collection metadata and corrupt/unreadable/unsupported ZIPs are preserved for review and may leave more files than BackupsToKeep.
+
+Restore history pins original selected ZIPs, retained inputs and safety backups. Migration state pins its safety backup. The restore-recovery tree and backups/pre-upgrade and backups/pre-migration trees are exempt from routine pruning. Unreadable/incomplete recovery or migration records, or a pending restore, prevent retention deletion. Protection is rechecked before each planned removal.
+
+The Desktop database-update backup now uses backups/pre-migration with pruning disabled. Legacy migration continues to use backups/pre-upgrade, and restore safety copies stay within their unique restore-recovery operation. The launcher requests Normal, the explicit routine backup root and BackupsToKeep=3 for manual/automatic routine backups. These are separate from the single fixed-name cloud copy and do not imply provider version history.
+
+An exclusive file lock serialises cooperating backup commands using the same destination directory. It does not freeze web writes or coordinate every source/destination combination. Validation may need temporary extraction space; one candidate payload is retained at a time during inspection. Failure to produce a valid new backup never triggers pruning. A retention/deletion warning retains the verified new backup and is logged without converting it into a failed backup. Review those warnings and preserved files rather than assuming an exact disk-space cap.
+
+ZIP creation now preserves empty directories and hidden files. This keeps a valid version 2 uploads directory even before the first photo is added; the archive format has not changed. See [C09 validation](maintenance/c09-backup-retention.md).
+
+## Checks
 
 Run the relevant checks from the repository root:
 
@@ -71,6 +87,8 @@ Run the relevant checks from the repository root:
 dotnet run --configuration Release --project tests/BackupRestore.Checks/BackupRestore.Checks.csproj
 pwsh ./tests/BackupRestore.Checks/Policy.Checks.ps1
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tests/BackupRestore.Checks/Policy.Checks.ps1
+pwsh ./tests/BackupRestore.Checks/Retention.Checks.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tests/BackupRestore.Checks/Retention.Checks.ps1
 pwsh ./tests/BackupRestore.Checks/Database.Checks.ps1 -MariaDbRuntimeRoot ./app/runtime/mariadb/win-x64
 ```
 

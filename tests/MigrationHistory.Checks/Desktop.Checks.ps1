@@ -60,7 +60,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw ($setupOutput -join "`n") }
     # Successful-backup simulation is isolated to this disposable test stage.
     # It does not certify operational backups and is never shipped as app code.
-    [IO.File]::WriteAllText((Join-Path $stage 'tools/backup-orchidapp.ps1'), "'synthetic' | Add-Content (Join-Path `$PSScriptRoot '../backup-count.txt'); exit 0", [Text.UTF8Encoding]::new($false))
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'BackupFixture.ps1') -Destination (Join-Path $stage 'tools/backup-orchidapp.ps1')
     Start-StagedApp 'Database is up to date.'
     Query 'ALTER TABLE schemaversion ENGINE=MyISAM;' | Out-Null
     Start-StagedApp 'schemaversion must use InnoDB' $true
@@ -73,6 +73,8 @@ try {
     Start-StagedApp 'Database updates applied: 1'
     Start-StagedApp 'Database is up to date.'
     Check 'Once-only SQL and backup' (([int](Query 'SELECT COUNT(*) FROM desktop_witness;')) -eq 1 -and @(Get-Content (Join-Path $stage 'backup-count.txt')).Count -eq 1)
+    $backupArguments=Get-Content -LiteralPath (Join-Path $stage 'backup-arguments.json') -Raw | ConvertFrom-Json
+    Check 'Desktop backup uses declared protected safety arguments' ($backupArguments.BackupType -eq 'Normal' -and $backupArguments.SkipOldBackupPruning -eq $true -and $backupArguments.BackupsRoot.Replace('\','/').EndsWith('/OrchidApp/backups/pre-migration',[StringComparison]::OrdinalIgnoreCase))
     foreach ($name in @('209902010000_One.sql','209902010000_Two.sql')) { [IO.File]::WriteAllText((Join-Path $folder $name),'SELECT 1;') }
     Start-StagedApp 'Duplicate migration timestamp' $true
     foreach ($name in @('209902010000_One.sql','209902010000_Two.sql')) { Remove-Item -LiteralPath (Join-Path $folder $name) }

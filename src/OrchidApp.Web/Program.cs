@@ -335,14 +335,11 @@ static void RunPreMigrationBackup(string runtimeRoot)
 
     Console.WriteLine("Creating a safety backup before applying database updates...");
 
-    var process = new Process
+    using var process = new Process
     {
         StartInfo = new ProcessStartInfo
         {
             FileName = "powershell.exe",
-            Arguments =
-                "-NoProfile -ExecutionPolicy Bypass " +
-                $"-File \"{backupScript}\"",
             WorkingDirectory = runtimeRoot,
             UseShellExecute = false,
             RedirectStandardOutput = true,
@@ -350,6 +347,10 @@ static void RunPreMigrationBackup(string runtimeRoot)
             CreateNoWindow = true
         }
     };
+    var safetyRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "OrchidApp", "backups", "pre-migration");
+    foreach (var argument in new[] { "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", backupScript,
+        "-BackupType", "Normal", "-BackupsRoot", safetyRoot, "-SkipOldBackupPruning" })
+        process.StartInfo.ArgumentList.Add(argument);
 
     process.OutputDataReceived += (s, e) =>
     {
