@@ -8,6 +8,39 @@ on:
 
 jobs:
 
+  lifecycle-closure:
+    name: Lifecycle closure migration and HTTP
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Install MariaDB client
+        run: sudo apt-get update && sudo apt-get install -y mariadb-client
+      - name: Check upgraded and schema-only closure with actual HTTP
+        shell: pwsh
+        env:
+          MARIADB_HOST: 127.0.0.1
+          MARIADB_PORT: 3306
+          MARIADB_USER: root
+          MARIADB_PASSWORD: root
+        run: ./tests/LifecycleClosure.Checks/Database.Checks.ps1
+
   linux-backup:
     name: Linux paired backup and recovery
     runs-on: ubuntu-latest

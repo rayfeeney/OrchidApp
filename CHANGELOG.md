@@ -1,50 +1,60 @@
-# C17 Linux paired backup and recovery
+# C11 atomic manual plant closure
 
-Changes only: 10 modified and 6 added repository files, plus this CHANGELOG.md. No deletions/moves. No credentials, private .env, collection data, backup archives or runtime binaries are included.
+Changes only: 13 modified and 6 added repository files, plus this CHANGELOG.md. No deletions/moves. No private settings/credentials, collection data, photos or runtime binaries are included.
 
-## Apply
+## Apply to source and development
 
-1. Extract over the source root containing OrchidApp.sln, replacing only the listed files. This follows C09. It does not install software, change credentials, schedule a job or operate a collection.
-2. Run CI. The new Linux job requires its first GitHub Actions run. Keep backup_orchids.sh, restore_orchids.sh and orchid_backup.py together.
-3. Existing Linux deployments must configure the new explicit JSON/client/rclone paths and Python dependency before invoking/scheduling the replacement backup script. An old no-argument cron invocation now fails safely; update/test it rather than restoring personal hard-coded defaults.
-4. Follow docs/user-guides/linux/OrchidApp-MariaDB-Backup-and-Restore-Runbook.md. Test a manual backup and isolated recovery before scheduling --stop-writers. The scheduled account needs all listed tool, file and service-control permissions.
+1. Extract over the repository root containing OrchidApp.sln, replacing only listed source files. This follows C17 and the maintained C01–C20 upgrade checklist. It is not an installer or a live database update.
+2. BEFORE COMMITTING, back up the isolated development/export database, configure its explicit MARIADB administration environment, review Apply-Migrations.ps1 -PlanOnly and apply through the canonical runner. The new file is 202610261200_AtomicManualPlantClosure.sql. Normal Development dotnet run does not migrate DBs and the admin scripts do not load the app's .env. The pre-commit exporter must see the updated DB or it can replace delivered schema artifacts with old definitions. Review generated/staged changes; do not bypass the hook or use the live collection.
+3. Keep the new .gitattributes migration-specific LF rule. It preserves the new raw checksum across Windows/Linux checkouts without changing historical file bytes. Never edit an applied migration or manually alter the ledger.
 
-Each new archive carries its own SQL, uploads and external settings. The tool requires quiescent application writers and holds a server-wide database read lock during capture. Verified immutable remote copy/read-back precedes local retention (default 14, minimum 1). Pinned, foreign/unknown/corrupt and legacy files remain. Remote deletion is manual; previous SQL-only snapshots/current uploads mirror are not converted or deleted.
+## Apply on deployment
 
-Restore requires one trusted archive, an absent output directory and an explicitly confirmed isolated existing empty database with the source name. It does not overwrite current uploads/settings or activate captured configuration. Failed SQL may be partially applied; input and RESTORE-PENDING.json are preserved. After data verification, application/replacement acceptance remains necessary.
+- Windows: build/test the complete installer/package, then use the normal Desktop preflight/backup/migration route. Manual administrators may use the canonical runner instead; do not apply by hand and then again through the ledger.
+- Linux: preserve a verified stopped-writer backup, supply all five explicit MARIADB connection values, PlanOnly and apply via Apply-Migrations.ps1, publish compatible app files and perform acceptance. The operational runner does not take a backup automatically.
+- Existing DBs need the new migration; fresh creation uses the exported schema/bootstrap without replaying it. Do not recreate an existing collection. No new site setting is required.
+- First adoption: run database/scripts/Review-ManualPlantClosure.sql read-only on the explicitly selected DB. Investigate historical ended/open or invalid-interval findings privately. This migration deliberately does not repair old partial closures or make ended plants editable. Do not bulk correct history or clear end dates without an agreed evidence-based repair.
+- Both platforms: use docs/upgrade-checklist.md and docs/maintenance/c11-manual-closure.md for exact adoption, disposable save/reopen checks and failure handling. Failed DDL may be partially applied; preserve pending markers/backup and investigate before retrying.
 
-All 333 schema/checksum/historical SQL artifacts are unchanged. No migration is required. Every src/ file, Windows backup/restore tool and Windows guide is unchanged, including the working Development startup configuration and C09 safeguards.
+## Behavior
+
+Manual first closure now writes flowering.endDate and atomically saves the plant plus open location/flowering ends at the same timestamp. Standalone calls own their transaction; calls inside an existing transaction use a reserved savepoint without committing earlier caller work. SQL failures roll back/rethrow. Invalid open start bounds are rejected. Existing date/time/split rules, all-open-row scope, direct clearing behavior and the ended-plant UI remain. Broader correction/concurrency rules remain C12–C14.
 
 ## Files
 
-| Change | Repository path | Purpose |
+| Change | Path | Purpose |
 | --- | --- | --- |
-| Modified | .github/workflows/ci.yml | Add isolated Linux archive/MariaDB/crypt checks and wrapper smoke checks. |
-| Modified | CONTRIBUTING.md | Document executable checks, disposable-server requirements and remaining platform acceptance. |
-| Modified | RELEASE_NOTES.md | Record paired Linux snapshots and required deployment reconfiguration. |
-| Modified | docs/code-change-backlog.md | Record C17 implementation, evidence and pending Linux/installation acceptance. |
-| Modified | docs/documentation-map.md | Link Linux snapshot ownership/evidence. |
-| Modified | docs/index.md | Link C17 evidence. |
-| Added | docs/maintenance/c17-linux-paired-backup.md | Record actual checks, skipped platforms and operating limits. |
-| Modified | docs/user-guides/linux/Full-App-Backup-Pre-Upgrade.md | Distinguish paired data snapshots from whole-app/OS rollback. |
-| Modified | docs/user-guides/linux/OrchidApp-MariaDB-Backup-and-Restore-Runbook.md | Replace obsolete mirror instructions with configuration, scheduling, paired capture, retention and isolated recovery. |
-| Modified | docs/user-guides/linux/installation-upgrade.md | Add Python requirement and distinguish routine/full-backup dependencies. |
-| Added | infrastructure/backups/backup.example.json | Supply non-secret explicit configuration template requiring a stable collection UUID. |
-| Modified | infrastructure/backups/backup_orchids.sh | Replace personal-path SQL/mirror script with explicit paired backup entry point. |
-| Added | infrastructure/backups/orchid_backup.py | Implement private configuration, writer control/read lock, checked snapshot capture, remote read-back, local retention and failed-restore marker. |
-| Added | infrastructure/backups/restore_orchids.sh | Add matching isolated recovery entry point. |
-| Added | tests/LinuxBackup.Checks/Database.Checks.ps1 | Create/drop only a generated canonical database with protected temporary client defaults for native checks. |
-| Added | tests/LinuxBackup.Checks/checks.py | Add policy fixtures, actual optional crypt backend and generated canonical-schema MariaDB round trip. |
+| Modified | .gitattributes | Pin only the new migration to LF so its raw checksum is portable. |
+| Modified | .github/workflows/ci.yml | Add Linux canonical upgrade/fresh-creation and actual HTTP closure acceptance job. |
+| Modified | CONTRIBUTING.md | Document the disposable lifecycle suite and source-export option. |
+| Modified | RELEASE_NOTES.md | Record migration, rollback behavior and historical-data review. |
+| Modified | database/checksums/schema.json | Official exporter checksum output. |
+| Added | database/migrations/202610261200_AtomicManualPlantClosure.sql | Add atomic first-closure procedure with caller-preserving transaction/savepoint and interval checks. |
+| Modified | database/schema/bootstrap.json | Official generated manifest/checksum and cutoff through the applied C11 migration. |
+| Modified | database/schema/routines/spUpdatePlantDetails.sql | Official exporter output of the migrated procedure for fresh creation. |
+| Added | database/scripts/Review-ManualPlantClosure.sql | Read-only historical ended/open and invalid interval review; no automatic repair. |
+| Modified | docs/code-change-backlog.md | Record implementation/evidence and remaining Linux/installed acceptance. |
+| Modified | docs/development-setup.md | Require migrating the isolated export database before committing this source change. |
+| Modified | docs/documentation-map.md | Link C11 evidence to temporal ownership. |
+| Modified | docs/index.md | Link C11 acceptance and adoption guidance. |
+| Added | docs/maintenance/c11-manual-closure.md | Document upgrade/developer steps, tests, historical review and remaining acceptance. |
+| Modified | docs/temporal-design.md | Replace the old mismatch warning with actual atomic closure semantics and limits. |
+| Modified | docs/upgrade-checklist.md | Add exact C11 Windows/Linux migration, historical review and disposable acceptance actions; retain C12–C20 pending work. |
+| Added | tests/LifecycleClosure.Checks/Database.Checks.ps1 | Run targeted prior-procedure upgrade and migration-free fresh schema with real web hosts on generated DBs. |
+| Added | tests/LifecycleClosure.Checks/PreC11UpdatePlantDetails.sql | Preserve the genuine prior defective procedure as a synthetic upgrade fixture only. |
+| Added | tests/LifecycleClosure.Checks/checks.py | Exercise 16 native SQL/actual HTTP rollback, boundary, timestamp and split-protection scenarios on both paths. |
 
 ## Validation actually completed
 
-- Final local suite: 31 discovered tests, 28 passed and 3 explicit platform skips (POSIX permissions, source symlink creation and actual rclone crypt backend).
-- Actual MariaDB 10.11.16 round trip on a newly generated Windows instance and canonical schema/seeds, with no migration replay. It checked old rows/photos/hidden uploads/configuration, blocked concurrent SQL writer, missing photo rejection and persistent partial-DDL recovery state. Service/cloud adapters were simulated; no live data or private environment file was used. The generated database was dropped and owned server shut down.
-- Both Bash wrappers passed installed Git Bash syntax checks. Changed PowerShell parsed without errors. actionlint passed with optional ShellCheck/Pyflakes integrations disabled.
-- Exact changed-file list/ZIP bytes, Markdown links, merge markers, Python syntax, template JSON and unchanged SQL/Windows/startup artifacts were checked. Existing Linux Word guides have no affected script instructions; no Word edit/render was required.
+- New private Windows MariaDB 10.11.16 instance: reproduced the original partial failure; canonical runner applied C11 once with the raw checksum and unchanged prior baseline. The read-only review identified the historical fixture without rewriting it.
+- All 16 lifecycle/actual HTTP scenarios passed against both upgraded and migration-free fresh-created databases: 32 executions, no skips. Rollback injected at location/flowering updates left all components unchanged; a failed actual Edit POST stayed editable and successful retry/reopen persisted the closure.
+- All 44 existing creation/baseline DB checks, 18 schema baseline policy checks and 24 Desktop migration policy scenarios passed (245 packaged migrations validated).
+- Release web build: zero warnings/errors. Policy project runs reported NU1900 for unavailable NuGet vulnerability metadata; this is not a successful vulnerability audit.
+- PowerShell syntax and actionlint passed (optional ShellCheck/Pyflakes disabled). Source/ZIP byte lists, local documentation links, bootstrap input hashes, exported procedure/migration equivalence and unchanged historical migrations were checked. All 244 pre-existing migration files and all application/Windows/Linux backup code are byte-identical to the preceding delivery.
+- Canonical routine, schema checksums and bootstrap were regenerated by the official exporter from the migrated pristine fixture, never hand-edited. Both platform Word plant guides were reviewed; their event/split instructions do not change, so no Word edit/render was needed. Owned servers/web hosts and generated DBs were cleaned up; diagnostic fixture directories remain.
 
 ## Limits and next work
 
-Linux CI, real systemd/cron/provider credentials, Pi hardware and compatible application save/reopen/replacement acceptance remain pending. CI adds an actual rclone crypt test on local disposable storage; that is not a real cloud-provider test. Direct filesystem writers outside configured units must also be paused. Source hashes cannot detect all transient writes. Database read locks affect the entire selected server, and restored secret configuration needs private review. Interrupted operations can leave stopped units/stale locks; investigate before clearing. Remote retention is manual and local count is not a storage cap.
+New Linux CI, real older-release databases, installed Windows/Pi/hardware acceptance and collection-specific historical findings remain pending. Synthetic prior-procedure staging is not historical-release certification. Deadlocks can abort an entire caller transaction according to MariaDB semantics. No retrospective data repair or broader temporal-policy change is claimed.
 
-Next in the agreed sequence: phase 3, C11 manual lifecycle closure/failure handling.
+Next: C12, agree and enforce ended-plant/date-correction policy.

@@ -112,6 +112,8 @@ This runs the existing schema baseline and migration database checks, which use 
 
 For later database changes use [migration runners](migration-runners.md), beginning with PlanOnly and a recoverable backup. Never remove incomplete markers or edit applied SQL/history. Windows packaging and installer work use the separate packaging scripts and [upgrade contract](windows-upgrade-contract.md).
 
+C11 introduces `202610261200_AtomicManualPlantClosure.sql`. Apply it to the isolated development database selected by the administration environment before committing this source change: the pre-commit exporter must see the updated procedure/history rather than export an old definition over the delivered schema. Normal Development dotnet run does not migrate the database, and the app's .env is not automatically loaded by administration scripts. Follow the [C11 developer/upgrade instructions](maintenance/c11-manual-closure.md).
+
 C16's local setup, schema creation, actual hook, source startup and photo HTTP round trip are recorded in [C16 evidence](maintenance/c16-developer-setup.md). The added Windows/Linux CI checks and a completely fresh OS installation still need acceptance; local Windows success is not Linux/device/installer proof.
 
 The C16 direct-start follow-up adds automatic Development .env loading and the local upload default. See [C16 evidence](maintenance/c16-developer-setup.md) for validation of that correction.
