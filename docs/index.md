@@ -21,6 +21,8 @@ Use current guides below. For each procedure, check its stated implementation li
 
 ## Install and protect data
 
+Start each release/installation upgrade with the [Windows and Linux upgrade action checklist (C01–C20)](upgrade-checklist.md). It includes one-time actions, recurring verification, unfinished requirements and a per-machine completion record.
+
 | Task | Guide |
 | --- | --- |
 | Install or upgrade a general Raspberry Pi/Linux deployment | [Linux installation](user-guides/linux/installation-upgrade.md) |
