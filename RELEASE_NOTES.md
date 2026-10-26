@@ -1,5 +1,13 @@
 # Release notes
 
+## Development database updates use existing .env credentials
+
+With the development app stopped, `pwsh ./scripts/DevSetup/update-database.ps1` reads the repository `.env`, backs up the database outside the checkout and applies pending migrations. Retry the commit afterwards. The hook reads the same file through the developer export wrapper, so GUI credentials do not depend on terminal inheritance. The hook still blocks pending migrations and never applies them automatically. Production/Desktop configuration is unchanged. See [developer setup](docs/development-setup.md).
+
+## C11 atomic manual plant closure
+
+New migration `202610261200_AtomicManualPlantClosure.sql` fixes flowering closure and makes plant/location/flowering updates atomic, preserving a caller's existing transaction. Invalid open interval bounds are rejected; SQL failures are rolled back/rethrown. The existing ended-plant UI policy is unchanged. Historical partial closures are not automatically rewritten: follow the [C11 review and upgrade steps](docs/maintenance/c11-manual-closure.md) and [platform checklist](docs/upgrade-checklist.md).
+
 ## C17 Linux paired backup and recovery
 
 Linux backups use explicit protected configuration and preserve each SQL snapshot with its own uploads and external settings. Stopped writers and a database read lock replace the previous online SQL/current-photo mirror assumption. Remote read-back precedes local retention; old cloud objects are not deleted. The matching isolated restore validates payloads, refuses nonempty targets and preserves a pending marker after partial failures. Existing deployments must configure the new entry points before scheduling; see the [Linux runbook](docs/user-guides/linux/OrchidApp-MariaDB-Backup-and-Restore-Runbook.md).

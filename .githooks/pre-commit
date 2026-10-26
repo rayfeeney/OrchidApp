@@ -4,7 +4,7 @@ set -e
 echo "Running pre-commit schema export..."
 
 if ! pwsh -NoProfile -ExecutionPolicy Bypass \
-  -File database/scripts/Export-MariaDBSchema.ps1
+  -File scripts/DevSetup/export-schema.ps1
 then
   echo "ERROR: MariaDB schema export failed."
   echo "Commit aborted by pre-commit hook."

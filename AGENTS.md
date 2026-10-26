@@ -4,6 +4,10 @@
 
 Read [docs/index.md](docs/index.md) and [CONTRIBUTING.md](CONTRIBUTING.md) before changing behaviour. Use [docs/documentation-map.md](docs/documentation-map.md) to identify the authoritative document for each area. Put new explanations, change summaries and reports under docs/, not at repository root. Keep required root files such as this file, README.md, CONTRIBUTING.md, RELEASE_NOTES.md and licence notices in their established locations.
 
+## Development credentials
+
+The repository-root `.env` holds this development checkout's database credentials. Do not ask the owner to re-enter credentials already held there, and never print, commit or package the private file or its values. Development database update and pre-commit export wrappers read the five MARIADB connection values from this file as literal data; they do not execute it or rely on a Git GUI inheriting terminal credentials. Use `pwsh ./scripts/DevSetup/update-database.ps1` to back up and apply pending development migrations, with the development app stopped. Do not run it against a collection/production database. Production/Desktop and operational deployment scripts retain their separate explicit configuration contracts.
+
 ## Documentation is part of every code change
 
 Maintain docs/upgrade-checklist.md with every C01–C20 implementation or deployment-affecting change. Update its Windows/Linux actions and issue coverage together; record new settings, exact migrations, one-time actions, recurring verification and recovery implications. Keep unfinished requirements explicitly pending. Release preparation must produce a release-specific checklist and acceptance record; source/CI success alone does not certify an installed upgrade.

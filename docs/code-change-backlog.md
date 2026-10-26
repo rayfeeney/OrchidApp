@@ -31,7 +31,7 @@ Record actual evidence at each step.
 | [C08](#c08) | P1 | Implemented; CI/installed acceptance pending | Make restore failure recoverable and preserve the source ZIP |
 | [C09](#c09) | P2 | Implemented; CI/installed acceptance pending | Correct backup retention controls |
 | [C10](#c10) | P1 | Implemented; CI/installed acceptance pending | Reconcile interrupted and completed legacy migration state |
-| [C11](#c11) | P1 | Confirmed SQL defect | Correct manual lifecycle closure and its failure handling |
+| [C11](#c11) | P1 | Implemented with local DB/HTTP checks; Linux CI/installation acceptance pending | Correct manual lifecycle closure and its failure handling |
 | [C12](#c12) | P2 | Confirmed inconsistency / policy decision required | Make temporal and ended-plant restrictions deliberate |
 | [C13](#c13) | P2 | Investigation / documented transaction gap | Verify structural transaction rollback and concurrency |
 | [C14](#c14) | P2 | Agreed guarantee needs design | Define deterministic history ordering if required |
@@ -184,7 +184,7 @@ Implementation: version 2 atomic state, exclusive operation lock, captured-sourc
 
 ## C11
 
-**Correct manual lifecycle closure and its failure handling** — P1; Confirmed SQL defect; status: Open.
+**Correct manual lifecycle closure and its failure handling** — P1; status: Implemented with local DB/HTTP checks; Linux CI/installation acceptance pending.
 
 Affected files/areas: new database/migrations SQL; exported spUpdatePlantDetails and schema checksums; lifecycle integration tests.
 
@@ -193,6 +193,8 @@ Required work: Use flowering.endDate, not nonexistent flowering.endDateTime. Mak
 Dependencies: None; upgrade acceptance uses C02/C04.
 
 Acceptance: Save/reopen closure succeeds; injected failure does not leave contradictory partial closure; unknown dates, flowering and location intervals and split lineage remain valid.
+
+Implementation: new migration `202610261200_AtomicManualPlantClosure.sql` corrects flowering.endDate, wraps the operation in an owned transaction or caller-preserving savepoint, rethrows failures and checks open interval start bounds. Canonical schema/checksums/bootstrap are regenerated through the exporter. The actual Edit-page failure stays editable with unchanged DB rows; retry succeeds. A read-only adoption review identifies historical records for investigation without rewriting them. See [C11 evidence](maintenance/c11-manual-closure.md) and the [upgrade checklist](upgrade-checklist.md). C12–C14 policy/concurrency work and real older-installation acceptance remain separate.
 
 ## C12
 

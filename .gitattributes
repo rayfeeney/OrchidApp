@@ -4,3 +4,6 @@
 # Shell scripts must always be LF
 *.sh text eol=lf
 .githooks/pre-commit text eol=lf
+
+# C11 is new history: keep its raw migration checksum identical on every platform.
+database/migrations/202610261200_AtomicManualPlantClosure.sql text eol=lf

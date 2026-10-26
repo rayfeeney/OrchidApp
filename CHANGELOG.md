@@ -1,23 +1,22 @@
-# C01–C20 upgrade action checklist
+# CI correction: .env fixture privacy false positive
 
-Changes only: four modified repository files and one added file, plus this CHANGELOG.md. No deletions or moves. Documentation only: no code, schema, private settings, credentials or data changes.
+Changes only: two modified repository files plus this CHANGELOG.md. No additions, deletions or moves. No private .env, credentials, DB changes, migrations, backup files or runtime binaries are included.
 
 ## Apply
 
-Extract over the repository root containing OrchidApp.sln. Start with docs/upgrade-checklist.md. This adds no deployment automation, schedule or service change and does not execute an upgrade.
+Extract over the repository root containing OrchidApp.sln after the development .env delivery, commit normally and rerun CI. Your development update command and .env are unchanged. No further database update is required for this test-only correction.
 
-The maintained checklist separates Windows/Linux, release preparation/on-machine actions, one-time/recurring/failure actions and all C01–C20 coverage. Unfinished C11–C15/C18–C20 requirements remain visibly pending; this is not certification that all twenty items can be deployed. Future C-item changes must keep it current. A release-specific private completed copy is the initial manual record; the eventual tracking/automation choice remains undecided.
+The CI administrator password is the common word root, which also appears in Git's legitimate root-commit output. The old whole-output substring assertion therefore produced a false password-disclosure alarm. The test now creates a separate random account with a unique high-entropy password for the wrappers' .env, preserves the strict password/stale-secret checks, and drops that account during cleanup. Its grants cover only the generated DB plus mysql.proc read access needed for routine export/dump. Administrative bootstrap/cleanup credentials are separate.
 
 ## Files
 
-| Change | Path | Purpose |
-| --- | --- | --- |
-| Modified | AGENTS.md | Require future C-item changes to maintain platform deployment actions and release acceptance records. |
-| Modified | CONTRIBUTING.md | Add the checklist update requirement to implementation/release workflow. |
-| Modified | docs/index.md | Make the action checklist the starting point for upgrades. |
-| Modified | docs/documentation-map.md | Assign one owner for cross-platform upgrade actions. |
-| Added | docs/upgrade-checklist.md | Add Windows/Linux action lists, all twenty issue mappings, pending decisions and a private per-machine completion record. |
+| Repository path | Purpose |
+| --- | --- |
+| tests/DevelopmentSetup.Checks/DatabaseUpdate.Checks.ps1 | Use a unique generated .env account/password rather than searching all hook output for the common CI administrator password; clean up the account. |
+| docs/maintenance/development-dotenv-workflow.md | Record the false-positive cause, unchanged strict privacy assertion and actual validation. |
 
-## Validation
+## Actual verification
 
-All twenty issue rows, local Markdown link targets, merge markers and exact ZIP entries/bytes were checked. Procedures were reviewed against the current backlog, platform contracts and Linux runbook. No application tests/build or Word edit/render was needed for this standalone documentation/process addition. Actual installed upgrade acceptance and unresolved C-item implementation remain pending.
+All 24 real SQL/backup/actual Git-hook checks passed twice on new Windows MariaDB 10.11.16 fixtures: once with the previous test admin credentials and once with CI's root/root admin credentials. Both runs used the unique wrapper account/password and preserved the output privacy checks. Generated accounts/databases and owned servers were cleaned up. The changed PowerShell file parsed successfully; documentation links, exact changed-file/ZIP bytes and unchanged application, schema, migrations and developer commands were checked.
+
+Linux CI still needs the corrected commit rerun. No user .env or real development/collection database was changed.

@@ -9,6 +9,7 @@ Use current guides below. For each procedure, check its stated implementation li
 - [Migration runners and incomplete-upgrade handling](migration-runners.md)
 - [Schema-only database creation and future migrations](database-creation.md), with [C01/C02 evidence](maintenance/c01-c02-schema-baseline.md) and [C05 CI checks](maintenance/c05-ci-database-acceptance.md)
 - [Architecture](architecture.md) and [temporal design](temporal-design.md)
+- [Manual lifecycle closure and C11 upgrade acceptance](maintenance/c11-manual-closure.md)
 - [Windows upgrade contract](windows-upgrade-contract.md)
 - [Legacy migration reconciliation evidence](maintenance/c10-migration-reconciliation.md)
 - [Windows backup source and archive compatibility](windows-backup-format.md)

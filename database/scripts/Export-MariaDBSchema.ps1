@@ -1,5 +1,6 @@
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "Schema-Baseline.ps1")
+. (Join-Path $PSScriptRoot 'Schema-ExportPreflight.ps1')
 
 $previousMysqlPassword = $env:MYSQL_PWD
 . (Join-Path $PSScriptRoot 'Database-Environment.ps1')
@@ -172,6 +173,12 @@ foreach ($row in $earlyHistoryRows) {
     $earlyHistory[$parts[0]] = $parts[1]
 }
 if ($earlyHistory.Count) { $null = Get-DatabaseBaselineCutoff $earlyHistory }
+$sourceManifest=Read-SchemaManifest $SchemaRoot
+$migrationFolder=Join-Path $RepoRoot 'database/migrations'
+$hasMigrationFolder=Test-Path -LiteralPath $migrationFolder -PathType Container
+$migrationFiles=@()
+if($hasMigrationFolder){$migrationFiles=@(Get-MigrationFiles $migrationFolder)}
+Assert-SchemaExportReady -History $earlyHistory -SchemaCutoff $sourceManifest.throughMigration -Files $migrationFiles -HasMigrationFolder $hasMigrationFolder
 
 # --- LOAD EXISTING CHECKSUMS -------------------------------------------------
 $Checksums = @{}

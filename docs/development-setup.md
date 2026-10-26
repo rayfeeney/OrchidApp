@@ -18,6 +18,22 @@ Storage__UploadRoot is optional for the app. The default is the current user's l
 
 On Windows, dotnet run also discovers the complete libvips runtime already restored under app/runtime/libvips/win-x64/bin. Restore it once if needed using pwsh ./scripts/restore-windows-runtime.ps1 -LibVipsOnly from the repository root. No download or native probe runs on every normal app startup. Native readiness can be checked separately below.
 
+## When a commit says the database needs updating
+
+Stop the development app. From the repository root run:
+
+```powershell
+pwsh ./scripts/DevSetup/update-database.ps1
+```
+
+Then retry the commit. The command reads the five database credentials/settings already in the repository `.env`, displays the selected host/port/database (never the password), checks pending migrations, makes a SQL backup and applies them through the normal runner. It does not ask you to re-enter credentials or create a new database. With nothing pending it makes no extra backup and reports that you can commit. `-PlanOnly` shows pending changes without backing up or applying them.
+
+The backup is stored outside the repository under the current user's local application-data directory, `OrchidApp/Development/database-backups/`, with a timestamp/unique folder and checksum record. The command stops before applying migrations if backup fails. This is a logical database backup, not a coordinated backup of uploads or a replacement for the deployed collection's recovery procedure. Keep the development app/other writers stopped while updating. Backups are retained for manual review; this command does not prune them.
+
+The pre-commit hook now uses `scripts/DevSetup/export-schema.ps1`, which reads that same `.env`. Git GUI windows do not need inherited credential variables. The five `.env` values are used together, overriding stale ambient database credentials for these wrappers only, then the previous process environment is restored. No `.env` is copied into backups or commits. App configuration may still have its documented explicit overrides; keep those aligned if you use them. Missing/invalid `.env` settings fail without printing their values. Production/Desktop and direct operational scripts retain their existing configuration behavior.
+
+[Validation and remaining platform acceptance](maintenance/development-dotenv-workflow.md).
+
 ## Prerequisites and platform scope
 
 | Component | Requirement and evidence |
@@ -64,7 +80,7 @@ The optional dot-sourced configure.ps1 generates ConnectionStrings__OrchidDb fro
 
 The administration scripts below still use explicit MARIADB environment values and do not load .env themselves; this is separate from the web app's automatic Development .env loading. No MYSQL_USER/MYSQL_PASSWORD aliases or database endpoint defaults are used. Creation, migrations and export all require the explicit MARIADB target. MYSQL_PWD is used only as the native client's temporary password transport; setup/export preserve its previous value. Environment values remain process-readable: use a private development terminal or your local secret management, and do not commit credentials or echo the connection string.
 
-Keep this terminal open for app commands and command-line Git commits. A GUI Git client already running elsewhere does not inherit these settings; launch it from the configured environment if needed. Repeat configuration in each new terminal and after changing target values. Runtime deployment permissions remain a separate concern; this is an isolated developer workflow.
+Keep this terminal open only for direct administration commands that use its environment. Normal app startup and the developer update/export wrappers read `.env`; Git GUI commits now use the export wrapper and do not need to inherit these variables. Runtime deployment permissions remain a separate concern; this is an isolated developer workflow.
 
 ## Create the database from schema and seeds
 
@@ -111,6 +127,8 @@ pwsh ./scripts/DevSetup/ci-local.ps1
 This runs the existing schema baseline and migration database checks, which use generated disposable database names. It replaces the obsolete MySQL Docker/Assemble-Schema route; it does not claim to mirror every CI step or validate the running app. Relevant feature checks are in [CONTRIBUTING](../CONTRIBUTING.md).
 
 For later database changes use [migration runners](migration-runners.md), beginning with PlanOnly and a recoverable backup. Never remove incomplete markers or edit applied SQL/history. Windows packaging and installer work use the separate packaging scripts and [upgrade contract](windows-upgrade-contract.md).
+
+C11 introduces `202610261200_AtomicManualPlantClosure.sql`. Use the single development update command above before committing, then retry the commit. It loads `.env`, backs up and applies reviewed pending migrations through the canonical runner. The exporter still refuses pending migrations or history older than source before writing schema/checksum files; the hook never applies migrations itself. Normal Development dotnet run remains unchanged. See [C11 guidance](maintenance/c11-manual-closure.md).
 
 C16's local setup, schema creation, actual hook, source startup and photo HTTP round trip are recorded in [C16 evidence](maintenance/c16-developer-setup.md). The added Windows/Linux CI checks and a completely fresh OS installation still need acceptance; local Windows success is not Linux/device/installer proof.
 

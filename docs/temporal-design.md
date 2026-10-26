@@ -111,16 +111,29 @@ The plant Edit POST rejects a plant whose existing end date is non-null. Thus th
 procedure's ability to clear an end date does not establish a working reactivation
 workflow in the current Edit page. Do not promise users general reactivation.
 
-### Closure and known schema mismatch
+### Atomic manual closure (C11)
 
-When first setting an end date, `spUpdatePlantDetails` attempts to close open
-location and flowering intervals. It currently refers to `flowering.endDateTime`,
-but the table defines `flowering.endDate`. This is a source defect that can make
-manual lifecycle closure fail. The procedure has no explicit transaction/rollback
-handler around the plant update and subsequent closure statements, so callers
-must not assume the whole operation rolls back together on failure.
+Migration `202610261200_AtomicManualPlantClosure.sql` corrects the flowering field
+to `flowering.endDate`. First setting an end date updates the plant and closes
+its open location/flowering intervals at the same timestamp in one transaction.
+The existing time-assignment and split/date protections remain. Closure is refused
+if it would end an open flowering before its start or a location at/before its
+start. Already closed intervals are unchanged. As before, closure updates all
+open rows for that plant, including inactive open rows; C12 owns broader policy.
 
-Do not describe manual closure as a proven cascade to all affected records.
+The procedure owns/commits a transaction only when none is active. Otherwise it
+uses the reserved savepoint `orchidapp_update_plant_details`, releasing it on
+success and rolling back to it on SQL failure without committing prior caller
+work. SQL errors are rethrown. A deadlock can cause MariaDB to abort the whole
+caller transaction; callers must handle that normal engine behavior. Do not use
+the reserved savepoint name in calling code. Broader structural/concurrency
+guarantees remain C13.
+
+Local native database and actual Edit-page save/reopen checks are recorded in
+[C11 evidence](maintenance/c11-manual-closure.md). Existing partially applied
+closures are not repaired automatically; use the read-only adoption review in
+that guide. The current Edit page still rejects already-ended plants.
+
 The procedure also does not comprehensively validate existing narrative history
 against revised lifecycle dates. Clearing an end date does not automatically
 reopen old location rows or create a new location assignment.
