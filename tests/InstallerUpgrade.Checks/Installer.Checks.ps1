@@ -20,9 +20,13 @@ function Check([string]$Name,[bool]$Pass) { if (-not $Pass) { throw "Check faile
 function Build([string]$Version,[string]$Value) {
     $Value | Set-Content -LiteralPath (Join-Path $package 'application.txt')
     $arguments=@('/Qp',"/DMyAppVersion=$Version","/DSourceDir=$package","/DOutputDir=$output",'/DInstallerFixture=1',"/DFixtureAppId=$identity","/DFixturePersistentRoot=$persistent",(Join-Path $RepoRoot 'installer/windows/OrchidApp.iss'))
-    & $InnoCompiler @arguments
+    # Compiler progress belongs on the host stream, never in the returned path.
+    # Inno 6 emits "Preprocessing" even with /Qp.
+    & $InnoCompiler @arguments | Out-Host
     if ($LASTEXITCODE -ne 0) { throw 'Fixture installer compilation failed.' }
-    Join-Path $output "OrchidAppSetup-$Version.exe"
+    $executable=Join-Path $output "OrchidAppSetup-$Version.exe"
+    if (-not (Test-Path -LiteralPath $executable -PathType Leaf)) { throw "Fixture installer was not created: $executable" }
+    return $executable
 }
 function Install([string]$Executable,[string]$LogName) {
     $log=Join-Path $root $LogName
