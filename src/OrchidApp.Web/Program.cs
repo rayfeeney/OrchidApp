@@ -46,6 +46,7 @@ builder.Services.AddRazorPages(options =>
 {
     options.Conventions.ConfigureFilter(new NavigationPageFilter());
     options.Conventions.ConfigureFilter(new Microsoft.AspNetCore.Mvc.TypeFilterAttribute(typeof(PlantWriteFilter)));
+    options.Conventions.ConfigureFilter(new Microsoft.AspNetCore.Mvc.TypeFilterAttribute(typeof(TaxonWriteFilter)));
 });
 
 builder.Services.AddDbContext<OrchidDbContext>(options =>
@@ -64,7 +65,13 @@ builder.Services.AddDbContext<OrchidDbContext>(options =>
         .AddInterceptors(new CollationInterceptor());
 });
 
-builder.Services.AddSingleton<PhotoPipeline>();
+builder.Services.AddScoped<PhotoPipeline>();
+builder.Services.AddScoped<ReadinessProbe>();
+builder.Services.AddScoped<IPhotoNativeProbe, PhotoNativeProbe>();
+builder.Services.AddSingleton<PhotoRecoveryRegistry>();
+builder.Services.AddScoped<PhotoWriteBatch>(sp => new PhotoWriteBatch(
+    sp.GetRequiredService<StoragePathService>().GetUploadRoot(),
+    sp.GetRequiredService<PhotoRecoveryRegistry>(), sp.GetRequiredService<ILogger<PhotoWriteBatch>>()));
 
 builder.Services.Configure<MediaIngestionOptions>(
     builder.Configuration.GetSection("MediaIngestion"));
@@ -247,11 +254,11 @@ app.UseStaticFiles(); // always serve wwwroot (Dev + Prod)
 
 var uploadsPath = builder.Configuration["Storage:UploadRoot"];
 
-if (Directory.Exists(uploadsPath))
+if (!string.IsNullOrWhiteSpace(uploadsPath) && Path.IsPathFullyQualified(uploadsPath))
 {
     app.UseStaticFiles(new StaticFileOptions
     {
-        FileProvider = new PhysicalFileProvider(uploadsPath),
+        FileProvider = new UploadFileProvider(uploadsPath),
         RequestPath = "/uploads"
     });
 }
@@ -261,6 +268,12 @@ app.UseRouting();
 app.UseAuthorization();
 
 app.MapRazorPages();
+app.MapGet("/health/live", () => Results.Ok(new { live = true }));
+app.MapGet("/health/ready", async (ReadinessProbe probe, CancellationToken ct) =>
+{
+    var result = await probe.CheckAsync(ct);
+    return Results.Json(result, statusCode: result.Ready ? 200 : 503);
+});
 
 app.Run();
 

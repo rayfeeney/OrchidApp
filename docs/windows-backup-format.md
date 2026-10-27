@@ -93,3 +93,9 @@ pwsh ./tests/BackupRestore.Checks/Database.Checks.ps1 -MariaDbRuntimeRoot ./app/
 ```
 
 The database suite requires Windows, an initialized build of its C# fixture utility and a complete MariaDB 10.11 runtime with mariadb-install-db.exe. It uses unique source/target/ProgramData fixtures and unused loopback ports, not the live collection. Use a short FixtureParent path because native Windows MariaDB dump paths remain length-limited. The suite exercises partial SQL, post-import photo and locked upload/settings failures and explicit recovery. It retains fixture directories and cleans up its own database processes. New Windows CI checks still require confirmation. See [C06/C07 evidence](maintenance/c06-c07-backup-source-and-format.md), [C08 recovery evidence](maintenance/c08-restore-recovery.md) and the [Windows upgrade contract](windows-upgrade-contract.md).
+
+## C15/C19 photo recovery acceptance
+
+Include the actual uploads and their private `.photo-recovery` records with SQL in a paired recovery point. Stop all writers for a consistent snapshot; a SQL dump or verified archive is not end-to-end application acceptance. Windows Normal backup does not quiesce every writer, and Linux scheduled coordination covers only configured units. Preserve any copied journals on restore even if they came from an upload that later succeeded on the original machine.
+
+After restore/start, require `/health/ready` to return 200 and reopen representative plant/taxon photos and thumbnails. Unresolved journals or missing active files return 503. Keep the input archive, matching files, SQL and logs; stop writers and follow [photo handling and read-only recovery review](photo-handling.md) before clearing any record. Never delete a journal just to force startup. C19 does not make concurrent SQL/file backups atomic or certify an installed recovery.

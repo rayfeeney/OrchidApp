@@ -1,215 +1,96 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NetVips;
+using System.Text.RegularExpressions;
 
 namespace OrchidApp.Web.Services;
 
-public sealed class PhotoPipeline
+public sealed class PhotoPipeline(IOptions<MediaIngestionOptions> options,
+    ILogger<PhotoPipeline> logger, PhotoWriteBatch? batch = null, PhotoFilePublisher? publisher = null)
 {
     private const long MaxUploadBytes = 10 * 1024 * 1024;
-    private const int MaxMegapixels = 40;
-
-    private readonly MediaIngestionOptions _options;
-    private readonly ILogger<PhotoPipeline> _logger;
-
-    public PhotoPipeline(
-        IOptions<MediaIngestionOptions> options,
-        ILogger<PhotoPipeline> logger)
+    public async Task<PhotoSaveResult> ProcessAndSaveAsync(Stream uploadStream,
+        PhotoStorageTarget target, string uploadsRootPath, CancellationToken ct = default)
     {
-        _options = options.Value;
-        _logger = logger;
-    }
-
-    public async Task<PhotoSaveResult> ProcessAndSaveAsync(
-        Stream uploadStream,
-        PhotoStorageTarget target,
-        string uploadsRootPath,
-        CancellationToken ct = default)
-    {
-        _logger.LogInformation(
-            "Photo ingestion started for {EntityType} {EntityId}",
-            target.EntityType,
-            target.EntityId);
-
-        await using var buffered = new MemoryStream();
-        await CopyWithLimitAsync(uploadStream, buffered, MaxUploadBytes, ct);
-        buffered.Position = 0;
-        var sourceBytes = buffered.ToArray();
-
-        if (buffered.Length == 0)
-            throw new InvalidOperationException("Empty file.");
-
-        _logger.LogInformation("Upload size {Bytes} bytes", buffered.Length);
-
+        if (!Path.IsPathFullyQualified(uploadsRootPath) ||
+            !Regex.IsMatch(target.EntityType, @"\A[a-zA-Z0-9_-]+\z") ||
+            !Regex.IsMatch(target.EntityId, @"\A[a-zA-Z0-9_-]+\z"))
+            throw new InvalidOperationException("The photo storage target is invalid.");
+        var folder = Path.Combine(uploadsRootPath, target.EntityType, target.EntityId);
+        var main = Guid.NewGuid().ToString("N") + ".jpg";
+        var thumb = Guid.NewGuid().ToString("N") + "_thumb.jpg";
+        var paths = new[] { Path.Combine(folder, main), Path.Combine(folder, thumb) };
+        var owned = paths.Concat(paths.Select(p => p + ".tmp")).ToArray();
         try
         {
-            using var original = Image.NewFromBuffer(
-                buffered.ToArray(),
-                access: Enums.Access.Sequential);
-
-            RejectAnimatedOrMultipage(original);
-
-            _logger.LogInformation(
-                "Decoded image via libvips. Width={Width}, Height={Height}",
-                original.Width,
-                original.Height);
-
-            if ((long)original.Width * original.Height > MaxMegapixels * 1_000_000L)
+            await using var buffer = new MemoryStream();
+            var bytes = new byte[81920];
+            int read;
+            while ((read = await uploadStream.ReadAsync(bytes, ct)) != 0)
+            {
+                if (buffer.Length + read > MaxUploadBytes) throw new InvalidOperationException("File exceeds maximum size.");
+                await buffer.WriteAsync(bytes.AsMemory(0, read), ct);
+            }
+            if (buffer.Length == 0) throw new InvalidOperationException("Empty file.");
+            using var original = Image.NewFromBuffer(buffer.ToArray(), access: Enums.Access.Sequential);
+            if ((original.GetTypeOf("n-pages") != 0 && (int)original.Get("n-pages") > 1) ||
+                (original.GetTypeOf("page-height") != 0 && (int)original.Get("page-height") > 0 &&
+                 (int)original.Get("page-height") < original.Height))
+                throw new InvalidOperationException("Animated or multi-frame images are not supported.");
+            if ((long)original.Width * original.Height > 40_000_000L)
                 throw new InvalidOperationException("Image dimensions too large.");
-
-            using var flattened = original.HasAlpha()
-                ? original.Flatten(background: new[] { 255.0, 255.0, 255.0 })
-                : original.Copy();
-
-            using var resized = ResizeIfNeeded(flattened, _options.MaxImageDimension).Copy();
-            using var originalThumb = Image.NewFromBuffer(
-                sourceBytes,
-                access: Enums.Access.Sequential);
-
-            using var flattenedThumb = originalThumb.HasAlpha()
-                ? originalThumb.Flatten(background: new[] { 255.0, 255.0, 255.0 })
-                : originalThumb.Copy();
-
-            using var thumbnail = ResizeIfNeeded(flattenedThumb, 300);
-
-            var entityFolder = Path.Combine(
-                uploadsRootPath,
-                target.EntityType,
-                target.EntityId);
-
-            Directory.CreateDirectory(entityFolder);
-
-            var fileName = $"{Guid.NewGuid():N}.jpg";
-            var finalPath = Path.Combine(entityFolder, fileName);
-            var tempOutputPath = finalPath + ".tmp";
-
-            SaveProcessedJpeg(resized, tempOutputPath);
-
-            File.Move(tempOutputPath, finalPath, overwrite: true);
-
-            // Create thumbnail file
-            var thumbFileName = $"{Guid.NewGuid():N}_thumb.jpg";
-            var thumbPath = Path.Combine(entityFolder, thumbFileName);
-            var tempThumbPath = thumbPath + ".tmp";
-
-            try
-            {
-                SaveProcessedJpeg(thumbnail, tempThumbPath);
-                File.Move(tempThumbPath, thumbPath, overwrite: true);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex,
-                    "Thumbnail generation failed for {EntityType} {EntityId}",
-                    target.EntityType,
-                    target.EntityId);
-
-                // Clean up temp file if it exists
-                if (File.Exists(tempThumbPath))
-                    File.Delete(tempThumbPath);
-
-                // Fallback: use main image as thumbnail
-                thumbFileName = fileName;
-            }
-
-            _logger.LogInformation(
-                "Photo saved. EntityType={EntityType}, EntityId={EntityId}, Width={Width}, Height={Height}, Path={Path}",
-                target.EntityType,
-                target.EntityId,
-                resized.Width,
-                resized.Height,
-                finalPath);
-
-            return new PhotoSaveResult
-            {
-                FileName = fileName,
-                ThumbnailFileName = thumbFileName,
-                MimeType = "image/jpeg",
-                Width = resized.Width,
-                Height = resized.Height
-            };
-        }
-        catch (InvalidOperationException)
-        {
-            throw;
+            // Share normalized materialized pixels, not a sequential decoder.
+            using var upright = original.Autorot().CopyMemory();
+            using var flattened = upright.HasAlpha()
+                ? upright.Flatten(background: new[] { 255.0, 255.0, 255.0 }) : upright.Copy();
+            using var resized = Resize(flattened, Math.Max(1, options.Value.MaxImageDimension));
+            using var thumbnail = Resize(flattened, 300);
+            Directory.CreateDirectory(folder);
+            batch?.Track(owned);
+            ct.ThrowIfCancellationRequested();
+            Save(resized, paths[0] + ".tmp");
+            ct.ThrowIfCancellationRequested();
+            Save(thumbnail, paths[1] + ".tmp");
+            ct.ThrowIfCancellationRequested();
+            (publisher ?? new PhotoFilePublisher()).Publish(paths[0] + ".tmp", paths[0]);
+            (publisher ?? new PhotoFilePublisher()).Publish(paths[1] + ".tmp", paths[1]);
+            return new PhotoSaveResult { FileName = main, ThumbnailFileName = thumb,
+                MimeType = "image/jpeg", Width = resized.Width, Height = resized.Height };
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(
-                ex,
-                "Photo ingestion failed for {EntityType} {EntityId}",
-                target.EntityType,
-                target.EntityId);
-            throw new InvalidOperationException("The photo could not be processed.");
+            foreach (var path in owned)
+                try { File.Delete(path); }
+                catch (Exception cleanup) { logger.LogError(cleanup, "Photo cleanup requires review"); }
+            if (ex is OperationCanceledException) throw;
+            logger.LogWarning(ex, "Photo processing failed for {Type} {Id}", target.EntityType, target.EntityId);
+            throw new InvalidOperationException(ex is InvalidOperationException ? ex.Message :
+                "The photo could not be processed. Please try another image.", ex);
         }
     }
-
-    private static void RejectAnimatedOrMultipage(Image image)
+    private static Image Resize(Image image, int maximum)
     {
-        if (image.GetTypeOf("n-pages") != 0)
+        var size = Math.Max(image.Width, image.Height);
+        return size <= maximum ? image.Copy() : image.Resize((double)maximum / size, kernel: Enums.Kernel.Lanczos3);
+    }
+    private void Save(Image image, string path)
+    {
+        using var output = image.Mutate(mutable =>
         {
-            var pages = (int)image.Get("n-pages");
-            if (pages > 1)
-                throw new InvalidOperationException("Animated or multi-frame images are not supported.");
-        }
-
-        if (image.GetTypeOf("page-height") != 0)
-        {
-            var pageHeight = (int)image.Get("page-height");
-            if (pageHeight > 0 && pageHeight < image.Height)
-                throw new InvalidOperationException("Animated or multi-frame images are not supported.");
-        }
+            if (!options.Value.StripGpsMetadata) return;
+            // Keep ICC and intrinsic headers, remove source EXIF/GPS/XMP/IPTC
+            // and comments. Compatible with native versions before 'keep'.
+            var retained = new HashSet<string>(StringComparer.Ordinal) {
+                "width", "height", "bands", "format", "coding", "interpretation",
+                "xoffset", "yoffset", "xres", "yres", "filename", "icc-profile-data" };
+            foreach (var field in image.GetFields())
+                if (!retained.Contains(field)) mutable.Remove(field);
+        });
+        output.Jpegsave(path, q: Math.Clamp(options.Value.JpegQuality, 1, 100), optimizeCoding: true, interlace: false);
     }
+}
 
-    private static Image ResizeIfNeeded(Image source, int maxDimension)
-    {
-        var longest = Math.Max(source.Width, source.Height);
-
-        if (longest <= maxDimension)
-            return source.Copy();
-
-        var scale = (double)maxDimension / longest;
-        return source.Resize(scale, kernel: Enums.Kernel.Lanczos3);
-    }
-
-    private void SaveProcessedJpeg(Image image, string path)
-    {
-        image.Jpegsave(
-            path,
-            q: ClampQuality(_options.JpegQuality),
-            optimizeCoding: true,
-            interlace: false);
-    }
-
-    private static int ClampQuality(int quality)
-    {
-        if (quality < 1) return 1;
-        if (quality > 100) return 100;
-        return quality;
-    }
-
-    private static async Task CopyWithLimitAsync(
-        Stream src,
-        Stream dest,
-        long maxBytes,
-        CancellationToken ct)
-    {
-        var buffer = new byte[81920];
-        long total = 0;
-
-        while (true)
-        {
-            var read = await src.ReadAsync(buffer.AsMemory(0, buffer.Length), ct);
-            if (read == 0)
-                break;
-
-            total += read;
-            if (total > maxBytes)
-                throw new InvalidOperationException("File exceeds maximum size.");
-
-            await dest.WriteAsync(buffer.AsMemory(0, read), ct);
-        }
-
-        dest.Position = 0;
-    }
+public class PhotoFilePublisher
+{
+    public virtual void Publish(string source, string destination) => File.Move(source, destination);
 }

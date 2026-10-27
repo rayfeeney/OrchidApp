@@ -829,7 +829,7 @@ FLUSH PRIVILEGES;
         _webAppProcess.BeginOutputReadLine();
         _webAppProcess.BeginErrorReadLine();
 
-        await WaitForWebAppAsync("http://localhost:5285");
+        await WaitForWebAppAsync("http://localhost:5285/health/ready");
 
         if (_activeMigration is not null)
         {

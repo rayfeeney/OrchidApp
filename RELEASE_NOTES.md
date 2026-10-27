@@ -1,5 +1,11 @@
 # Release notes
 
+## C15/C19 photo policy and recoverable uploads
+
+New photos are upright and remove GPS/private camera metadata by default while preserving ICC colour. Photo and thumbnail writes succeed together; confirmed request rollback cleans newly generated files, while uncertain outcomes retain private recovery records. Database/file/native readiness is available at `/health/ready`, and the Windows launcher waits for it.
+
+Existing databases require `202610271200_PhotoTaxonTransaction.sql`; existing photos are unchanged. Audit explicit metadata-retention overrides. Follow the [Windows/Linux upgrade checklist](docs/upgrade-checklist.md) and [photo recovery procedure](docs/photo-handling.md). Linux and installed-machine acceptance remain pending.
+
 ## C14 predictable history ordering
 
 Plant history remains newest first. Matching timestamps now sort by event type: flowering, move, observation, repotting; matching events within one type use record ID descending. Date corrections can reposition cards. No schema, timestamp, configuration or migration change is required. See [C14 evidence](docs/maintenance/c14-history-ordering.md) and the [upgrade checklist](docs/upgrade-checklist.md).

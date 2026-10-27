@@ -302,7 +302,6 @@ public class AddModel : PageModel
                 var observationTypeId = await _resolver.GetIdAsync(typeCode);
 
                 var uploadsRoot = _storagePathService.GetUploadRoot();
-                var savedRelativePaths = new List<string>();
 
                 try
                 {
@@ -357,7 +356,6 @@ public class AddModel : PageModel
                                     "The photo could not be processed. Please try another image.", ex);
                             }
 
-                            savedRelativePaths.Add(result.FileName); // temporary, we’ll clean this later
 
                             var photo = new PlantPhoto
                             {
@@ -385,26 +383,6 @@ public class AddModel : PageModel
                 {
                     // PlantWriteFilter rolls back the complete request after
                     // this validation page is returned.
-
-                    foreach (var relativePath in savedRelativePaths)
-                    {
-                        try
-                        {
-                            var fullPath = Path.Combine(
-                                uploadsRoot,
-                                relativePath.Replace('/', Path.DirectorySeparatorChar));
-
-                            if (System.IO.File.Exists(fullPath))
-                                System.IO.File.Delete(fullPath);
-                        }
-                        catch (Exception cleanupEx)
-                        {
-                            _logger.LogWarning(cleanupEx,
-                                "Failed to clean up photo file {RelativePath} for plant {PlantId}",
-                                relativePath,
-                                PlantId);
-                        }
-                    }
 
                     var message = ex is InvalidOperationException
                         ? ex.Message

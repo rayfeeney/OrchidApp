@@ -1,11 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
   <ItemGroup>
+    <Content Include="fixtures/**" CopyToOutputDirectory="PreserveNewest" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="NetVips" Version="2.4.2" />
-    <Compile Include="../../src/OrchidApp.Web/Services/PhotoPipeline.cs" Link="PhotoPipeline.cs" />
-    <Compile Include="../../src/OrchidApp.Web/Services/PhotoStorageTarget.cs" Link="PhotoStorageTarget.cs" />
-    <Compile Include="../../src/OrchidApp.Web/Services/PhotoSaveResult.cs" Link="PhotoSaveResult.cs" />
-    <Compile Include="../../src/OrchidApp.Web/Services/MediaIngestionOptions.cs" Link="MediaIngestionOptions.cs" />
+    <ProjectReference Include="../../src/OrchidApp.Web/OrchidApp.Web.csproj" />
   </ItemGroup>
 </Project>
