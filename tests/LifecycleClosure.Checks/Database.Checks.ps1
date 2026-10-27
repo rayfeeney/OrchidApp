@@ -1,6 +1,7 @@
 param([string]$PythonExe='python3',[int]$WebPort=53337,[switch]$ExportSchema)
 $ErrorActionPreference='Stop'
 Write-Host 'Lifecycle checks revision: c13-lock-cache-v3'
+Write-Host 'History ordering checks revision: c14-event-type-v1'
 $PSNativeCommandUseErrorActionPreference=$false
 $repo=(Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../..')).Path
 foreach($name in @('MARIADB_HOST','MARIADB_PORT','MARIADB_USER','MARIADB_PASSWORD')) {
@@ -145,6 +146,8 @@ try {
         if($LASTEXITCODE -ne 0){throw 'Ended-plant/date database/HTTP checks failed.'}
         & $PythonExe (Join-Path $PSScriptRoot 'Structural.Checks.py')
         if($LASTEXITCODE -ne 0){throw 'Structural transaction/concurrency checks failed.'}
+        & $PythonExe (Join-Path $PSScriptRoot 'HistoryOrdering.Checks.py')
+        if($LASTEXITCODE -ne 0){throw 'History ordering SQL/HTTP checks failed.'}
         Stop-HostProcess
     }
     Write-Host 'C11 upgrade and schema-only creation with actual HTTP closure checks passed.'

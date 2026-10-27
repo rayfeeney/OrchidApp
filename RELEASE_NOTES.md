@@ -1,5 +1,9 @@
 # Release notes
 
+## C14 predictable history ordering
+
+Plant history remains newest first. Matching timestamps now sort by event type: flowering, move, observation, repotting; matching events within one type use record ID descending. Date corrections can reposition cards. No schema, timestamp, configuration or migration change is required. See [C14 evidence](docs/maintenance/c14-history-ordering.md) and the [upgrade checklist](docs/upgrade-checklist.md).
+
 ## C13 CI revision v3 — metadata cache refresh
 
 Lock-wait checks now leave enough idle time for MariaDB's transaction metadata cache to refresh. A fast persistent-observer regression exercises the stale-cache case that Windows process startup had masked. HTTP wait checks identify their actual blocker. This changes tests only; no migration or configuration change is required. Rerun CI and confirm `c13-lock-cache-v3` in its output. See the [cache diagnosis](docs/maintenance/c13-structural-transactions.md#ci-cache-diagnosis-and-revision-v3).

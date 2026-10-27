@@ -34,7 +34,7 @@ Record actual evidence at each step.
 | [C11](#c11) | P1 | Implemented with local DB/HTTP checks; Linux CI/installation acceptance pending | Correct manual lifecycle closure and its failure handling |
 | [C12](#c12) | P2 | Implemented with local SQL/HTTP checks; Linux CI/installed acceptance pending | Make temporal and ended-plant restrictions deliberate |
 | [C13](#c13) | P2 | Implemented; CI/installed acceptance pending | Verify structural transaction rollback and concurrency |
-| [C14](#c14) | P2 | Agreed guarantee needs design | Define deterministic history ordering if required |
+| [C14](#c14) | P2 | Agreed display order implemented; CI/installed acceptance pending | Define deterministic history ordering if required |
 | [C15](#c15) | P2 | Confirmed option/implementation mismatch | Implement or retire metadata-stripping configuration |
 | [C16](#c16) | P1 | Confirmed portability/setup gaps | Make developer setup and native dependencies reproducible |
 | [C17](#c17) | P1 | Implemented with local archive/native checks; Linux CI/installation acceptance pending | Make Linux backup/restore portable and paired |
@@ -230,7 +230,7 @@ Implementation: migration `202610262000_StructuralTransactions.sql` adds caller-
 
 ## C14
 
-**Define deterministic history ordering if required** — P2; Agreed guarantee needs design; status: Open.
+**Define deterministic history ordering if required** — P2; agreed policy implemented; CI/Linux and installed UI acceptance pending.
 
 Affected files/areas: database/schema/views/vplantlifecyclehistory.sql via migration/export; plant history queries/tests.
 
@@ -239,6 +239,8 @@ Required work: Current SourceId is table-local and equal-second timestamps can t
 Dependencies: C12 policy.
 
 Acceptance: Equal timestamps and equal IDs across event types render a deterministic agreed order; date corrections and daylight-saving cases meet documented policy.
+
+Owner decision: newest stored date/time first; matching timestamps use event type ascending (Flowering, LocationChange/Move, Observation, Repotting), then SourceId descending within the same type. The Details page outer query now implements that order. No view/schema/data change or migration is required. Actual SQL/HTTP checks cover ties, type-before-ID precedence, repeated reads, date corrections, ended/inactive scope and repeated local clock-hour values. This is display stability, not insertion order or reconstructed UTC chronology. See [C14 evidence](maintenance/c14-history-ordering.md).
 
 ## C15
 
