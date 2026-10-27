@@ -1,6 +1,6 @@
 param([string]$PythonExe='python3',[int]$WebPort=53337,[switch]$ExportSchema)
 $ErrorActionPreference='Stop'
-Write-Host 'Lifecycle checks revision: c13-lock-wait-count-v2'
+Write-Host 'Lifecycle checks revision: c13-lock-cache-v3'
 $PSNativeCommandUseErrorActionPreference=$false
 $repo=(Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../..')).Path
 foreach($name in @('MARIADB_HOST','MARIADB_PORT','MARIADB_USER','MARIADB_PASSWORD')) {

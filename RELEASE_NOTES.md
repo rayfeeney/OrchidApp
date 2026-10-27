@@ -1,5 +1,9 @@
 # Release notes
 
+## C13 CI revision v3 — metadata cache refresh
+
+Lock-wait checks now leave enough idle time for MariaDB's transaction metadata cache to refresh. A fast persistent-observer regression exercises the stale-cache case that Windows process startup had masked. HTTP wait checks identify their actual blocker. This changes tests only; no migration or configuration change is required. Rerun CI and confirm `c13-lock-cache-v3` in its output. See the [cache diagnosis](docs/maintenance/c13-structural-transactions.md#ci-cache-diagnosis-and-revision-v3).
+
 ## C13 CI follow-up — lock-wait observation
 
 Concurrency checks now accept a positive number of wait edges for the waiting connection, with a two-holder regression and clearer timeout diagnostics. Fresh subcase fixtures prevent cascaded failures after an earlier assertion. This changes tests only: no app, schema, migration or configuration update is required. Rerun the lifecycle CI job with revision `c13-lock-wait-count-v2`; see [C13 evidence](docs/maintenance/c13-structural-transactions.md#ci-follow-up-on-27-october-2026).

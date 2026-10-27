@@ -12,9 +12,15 @@ import subprocess
 import threading
 import time
 import unittest
+from unittest.mock import patch
 import urllib.error
 import urllib.parse
 import urllib.request
+
+# MariaDB's transaction/lock metadata cache refreshes only after at least
+# 100 ms without a read. Faster polling can keep an empty snapshot alive.
+# See MariaDB 10.11 storage/innobase/trx/trx0i_s.cc CACHE_MIN_IDLE_TIME_NS.
+LOCK_POLL_SECONDS = .25
 
 
 class Session:
@@ -166,7 +172,7 @@ class Structural(unittest.TestCase):
             # may be blocked by several locks/transactions on the same row.
             if rows and int(rows[0])>0:return
             observed=sql(f"SELECT trx_state,COALESCE(trx_query,'') FROM information_schema.INNODB_TRX WHERE trx_mysql_thread_id={session.id};")
-            time.sleep(.05)
+            time.sleep(LOCK_POLL_SECONDS)
         self.fail(f'Competing operation did not wait on the parent row lock; connection={session.id}; wait_count={rows}; transaction={observed}')
 
     def race(self, first, second):
@@ -198,6 +204,24 @@ class Structural(unittest.TestCase):
                 self.wait_blocked(writer,future)
             finally:
                 a.run('ROLLBACK;');b.run('COMMIT;')
+            self.assertEqual(future.result(timeout=20)[-1],'0')
+        self.assertEqual(writer.errors,[]);self.invariant()
+
+    def test_cached_metadata_refreshes_with_a_fast_observer(self):
+        # A persistent observer removes the per-process startup delay that hid
+        # this bug on Windows. Prime a snapshot before the writer starts; the
+        # metadata poll must leave enough idle time for that snapshot to refresh.
+        with Session() as holder,Session() as writer,Session() as observer,ThreadPoolExecutor(max_workers=1) as pool:
+            holder.run(f'START TRANSACTION; SELECT plantId FROM plant WHERE plantId={self.p} FOR UPDATE;')
+            time.sleep(LOCK_POLL_SECONDS)
+            count=f'SELECT COUNT(*) FROM information_schema.INNODB_TRX WHERE trx_mysql_thread_id={writer.id};'
+            self.assertEqual(observer.run(count),['0'])
+            future=pool.submit(writer.run,self.move()+' SELECT @@in_transaction;')
+            try:
+                with patch(__name__+'.sql',observer.run):
+                    self.wait_blocked(writer,future)
+                self.assertFalse(future.done())
+            finally:holder.run('COMMIT;')
             self.assertEqual(future.result(timeout=20)[-1],'0')
         self.assertEqual(writer.errors,[]);self.invariant()
 
@@ -284,8 +308,9 @@ class Structural(unittest.TestCase):
                     deadline=time.monotonic()+10
                     while time.monotonic()<deadline:
                         if future.done():self.fail('HTTP write bypassed closure lock')
-                        if int(sql('SELECT COUNT(*) FROM information_schema.INNODB_LOCK_WAITS;')[0])>0:break
-                        time.sleep(.05)
+                        count=sql(f'SELECT COUNT(*) FROM information_schema.INNODB_LOCK_WAITS w JOIN information_schema.INNODB_TRX blocker ON blocker.trx_id=w.blocking_trx_id WHERE blocker.trx_mysql_thread_id={a.id};')
+                        if int(count[0])>0:break
+                        time.sleep(LOCK_POLL_SECONDS)
                     else:self.fail('HTTP write did not acquire a parent lock')
                     a.run('COMMIT;');self.assertEqual(future.result()[0],400)
                 after=self.snapshot();before['plant']=after['plant'];before['plantlocationhistory']=after['plantlocationhistory'];before['flowering']=after['flowering']

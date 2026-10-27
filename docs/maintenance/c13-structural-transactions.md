@@ -154,6 +154,9 @@ Next in the agreed order is C14 history ordering.
 
 ## CI follow-up on 27 October 2026
 
+This records the first, incomplete correction. The later cache diagnosis below
+explains the continued Linux failure; a positive wait count alone was insufficient.
+
 The first Linux CI run failed in the test helper that observes structural lock
 waits. The helper compared the count from `INNODB_LOCK_WAITS` to exactly one.
 Those rows describe wait edges: a waiting transaction can have more than one
@@ -182,3 +185,38 @@ This is a test-only correction. Application code, migration SQL, generated schem
 settings and deployment actions are unchanged. The Windows/Linux user guides were
 reviewed; their failed-save and upgrade instructions still apply, so no Word edit
 or new database migration is required. Keep the existing C13 app/migration pairing.
+
+## CI cache diagnosis and revision v3
+
+The next Linux log reports `wait_count=['0']; transaction=[]` while the competing
+operation remains pending. The earlier two-holder regression passes in that same
+run. This rules out the exact-count assumption as the explanation of the remaining
+failure and points to stale observation data rather than an absent row lock.
+
+MariaDB 10.11 shares a cache across `INNODB_TRX`, `INNODB_LOCKS` and
+`INNODB_LOCK_WAITS`. Its refresh requires more than 100 ms since the last cache
+read, and each read updates that time. Polling it every 50 ms can therefore keep
+an empty snapshot alive. See the [MariaDB cache implementation](https://github.com/MariaDB/server/blob/10.11/storage/innobase/trx/trx0i_s.cc#L898-L914)
+and [read timestamp update](https://github.com/MariaDB/server/blob/10.11/storage/innobase/trx/trx0i_s.cc#L1062-L1066).
+Process startup made the old polling slower on Windows, masking the problem.
+
+Revision `c13-lock-cache-v3` leaves 250 ms between metadata polling attempts,
+including after timeout diagnostic reads. The test still requires observed wait
+edges for the specific waiting connection; a delay alone is not success. The
+HTTP closure-wait check also uses this spacing and scopes its wait edges to the
+actual holding connection, rather than any wait on the server. Process-list-only
+observation of the synthetic user lock does not read the InnoDB cache and keeps
+its existing polling behavior.
+
+A new regression uses a persistent, fast observer connection and primes an empty
+snapshot before starting the blocked writer. This removes Windows process startup
+as an accidental cache-refresh delay. The maintainer reproduction runs that same
+scenario first with the old 50 ms setting, expecting the full-timeout empty-cache
+failure, then with 250 ms spacing, requiring a real wait and successful completion
+only after releasing the parent lock. Its results and the full upgraded/fresh
+fixture run are recorded in the delivery.
+
+There are now 23 structural scenarios, plus 16 closure and 16 C12 scenarios on
+each fixture: 110 executions. Linux CI must still be rerun; local native testing
+does not certify the Linux runner. This remains a test-only correction. No app,
+SQL, schema, credentials, Word-guide or deployment-action change is required.
