@@ -151,3 +151,34 @@ Linux CI, installed Desktop/Pi acceptance and representative older installations
 remain pending. Cross-publishing or source success does not certify those targets.
 No owner's `.env`, collection database or live photos are modified by these checks.
 Next in the agreed order is C14 history ordering.
+
+## CI follow-up on 27 October 2026
+
+The first Linux CI run failed in the test helper that observes structural lock
+waits. The helper compared the count from `INNODB_LOCK_WAITS` to exactly one.
+Those rows describe wait edges: a waiting transaction can have more than one
+blocking lock/transaction. The corrected check requires a positive count for the
+specific waiting connection and still fails if the operation completes before
+the held lock is released. Timeout output now includes connection ID, count and
+transaction state/query rather than only a generic failure message.
+
+The pasted CI log does not contain the observed counts, so it cannot independently
+establish their exact values. Its initial wait timeouts and subsequent subcase
+failures are consistent with this invalid exact-count assumption. The follow-up
+adds an actual database regression with two shared lock holders: the writer has
+at least two wait edges, remains blocked after one holder commits, and completes
+only after both release. This reproduces the original assertion's false negative
+without weakening the requirement to observe a real wait. Each closure/photo
+subcase now creates its fresh plant at the start, preventing an earlier assertion
+failure from leaving later subcases pointed at an already-ended fixture.
+
+The suite identifies this correction as `c13-lock-wait-count-v2` and contains 22
+structural scenarios, alongside the existing 16 closure and 16 C12 scenarios on
+each upgraded/fresh fixture: 108 executions. The delivery records the completed
+local run; Linux CI must be rerun to confirm its result. A local Linux container
+engine was unavailable, so no Linux reproduction or pass is claimed.
+
+This is a test-only correction. Application code, migration SQL, generated schema,
+settings and deployment actions are unchanged. The Windows/Linux user guides were
+reviewed; their failed-save and upgrade instructions still apply, so no Word edit
+or new database migration is required. Keep the existing C13 app/migration pairing.

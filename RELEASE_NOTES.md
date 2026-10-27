@@ -1,5 +1,9 @@
 # Release notes
 
+## C13 CI follow-up — lock-wait observation
+
+Concurrency checks now accept a positive number of wait edges for the waiting connection, with a two-holder regression and clearer timeout diagnostics. Fresh subcase fixtures prevent cascaded failures after an earlier assertion. This changes tests only: no app, schema, migration or configuration update is required. Rerun the lifecycle CI job with revision `c13-lock-wait-count-v2`; see [C13 evidence](docs/maintenance/c13-structural-transactions.md#ci-follow-up-on-27-october-2026).
+
 ## C13 structural transaction rollback and concurrency
 
 Plant writes now hold a shared parent-row lock through their request transaction, including event/photo operations racing with closure. Structural location, split, propagation and hero-photo procedures roll back failures without committing caller work. Existing databases require `202610262000_StructuralTransactions.sql` and the matching app; fresh creation uses the regenerated schema. No settings change or historical data repair is required. See [C13 evidence](docs/maintenance/c13-structural-transactions.md) and [Windows/Linux upgrade actions](docs/upgrade-checklist.md).

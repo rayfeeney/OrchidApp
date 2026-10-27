@@ -158,12 +158,16 @@ class Structural(unittest.TestCase):
 
     def wait_blocked(self, session, future):
         deadline=time.monotonic()+10
+        rows=[];observed=[]
         while time.monotonic()<deadline:
-            if future.done():self.fail('Competing operation completed before parent lock was released')
+            if future.done():self.fail(f'Competing operation completed before parent lock was released; connection={session.id}; task_error={future.exception()}; MariaDB_errors={session.errors}')
             rows=sql(f'SELECT COUNT(*) FROM information_schema.INNODB_LOCK_WAITS w JOIN information_schema.INNODB_TRX t ON t.trx_id=w.requesting_trx_id WHERE t.trx_mysql_thread_id={session.id};')
-            if rows==['1']:return
+            # This is a wait-edge count, not a Boolean. One waiting transaction
+            # may be blocked by several locks/transactions on the same row.
+            if rows and int(rows[0])>0:return
+            observed=sql(f"SELECT trx_state,COALESCE(trx_query,'') FROM information_schema.INNODB_TRX WHERE trx_mysql_thread_id={session.id};")
             time.sleep(.05)
-        self.fail('Competing operation did not wait on the parent row lock')
+        self.fail(f'Competing operation did not wait on the parent row lock; connection={session.id}; wait_count={rows}; transaction={observed}')
 
     def race(self, first, second):
         with Session() as a, Session() as b, ThreadPoolExecutor(max_workers=1) as pool:
@@ -178,6 +182,24 @@ class Structural(unittest.TestCase):
     def test_concurrent_moves_serialize_and_preserve_intervals(self):
         errors=self.race(self.move(),self.move('2020-07-01',self.locations[0]))
         self.assertEqual(errors,([],[]));self.invariant()
+
+    def test_multiple_blockers_are_recognized_as_a_real_lock_wait(self):
+        # Reproduce the exact-count false negative with two shared holders.
+        # The pending writer must remain blocked until BOTH are released.
+        with Session() as a,Session() as b,Session() as writer,ThreadPoolExecutor(max_workers=1) as pool:
+            shared=f'START TRANSACTION; SELECT plantId FROM plant WHERE plantId={self.p} LOCK IN SHARE MODE;'
+            a.run(shared);b.run(shared)
+            future=pool.submit(writer.run,self.move()+' SELECT @@in_transaction;')
+            try:
+                self.wait_blocked(writer,future)
+                edges=int(sql(f'SELECT COUNT(*) FROM information_schema.INNODB_LOCK_WAITS w JOIN information_schema.INNODB_TRX t ON t.trx_id=w.requesting_trx_id WHERE t.trx_mysql_thread_id={writer.id};')[0])
+                self.assertGreaterEqual(edges,2)
+                a.run('COMMIT;')
+                self.wait_blocked(writer,future)
+            finally:
+                a.run('ROLLBACK;');b.run('COMMIT;')
+            self.assertEqual(future.result(timeout=20)[-1],'0')
+        self.assertEqual(writer.errors,[]);self.invariant()
 
     def test_move_uses_current_rows_inside_older_caller_snapshot(self):
         with Session() as caller:
@@ -204,6 +226,7 @@ class Structural(unittest.TestCase):
     def test_rolled_back_closure_allows_waiting_structural_writes(self):
         operations=lambda:[self.move(),self.split(),self.propagate(),f'CALL spRemovePlantLocation({self.history});']
         for index in range(4):
+            if index:self.setUp()
             operation=operations()[index]
             with self.subTest(operation=operation):
                 # Roll back the first closure so every subcase starts editable.
@@ -214,20 +237,18 @@ class Structural(unittest.TestCase):
                     finally:a.run('ROLLBACK;')
                     task.result(timeout=20)
                 self.assertEqual(b.errors,[])
-                # The operation may end/change this plant; use a fresh fixture.
-                self.setUp()
 
     def test_committed_closure_refuses_waiting_structural_writes(self):
         operations=lambda:[self.move(),self.split(),self.propagate(),
             f'CALL spRemovePlantLocation({self.history});',
             f"CALL spEditPlantLocation({self.history},'2020-04-01','','');"]
         for index in range(5):
+            if index:self.setUp()
             operation=operations()[index]
             with self.subTest(operation=operation):
                 errors=self.race(self.closure(),operation)
                 self.assertEqual(errors[0],[])
                 self.assertIn('Ended plants are read-only',''.join(errors[1]))
-                self.setUp()
 
     def test_split_refuses_interval_inversion_and_invalid_children(self):
         before=self.snapshot()
@@ -252,6 +273,7 @@ class Structural(unittest.TestCase):
                (f'/Plants/Photos/{self.p}?handler=Upload',{}),
                (f'/Plants/Photos/{self.p}?handler=SetHero',{'photoId':'0'})]
         for index in range(3):
+            if index:self.setUp()
             path,values=paths()[index]
             with self.subTest(path=path):
                 opener,token=self.opener()
@@ -268,7 +290,6 @@ class Structural(unittest.TestCase):
                     a.run('COMMIT;');self.assertEqual(future.result()[0],400)
                 after=self.snapshot();before['plant']=after['plant'];before['plantlocationhistory']=after['plantlocationhistory'];before['flowering']=after['flowering']
                 self.assertEqual(after,before)
-                self.setUp()
 
     def test_route_id_override_cannot_lock_a_different_plant(self):
         opener,token=self.opener();other=self.plant();before=self.snapshot()
