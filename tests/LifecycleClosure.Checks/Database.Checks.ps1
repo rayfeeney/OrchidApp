@@ -2,6 +2,7 @@ param([string]$PythonExe='python3',[int]$WebPort=53337,[switch]$ExportSchema)
 $ErrorActionPreference='Stop'
 Write-Host 'Lifecycle checks revision: c13-lock-cache-v3'
 Write-Host 'History ordering checks revision: c14-event-type-v1'
+Write-Host 'Photo consistency checks revision: c15-c19-photo-v1'
 $PSNativeCommandUseErrorActionPreference=$false
 $repo=(Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../..')).Path
 foreach($name in @('MARIADB_HOST','MARIADB_PORT','MARIADB_USER','MARIADB_PASSWORD')) {
@@ -13,7 +14,7 @@ $null=New-Item -ItemType Directory -Path $root
 $defaults=Join-Path $root 'client.cnf'
 $databases=@(('orchids_c11_'+[guid]::NewGuid().ToString('N')),('orchids_c11_'+[guid]::NewGuid().ToString('N')))
 $prior=@{}
-foreach($name in @('MARIADB_DATABASE','MARIADB_CHARSET','MARIADB_COLLATION','C11_TEST_DEFAULTS','C11_TEST_DATABASE','C11_TEST_WEB_URL','MYSQL_PWD','ASPNETCORE_ENVIRONMENT','ASPNETCORE_URLS','ConnectionStrings__OrchidDb','ConnectionStrings__DefaultConnection','Storage__UploadRoot','Monitoring__Enabled')) {
+foreach($name in @('PATH','MARIADB_DATABASE','MARIADB_CHARSET','MARIADB_COLLATION','C11_TEST_DEFAULTS','C11_TEST_DATABASE','C11_TEST_WEB_URL','MYSQL_PWD','ASPNETCORE_ENVIRONMENT','ASPNETCORE_URLS','ConnectionStrings__OrchidDb','ConnectionStrings__DefaultConnection','Storage__UploadRoot','Monitoring__Enabled')) {
     $prior[$name]=[Environment]::GetEnvironmentVariable($name)
 }
 $process=$null;$cleanupCode=0
@@ -35,6 +36,11 @@ function Stop-HostProcess {
     $script:process=$null
 }
 try {
+    if($IsWindows) {
+        $native=Join-Path $repo 'app/runtime/libvips/win-x64/bin'
+        if(-not(Test-Path -LiteralPath $native)){throw 'Restore the pinned Windows native runtime before photo checks.'}
+        $env:PATH=$native+[IO.Path]::PathSeparator+$env:PATH
+    }
     $lines=@('[client]','protocol=tcp',('host='+ (Quote-Option $env:MARIADB_HOST)),('port='+$env:MARIADB_PORT),('user='+ (Quote-Option $env:MARIADB_USER)),('password='+ (Quote-Option $env:MARIADB_PASSWORD)))
     [IO.File]::WriteAllLines($defaults,$lines,[Text.UTF8Encoding]::new($false))
     if(-not $IsWindows){& chmod 600 -- $defaults;if($LASTEXITCODE -ne 0){throw 'Credential protection failed.'}}
@@ -54,6 +60,7 @@ try {
     # Synthetic upgrade fixture: current schema except the genuine pre-C11 procedure.
     # Regenerate its fixture manifest with the preceding cutoff, never edit production artifacts.
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'PreC11UpdatePlantDetails.sql') -Destination (Join-Path $stage 'schema/routines/spUpdatePlantDetails.sql') -Force
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'PreC19UpdateTaxonDetails.sql') -Destination (Join-Path $stage 'schema/routines/spUpdateTaxonDetails.sql') -Force
     & (Join-Path $stage 'scripts/New-SchemaManifest.ps1') -SchemaRoot (Join-Path $stage 'schema') -ThroughMigration '202606041820'
     if(Test-Path -LiteralPath (Join-Path $stage 'migrations')){throw 'Schema-only stage unexpectedly contains migrations.'}
     $env:MARIADB_DATABASE=$databases[0]
@@ -140,6 +147,8 @@ try {
             Start-Sleep -Seconds 1
         }
         if(-not $ready){throw 'Fixture web host did not become ready.'}
+        & $PythonExe (Join-Path $PSScriptRoot 'PhotoConsistency.Checks.py')
+        if($LASTEXITCODE -ne 0){throw 'Photo consistency/readiness checks failed.'}
         & $PythonExe (Join-Path $PSScriptRoot 'checks.py')
         if($LASTEXITCODE -ne 0){throw 'Lifecycle closure database/HTTP checks failed.'}
         & $PythonExe (Join-Path $PSScriptRoot 'EndedPlant.Checks.py')

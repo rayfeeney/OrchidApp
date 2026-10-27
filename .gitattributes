@@ -9,3 +9,4 @@
 database/migrations/202610261200_AtomicManualPlantClosure.sql text eol=lf
 database/migrations/202610261800_EndedPlantReadOnly.sql text eol=lf
 database/migrations/202610262000_StructuralTransactions.sql text eol=lf
+database/migrations/202610271200_PhotoTaxonTransaction.sql text eol=lf

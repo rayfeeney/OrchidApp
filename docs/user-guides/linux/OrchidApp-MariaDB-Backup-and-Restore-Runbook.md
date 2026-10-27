@@ -96,3 +96,9 @@ Point a compatible isolated publication at the recovered database and `destinati
 Keep input/pin/evidence until another verified recovery route exists. An old paired archive carries its own files; old standalone `.sql.gz` files require separate proof of matching uploads and remain a manual recovery format. Use the [installation guide](installation-upgrade.md) for replacement tools/accounts/compatible binaries and service registration without schema creation over restored data. Apply later migrations only as a separate controlled upgrade after recovery acceptance.
 
 Test recovery quarterly and after changing scripts, credentials, providers or runtime. Process success, hashes and row counts alone do not certify whole-machine recovery.
+
+## C15/C19 photo recovery acceptance
+
+Include the actual uploads and their private `.photo-recovery` records with SQL in a paired recovery point. Stop all writers for a consistent snapshot; a SQL dump or verified archive is not end-to-end application acceptance. Windows Normal backup does not quiesce every writer, and Linux scheduled coordination covers only configured units. Preserve any copied journals on restore even if they came from an upload that later succeeded on the original machine.
+
+After restore/start, require `/health/ready` to return 200 and reopen representative plant/taxon photos and thumbnails. Unresolved journals or missing active files return 503. Keep the input archive, matching files, SQL and logs; stop writers and follow [photo handling and read-only recovery review](../../photo-handling.md) before clearing any record. Never delete a journal just to force startup. C19 does not make concurrent SQL/file backups atomic or certify an installed recovery.

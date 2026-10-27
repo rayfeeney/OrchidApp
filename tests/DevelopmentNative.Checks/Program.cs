@@ -24,6 +24,8 @@ try
     // Force lazy native decoding to read all pixels, not just file headers.
     _ = reopened.Avg();
     _ = thumbnail.Avg();
+    await PhotoPolicyChecks.RunAsync(probe);
+    await PhotoRecoveryChecks.RunAsync(probe);
     Console.WriteLine($"Native photo and thumbnail save/reopen passed (libvips {NetVips.NetVips.Version(0)}.{NetVips.NetVips.Version(1)}.{NetVips.NetVips.Version(2)}).");
 }
 finally { Directory.Delete(probe, recursive: true); }

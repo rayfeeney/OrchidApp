@@ -28,3 +28,7 @@ The current user guides are maintained as .docx files. Matching editable Markdow
 ## Review and retirement
 
 For a behaviour change, update the owner, its index entry and any affected platform guide. Check configuration names, code/script paths and acceptance steps. If implementation remains incomplete, describe the present limit and link its backlog ID. Move inapplicable/superseded docs to history, with a replacement pointer and corrected incoming links. Keep new change reports in docs/; retire them when their operating instructions are superseded, preserving evidence rather than silently rewriting recorded results.
+
+## Photo policy ownership
+
+[Photo handling and recovery](photo-handling.md) owns C15/C19 metadata, orientation, readiness and recovery-record procedures. [Validation evidence](maintenance/c15-c19-photo-handling.md) records measured checks. Windows/Linux guides link here; the upgrade checklist owns adoption actions.

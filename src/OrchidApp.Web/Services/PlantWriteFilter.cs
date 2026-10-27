@@ -9,7 +9,7 @@ namespace OrchidApp.Web.Services;
 
 // Hold the same parent-row lock as the structural procedures until the entire
 // handler finishes. Reads deliberately remain outside this transaction.
-public sealed class PlantWriteFilter(OrchidDbContext db) : IAsyncPageFilter
+public sealed class PlantWriteFilter(OrchidDbContext db, PhotoWriteBatch batch) : IAsyncPageFilter
 {
     private static readonly HashSet<string> Pages = new(StringComparer.Ordinal)
     {
@@ -70,13 +70,6 @@ public sealed class PlantWriteFilter(OrchidDbContext db) : IAsyncPageFilter
             return;
         }
 
-        var executed = await next();
-        // Validation/error pages must not commit earlier SaveChanges calls.
-        // Exceptions also leave the transaction for DisposeAsync to roll back.
-        if (executed.Exception is null && context.ModelState.IsValid &&
-            executed.Result is RedirectToPageResult or LocalRedirectResult)
-            await transaction.CommitAsync(ct);
-        else
-            await transaction.RollbackAsync(CancellationToken.None);
+        await PhotoWriteCompletion.ExecuteAsync(transaction, batch, context, next);
     }
 }

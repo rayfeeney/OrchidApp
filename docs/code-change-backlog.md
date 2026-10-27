@@ -23,7 +23,7 @@ Record actual evidence at each step.
 | --- | --- | --- | --- |
 | [C01](#c01) | P1 | Confirmed defect / agreed requirement | Make fresh schema creation portable and dependency ordered |
 | [C02](#c02) | P1 | Agreed requirement / current dependency gap | Supply schema-contained baseline identity for future upgrades |
-| [C03](#c03) | P1 | Agreed requirement | Restrict bespoke monitoring to the owner’s installation |
+| [C03](#c03) | P1 | Agreed requirement | Restrict bespoke monitoring to the ownerâ€™s installation |
 | [C04](#c04) | P1 | Confirmed enforcement gap | Reconcile migration runners and enforce compatible history |
 | [C05](#c05) | P1 | Confirmed CI coverage gap | Validate schema-only seeded creation and future upgrades in CI |
 | [C06](#c06) | P1 | Confirmed source-selection gap | Bind legacy safety backup to the detected source |
@@ -35,16 +35,16 @@ Record actual evidence at each step.
 | [C12](#c12) | P2 | Implemented with local SQL/HTTP checks; Linux CI/installed acceptance pending | Make temporal and ended-plant restrictions deliberate |
 | [C13](#c13) | P2 | Implemented; CI/installed acceptance pending | Verify structural transaction rollback and concurrency |
 | [C14](#c14) | P2 | Agreed display order implemented; CI/installed acceptance pending | Define deterministic history ordering if required |
-| [C15](#c15) | P2 | Confirmed option/implementation mismatch | Implement or retire metadata-stripping configuration |
+| [C15](#c15) | P2 | Implemented; Linux/installed acceptance pending | Implement or retire metadata-stripping configuration |
 | [C16](#c16) | P1 | Confirmed portability/setup gaps | Make developer setup and native dependencies reproducible |
 | [C17](#c17) | P1 | Implemented with local archive/native checks; Linux CI/installation acceptance pending | Make Linux backup/restore portable and paired |
 | [C18](#c18) | P2 | Validation gap / required operational contract | Validate packaged upgrades and recovery including app-only updates |
-| [C19](#c19) | P2 | Documented consistency/readiness gap | Validate database/filesystem/native readiness and photo consistency |
+| [C19](#c19) | P2 | Implemented; Linux/installed acceptance pending | Validate database/filesystem/native readiness and photo consistency |
 | [C20](#c20) | P2 | Confirmed test inventory/evidence gap | Keep feature checks and build evidence reproducible |
 
 ## C01
 
-**Make fresh schema creation portable and dependency ordered** — P1; Confirmed defect / agreed requirement; status: Implemented locally; Linux/native-photo acceptance pending.
+**Make fresh schema creation portable and dependency ordered** â€” P1; Confirmed defect / agreed requirement; status: Implemented locally; Linux/native-photo acceptance pending.
 
 Affected files/areas: database/scripts/rebuild.ps1; database/schema/; schema export tooling.
 
@@ -58,7 +58,7 @@ Implementation and local validation: [C01/C02 evidence](maintenance/c01-c02-sche
 
 ## C02
 
-**Supply schema-contained baseline identity for future upgrades** — P1; Agreed requirement / current dependency gap; status: Implemented locally; Linux/native-photo acceptance pending.
+**Supply schema-contained baseline identity for future upgrades** â€” P1; Agreed requirement / current dependency gap; status: Implemented locally; Linux/native-photo acceptance pending.
 
 Affected files/areas: src/OrchidApp.Web/Program.cs; database/scripts/Export-MariaDBSchema.ps1; rebuild and migration scripts; schema metadata.
 
@@ -72,7 +72,7 @@ Implementation and local validation: [C01/C02 evidence](maintenance/c01-c02-sche
 
 ## C03
 
-**Restrict bespoke monitoring to the owner’s installation** — P1; Agreed requirement; status: Implemented locally; owner device acceptance pending.
+**Restrict bespoke monitoring to the ownerâ€™s installation** â€” P1; Agreed requirement; status: Implemented locally; owner device acceptance pending.
 
 Affected files/areas: src/OrchidApp.Web/Configuration/PlatformFeatures.cs; Pages/Index.cshtml.cs; Program.cs; configuration; environment/chart tests.
 
@@ -86,7 +86,7 @@ Implementation: Monitoring:Enabled defaults false and requires Linux ARM/ARM64. 
 
 ## C04
 
-**Reconcile migration runners and enforce compatible history** — P1; Confirmed enforcement gap; status: Implemented; local checks and corrected Linux CI confirmed passed by the owner.
+**Reconcile migration runners and enforce compatible history** â€” P1; Confirmed enforcement gap; status: Implemented; local checks and corrected Linux CI confirmed passed by the owner.
 
 Affected files/areas: database/scripts/Apply-Migrations.ps1; Apply-MariaDBMigrations.ps1; dev-runner.ps1; src/OrchidApp.Web/Program.cs.
 
@@ -100,7 +100,7 @@ Implementation: canonical PowerShell runner plus compatibility alias, matching D
 
 ## C05
 
-**Validate schema-only seeded creation and future upgrades in CI** — P1; Confirmed CI coverage gap; status: Open.
+**Validate schema-only seeded creation and future upgrades in CI** â€” P1; Confirmed CI coverage gap; status: Open.
 
 Affected files/areas: .github/workflows/ci.yml; database schema metadata/tests; tests/.
 
@@ -114,7 +114,7 @@ Implementation: CI uses the production creator from a stage containing scripts/s
 
 ## C06
 
-**Bind legacy safety backup to the detected source** — P1; Confirmed source-selection gap; status: Implemented and locally verified; new CI/installed-machine acceptance pending.
+**Bind legacy safety backup to the detected source** â€” P1; Confirmed source-selection gap; status: Implemented and locally verified; new CI/installed-machine acceptance pending.
 
 Affected files/areas: src/OrchidApp.Launcher/OrchidAppLauncherForm.cs; app/tools/backup-orchidapp.ps1.
 
@@ -128,7 +128,7 @@ Implementation: launcher captures a quiescent source with writes/deletion denied
 
 ## C07
 
-**Restore settings from the format written by backup** — P1; Confirmed backup/restore format mismatch; status: Implemented and locally verified; new CI/installed-machine acceptance pending.
+**Restore settings from the format written by backup** â€” P1; Confirmed backup/restore format mismatch; status: Implemented and locally verified; new CI/installed-machine acceptance pending.
 
 Affected files/areas: app/tools/backup-orchidapp.ps1; app/tools/restore-orchidapp.ps1.
 
@@ -142,7 +142,7 @@ Implementation: version 2 payload inventories and original nested settings round
 
 ## C08
 
-**Make restore failure recoverable and preserve the source ZIP** — P1; status: Implemented with local recovery checks; CI/installed-machine acceptance pending.
+**Make restore failure recoverable and preserve the source ZIP** â€” P1; status: Implemented with local recovery checks; CI/installed-machine acceptance pending.
 
 Affected files/areas: src/OrchidApp.Launcher/OrchidAppLauncherForm.cs; app/tools/restore-orchidapp.ps1.
 
@@ -156,7 +156,7 @@ Implementation: retained input, verified safety backup, persistent phase journal
 
 ## C09
 
-**Correct backup retention controls** — P2; status: Implemented with local retention/native/Desktop checks; CI/installed-machine acceptance pending.
+**Correct backup retention controls** â€” P2; status: Implemented with local retention/native/Desktop checks; CI/installed-machine acceptance pending.
 
 Affected files/areas: app/tools/backup-orchidapp.ps1; src/OrchidApp.Launcher/OrchidAppLauncherForm.cs.
 
@@ -170,7 +170,7 @@ Implementation: declared skip/count controls, minimum one backup, validated top-
 
 ## C10
 
-**Reconcile interrupted and completed legacy migration state** — P1; status: Implemented with local reconciliation checks; CI/installed-machine acceptance pending.
+**Reconcile interrupted and completed legacy migration state** â€” P1; status: Implemented with local reconciliation checks; CI/installed-machine acceptance pending.
 
 Affected files/areas: src/OrchidApp.Launcher/OrchidAppLayoutResolver.cs; Infrastructure/LegacyDataMigrationService.cs; Infrastructure/MigrationStateService.cs; OrchidAppLauncherForm.cs.
 
@@ -184,7 +184,7 @@ Implementation: version 2 atomic state, exclusive operation lock, captured-sourc
 
 ## C11
 
-**Correct manual lifecycle closure and its failure handling** — P1; status: Implemented with local DB/HTTP checks; Linux CI/installation acceptance pending.
+**Correct manual lifecycle closure and its failure handling** â€” P1; status: Implemented with local DB/HTTP checks; Linux CI/installation acceptance pending.
 
 Affected files/areas: new database/migrations SQL; exported spUpdatePlantDetails and schema checksums; lifecycle integration tests.
 
@@ -194,11 +194,11 @@ Dependencies: None; upgrade acceptance uses C02/C04.
 
 Acceptance: Save/reopen closure succeeds; injected failure does not leave contradictory partial closure; unknown dates, flowering and location intervals and split lineage remain valid.
 
-Implementation: new migration `202610261200_AtomicManualPlantClosure.sql` corrects flowering.endDate, wraps the operation in an owned transaction or caller-preserving savepoint, rethrows failures and checks open interval start bounds. Canonical schema/checksums/bootstrap are regenerated through the exporter. The actual Edit-page failure stays editable with unchanged DB rows; retry succeeds. A read-only adoption review identifies historical records for investigation without rewriting them. See [C11 evidence](maintenance/c11-manual-closure.md) and the [upgrade checklist](upgrade-checklist.md). C12–C14 policy/concurrency work and real older-installation acceptance remain separate.
+Implementation: new migration `202610261200_AtomicManualPlantClosure.sql` corrects flowering.endDate, wraps the operation in an owned transaction or caller-preserving savepoint, rethrows failures and checks open interval start bounds. Canonical schema/checksums/bootstrap are regenerated through the exporter. The actual Edit-page failure stays editable with unchanged DB rows; retry succeeds. A read-only adoption review identifies historical records for investigation without rewriting them. See [C11 evidence](maintenance/c11-manual-closure.md) and the [upgrade checklist](upgrade-checklist.md). C12â€“C14 policy/concurrency work and real older-installation acceptance remain separate.
 
 ## C12
 
-**Make temporal and ended-plant restrictions deliberate** — P2; status: Implemented with local SQL/HTTP checks; Linux CI/installed acceptance pending.
+**Make temporal and ended-plant restrictions deliberate** â€” P2; status: Implemented with local SQL/HTTP checks; Linux CI/installed acceptance pending.
 
 Affected files/areas: Pages/Plants/Events/Add.cshtml.cs, Edit.cshtml.cs, Remove.cshtml.cs; Photos/Index.cshtml.cs; plant Edit; relevant SQL.
 
@@ -214,7 +214,7 @@ Implementation: event handlers reject ended writes and scope source IDs to their
 
 ## C13
 
-**Verify structural transaction rollback and concurrency** — P2; implemented in source; CI/Linux and installed acceptance pending.
+**Verify structural transaction rollback and concurrency** â€” P2; implemented in source; CI/Linux and installed acceptance pending.
 
 Affected files/areas: location/split/propagation stored procedures via new migrations; DB integration tests.
 
@@ -230,7 +230,7 @@ Implementation: migration `202610262000_StructuralTransactions.sql` adds caller-
 
 ## C14
 
-**Define deterministic history ordering if required** — P2; agreed policy implemented; CI/Linux and installed UI acceptance pending.
+**Define deterministic history ordering if required** â€” P2; agreed policy implemented; CI/Linux and installed UI acceptance pending.
 
 Affected files/areas: database/schema/views/vplantlifecyclehistory.sql via migration/export; plant history queries/tests.
 
@@ -244,19 +244,21 @@ Owner decision: newest stored date/time first; matching timestamps use event typ
 
 ## C15
 
-**Implement or retire metadata-stripping configuration** — P2; Confirmed option/implementation mismatch; status: Open.
+**Implement or retire metadata-stripping configuration** â€” P2; Confirmed option/implementation mismatch; status: Implemented in source; Linux/native and installed acceptance pending.
 
 Affected files/areas: src/OrchidApp.Web/Services/PhotoPipeline.cs; MediaIngestionOptions.cs; image fixtures/tests.
 
-Required work: Decide intended metadata/privacy and orientation behaviour; implement and test actual JPEG save/rotation rules or remove unused StripGpsMetadata. Preserve intentional colour handling and alpha rules.
+Original requirement: Decide intended metadata/privacy and orientation behaviour; implement and test actual JPEG save/rotation rules or remove unused StripGpsMetadata. Preserve intentional colour handling and alpha rules.
 
 Dependencies: None.
 
 Acceptance: Output fixtures demonstrate the chosen GPS/EXIF/orientation/colour policy on supported native runtimes; docs describe measured behaviour.
 
+Implementation and evidence: [C15/C19 photo handling](maintenance/c15-c19-photo-handling.md). Windows native policy/recovery checks and isolated upgraded/fresh SQL/HTTP checks passed; actual Linux/Pi and installer/recovery acceptance remain pending.
+
 ## C16
 
-**Make developer setup and native dependencies reproducible** — P1; Confirmed portability/setup gaps; status: Open.
+**Make developer setup and native dependencies reproducible** â€” P1; Confirmed portability/setup gaps; status: Open.
 
 Affected files/areas: scripts/DevSetup/setup.ps1; schema exporter; development configuration; runtime restore tooling.
 
@@ -272,7 +274,7 @@ Implementation: one explicit MARIADB target generates app configuration; committ
 
 ## C17
 
-**Make Linux backup/restore portable and paired** — P1; status: Implemented with local archive/native checks; Linux CI/installation acceptance pending.
+**Make Linux backup/restore portable and paired** â€” P1; status: Implemented with local archive/native checks; Linux CI/installation acceptance pending.
 
 Affected files/areas: infrastructure/backups/backup_orchids.sh; Linux deployment/support tooling.
 
@@ -286,31 +288,33 @@ Implementation: explicit private JSON/client/rclone paths, configured writer sto
 
 ## C18
 
-**Validate packaged upgrades and recovery including app-only updates** — P2; Validation gap / required operational contract; status: Open.
+**Validate packaged upgrades and recovery including app-only updates** â€” P2; Validation gap / required operational contract; status: Open.
 
 Affected files/areas: installer/windows/OrchidApp.iss; scripts/build-windows-installer.ps1; launcher/packaging integration tests; CI as appropriate.
 
 Required work: Decide and implement explicit backup policy for same-layout app-only updates, then test actual installer clean install/upgrade/uninstall and data persistence. Package creation alone is insufficient.
 
-Dependencies: C06–C10.
+Dependencies: C06â€“C10.
 
 Acceptance: Actual isolated installer tests preserve data, enforce the approved backup policy and recover from failures; signed status is verified per produced artefact, not presumed.
 
 ## C19
 
-**Validate database/filesystem/native readiness and photo consistency** — P2; Documented consistency/readiness gap; status: Open.
+**Validate database/filesystem/native readiness and photo consistency** â€” P2; Documented consistency/readiness gap; status: Implemented in source; Linux/native and installed acceptance pending.
 
 Affected files/areas: src/OrchidApp.Web/Program.cs; PhotoPipeline.cs; photo handlers; host/backup integration tests.
 
-Required work: Define useful startup/health diagnostics and compensation for partial photo/observation writes. Do not treat a listening service or successful SQL dump as end-to-end readiness.
+Original requirement: Define useful startup/health diagnostics and compensation for partial photo/observation writes. Do not treat a listening service or successful SQL dump as end-to-end readiness.
 
 Dependencies: C03, C15 coordination.
 
 Acceptance: Missing DB/upload/native dependency, partial multi-photo failure and paired backup cases are observable and leave a defined recovery path; health criteria match documentation.
 
+Implementation and evidence: [C15/C19 photo handling](maintenance/c15-c19-photo-handling.md). Windows native policy/recovery checks and isolated upgraded/fresh SQL/HTTP checks passed; actual Linux/Pi and installer/recovery acceptance remain pending.
+
 ## C20
 
-**Keep feature checks and build evidence reproducible** — P2; Confirmed test inventory/evidence gap; status: Open.
+**Keep feature checks and build evidence reproducible** â€” P2; Confirmed test inventory/evidence gap; status: Open.
 
 Affected files/areas: tests/GreenhouseCharts.Checks; other executable checks; .github/workflows/ci.yml; evidence generation.
 

@@ -292,7 +292,7 @@ The following need explicit implementation and tests before becoming guarantees:
 
 - C11 atomic manual closure and C12 request/date policy are implemented locally;
   their Linux/installed acceptance and representative older DB checks remain.
-- Additional diagnostics/compensation for photo/database failures remain C19.
+- C19 adds photo request compensation and durable recovery records for uncertain outcomes. [Photo handling](photo-handling.md) defines confirmed rollback cleanup, retained evidence, readiness and operator review; SQL and files are not one atomic resource.
 - C14 implements the agreed display tie-breaker; Linux CI and installed UI
   acceptance remain pending. Absolute chronology across local clock changes is
   not promised by the current DATETIME model.

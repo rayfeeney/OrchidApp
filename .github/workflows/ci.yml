@@ -9,7 +9,7 @@ on:
 jobs:
 
   lifecycle-closure:
-    name: Lifecycle closure, transactions and history ordering
+    name: Lifecycle closure, transactions, history and photo recovery
     runs-on: ubuntu-latest
     services:
       mariadb:
@@ -30,8 +30,8 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
-      - name: Install MariaDB client
-        run: sudo apt-get update && sudo apt-get install -y mariadb-client
+      - name: Install MariaDB client and native photo runtime
+        run: sudo apt-get update && sudo apt-get install -y mariadb-client libvips-tools
       - name: Check upgraded and schema-only lifecycle policy with actual HTTP
         shell: pwsh
         env:

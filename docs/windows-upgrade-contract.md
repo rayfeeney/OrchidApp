@@ -330,3 +330,9 @@ Source-bound capture/backup and archive settings compatibility (C06/C07), explic
 Before restoring on a replacement PC, preserve the trusted ZIP separately and do not run a new empty-data backup into the only fixed-name cloud copy. A cloud destination is not required to select a restore ZIP. Configure future cloud backups only after verifying plants, photos, settings and subsequent startup. Included settings now restore through the supported archive layouts; verify them before enabling future backups.
 
 Fresh Desktop creation uses the [schema-only contract](database-creation.md) implemented in C01/C02. Bespoke monitoring is not a Windows/general-install dependency.
+
+## C15/C19 photo recovery acceptance
+
+Include the actual uploads and their private `.photo-recovery` records with SQL in a paired recovery point. Stop all writers for a consistent snapshot; a SQL dump or verified archive is not end-to-end application acceptance. Windows Normal backup does not quiesce every writer, and Linux scheduled coordination covers only configured units. Preserve any copied journals on restore even if they came from an upload that later succeeded on the original machine.
+
+After restore/start, require `/health/ready` to return 200 and reopen representative plant/taxon photos and thumbnails. Unresolved journals or missing active files return 503. Keep the input archive, matching files, SQL and logs; stop writers and follow [photo handling and read-only recovery review](photo-handling.md) before clearing any record. Never delete a journal just to force startup. C19 does not make concurrent SQL/file backups atomic or certify an installed recovery.

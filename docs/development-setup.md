@@ -133,3 +133,7 @@ C11 introduces `202610261200_AtomicManualPlantClosure.sql`. Use the single devel
 C16's local setup, schema creation, actual hook, source startup and photo HTTP round trip are recorded in [C16 evidence](maintenance/c16-developer-setup.md). The added Windows/Linux CI checks and a completely fresh OS installation still need acceptance; local Windows success is not Linux/device/installer proof.
 
 The C16 direct-start follow-up adds automatic Development .env loading and the local upload default. See [C16 evidence](maintenance/c16-developer-setup.md) for validation of that correction.
+
+## C15/C19 photo adoption
+
+Stop the app and use the same `pwsh ./scripts/DevSetup/update-database.ps1` command to adopt `202610271200_PhotoTaxonTransaction.sql`; credentials remain in the repository `.env`. Normal `dotnet run` stays the daily start command. It does not apply migrations automatically. Check `/health/ready` for database/storage/native/reference/recovery readiness; `/health/live` only proves a responding web process. The optional pre-start native probe remains separate. See [photo handling](photo-handling.md) for policy and the read-only recovery report. Existing photos are unchanged.

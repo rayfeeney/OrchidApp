@@ -55,3 +55,6 @@ Start each release/installation upgrade with the [Windows and Linux upgrade acti
 ## History
 
 [Documentation history](history/index.md) preserves superseded guides, recent delivery records, evidence and prior release publications. They are not current operating procedures. When a docs/ file is no longer applicable, move it into docs/history/, identify the replacement and update incoming current links. Follow [AGENTS.md](../AGENTS.md) and the ownership map when changing code or documents.
+
+- [Photo policy, readiness and recovery](photo-handling.md) — C15/C19 metadata/orientation, request compensation and retained recovery records.
+- [C15/C19 implementation and validation](maintenance/c15-c19-photo-handling.md).
