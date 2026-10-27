@@ -38,7 +38,7 @@ Record actual evidence at each step.
 | [C15](#c15) | P2 | Implemented; Linux/installed acceptance pending | Implement or retire metadata-stripping configuration |
 | [C16](#c16) | P1 | Confirmed portability/setup gaps | Make developer setup and native dependencies reproducible |
 | [C17](#c17) | P1 | Implemented with local archive/native checks; Linux CI/installation acceptance pending | Make Linux backup/restore portable and paired |
-| [C18](#c18) | P2 | Validation gap / required operational contract | Validate packaged upgrades and recovery including app-only updates |
+| [C18](#c18) | P2 | Source/isolated checks implemented; installed acceptance pending | Validate packaged upgrades and recovery including app-only updates |
 | [C19](#c19) | P2 | Implemented; Linux/installed acceptance pending | Validate database/filesystem/native readiness and photo consistency |
 | [C20](#c20) | P2 | Confirmed test inventory/evidence gap | Keep feature checks and build evidence reproducible |
 
@@ -288,15 +288,17 @@ Implementation: explicit private JSON/client/rclone paths, configured writer sto
 
 ## C18
 
-**Validate packaged upgrades and recovery including app-only updates** â€” P2; Validation gap / required operational contract; status: Open.
+**Validate packaged upgrades and recovery including app-only updates** â€” P2; Validation gap / required operational contract; status: Implemented in source; representative older-release/production installer acceptance pending.
 
 Affected files/areas: installer/windows/OrchidApp.iss; scripts/build-windows-installer.ps1; launcher/packaging integration tests; CI as appropriate.
 
-Required work: Decide and implement explicit backup policy for same-layout app-only updates, then test actual installer clean install/upgrade/uninstall and data persistence. Package creation alone is insufficient.
+Original requirement: Decide and implement explicit backup policy for same-layout app-only updates, then test actual installer clean install/upgrade/uninstall and data persistence. Package creation alone is insufficient.
 
 Dependencies: C06â€“C10.
 
 Acceptance: Actual isolated installer tests preserve data, enforce the approved backup policy and recover from failures; signed status is verified per produced artefact, not presumed.
+
+Implementation: mandatory verified offline installer snapshot for every existing-file replacement, including app-only updates; refusal of busy/unclear processes or unresolved recovery state; non-overwriting review/extraction and actual artifact signing evidence. Real isolated Inno fixtures and owned MariaDB rollback tests are recorded in [C18 evidence](maintenance/c18-installer-upgrades.md). Representative older-release and actual administrator deployment acceptance remain open.
 
 ## C19
 

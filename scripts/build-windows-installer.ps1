@@ -1,3 +1,7 @@
+param(
+    [string]$InnoCompiler='C:\Program Files\Inno Setup 7\ISCC.exe',
+    [switch]$RequireValidSignature
+)
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
@@ -7,6 +11,7 @@ $repoRoot = Split-Path -Parent $scriptRoot
 $sourceDir = Join-Path $repoRoot "dist\windows\OrchidApp"
 $launcherExe = Join-Path $sourceDir "OrchidApp.Launcher.exe"
 
+if (-not (Test-Path -LiteralPath $launcherExe -PathType Leaf)) { throw "Launcher executable not found: $launcherExe" }
 $versionInfo = (Get-Item $launcherExe).VersionInfo
 $productVersion = $versionInfo.ProductVersion
 
@@ -22,7 +27,7 @@ if ($appVersion -notmatch '^\d+\.\d+\.\d+$') {
 
 $installerScript = Join-Path $repoRoot "installer\windows\OrchidApp.iss"
 $outputInstaller = Join-Path $repoRoot "dist\installer\OrchidAppSetup-$appVersion.exe"
-$isccExe = "C:\Program Files\Inno Setup 7\ISCC.exe"
+$isccExe = $InnoCompiler
 
 Write-Host "Building OrchidApp Windows installer..."
 Write-Host "Repo root: $repoRoot"
@@ -47,7 +52,13 @@ Write-Host "Source folder: $sourceDir"
 Write-Host "Installer script: $installerScript"
 Write-Host "Inno compiler: $isccExe"
 
-& $isccExe $installerScript "/DMyAppVersion=$appVersion"
+foreach ($helper in @('Installer-Snapshot.ps1','prepare-installer-upgrade.ps1','review-installer-snapshot.ps1')) {
+    if (-not (Test-Path -LiteralPath (Join-Path $sourceDir "tools/$helper") -PathType Leaf)) { throw "Packaged installer helper missing: $helper. Repackage before building the installer." }
+    if ((Get-FileHash -LiteralPath (Join-Path $sourceDir "tools/$helper")).Hash -ne
+        (Get-FileHash -LiteralPath (Join-Path $repoRoot "app/tools/$helper")).Hash) { throw "Packaged installer helper is stale: $helper" }
+}
+# Inno preprocessor options precede the script; use the checked-in production identity.
+& $isccExe "/DMyAppVersion=$appVersion" $installerScript
 
 Write-Host "App version: $appVersion"
 
@@ -61,3 +72,20 @@ if (-not (Test-Path $outputInstaller)) {
 
 Write-Host "Installer created:"
 Write-Host $outputInstaller
+
+$signature=Get-AuthenticodeSignature -LiteralPath $outputInstaller
+$evidence=[ordered]@{
+    formatVersion=1
+    artifact=[IO.Path]::GetFileName($outputInstaller)
+    version=$appVersion
+    sha256=(Get-FileHash -LiteralPath $outputInstaller -Algorithm SHA256).Hash.ToLowerInvariant()
+    signatureStatus=[string]$signature.Status
+    signerThumbprint=if ($signature.SignerCertificate) { $signature.SignerCertificate.Thumbprint } else { $null }
+    signatureRequired=[bool]$RequireValidSignature
+    createdUtc=[datetime]::UtcNow.ToString('o')
+    installedAcceptance='Pending: run isolated installer and actual release acceptance separately.'
+}
+$evidence | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath ($outputInstaller+'.evidence.json') -Encoding UTF8
+Write-Host "Installer SHA-256: $($evidence.sha256)"
+Write-Host "Installer signature status: $($signature.Status)"
+if ($RequireValidSignature -and $signature.Status -ne 'Valid') { throw 'Installer does not have a valid Authenticode signature. The artifact and evidence were retained; do not release it as signed.' }

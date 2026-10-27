@@ -297,3 +297,34 @@ jobs:
       - name: Create Windows package
         shell: pwsh
         run: ./scripts/package-windows.ps1
+
+      - name: Check installer snapshot policy on both PowerShell versions
+        shell: pwsh
+        run: |
+          ./tests/InstallerUpgrade.Checks/Policy.Checks.ps1
+          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tests/InstallerUpgrade.Checks/Policy.Checks.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Check real database recovery from installer snapshot
+        shell: pwsh
+        run: ./tests/InstallerUpgrade.Checks/Database.Checks.ps1 -MariaDbRuntimeRoot ./app/runtime/mariadb/win-x64
+
+      - name: Compile and test isolated installers
+        shell: pwsh
+        run: |
+          choco install innosetup --yes --no-progress
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $compiler = @('C:\Program Files\Inno Setup 7\ISCC.exe','C:\Program Files (x86)\Inno Setup 7\ISCC.exe','C:\Program Files (x86)\Inno Setup 6\ISCC.exe','C:\Program Files\Inno Setup 6\ISCC.exe') | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+          if (-not $compiler) { throw 'Installed Inno Setup compiler was not found.' }
+          dotnet build src/OrchidApp.Launcher/OrchidApp.Launcher.csproj --configuration Release
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ./tests/InstallerUpgrade.Checks/Installer.Checks.ps1 -InnoCompiler $compiler
+          ./tests/InstallerUpgrade.Checks/Build.Checks.ps1 -InnoCompiler $compiler
+          ./scripts/build-windows-installer.ps1 -InnoCompiler $compiler
+
+      - name: Retain produced installer identity and signing evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer-evidence
+          path: dist/installer/*.evidence.json
+          if-no-files-found: error

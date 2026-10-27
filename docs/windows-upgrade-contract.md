@@ -86,9 +86,8 @@ states that plant data, photos, backups and settings are preserved. The
 `[UninstallDelete]` section is intentionally empty; uninstall removes installed
 application files and shortcuts while leaving ProgramData alone.
 
-`CloseApplications=yes` asks Inno Setup to handle affected running applications;
-it is not an implemented database backup or complete migration-readiness check.
-No unconditional pre-install backup gate is defined. The checked-in installer
+`CloseApplications=no` leaves process shutdown with the operator. The pre-install helper refuses active/unclear processes rather than force-closing a database.
+C18 now requires a verified offline snapshot before replacing any existing application/persistent files, including app-only upgrades. [Installer backup and recovery](windows-installer-recovery.md) defines the gate and its distinct archive format. The checked-in installer
 configuration has no signing configuration; do not claim a particular distributed
 binary is signed without inspecting that artefact. An unsigned installer may show
 an unknown publisher.
@@ -216,9 +215,10 @@ collects pending files and invokes the normal backup tool before applying them.
 Backup failure aborts SQL migration. New records are verified after successful
 application. This is distinct from the legacy PreUpgrade backup path.
 
-An app-version change without pending SQL does not trigger an unconditional
-same-layout pre-upgrade backup. Do not describe this as a backup gate for every
-installer update. SQL application can leave partial DDL on failure; neither
+The Desktop SQL backup remains conditional on pending migrations. C18 adds a
+separate mandatory offline installer snapshot before replacing existing files,
+including same-layout app-only updates. See [installer recovery](windows-installer-recovery.md).
+SQL application can leave partial DDL on failure; neither
 installer rollback nor data-copy preservation automatically reverses schema changes.
 See [migration paths](architecture.md#implemented-migration-paths).
 
@@ -325,7 +325,7 @@ for the known gaps above.
 
 ## Required follow-up and current operator boundary
 
-Source-bound capture/backup and archive settings compatibility (C06/C07), explicit restore recovery (C08), migration reconciliation (C10) and protected routine retention (C09) are implemented with local checks. New CI and installed-machine acceptance remain pending under [C18](code-change-backlog.md#c18). Preserve a verified off-computer recovery copy before upgrading and obtain support for busy/ambiguous sources, changed partial targets or unsupported old state. See [C10 evidence](maintenance/c10-migration-reconciliation.md) and [C09 evidence](maintenance/c09-backup-retention.md).
+Source-bound capture/backup and archive settings compatibility (C06/C07), explicit restore recovery (C08), migration reconciliation (C10) and protected routine retention (C09) are implemented with local checks. C18 adds real isolated Inno install/upgrade/uninstall, snapshot policy and disposable database recovery checks. CI and representative older-release/administrator installer acceptance remain pending; see [C18 evidence](maintenance/c18-installer-upgrades.md). Preserve a verified off-computer recovery copy before upgrading and obtain support for busy/ambiguous sources, changed partial targets or unsupported old state. See [C10 evidence](maintenance/c10-migration-reconciliation.md) and [C09 evidence](maintenance/c09-backup-retention.md).
 
 Before restoring on a replacement PC, preserve the trusted ZIP separately and do not run a new empty-data backup into the only fixed-name cloud copy. A cloud destination is not required to select a restore ZIP. Configure future cloud backups only after verifying plants, photos, settings and subsequent startup. Included settings now restore through the supported archive layouts; verify them before enabling future backups.
 

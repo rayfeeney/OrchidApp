@@ -100,3 +100,7 @@ For failures, inspect service/application logs without printing secret files int
 ## C15/C19 photo readiness after upgrade
 
 Apply `202610271200_PhotoTaxonTransaction.sql` through the canonical migration runner before accepting the new app. With the service started, require `curl --fail http://127.0.0.1:5000/health/ready` using its actual listener. A responding Home page or active service alone is insufficient. On 503 inspect component flags and protected application logs, check database history, writable uploads, native libvips and referenced files. Preserve unresolved `.photo-recovery` records and matching SQL/uploads; [photo recovery](../../photo-handling.md) defines review. New photos are upright and stripped of private metadata by default, preserving ICC colour; an explicit false override retains metadata. Existing photos are not rewritten. Test the actual Linux image and installed native runtime before acceptance.
+
+## App-only upgrade backup policy
+
+C18 adds a Windows installer gate; it adds no Linux setting, migration or automatic Linux installer. For Linux app-only updates, keep the existing stopped-writer paired backup and off-device copy, preserving compatible prior app/configuration as well as data. Continue the [upgrade checklist](../../upgrade-checklist.md) and verify the actual service/native photo readiness after deployment. Windows installer fixture checks do not certify Linux/Pi recovery.

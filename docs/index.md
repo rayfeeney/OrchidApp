@@ -58,3 +58,5 @@ Start each release/installation upgrade with the [Windows and Linux upgrade acti
 
 - [Photo policy, readiness and recovery](photo-handling.md) — C15/C19 metadata/orientation, request compensation and retained recovery records.
 - [C15/C19 implementation and validation](maintenance/c15-c19-photo-handling.md).
+
+- [Windows installer backup and recovery](windows-installer-recovery.md), with [C18 validation and limits](maintenance/c18-installer-upgrades.md).
