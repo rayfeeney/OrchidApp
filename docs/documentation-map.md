@@ -32,3 +32,7 @@ For a behaviour change, update the owner, its index entry and any affected platf
 ## Photo policy ownership
 
 [Photo handling and recovery](photo-handling.md) owns C15/C19 metadata, orientation, readiness and recovery-record procedures. [Validation evidence](maintenance/c15-c19-photo-handling.md) records measured checks. Windows/Linux guides link here; the upgrade checklist owns adoption actions.
+
+## Installer backup ownership
+
+[Windows installer backup and recovery](windows-installer-recovery.md) owns C18 mandatory snapshot, archive format, stopped-writer checks, read-only review/extraction and artifact signing evidence. [C18 evidence](maintenance/c18-installer-upgrades.md) records actual fixture scope; the upgrade checklist retains separate Windows/Linux release actions.

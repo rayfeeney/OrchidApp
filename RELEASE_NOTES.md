@@ -1,5 +1,11 @@
 # Release notes
 
+## C18 installer backup for every upgrade
+
+Windows setup now requires a verified offline snapshot before replacing existing application/persistent files, including app-only updates. Busy/unclear processes, unresolved recovery state or backup failure stop replacement. Keep OrchidApp closed through setup and preserve a separate off-computer backup. The new raw installer snapshot uses a separate support-assisted recovery path; it is not a normal Restore-dialog ZIP.
+
+Installer builds record each produced artifact's checksum and signing status. C18 adds no database migration, development startup change or Linux configuration. Follow [installer recovery](docs/windows-installer-recovery.md) and the [Windows/Linux checklist](docs/upgrade-checklist.md). Representative older-release and production installer acceptance remain pending.
+
 ## C15/C19 photo policy and recoverable uploads
 
 New photos are upright and remove GPS/private camera metadata by default while preserving ICC colour. Photo and thumbnail writes succeed together; confirmed request rollback cleans newly generated files, while uncertain outcomes retain private recovery records. Database/file/native readiness is available at `/health/ready`, and the Windows launcher waits for it.
