@@ -67,23 +67,34 @@ parameter or property names.
 
 ## Ordering and same-day events
 
-Plant Details reads `vplantlifecyclehistory`, ordering by `EventDateTime` descending
-and then `SourceId` descending. The view combines active Observation, Repotting,
-Flowering and LocationChange records for active plant records. Separate lineage
-views/workflows represent split and propagation relationships.
+Plant Details reads `vplantlifecyclehistory` and explicitly orders the result by:
 
-There is no universal insertion-order guarantee for events on the same day:
+1. Stored `EventDateTime` descending (newest first).
+2. `EventType` ascending when the complete date/time matches: Flowering,
+   LocationChange (displayed as Move), Observation, Repotting.
+3. `SourceId` descending within the same timestamp and event type.
 
-- DATETIME values can collide within a second; split times have minute precision.
-- Source IDs are table-local, so different event types can have equal timestamps
-  and equal IDs. The current sort is not a total order across those ties.
-- Changing a calendar date changes placement in history. Observation, Repotting,
-  existing Flowering timestamps and LocationChange corrections preserve their
-  previous times; this does not provide a total order or immutable history.
+This is the owner-approved C14 display rule. Event type takes precedence over
+record ID when timestamps match. IDs are table-local; each current event type
+maps to one source table with a unique primary key, so the full sort tuple is
+unique for each visible event. The view combines active records for active plant
+records; split and propagation relationships retain their separate lineage views.
+The outer page query owns ordering. A view without an explicit outer sort does
+not promise this order to arbitrary callers.
 
-No user-controlled sequence field or explicit same-day reorder tool is implemented.
-Any future ordering guarantee needs an explicit cross-domain tie-breaking policy
-and meaningful tests, not only DATETIME storage.
+Changing a calendar date can reposition a card. Observation, Repotting, existing
+Flowering timestamps and LocationChange corrections preserve the existing time;
+returning a date to a tied timestamp restores its event-type/ID position. Times
+that differ on the same day still sort by time before event type. Equal times
+within one type retain descending record-ID order.
+
+This provides stable display, not insertion order or exact historical chronology.
+Stored DATETIME values have no timezone offset or daylight-saving fold. Records
+from a repeated local clock hour with equal stored values therefore use the same
+type/ID tie-breakers; no UTC order is inferred or reconstructed. Existing clock
+and timezone limitations above remain. No user-controlled ordering field, manual
+reordering workflow, timestamp rewrite or migration is introduced. See
+[C14 evidence](maintenance/c14-history-ordering.md).
 
 ## Plant lifecycle
 
@@ -282,7 +293,9 @@ The following need explicit implementation and tests before becoming guarantees:
 - C11 atomic manual closure and C12 request/date policy are implemented locally;
   their Linux/installed acceptance and representative older DB checks remain.
 - Additional diagnostics/compensation for photo/database failures remain C19.
-- A deterministic cross-domain history tie-breaker if strict ordering is required.
+- C14 implements the agreed display tie-breaker; Linux CI and installed UI
+  acceptance remain pending. Absolute chronology across local clock changes is
+  not promised by the current DATETIME model.
 - C13 structural rollback and parent-lock coordination require Linux/installed
   acceptance as well as local native SQL/HTTP checks.
 - C12 protects propagation origin dates and forbids normal reactivation. Any
