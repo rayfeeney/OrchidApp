@@ -1,6 +1,7 @@
 using System.Data;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using OrchidApp.Web.Data;
 
 namespace OrchidApp.Web.Infrastructure;
@@ -48,12 +49,14 @@ public class StoredProcedureExecutor : IStoredProcedureExecutor
         await using (var setCmd = conn.CreateCommand())
         {
             setCmd.CommandText = "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;";
+            setCmd.Transaction = _db.Database.CurrentTransaction?.GetDbTransaction();
             await setCmd.ExecuteNonQueryAsync();
         }
 
         await using var cmd = conn.CreateCommand();
         cmd.CommandText = BuildCallSql(procedureName, parameters);
         cmd.CommandType = CommandType.Text;
+        cmd.Transaction = _db.Database.CurrentTransaction?.GetDbTransaction();
 
         foreach (var p in parameters)
         {
@@ -88,6 +91,11 @@ dbp.Value = rawValue ?? DBNull.Value;
         {
             results.Add(Map<T>(reader));
         }
+
+        // CALL can report a failure after its first result set. Consume the
+        // trailing results before allowing the enclosing write to commit.
+        while (await reader.NextResultAsync())
+            while (await reader.ReadAsync()) { }
 
         return results;
     }

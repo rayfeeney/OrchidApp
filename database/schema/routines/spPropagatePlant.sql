@@ -3,57 +3,75 @@ SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 DELIMITER //
 
 CREATE OR REPLACE PROCEDURE `spPropagatePlant`(
-
     IN pParentPlantId INT,
     IN pPropagationDate DATE,
     IN pPropagationTypeId INT,
     IN pChildPlantName VARCHAR(100),
     IN pMediumId INT,
     IN pPropagationNotes TEXT
-
 )
 BEGIN
-
     DECLARE vTaxonId INT;
     DECLARE vParentPlantTag CHAR(8);
     DECLARE vParentStart DATETIME;
     DECLARE vParentEnd DATETIME;
     DECLARE vTaxonIsActive TINYINT;
     DECLARE vGenusIsActive TINYINT;
-
     DECLARE vChildTag CHAR(8);
     DECLARE vChildPlantId INT;
-
     DECLARE vPropagationDateTime DATETIME;
     DECLARE vPropagationTypeName VARCHAR(100);
-
+    DECLARE vOwnTransaction BOOLEAN DEFAULT FALSE;
+    DECLARE vSavepointCreated BOOLEAN DEFAULT FALSE;
+    DECLARE vLockedPlantId INT;
+    DECLARE vLockedEnd DATETIME;
+    DECLARE vLockedAcquisition DATETIME;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        IF vOwnTransaction THEN
+            ROLLBACK;
+        ELSEIF vSavepointCreated AND @@in_transaction THEN
+            ROLLBACK TO SAVEPOINT orchidapp_propagateplant;
+            RELEASE SAVEPOINT orchidapp_propagateplant;
+        END IF;
+        RESIGNAL;
+    END;
+    IF @@in_transaction THEN
+        SAVEPOINT orchidapp_propagateplant;
+        SET vSavepointCreated = TRUE;
+    ELSE
+        START TRANSACTION;
+        SET vOwnTransaction = TRUE;
+    END IF;
+    SELECT plantId, endDate, acquisitionDate
+      INTO vLockedPlantId, vLockedEnd, vLockedAcquisition
+      FROM plant WHERE plantId = pParentPlantId AND isActive = 1 FOR UPDATE;
+    IF vLockedPlantId IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Active plant not found.';
+    END IF;
+    IF vLockedEnd IS NOT NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Ended plants are read-only.';
+    END IF;
     IF pParentPlantId IS NULL THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Parent plant id is required';
     END IF;
-
     IF pPropagationDate IS NULL THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Propagation date is required';
     END IF;
-
     IF pPropagationTypeId IS NULL THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Propagation type is required';
     END IF;
-
     IF pPropagationDate > CURRENT_DATE THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Propagation date cannot be in the future';
     END IF;
-
     SET vPropagationDateTime = TIMESTAMP(
         pPropagationDate,
         TIME(NOW())
     );
-
-    START TRANSACTION;
-
     SELECT
         p.taxonId,
         p.plantTag,
@@ -74,35 +92,28 @@ BEGIN
     WHERE p.plantId = pParentPlantId
       AND p.isActive = 1
     FOR UPDATE;
-
     IF vParentEnd IS NOT NULL THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Parent plant already ended';
     END IF;
-
     IF vTaxonIsActive = 0 OR vGenusIsActive = 0 THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Plant must be classified under an active genus and species / hybrid';
     END IF;
-
     IF vPropagationDateTime < vParentStart THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Propagation datetime cannot be before plant lifecycle start';
     END IF;
-
     SELECT propagationTypeName
     INTO vPropagationTypeName
     FROM propagationtype
     WHERE propagationTypeId = pPropagationTypeId
-    AND isActive = 1;
-
+    AND isActive = 1 FOR UPDATE;
     IF vPropagationTypeName IS NULL THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Invalid propagation type';
     END IF;
-
     SET vChildTag = fnGeneratePlantTag();
-
     INSERT INTO plant (
         taxonId,
         plantTag,
@@ -119,9 +130,7 @@ BEGIN
         CONCAT(vPropagationTypeName, ' from ', vParentPlantTag),
         1
     );
-
     SET vChildPlantId = LAST_INSERT_ID();
-
     IF EXISTS (
         SELECT 1
         FROM plantsplitchild
@@ -131,7 +140,6 @@ BEGIN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Plant already has a split origin';
     END IF;
-
     IF pMediumId IS NOT NULL THEN
         INSERT INTO repotting (
             plantId,
@@ -148,7 +156,6 @@ BEGIN
             1
         );
     END IF;
-
     INSERT INTO plantpropagation (
         parentPlantId,
         childPlantId,
@@ -165,12 +172,14 @@ BEGIN
         pPropagationNotes,
         1
     );
-
+    IF vOwnTransaction THEN
+        COMMIT;
+    ELSE
+        RELEASE SAVEPOINT orchidapp_propagateplant;
+    END IF;
     SELECT
         vChildPlantId AS childPlantId,
         vChildTag AS childPlantTag;
-
-    COMMIT;
 
 END
 //

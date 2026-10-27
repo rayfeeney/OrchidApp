@@ -11,6 +11,7 @@ Use current guides below. For each procedure, check its stated implementation li
 - [Architecture](architecture.md) and [temporal design](temporal-design.md)
 - [Manual lifecycle closure and C11 upgrade acceptance](maintenance/c11-manual-closure.md)
 - [Ended plant policy and C12 upgrade acceptance](maintenance/c12-ended-plant-policy.md)
+- [Structural transactions and C13 acceptance](maintenance/c13-structural-transactions.md)
 - [Windows upgrade contract](windows-upgrade-contract.md)
 - [Legacy migration reconciliation evidence](maintenance/c10-migration-reconciliation.md)
 - [Windows backup source and archive compatibility](windows-backup-format.md)

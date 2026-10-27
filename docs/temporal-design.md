@@ -121,9 +121,13 @@ spUpdatePlantDetails also rejects any call for an already-ended plant, including
 attempts to clear its end date. Migration 202610261800_EndedPlantReadOnly.sql adds
 that guard and propagation-origin protection without rewriting historical rows.
 
-These are application request checks and the stated procedure guards. Structural
-transaction/concurrency acceptance remains C13; direct administrative SQL is
-outside this user workflow. See [C12 evidence](maintenance/c12-ended-plant-policy.md).
+C13 places the normal plant POST handlers in a Read Committed transaction and
+locks the route plant before loading mutable state. Its structural procedures
+lock that same parent, so a waiting writer rechecks the committed end state. A
+request commits only after a successful local redirect with valid model state;
+validation/error pages and exceptions roll back its database changes. Direct
+administrative SQL remains outside this protocol. See [C12 evidence](maintenance/c12-ended-plant-policy.md)
+and [C13 evidence](maintenance/c13-structural-transactions.md).
 
 ### Atomic manual closure (C11)
 
@@ -141,8 +145,8 @@ uses the reserved savepoint `orchidapp_update_plant_details`, releasing it on
 success and rolling back to it on SQL failure without committing prior caller
 work. SQL errors are rethrown. A deadlock can cause MariaDB to abort the whole
 caller transaction; callers must handle that normal engine behavior. Do not use
-the reserved savepoint name in calling code. Broader structural/concurrency
-guarantees remain C13.
+the reserved savepoint name in calling code. C13 applies the same ownership
+contract to the other structural operations and coordinates normal request writes.
 
 Local native database and actual Edit-page save/reopen checks are recorded in
 [C11 evidence](maintenance/c11-manual-closure.md). Existing partially applied
@@ -196,8 +200,9 @@ Event Remove soft-deletes narrative records by changing `isActive`; location
 removal calls its structural procedure. This preserves rows rather than physically
 erasing event history. Each workflow's lifecycle/taxonomy checks must be assessed
 separately. C12 rejects event removals for ended plants and scopes source IDs to
-the route plant. There is no universal database constraint enforcing all narrative
-date boundaries; broader transaction/concurrency work remains C13.
+the route plant. C13 holds the parent-row lock for the complete write request,
+including date checks and photo processing. There is no universal database
+constraint enforcing all narrative date boundaries or direct administrative writes.
 
 ## Location timeline
 
@@ -209,22 +214,25 @@ checks do not themselves enforce every historical overlap or lifecycle boundary.
 - **Move:** the procedure rejects the current location as a destination, checks
   against existing timeline points/overlaps, closes the current interval and
   inserts a new open interval. Date validation against the plant is also performed
-  in the page handler. The procedure does not independently implement every one
-  of those lifecycle checks.
+  in the page handler. C13 repeats known acquisition/future bounds in SQL,
+  rejects ended plants and requires the new start to be strictly after the current
+  start, including equal-second requests. Refresh before retrying a rejected save.
 - **Edit:** the procedure validates the new start against its effective end,
   previous start and next start, and adjusts a matching previous interval's end.
   It permits controlled boundary changes; structural timestamps are not all
-  immutable. The current page supplies midnight rather than preserving the time.
+  immutable. The page preserves the existing time. C13 repeats lifecycle bounds
+  in SQL and refuses overlap with other active intervals outside the adjusted pair.
 - **Remove:** the procedure soft-deletes a row and stitches matching neighbours.
   Removing a current row can reopen a matching previous interval; removing an
   interior historical row can extend a matching previous row to the removed end.
   Missing neighbours are not automatically reconstructed.
 
-The procedures use transactions for their multi-row operations, but the current
-definitions do not include explicit exception rollback handlers. Do not claim
-that all failure and concurrency cases are proven atomic merely because they use
-`START TRANSACTION`/`COMMIT`. Validate rollback and locking behaviour under the
-actual connection/transaction lifecycle.
+C13 locks the plant before deciding which intervals to change. SQL exception
+handlers roll back an owned transaction or the operation savepoint inside a
+caller transaction, then rethrow the error. Current locking reads avoid using a
+stale caller snapshot for timeline decisions. Tested failures cannot be committed
+later through an unrelated successful operation on the same connection. Existing
+corrupt timelines are refused where detected, rather than silently repaired.
 
 ## Split
 
@@ -241,8 +249,9 @@ timestamp. Children do not inherit a location. When a child's medium is supplied
 the procedure creates its initial repotting record at that same timestamp.
 
 The unique parent key prevents multiple split records for a parent. No general
-UI edit or reversal exists. The procedure uses a transaction but has no explicit
-SQL exception rollback handler, so failure behaviour needs integration validation.
+UI edit or reversal exists. C13 rolls back the complete operation on error,
+including children, lineage, optional repotting and parent closure. It validates
+the children array and refuses inversion of open location/flowering intervals.
 It does not comprehensively reject or repair every pre-existing narrative event
 after a backdated split. Do not claim that splitting automatically makes all
 historical data fit the new boundary.
@@ -256,8 +265,9 @@ the parent acquisition boundary, and can create an initial medium/repotting reco
 
 Each child has one propagation origin enforced by its unique child key; a parent
 can have multiple propagated children. Children do not automatically receive a
-location. There is no general edit/reversal workflow. As with split, transaction
-statements alone do not establish complete error rollback coverage.
+location. There is no general edit/reversal workflow. C13 serializes propagation
+with other parent writes and rolls back a failed child/origin/medium operation.
+Successful concurrent propagations remain separate children of the open parent.
 
 ## Requirements for future changes
 
@@ -273,7 +283,8 @@ The following need explicit implementation and tests before becoming guarantees:
   their Linux/installed acceptance and representative older DB checks remain.
 - Additional diagnostics/compensation for photo/database failures remain C19.
 - A deterministic cross-domain history tie-breaker if strict ordering is required.
-- Transaction rollback/concurrency behaviour for structural procedures.
+- C13 structural rollback and parent-lock coordination require Linux/installed
+  acceptance as well as local native SQL/HTTP checks.
 - C12 protects propagation origin dates and forbids normal reactivation. Any
   future exceptional correction workflow would require a separate approved design.
 

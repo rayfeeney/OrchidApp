@@ -1,6 +1,6 @@
 param([string]$PythonExe='python3',[int]$WebPort=53337,[switch]$ExportSchema)
 $ErrorActionPreference='Stop'
-Write-Host 'Lifecycle checks revision: c12-read-only-v1'
+Write-Host 'Lifecycle checks revision: c13-lock-cache-v3'
 $PSNativeCommandUseErrorActionPreference=$false
 $repo=(Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../..')).Path
 foreach($name in @('MARIADB_HOST','MARIADB_PORT','MARIADB_USER','MARIADB_PASSWORD')) {
@@ -40,6 +40,16 @@ try {
     $env:MYSQL_PWD=$null;$env:MARIADB_CHARSET='utf8mb4';$env:MARIADB_COLLATION='utf8mb4_unicode_ci'
     $stage=Join-Path $root 'schema-only/database';$null=New-Item -ItemType Directory -Path $stage
     foreach($directory in @('scripts','schema')){Copy-Item -LiteralPath (Join-Path $repo "database/$directory") -Destination $stage -Recurse}
+    # Restore the genuine pre-C13 definitions before hashing/creating this
+    # upgrade fixture. The fresh fixture below uses only current schema assets.
+    $priorStructural=Get-Content -LiteralPath (Join-Path $PSScriptRoot 'PreC13Structural.sql') -Raw
+    $blocks=[regex]::Matches($priorStructural,'(?ms)^SET NAMES.*?(?=^SET NAMES|\z)')
+    if($blocks.Count -ne 6){throw 'Expected six preceding structural procedures.'}
+    foreach($block in $blocks) {
+        $routine=[regex]::Match($block.Value,'CREATE OR REPLACE PROCEDURE `([A-Za-z]+)`').Groups[1].Value
+        if($routine -notin @('spMovePlantToLocation','spEditPlantLocation','spRemovePlantLocation','spSplitPlant','spPropagatePlant','spSetHeroPhoto')){throw 'Unexpected preceding routine.'}
+        [IO.File]::WriteAllText((Join-Path $stage "schema/routines/$routine.sql"),$block.Value,[Text.UTF8Encoding]::new($false))
+    }
     # Synthetic upgrade fixture: current schema except the genuine pre-C11 procedure.
     # Regenerate its fixture manifest with the preceding cutoff, never edit production artifacts.
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'PreC11UpdatePlantDetails.sql') -Destination (Join-Path $stage 'schema/routines/spUpdatePlantDetails.sql') -Force
@@ -90,8 +100,8 @@ try {
     $exported=& pwsh -NoProfile -File $exporter 2>&1
     if($LASTEXITCODE -ne 0){throw "Migrated export failed: $($exported -join "`n")"}
     $exportCutoff=(Get-Content -LiteralPath (Join-Path $exportSource 'schema/bootstrap.json') -Raw | ConvertFrom-Json).throughMigration
-    if($exportCutoff -lt '202610261800'){throw 'Migrated export did not include C12 cutoff.'}
-    Write-Host 'Migrated export succeeded with C11/C12 cutoff.'
+    if($exportCutoff -lt '202610262000'){throw 'Migrated export did not include C13 cutoff.'}
+    Write-Host 'Migrated export succeeded with C11/C12/C13 cutoff.'
     foreach($row in $oldBaseline){if(@(Query "SELECT CONCAT(scriptName,':',checksum) FROM schemaversion ORDER BY scriptName;") -notcontains $row){throw 'Existing baseline/history changed.'}}
     if($ExportSchema){& (Join-Path $repo 'database/scripts/Export-MariaDBSchema.ps1')}
 
@@ -106,7 +116,7 @@ try {
             foreach($directory in @('scripts','schema')){Copy-Item -LiteralPath (Join-Path $repo "database/$directory") -Destination $fresh -Recurse}
             if(Test-Path -LiteralPath (Join-Path $fresh 'migrations')){throw 'Fresh fixture contains migration SQL.'}
             $freshCutoff=(Get-Content -LiteralPath (Join-Path $fresh 'schema/bootstrap.json') -Raw | ConvertFrom-Json).throughMigration
-            if($freshCutoff -lt '202610261800'){throw "Fresh schema cutoff is '$freshCutoff'; expected at least 202610261800. Restore matching generated routine/bootstrap/checksum files and update the isolated development database before committing. Do not edit the cutoff by hand."}
+            if($freshCutoff -lt '202610262000'){throw "Fresh schema cutoff is '$freshCutoff'; expected at least 202610262000. Restore matching generated routine/bootstrap/checksum files and update the isolated development database before committing. Do not edit the cutoff by hand."}
             & (Join-Path $fresh 'scripts/rebuild.ps1') -ConfirmDatabase $database
             if([int](Query "SELECT COUNT(*) FROM schemaversion WHERE scriptName='$migration';") -ne 0){throw 'Fresh creation replayed C11 migration.'}
         }
@@ -133,6 +143,8 @@ try {
         if($LASTEXITCODE -ne 0){throw 'Lifecycle closure database/HTTP checks failed.'}
         & $PythonExe (Join-Path $PSScriptRoot 'EndedPlant.Checks.py')
         if($LASTEXITCODE -ne 0){throw 'Ended-plant/date database/HTTP checks failed.'}
+        & $PythonExe (Join-Path $PSScriptRoot 'Structural.Checks.py')
+        if($LASTEXITCODE -ne 0){throw 'Structural transaction/concurrency checks failed.'}
         Stop-HostProcess
     }
     Write-Host 'C11 upgrade and schema-only creation with actual HTTP closure checks passed.'

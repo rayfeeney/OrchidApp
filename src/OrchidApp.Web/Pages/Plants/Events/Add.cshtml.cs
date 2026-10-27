@@ -304,8 +304,6 @@ public class AddModel : PageModel
                 var uploadsRoot = _storagePathService.GetUploadRoot();
                 var savedRelativePaths = new List<string>();
 
-                await using var tx = await _db.Database.BeginTransactionAsync();
-
                 try
                 {
                     var observation = new PlantEvent
@@ -382,11 +380,11 @@ public class AddModel : PageModel
                         await _db.SaveChangesAsync();
                     }
 
-                    await tx.CommitAsync();
                 }
                 catch (Exception ex)
                 {
-                    await tx.RollbackAsync();
+                    // PlantWriteFilter rolls back the complete request after
+                    // this validation page is returned.
 
                     foreach (var relativePath in savedRelativePaths)
                     {
