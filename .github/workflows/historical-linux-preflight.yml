@@ -1,0 +1,73 @@
+name: Historical Linux database upgrade checks
+
+on:
+  workflow_dispatch:
+    inputs:
+      fixture_release:
+        description: Reviewed fixture release tag in this repository
+        required: true
+        default: ci-fixture-linux-arm64-1.3.0-080ba9c-v1
+        type: string
+      reviewed_adoption:
+        description: Verify the exact reviewed schema, preserve original history, and test actual forward migrations
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    name: Verify reviewed historical database adoption and migration
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Verify fixture validation rules without a database
+        run: python tests/HistoricalUpgrade.Checks/checks.py
+      - name: Download only the pinned sanitised release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FIXTURE_RELEASE: ${{ inputs.fixture_release }}
+          FIXTURE_REPOSITORY: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$FIXTURE_RELEASE" =~ ^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$ ]] || { echo 'Invalid fixture release tag'; exit 1; }
+          mkdir -p artifacts/historical-upgrade/input
+          gh release download "$FIXTURE_RELEASE" --repo "$FIXTURE_REPOSITORY" \
+            --pattern 'OrchidApp-Pi-specimen-1.3.0-080ba9c-review.tar.gz' \
+            --dir artifacts/historical-upgrade/input
+      - name: Restore into an owned server and run the selected database checks
+        env:
+          REVIEWED_ADOPTION: ${{ inputs.reviewed_adoption }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          options=()
+          if [[ "$REVIEWED_ADOPTION" == 'true' ]]; then options+=(--adopt-and-migrate); fi
+          python tests/HistoricalUpgrade.Checks/preflight.py \
+            --specimen artifacts/historical-upgrade/input/OrchidApp-Pi-specimen-1.3.0-080ba9c-review.tar.gz \
+            "${options[@]}"
+      - name: Retain diagnostic reports even on compatibility failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-linux-preflight-evidence
+          path: |
+            artifacts/historical-upgrade/**/report.json
+            artifacts/historical-upgrade/**/ledger-review.json
+            artifacts/historical-upgrade/**/migration-preflight.log
+            artifacts/historical-upgrade/**/proxy-build.log
+            artifacts/historical-upgrade/**/schema-identity.json
+            artifacts/historical-upgrade/**/adopted-plan.log
+            artifacts/historical-upgrade/**/apply.log
+            artifacts/historical-upgrade/**/second-apply.log
+          if-no-files-found: warn

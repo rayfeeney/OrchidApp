@@ -40,6 +40,8 @@ GitHub CI uploads the feature and greenhouse database evidence even when their r
 
 ## Check inventory and boundaries
 
+The existing feature job runs `python tests/HistoricalUpgrade.Checks/checks.py`: 17 pure fixture/adoption policy checks. The manual historical Linux workflow restores the pinned release asset and defaults to exact reviewed structural adoption plus four canonical forward migrations and a zero-work second apply. All original history and application data are verified; a real added-view guard proves unreviewed schema rejection. The original read-only refusal is separately selectable. Local database acceptance passed; full package/application/recovery and remote CI remain unclaimed. Only bounded reports/logs are uploaded. See [scope](historical-linux-upgrade.md) and [adoption evidence](maintenance/historical-linux-adoption.md).
+
 | Category | Checks and execution | What remains separate |
 | --- | --- | --- |
 | Isolated feature/policy | Eight executable projects selected by `scripts/run-feature-checks.py`; evidence-runner behavior via `python tests/FeatureEvidence.Checks/checks.py` | A local HTTP fixture is not a physical ARM browser/server check |

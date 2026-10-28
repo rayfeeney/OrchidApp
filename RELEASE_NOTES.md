@@ -1,5 +1,9 @@
 # Release notes
 
+## Historical Linux reviewed database upgrade checks
+
+The exact sanitised specimen now passes reviewed structural adoption and four actual forward migrations locally, with zero work on a second apply. All 245 historical records survive in an audit table; all application-table data hashes/counts match. Seventeen unit checks run in feature CI and a manual workflow defaults to reviewed adoption; original refusal remains selectable. No old SQL/checksum policy, production startup or live Pi is changed. Full package/app-only/recovery acceptance, fixture publication and remote CI remain pending. See [scope](docs/historical-linux-upgrade.md) and [evidence](docs/maintenance/historical-linux-adoption.md).
+
 ## Greenhouse CI deduplication (CHAT-R04)
 
 The database job now runs only its SQL loading/performance/net-cost suites; isolated calculation/cache/policy coverage remains in the feature job. Reports reject mixed or missing mode evidence even when an executable exits successfully. All three CI jobs and disposable database guards remain. No application behavior, migration or production setting changes. See [validation](docs/maintenance/ci-greenhouse-modes.md) and [release actions](docs/upgrade-checklist.md#chat-r04-greenhouse-ci-deduplication).

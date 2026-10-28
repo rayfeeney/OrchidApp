@@ -39,6 +39,8 @@ Move superseded/inapplicable docs to docs/history/, preserve their context and u
 
 ## Validate locally
 
+Historical Linux verifier/adoption unit tests run with `python tests/HistoricalUpgrade.Checks/checks.py`. The Docker-backed command defaults to original read-only refusal; explicit `--adopt-and-migrate` verifies the exact reviewed historical structure/history, archives the original ledger unchanged, tests the four real forward migrations and confirms zero work on a second apply plus unchanged application data. This runs only in a newly owned disposable restore; no live adoption command or package/recovery acceptance is supplied. See [scope](docs/historical-linux-upgrade.md) and [adoption evidence](docs/maintenance/historical-linux-adoption.md). Missing/unreviewed inputs must fail.
+
 Greenhouse execution is disjoint: the normal feature run covers isolated calculations/cache/policy; `--mode greenhouse-db` covers only guarded SQL loading/performance/net-cost suites. Successful logs must identify the selected suites with no mixed mode; the runner records/fails `modeEvidence` accordingly. Direct preview arguments require the connection to be cleared. See [CI mode evidence](docs/maintenance/ci-greenhouse-modes.md). Existing CI jobs and database safeguards remain separate and unchanged.
 
 The existing lifecycle database runner also executes `tests/LifecycleClosure.Checks/ValidationMessages.Checks.py` against its generated upgraded and schema-only fixtures. It verifies rendered server-side errors, unchanged records on rejection and valid correction/save/reopen. See [plant-event message evidence](docs/maintenance/event-validation-messages.md); never run fixture tests against an installed collection.
