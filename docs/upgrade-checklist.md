@@ -191,3 +191,10 @@ Stop the development app and run `pwsh ./scripts/DevSetup/update-database.ps1` f
 ### Historical packaging test shell exit
 
 CI owners: the policy script's expected failing publish must not leave a nonzero native exit after successful assertions/cleanup. Validate through GitHub-style dot-sourced PowerShell, including a deliberately failing assertion. This affects both normal feature CI and the manual historical workflow; it requires no operator, schema, setting, package rebuild or live Pi action. Preserve the evidence uploader's strict missing-file behavior. See [PR #362 correction evidence](maintenance/historical-linux-application-recovery.md).
+
+
+### Hosted paired-backup diagnostics
+
+CI owners: historical acceptance retains the production paired CLI's sanitized ERROR summary when backup/restore fails; raw native diagnostics, credentials and backup contents remain excluded from uploaded artifacts. A failed pre-upgrade backup stops migration/application replacement. This test-reporting change requires no operator/database setting or live Pi action.
+
+Hosted CI fixture setup additionally assigns/verifies copied admin configuration as root:root mode 600 after a deliberate foreign-owner probe. Do not relax the production backup protected-file requirement. This is isolated fixture provisioning and requires no live configuration changes.

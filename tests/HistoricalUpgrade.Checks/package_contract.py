@@ -3,6 +3,18 @@ from pathlib import PurePosixPath
 import stat
 
 
+def paired_failure_message(args, stdout, stderr):
+    # Only the reviewed production CLI's own sanitized ERROR log is public.
+    # Never return arbitrary native-tool stderr or private diagnostic contents.
+    if len(args)<3 or args[:2]!=['python3','/checks/orchid_backup.py'] or args[2] not in ('backup','restore'):
+        return None
+    lines=(stdout+b'\n'+stderr).decode('utf-8','replace').splitlines()
+    for line in reversed(lines):
+        if ' | ERROR: ' in line:return line.split(' | ERROR: ',1)[1][:800]
+        if line.startswith('ERROR: '):return line[7:807]
+    return None
+
+
 def validate_package(archive):
     members=archive.infolist()
     if len(members)>15000 or sum(i.file_size for i in members)>2*1024**3:

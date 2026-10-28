@@ -73,7 +73,19 @@ class ApplicationStage:
             client.write_text('[client]\nhost=127.0.0.1\nport=3306\nprotocol=tcp\nuser=root\npassword='+p.PASSWORD+'\ndefault-character-set=utf8mb4\n')
             p.docker('cp',str(client),self.container+':/specimen/admin.cnf')
             p.docker('start',self.container)
+            # docker cp can retain the hosted runner's UID. Exercise that
+            # case even on engines which default to root, then establish the
+            # backup tool's real protected-file contract (never relax it).
+            self.command(['chown','1001:1001','/specimen/admin.cnf'])
+            self.command(['chmod','644','/specimen/admin.cnf'])
+            self.command(['chown','0:0','/specimen/admin.cnf'])
             self.command(['chmod','600','/specimen/admin.cnf'])
+            protection=json.loads(self.command(['python3','-c',
+                "import os,json,stat; s=os.stat('/specimen/admin.cnf'); "
+                "print(json.dumps({'uid':s.st_uid,'gid':s.st_gid,'mode':stat.S_IMODE(s.st_mode)}))"]).decode())
+            if protection!={'uid':0,'gid':0,'mode':0o600}:
+                raise ValueError('Copied fixture admin configuration is not protected')
+            self.report['adminConfigProtection']={'foreignOwnerProbe':True,**protection}
             p.query(database,"CREATE USER 'specimen'@'%' IDENTIFIED BY 'specimen-only-not-production'; "
                 "GRANT SELECT,INSERT,UPDATE,DELETE,EXECUTE ON orchids.* TO 'specimen'@'%';")
             self.report['nativeVersions']=self.command(['dpkg-query','-W','libvips42','mariadb-client','python3','rclone']).decode().splitlines()

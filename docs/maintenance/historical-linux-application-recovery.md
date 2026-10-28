@@ -57,3 +57,15 @@ The fixture archive/release and migration payloads remain unchanged. Windows spe
 The first merged-resolution PR run passed six jobs but stopped the feature job after the packaging policy script printed all three checks passed. The test's intentionally mocked native failure left LASTEXITCODE=42, which GitHub's PowerShell wrapper treated as a failing step. The feature runner therefore never executed, making the later missing artifacts/feature-checks error secondary. The punycode warning was not the cause.
 
 The policy test now removes its mock through the correct Function provider path and resets LASTEXITCODE only after all assertions and cleanup succeed. A real assertion/cleanup exception still fails. Local validation reproduced the old behavior through the CI-style dot-sourced wrapper, then verified success returns zero and the mock does not leak; a deliberately failing assertion still returns nonzero. This correction does not weaken the evidence uploader's missing-file check or change production/application behavior. Hosted checks must be rerun on the correction commit.
+
+
+## First full hosted baseline-backup diagnostic
+
+Run 40773954965 built both packages/native runtime and verified the historical app/pages/photo, then the production paired backup CLI failed before migration. The generic test wrapper concealed the CLI's already-sanitized ERROR message while keeping raw diagnostics private. The wrapper now exposes only that reviewed CLI's sanitized ERROR log, never arbitrary native stderr or private tool-error files. Pure tests enforce the boundary. The complete hosted run remains nonpassing until the underlying baseline backup issue is diagnosed and corrected; no backup check is skipped or weakened.
+
+
+### Hosted fixture credential ownership (CHAT-R14)
+
+Diagnostic run 40775272083 reproduced the baseline backup refusal with the production message: configuration files must be owned by root/operator and mode 600 or stricter. The copied admin.cnf could carry the hosted runner's foreign UID; the fixture previously set mode 600 but did not normalize ownership. The orchestrator now explicitly assigns root:root and mode 600 after Docker copy and verifies numeric UID/GID/mode. A deliberate UID/GID 1001 and mode 644 probe exercises this case even on engines where copy defaults to root. The production protected-file check is unchanged; neither credentials nor raw private diagnostics are uploaded.
+
+The safe diagnostic boundary adds two pure checks (23 total). The original failed runs remain nonpassing; full hosted success must be obtained on the ownership correction. This is fixture provisioning/reporting only, with no app/schema/live Pi configuration change.

@@ -10,7 +10,7 @@ The actual schema/history/data are restored, not rebuilt from historical migrati
 
 ## Checks
 
-[Commands and prerequisites](../tests/HistoricalUpgrade.Checks/README.md) cover three modes: original read-only refusal; verified database adoption/migration; or complete isolated package/application/recovery. Normal feature CI runs 21 pure verification/ownership/package checks plus three package policy checks. Heavy acceptance remains manually dispatched, using the published fixed release asset. Missing/unreviewed inputs and incomplete phases fail.
+[Commands and prerequisites](../tests/HistoricalUpgrade.Checks/README.md) cover three modes: original read-only refusal; verified database adoption/migration; or complete isolated package/application/recovery. Normal feature CI runs 23 pure verification/ownership/package checks plus three package policy checks. Heavy acceptance remains manually dispatched, using the published fixed release asset. Missing/unreviewed inputs and incomplete phases fail.
 
 The database phase admits only the exact independently reviewed schema/history, preserves all original records in an audit table, establishes the verified historical cut-off and runs the four real forward migrations with no work on a second apply. All pre-workflow application data and exact final schema are checked. The unmodified runner/Desktop policy and raw-byte checks remain intact; see [adoption evidence](maintenance/historical-linux-adoption.md) and [original provenance investigation](maintenance/historical-ledger-compatibility.md).
 
