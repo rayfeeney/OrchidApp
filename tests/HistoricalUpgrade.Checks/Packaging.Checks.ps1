@@ -25,12 +25,15 @@ try {
     $count++
     if ((Get-FileHash -LiteralPath $props).Hash -cne $before) { throw 'NoVersionStamp changed tracked version properties.' }
     $count++
-    Write-Host "$count Linux package policy checks passed."
 }
 finally {
-    Remove-Item Function:global:dotnet -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath Function:\dotnet -ErrorAction Stop
     $parent=[IO.Path]::GetFullPath((Join-Path $root 'artifacts/historical-upgrade'))
     if ([IO.Directory]::GetParent([IO.Path]::GetFullPath($temp)).FullName -cne $parent -or
         [IO.Path]::GetFileName($temp) -notlike 'package-policy-*') { throw 'Unsafe package test cleanup.' }
     Remove-Item -LiteralPath $temp -Recurse -Force
 }
+# GitHub's pwsh wrapper exits with LASTEXITCODE. The intentional mocked publish
+# failure must not leak its code after every assertion and cleanup has passed.
+$global:LASTEXITCODE=0
+Write-Host "$count Linux package policy checks passed."
