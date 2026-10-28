@@ -72,3 +72,6 @@ launcher-settings.json
 infrastructure/environment-importer/downloads/
 # Restored native runtimes are local/package inputs, never source.
 app/runtime/
+
+# Generated feature-check logs and revision/environment evidence.
+artifacts/feature-checks/

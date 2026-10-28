@@ -40,7 +40,7 @@ Record actual evidence at each step.
 | [C17](#c17) | P1 | Implemented with local archive/native checks; Linux CI/installation acceptance pending | Make Linux backup/restore portable and paired |
 | [C18](#c18) | P2 | Source/isolated checks implemented; installed acceptance pending | Validate packaged upgrades and recovery including app-only updates |
 | [C19](#c19) | P2 | Implemented; Linux/installed acceptance pending | Validate database/filesystem/native readiness and photo consistency |
-| [C20](#c20) | P2 | Confirmed test inventory/evidence gap | Keep feature checks and build evidence reproducible |
+| [C20](#c20) | P2 | Implemented; merged-revision CI/device acceptance pending | Keep feature checks and build evidence reproducible |
 
 ## C01
 
@@ -316,7 +316,7 @@ Implementation and evidence: [C15/C19 photo handling](maintenance/c15-c19-photo-
 
 ## C20
 
-**Keep feature checks and build evidence reproducible** â€” P2; Confirmed test inventory/evidence gap; status: Open.
+**Keep feature checks and build evidence reproducible** â€” P2; Implemented curated CI and reproducible evidence; CI/device acceptance pending; status: Implemented in source.
 
 Affected files/areas: tests/GreenhouseCharts.Checks; other executable checks; .github/workflows/ci.yml; evidence generation.
 
@@ -325,6 +325,8 @@ Required work: Choose relevant checks for CI, include greenhouse policy/calculat
 Dependencies: C03; relevant fix dependencies.
 
 Acceptance: CI/local reports distinguish isolated, DB, benchmark and device checks, run the intended fixtures only, and state actual results without suggesting production or hardware validation.
+
+Implementation: [testing/evidence owner](testing-evidence.md) selects isolated feature executables and an explicitly empty disposable greenhouse server in separate CI jobs. Domain-unavailable cache results, exceptions and expiry/recovery are tested separately. Reports retain commands, source identity, environment, failures and omissions without fixed historical pass-count assertions. [C20 evidence](maintenance/c20-reproducible-checks.md) records measured local isolated/SQL results; merged-revision Linux CI and real device/older-release acceptance remain pending.
 
 ## Closure rules
 

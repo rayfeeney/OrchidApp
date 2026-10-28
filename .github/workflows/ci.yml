@@ -8,6 +8,65 @@ on:
 
 jobs:
 
+  feature-checks:
+    name: Isolated feature checks and evidence
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Check evidence failure and isolation handling
+        run: python tests/FeatureEvidence.Checks/checks.py
+      - name: Run isolated feature checks
+        run: python scripts/run-feature-checks.py
+      - name: Retain commands, results and environment even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: isolated-feature-evidence
+          path: artifacts/feature-checks/
+          if-no-files-found: error
+
+  greenhouse-integration:
+    name: Disposable greenhouse database checks
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: c20-disposable-ci
+        ports:
+          - 33317:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Run only the explicitly disposable greenhouse integration fixture
+        env:
+          GREENHOUSE_DISPOSABLE_INSTANCE: '1'
+          GREENHOUSE_TEST_CONNECTION: 'Server=127.0.0.1;Port=33317;User ID=root;Password=c20-disposable-ci;Allow User Variables=true'
+        run: python scripts/run-feature-checks.py --mode greenhouse-db
+      - name: Retain database evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: greenhouse-database-evidence
+          path: artifacts/feature-checks/
+          if-no-files-found: error
+
   lifecycle-closure:
     name: Lifecycle closure, transactions, history and photo recovery
     runs-on: ubuntu-latest

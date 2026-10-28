@@ -6,6 +6,7 @@ Use current guides below. For each procedure, check its stated implementation li
 
 - [Developer machine and first run](development-setup.md), with [C16 evidence and remaining acceptance](maintenance/c16-developer-setup.md)
 - [Contributing and validation](../CONTRIBUTING.md)
+- [Reproducible feature checks and release evidence](testing-evidence.md), with [C20 validation](maintenance/c20-reproducible-checks.md)
 - [Migration runners and incomplete-upgrade handling](migration-runners.md)
 - [Schema-only database creation and future migrations](database-creation.md), with [C01/C02 evidence](maintenance/c01-c02-schema-baseline.md) and [C05 CI checks](maintenance/c05-ci-database-acceptance.md)
 - [Architecture](architecture.md) and [temporal design](temporal-design.md)

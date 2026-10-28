@@ -39,7 +39,7 @@ dotnet run --project tests/EnvironmentSummary.Checks/EnvironmentSummary.Checks.c
 dotnet run --project tests/GreenhouseCharts.Checks/GreenhouseCharts.Checks.csproj
 ```
 
-Optional integration requires an EMPTY disposable MariaDB instance bound to 127.0.0.1:33317. GREENHOUSE_TEST_CONNECTION selects it; fixture setup creates orchids and EnergyMonitoring and changes test data. Never aim at live data. GREENHOUSE_BENCHMARK=1 additionally enables the synthetic large-history benchmark. Clear both variables afterward. Follow source guards; a loopback port alone is not proof an instance is disposable.
+Optional integration requires an EMPTY disposable MariaDB instance bound to 127.0.0.1:33317. GREENHOUSE_TEST_CONNECTION selects it and GREENHOUSE_DISPOSABLE_INSTANCE=1 explicitly confirms it. The executable refuses any existing user schema before fixture setup creates orchids and EnergyMonitoring and changes synthetic test data. Use a new empty server for each run, not the development server from .env. Never aim at live data. GREENHOUSE_BENCHMARK=1 additionally enables the synthetic large-history benchmark. Clear all optional variables afterward. The C20 evidence runner deliberately disables the benchmark even in database mode; invoke the check executable directly for an explicitly requested benchmark. Follow source guards; a loopback port alone is not proof an instance is disposable.
 
 Optional generated-data Razor preview:
 
@@ -47,6 +47,8 @@ Optional generated-data Razor preview:
 dotnet run --project tests/GreenhouseCharts.Checks -- --serve <absolute-path-to-src/OrchidApp.Web>
 ```
 
-Open http://127.0.0.1:5318/. This does not bypass the production feature gate. Record actual commands, revision, runtime/database version, fixture state and outcomes. Check complete/incomplete feeds, zeros, duplicates, mapping/tariff conflicts, clock changes, calendar/year boundaries, cache invalidation and desktop/mobile presentation. Run physical-device checks where relevant. No tests, benchmark or device deployment were performed by this documentation change.
+Open http://127.0.0.1:5318/. This does not bypass the production feature gate. Record actual commands, revision, runtime/database version, fixture state and outcomes. Check complete/incomplete feeds, zeros, duplicates, mapping/tariff conflicts, clock changes, calendar/year boundaries, cache invalidation and desktop/mobile presentation. Run physical-device checks where relevant. [C20 evidence](../maintenance/c20-reproducible-checks.md) records the current isolated and disposable SQL run; no benchmark or physical-device acceptance is claimed.
 
 Recent stage-specific results and fixed delivery hashes remain in [history](../history/greenhouse-changes/index.md). They are not current acceptance counts, a production collector certificate or a Pi performance guarantee. The earlier guide and changes are superseded as operating instructions by this document. Relevant pending implementation/validation items are [C03 and C20](../code-change-backlog.md).
+
+The maintained [test inventory and evidence procedure](../testing-evidence.md) supplies `python scripts/run-feature-checks.py` and separate explicit `--mode greenhouse-db` execution. CI retains their command/revision/environment reports even on failure. Cached domain-unavailable results and uncached exceptions are tested independently. Historical stage counts are not current pass assertions.

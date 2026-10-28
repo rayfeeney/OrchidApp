@@ -1,5 +1,9 @@
 # Release notes
 
+## C20 reproducible feature checks and evidence
+
+CI now runs isolated feature/calculation/cache checks and separate empty-disposable-server greenhouse SQL fixtures, retaining command/source/environment/result reports even on failure. Cached domain-unavailable results and propagated exceptions have separate checks. Existing user schemas block greenhouse fixture setup. No production setting, database migration or normal development startup change. See [test inventory](docs/testing-evidence.md), [local evidence and pending acceptance](docs/maintenance/c20-reproducible-checks.md) and the [Windows/Linux upgrade action list](docs/upgrade-checklist.md).
+
 ## C18 installer backup for every upgrade
 
 Windows setup now requires a verified offline snapshot before replacing existing application/persistent files, including app-only updates. Busy/unclear processes, unresolved recovery state or backup failure stop replacement. Keep OrchidApp closed through setup and preserve a separate off-computer backup. The new raw installer snapshot uses a separate support-assisted recovery path; it is not a normal Restore-dialog ZIP.
