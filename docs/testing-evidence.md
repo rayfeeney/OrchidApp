@@ -40,6 +40,8 @@ GitHub CI uploads the feature and greenhouse database evidence even when their r
 
 ## Check inventory and boundaries
 
+The feature job runs 21 pure historical fixture/adoption/package/ownership checks plus three PowerShell package policy checks. The manual historical workflow now defaults to actual ARM64 package/application/action/app-only/recovery phases, using the unchanged published fixture and reviewed database admission. The earlier hosted database-only success is retained separately; the extended workflow needs a run after applying this delivery. Bounded reports distinguish actual migration, intentional action writes, app-only state preservation, failed-DDL marker/refusal and full compatible recovery. Real Pi/systemd/provider/browser and Windows installed acceptance remain separate. See [scope](historical-linux-upgrade.md) and [actual phase results](maintenance/historical-linux-application-recovery.md).
+
 | Category | Checks and execution | What remains separate |
 | --- | --- | --- |
 | Isolated feature/policy | Eight executable projects selected by `scripts/run-feature-checks.py`; evidence-runner behavior via `python tests/FeatureEvidence.Checks/checks.py` | A local HTTP fixture is not a physical ARM browser/server check |

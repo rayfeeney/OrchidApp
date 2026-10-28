@@ -344,6 +344,22 @@ Database mode now exits after its guarded SQL loading, performance and net-cost 
 
 Affected paths: `tests/GreenhouseCharts.Checks/Program.cs`, `scripts/run-feature-checks.py`, `tests/FeatureEvidence.Checks/checks.py` and linked documentation. No migration or production configuration/startup change. Preserve the three separate CI jobs and finish C18 historical upgrade/recovery work independently.
 
+## CHAT-R05/R07: historical Linux package/application/recovery checks
+
+**Status: repository implementation extended; local phase results are recorded in the linked acceptance article. The extended hosted workflow must run on the applied revision.** The previously merged database phase and published immutable fixture remain unchanged. The new manual default builds actual Linux ARM64 packages, executes current plant actions/readiness/restart, tests a distinct app-only build with unchanged state, and uses production paired backup/restore for broken-app and actual failed-DDL recovery. Normal CI adds 21 pure checks and three package policy checks. Real systemd/Pi/provider/browser and Windows installed acceptance remain separate. See [scope](historical-linux-upgrade.md) and [actual phase evidence](maintenance/historical-linux-application-recovery.md).
+
+## CHAT-R10/R11: historical ledger and raw-byte packaging compatibility
+
+**Status: immediate fixture blocker addressed by reviewed adoption; broad live adoption and wider historical packaging compatibility remain separate.** The original 245 records are preserved unchanged in `schemaversion_legacy_pi_130`; the verified historical marker starts active planning. Forward raw checksums, original-refusal testing and exact admission identities remain unchanged. Recovery restores matching historical records/binaries instead of deleting a pending marker to retry. See [investigation](maintenance/historical-ledger-compatibility.md) and [adoption evidence](maintenance/historical-linux-adoption.md).
+
+## CHAT-R12: false recovery record after a no-photo save
+
+**Priority: high. Status: corrected in source; reproduced by pre-fix ARM64 package and covered by corrected HTTP/native cases; merged-revision CI/installed acceptance pending.** On a clean upload root, successful non-photo completion tried deleting a never-created journal directory, wrote an empty cleanup-required journal, then blocked subsequent legitimate photos. `PhotoWriteBatch` now avoids journal I/O for empty Track/commit/rollback. Genuine uncertainty/cleanup protection remains unchanged. Five new native assertions cover empty paths and later successful photo tracking; existing 611 metadata plus 37 recovery checks passed locally. No SQL/settings/automatic journal removal. See [evidence](maintenance/historical-linux-application-recovery.md) and [photo contract](photo-handling.md).
+
+## CHAT-R13: Linux package unattended and failure handling
+
+**Priority: normal. Status: corrected/tested locally; applied-revision CI pending.** The package script always prompted/stamped source and ignored native publish failure. The explicit non-stamping/absent-output/build-identity options support actual CI packages, and native failure now aborts ZIP creation. Three real script policy checks cover publish failure/no ZIP, existing-output preservation and unchanged version properties. Existing interactive packaging is retained. See [commands and evidence](maintenance/historical-linux-application-recovery.md).
+
 ## Closure rules
 
 For each item, record actual changed paths, implementation revision, updated document owners from documentation-map.md, checks run/results and remaining limitations. Keep schema/current exports aligned using the normal export process; never edit applied migrations. Validate destructive workflows only in isolated targets. A code item is complete only after its acceptance is demonstrated and affected guides are updated in the same change. Link related documentation review findings as needed under history/documentation-review/; those reports describe the original snapshot and may contain superseded paths/requirements.

@@ -1,6 +1,9 @@
 param(
     [string]$Configuration = "Release",
-    [string]$Runtime = "linux-arm64"
+    [string]$Runtime = "linux-arm64",
+    [switch]$NoVersionStamp,
+    [string]$OutputRoot,
+    [string]$InformationalVersionOverride
 )
 
 $ErrorActionPreference = "Stop"
@@ -137,15 +140,25 @@ $RepoRoot = Resolve-Path (Join-Path $ScriptRoot "..")
 
 $DirectoryBuildProps = Join-Path $RepoRoot "Directory.Build.props"
 
-Write-Step "Stamping application version"
+Write-Step $(if ($NoVersionStamp) { 'Reading application version (no source stamp)' } else { 'Stamping application version' })
 
-$AppVersion = Update-OrchidAppVersionForPackaging `
-    -DirectoryBuildPropsPath $DirectoryBuildProps
+$AppVersion = if ($NoVersionStamp) {
+    Get-OrchidAppVersion -DirectoryBuildPropsPath $DirectoryBuildProps
+} else {
+    Update-OrchidAppVersionForPackaging -DirectoryBuildPropsPath $DirectoryBuildProps
+}
+if ($InformationalVersionOverride -and
+    $InformationalVersionOverride -cnotmatch '^[A-Za-z0-9.+-]{1,100}$') {
+    throw 'InformationalVersionOverride must be a simple build identity.'
+}
 
 $PackageName = "OrchidApp-v$($AppVersion.ProductVersion)-RaspberryPi-Linux-arm64"
 
 $DistRoot = Join-Path $RepoRoot "dist"
-$PlatformDistRoot = Join-Path $DistRoot "linuxpi"
+$PlatformDistRoot = if ($OutputRoot) { [IO.Path]::GetFullPath($OutputRoot) } else { Join-Path $DistRoot "linuxpi" }
+if ($OutputRoot -and (Test-Path -LiteralPath $PlatformDistRoot)) {
+    throw 'An explicit package OutputRoot must be absent; existing files will not be replaced.'
+}
 $PackageRoot = Join-Path $PlatformDistRoot "OrchidApp"
 $AppOutput = Join-Path $PackageRoot "app"
 $ZipPath = Join-Path $PlatformDistRoot "$PackageName.zip"
@@ -169,7 +182,9 @@ if (-not (Test-Path $DatabaseSource)) {
 Write-Step "Preparing package folders"
 
 if (Test-Path $PlatformDistRoot) {
-    Remove-Item $PlatformDistRoot -Recurse -Force
+    $expected = [IO.Path]::GetFullPath((Join-Path $RepoRoot 'dist/linuxpi'))
+    if ([IO.Path]::GetFullPath($PlatformDistRoot) -cne $expected) { throw 'Unexpected package cleanup target.' }
+    Remove-Item -LiteralPath $PlatformDistRoot -Recurse -Force
 }
 
 New-Item -ItemType Directory -Force -Path $PlatformDistRoot | Out-Null
@@ -177,11 +192,11 @@ New-Item -ItemType Directory -Force -Path $AppOutput | Out-Null
 
 Write-Step "Publishing .NET app"
 
-dotnet publish $WebProject `
-    -c $Configuration `
-    -r $Runtime `
-    --self-contained true `
-    -o $AppOutput
+$publishArguments = @('publish', $WebProject, '-c', $Configuration, '-r', $Runtime,
+    '--self-contained', 'true', '-o', $AppOutput)
+if ($InformationalVersionOverride) { $publishArguments += "-p:InformationalVersion=$InformationalVersionOverride" }
+& dotnet @publishArguments
+if ($LASTEXITCODE -ne 0) { throw 'Linux application publish failed; no package will be created.' }
 
 Write-Step "Copying database files"
 

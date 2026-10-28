@@ -1,46 +1,66 @@
-# CHAT-R04 — greenhouse CI deduplication
+# Historical Linux application, app-only and recovery changes
 
-Database execution no longer repeats isolated greenhouse calculations/cache/net-cost policy tests. The existing isolated, greenhouse database and lifecycle jobs remain separate. No SQL assertion/helper/fixture coverage is removed.
+## Apply this delivery
 
-## Apply
+Apply AFTER merged PR #361 (383bec7d019c8f102802f5e61e19ef32989663d9). This is a delta from that exact merged source, not a full repository. Extract the 28 listed source/documentation files at the OrchidApp repository root, review overlapping newer edits, then create a PR and merge only after normal CI passes. Root CHANGELOG.md is delivery documentation; preserve/merge any existing project changelog. No files are deleted.
 
-1. Apply after `OrchidApp-CHAT-R01-R03-changes-only.zip`. Shared documentation includes that preceding correction. Review/extract the repository-relative files below into the source root containing OrchidApp.sln, preserving unrelated local changes.
-2. Commit and run the existing CI. Commands and job names are unchanged: `python scripts/run-feature-checks.py` and, only on the configured new empty disposable service, `python scripts/run-feature-checks.py --mode greenhouse-db`.
-3. Require passed greenhouse `modeEvidence` with no mixed modes. Keep all job results and retained logs. The database assertion total is smaller because the isolated assertions run once in their own job, not because SQL coverage was removed.
-4. For direct manual preview use, clear optional connection variables before `--fixture-output`/`--serve`. With a connection, direct execution now selects database-only mode; database-plus-preview arguments are refused before setup.
+The existing specimen release/asset stays unchanged. No new specimen upload or GitHub release is needed. After merging, manually run Historical Linux package upgrade and recovery checks on main, leaving reviewed_adoption and application_checks true. The extended hosted job has not yet run; the earlier successful database-only job is not presented as full application acceptance.
 
-**No application deployment/rebuild solely for this correction, database migration, .env setting, credential or normal startup change is required.** Other included changes retain their normal deployment/backup obligations. Fixture SQL must never run on a collection/development server.
+This ZIP contains no fixture archive, private capture/credentials, SQL export, application binary/package, backup archive, native library, generated lockfile, runtime tree or private log. No SQL migration, generated schema, .gitattributes, canonical runner/Desktop policy, dependency-lock or tracked product version property is changed.
 
-## Every added/modified repository file
+## Every added or modified file
 
-- **Modified `tests/GreenhouseCharts.Checks/Program.cs`** — Select guarded database-only execution before isolated suites, retain SQL coverage, emit mode/suite labels and refuse database-plus-preview arguments before setup.
-- **Modified `scripts/run-feature-checks.py`** — Record greenhouse mode evidence and fail missing/mixed suite selection even when the process exits zero; keep commands, guards, log hashes and other suite handling.
-- **Modified `tests/FeatureEvidence.Checks/checks.py`** — Add exclusive-mode/suite evidence cases and zero-exit wrong-mode failure-report regression coverage.
-- **Modified `CONTRIBUTING.md`** — Explain disjoint execution, evidence requirements and preview constraints.
-- **Modified `RELEASE_NOTES.md`** — Describe CI deduplication and unchanged operator/migration requirements.
-- **Modified `docs/testing-evidence.md`** — Document SQL-only mode, direct-executable behavior and additive modeEvidence results.
-- **Modified `docs/upgrade-checklist.md`** — Record release-owner evidence checks and no Windows/Linux operator action for this test-only change.
-- **Modified `docs/code-change-backlog.md`** — Track CHAT-R04 implementation and local validation, leaving applied/merged CI pending.
-- **Modified `docs/index.md`** — Link measured CI-mode evidence.
-- **Modified `docs/maintenance/c20-reproducible-checks.md`** — Preserve original C20 observations and link the subsequent disjoint-mode change.
-- **Added `docs/maintenance/ci-greenhouse-modes.md`** — Record execution contract, actual tests, guards, warning/failure history and remaining limits.
-
-Root CHANGELOG.md is included only as this delivery inventory. No other application/source files, logs, private settings, data or binaries are packaged.
+- `.github/workflows/ci.yml`: Add Linux package policy checks to normal feature CI.
+- `.github/workflows/historical-linux-preflight.yml`: Build/run actual ARM64 packages with QEMU; select full or database-only phases; retain bounded failure/recovery evidence.
+- `CONTRIBUTING.md`: Document new commands, actual phase boundaries and existing published asset.
+- `RELEASE_NOTES.md`: Record application/recovery tooling, photo regression fix and package failure handling.
+- `docs/code-change-backlog.md`: Update R05/R07 scope and record R12/R13 findings, fixes and remaining acceptance.
+- `docs/documentation-map.md`: Register ownership for historical package/application/recovery evidence.
+- `docs/historical-linux-upgrade.md`: Describe the complete isolated workflow and platform limits.
+- `docs/index.md`: Link current package/action/recovery evidence.
+- `docs/maintenance/c15-c19-photo-handling.md`: Record later empty-photo-batch regression and native evidence.
+- `docs/maintenance/historical-linux-adoption.md`: Link completed database phase to new application/recovery evidence without rewriting historical results.
+- `docs/maintenance/historical-linux-fixture-review.md`: Record owner publication of exact reviewed artifact and verified identity.
+- `docs/photo-handling.md`: Clarify no-photo requests create no recovery journal; preserve genuine recovery rules.
+- `docs/testing-evidence.md`: Distinguish new package/action/recovery testing from prior hosted database-only success.
+- `docs/upgrade-checklist.md`: Update Windows/Linux deployment, package flags, photo regression and remaining acceptance actions.
+- `scripts/package-linuxpi.ps1`: Add non-stamping unattended build/output/identity options, explicit native failure detection and guarded output handling.
+- `src/OrchidApp.Web/Services/PhotoWriteBatch.cs`: Avoid journal I/O for empty tracking lists and no-photo commit/rollback; retain genuine recovery behavior.
+- `tests/DevelopmentNative.Checks/PhotoRecoveryChecks.cs`: Five regressions for empty lists, no-photo outcomes and later successful photo commits.
+- `tests/HistoricalUpgrade.Checks/README.md`: Prerequisites, complete package/runtime commands, modes and evidence boundaries.
+- `tests/HistoricalUpgrade.Checks/checks.py`: Expand pure checks from 17 to 21 with package/path/resource and application-namespace guards.
+- `tests/HistoricalUpgrade.Checks/preflight.py`: Integrate baseline/current/action/app-only/failed-DDL recovery phases and partial-output timeout diagnostics.
+- `tests/HistoricalUpgrade.Checks/Runtime.Dockerfile`: Pinned ARM64 .NET 8.0.33 base and libvips42 8.14.1 runtime with real backup tools.
+- `tests/HistoricalUpgrade.Checks/application_stage.py`: Validate packages/owned resources, orchestrate phases and real canonical failure/retry refusal, collect scoped reports and clean up.
+- `tests/HistoricalUpgrade.Checks/container_driver.py`: Run web child as UID 1654, real paired capture/restore, state comparison, broken-app recovery and historical rollback.
+- `tests/HistoricalUpgrade.Checks/http_support.py`: Loopback-only actual cookie/antiforgery/multipart HTTP forms and synthetic image checks using standard library.
+- `tests/HistoricalUpgrade.Checks/plant_actions.py`: 17 post-upgrade plant-action checks, including quick actions/photo/note, moving, flowering, repotting and split/lineage.
+- `tests/HistoricalUpgrade.Checks/package_contract.py`: Reject unsafe/missing/duplicate/special/resource-exceeding complete Linux ZIPs.
+- `tests/HistoricalUpgrade.Checks/Packaging.Checks.ps1`: Three meaningful real-script checks for publish failure, existing output protection and unchanged version properties.
+- `docs/maintenance/historical-linux-application-recovery.md`: Implementation, actual results, issue reproduction, failures and explicit limits.
 
 ## Actual validation
 
-- Eight evidence-runner unit tests passed, including complete/missing/mixed suite labels and an executable that exits zero in the wrong mode producing a failed report.
-- All eight selected isolated feature executables passed in the final run; greenhouse reported 65 isolated assertions with only its isolated suites.
-- Fresh private MariaDB 10.11.16 database-only execution passed, reporting 18 SQL assertions with loading/summary, performance and net-cost suites, with no isolated execution. SQL/cache/net-cost helper implementations and all named Program assertions are retained.
-- Nonempty disposable-server guard refused setup before fixture SQL, left the synthetic sentinel value 42 unchanged and created neither greenhouse fixture schema. Only the owned private server was shut down.
-- Database-plus-preview execution refused a synthetic invalid connection before parsing/setup and wrote no preview file.
-- Final isolated/database reports have matching selected-source fingerprint `7c43a7b77c2ab892287ecd91a3fbf6927eeed5700aea1d3725424cfcba74bfad`. This is source evidence, not a release-package hash or Git revision.
-- Python sources parsed; unchanged workflow passed actionlint with optional ShellCheck/Pyflakes disabled; changed Markdown local links resolve. User/operator and plant-management guides need no changes for this test-only execution update.
+- Full local Linux ARM64 package/application/recovery run returned zero and passed all phases (28 October 2026, 20:45-20:56 UTC). Actual complete self-contained ARM64 ZIPs were built with distinct compiled informational identities from the same reviewed functional source/SQL.
+- Verified frozen input: 1,073 files, 798 synthetic image hashes and original 245-row history; pre-upgrade actual paired snapshot plus matching old application/configuration/uploads recovery set verified. Input SHA-256 remains 7ffd16949ae07238f31447ad7d64e1444e898a00248b8e14757533bcbf00f3b5.
+- Exact structural admission, archived original history, all four actual forward migrations and zero-work repeat passed. Pre-workflow application data remained SHA-256 6b8b8350197dc87b0a56cc145942ce162ef9596347cbb9dd4e7d49d4bb94cec6; final upgraded structure matched the unchanged reviewed contract.
+- Current readiness/core pages/existing photo and all 17 HTTP action cases passed. Source monitoring flag was disabled and current build made no owner-energy queries. Full state survived restart.
+- App-only distinct build passed readiness, unchanged database schema/history/data, uploads/settings before test writes, and save/reopen. Deliberately broken DLL failed startup; actual production paired restore recovered exact current snapshot/app/files/configuration and passed readiness/photo/save/reopen.
+- Actual injected canonical SQL left partial DDL and a durable pending checksum; retry was rejected. Original historical app/data/files/settings/schema/history were recovered through production paired restore, followed by working save/reopen. No pending marker was deleted to retry. Both owned containers/volumes were removed.
+- Real C17 backup read locks and actual rclone crypt upload/read-back ran over isolated local storage. ARM64 .NET 8.0.33 and libvips42 8.14.1 used; backup client 10.11.19 and database server 10.11.14 are recorded separately.
+- 21 pure checks and three real-script packaging policy checks passed. Windows native checks passed 611 metadata/orientation/colour and 37 recovery assertions, including five new regressions. NuGet vulnerability metadata was unavailable (NU1900); no complete vulnerability audit is claimed.
+- Python compilation, workflow actionlint (optional shellcheck/pyflakes disabled) and 285 local documentation links passed. ZIP member inventory and source bytes verified.
 
-## Limits and retained failures
+## Issues corrected and failed attempts retained
 
-- Windows AMD64, .NET SDK 9.0.315 targeting net8.0, Python 3, private MariaDB 10.11.16. This extracted source mirror has no Git revision identity.
-- The initial restricted full feature run retained an EnvironmentSummary socket/loopback failure; the subsequent run with loopback access passed. That environmental failure was not erased or labelled successful.
-- Restore emitted NU1900 warnings because the NuGet vulnerability service was unavailable; this is not a vulnerability audit.
-- Applied/merged-revision GitHub CI, Linux runtime and device/installed acceptance remain pending. No C18 historical upgrade/recovery or Windows fixture work is claimed. The frozen historical specimen is unchanged.
-- Assertion totals above are measured observations, never fixed pass criteria.
+CHAT-R12: the pre-fix current ARM64 build created an empty false recovery journal after no-photo save and then blocked a real photo. Empty batches now avoid journal I/O; true failed/uncertain photo recovery remains unchanged. No existing journal is automatically removed and no new setting/migration is introduced.
+
+CHAT-R13: Linux packaging prompted/stamped source and ignored native publishing failure. Optional unattended non-stamping builds and protected explicit outputs now support CI; failed publish stops before ZIP creation. Existing normal release stamping remains.
+
+Other nonpassing local attempts exposed Docker overlay directory staging behavior (corrected in the harness), plus one unexplained canonical command timeout. They were not counted as successful application acceptance. Partial timeout output/process-state diagnostics are now retained; the final fresh full run passed without relaxing checks.
+
+## Limits
+
+All destructive replacement/recovery is inside new owned disposable containers with no host bind mounts, published ports or external runtime network. No live Pi/collection is touched. The application is actual ARM64 under emulation; MariaDB runs amd64. A PID-derived fixture service-state adapter is used instead of real systemd. The encrypted backend is real rclone crypt over private local storage, not a cloud provider. HTTP forms do not execute browser JavaScript or certify mobile/visual behavior. Windows specimen/installer, real Pi service/account/permissions/provider and general live adoption acceptance remain separate. A failed fixture is discarded/restored rather than force-retried.
+
+Authoritative source/test, photo, historical upgrade, checklist, backlog, contributor/release/index/ownership documentation is updated. Existing Word user flows did not change, so no Word edits/rendering were needed. See docs/maintenance/historical-linux-application-recovery.md for full evidence and tests/HistoricalUpgrade.Checks/README.md for commands.

@@ -36,6 +36,7 @@ public sealed class PhotoWriteBatch(string root, PhotoRecoveryRegistry registry,
                 throw new InvalidOperationException("Invalid photo batch path.");
             files.Add(full);
         }
+        if (files.Count == 0) return;
         registry.Add(journal); Write("Prepared");
     }
     private void Write(string state)
@@ -54,6 +55,9 @@ public sealed class PhotoWriteBatch(string root, PhotoRecoveryRegistry registry,
     public void Committed()
     {
         resolved = true;
+        // Non-photo writes also use the completion filter. No tracked files
+        // means no journal was created and there is nothing to clean up.
+        if (files.Count == 0) return;
         try { File.Delete(journal); File.Delete(journal + ".tmp"); }
         catch (Exception ex)
         {
@@ -64,6 +68,7 @@ public sealed class PhotoWriteBatch(string root, PhotoRecoveryRegistry registry,
     }
     public void RolledBack()
     {
+        if (files.Count == 0) { resolved = true; return; }
         bool failed = false;
         foreach (var path in files)
         {

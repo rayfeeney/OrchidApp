@@ -1,5 +1,13 @@
 # Release notes
 
+## Historical Linux package, actions and recovery checks
+
+The historical CI tooling now builds/executes actual self-contained Linux ARM64 packages, plant actions, app-only replacement and production paired recovery around the existing verified database admission. The published specimen and migration payloads are unchanged. Extended hosted acceptance needs a run after this delivery is applied; real Pi/systemd/provider/browser and Windows installer acceptance remain separate. See [scope/results](docs/maintenance/historical-linux-application-recovery.md).
+
+The test exposed a false photo-recovery journal after a no-photo save on a clean upload root. Empty photo batches now avoid journal I/O while preserving real failure/uncertainty safeguards. Five new native assertions cover the regression. No database migration, setting or automatic journal cleanup is introduced.
+
+Linux packaging now supports explicit unattended non-stamping output/build-identity options, refuses an existing explicit output, and stops if native publishing fails. Default interactive release stamping remains. CI test builds do not create a product release or change tracked version metadata.
+
 ## Greenhouse CI deduplication (CHAT-R04)
 
 The database job now runs only its SQL loading/performance/net-cost suites; isolated calculation/cache/policy coverage remains in the feature job. Reports reject mixed or missing mode evidence even when an executable exits successfully. All three CI jobs and disposable database guards remain. No application behavior, migration or production setting changes. See [validation](docs/maintenance/ci-greenhouse-modes.md) and [release actions](docs/upgrade-checklist.md#chat-r04-greenhouse-ci-deduplication).
