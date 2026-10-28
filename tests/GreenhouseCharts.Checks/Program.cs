@@ -101,10 +101,19 @@ if (Environment.GetEnvironmentVariable("GREENHOUSE_TEST_CONNECTION") is { Length
     var settings = new MySqlConnectionStringBuilder(connection);
     if (settings.Server != "127.0.0.1" || settings.Port != 33317)
         throw new Exception("Integration fixtures require the disposable loopback database on port 33317.");
-    await using var sql = new MySqlConnection(connection);
+    if (Environment.GetEnvironmentVariable("GREENHOUSE_DISPOSABLE_INSTANCE") != "1")
+        throw new Exception("Integration fixtures require explicit GREENHOUSE_DISPOSABLE_INSTANCE=1 confirmation for a new empty disposable server.");
+    await using var sql = new MySqlConnection(new MySqlConnectionStringBuilder(connection) { Database = "" }.ConnectionString);
     await sql.OpenAsync();
+    // This fixture owns two fixed schema names. Refuse all existing user schemas,
+    // including leftovers from a prior run, before executing any fixture SQL.
+    await using (var guard = new MySqlCommand("SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME NOT IN ('mysql','information_schema','performance_schema','sys')", sql))
+        if (Convert.ToInt32(await guard.ExecuteScalarAsync()) != 0)
+            throw new Exception("Greenhouse fixtures require a new empty disposable server; no fixture SQL was executed.");
+    Console.WriteLine($"Disposable MariaDB version: {sql.ServerVersion}");
     var fixture = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Fixtures", "setup.sql"));
     await using (var command = new MySqlCommand(fixture, sql)) await command.ExecuteNonQueryAsync();
+    connection = new MySqlConnectionStringBuilder(connection) { Database = "orchids" }.ConnectionString;
     var options = new DbContextOptionsBuilder<OrchidDbContext>().UseMySql(connection, new MariaDbServerVersion(new Version(10, 11, 16))).Options;
     await using var db = new OrchidDbContext(options);
     var loaded = await new GreenhouseChartService(db).LoadAsync(["Cool side", "Hot side"], now, default);

@@ -35,15 +35,32 @@ internal static class PerformanceChecks
         check("Different database cannot reuse cached chart", key != GreenhouseChartCache.Key("other", now, ["Cool side", "Hot side"]));
         var midnight = new DateTime(2026, 10, 23, 23, 0, 0, DateTimeKind.Utc);
         check("London midnight changes cache key", GreenhouseChartCache.Key("test", midnight.AddMinutes(-1), ["Cool side"]) != GreenhouseChartCache.Key("test", midnight, ["Cool side"]));
+        var propagated = false;
         try { await cache.GetAsync("failure", _ => throw new IOException("fixture"), default); }
-        catch (IOException) { }
+        catch (IOException) { propagated = true; }
+        check("Loader exception is propagated rather than cached as unavailable", propagated);
         await cache.GetAsync("failure", Load, default);
         check("Failures do not poison the cache", loads == 3);
+        var unavailableLoads = 0;
+        var unavailable = GreenhouseChartService.Build("Cool side", now, [], [], [], [], [], [], []);
+        Task<IReadOnlyList<GreenhouseChart>> LoadUnavailable(CancellationToken ct)
+        {
+            unavailableLoads++;
+            return Task.FromResult<IReadOnlyList<GreenhouseChart>>([unavailable]);
+        }
+        var missing = await cache.GetAsync("domain-unavailable", LoadUnavailable, default);
+        var cachedMissing = await cache.GetAsync("domain-unavailable", LoadUnavailable, default);
+        check("Successful domain-unavailable result is cached", unavailableLoads == 1 && ReferenceEquals(missing, cachedMissing));
+        check("Cached missing readings and costs remain null", cachedMissing[0].Temperatures.All(p => p.Y is null)
+            && cachedMissing[0].Costs.All(p => p.Y is null) && cachedMissing[0].Periods.All(p => p.Target is null));
+        clock.UtcNow = clock.UtcNow.AddSeconds(121);
+        var recovered = await cache.GetAsync("domain-unavailable", Load, default);
+        check("Unavailable result expires and can recover", !ReferenceEquals(missing, recovered) && loads == 4);
         using var disabledMemory = new MemoryCache(new MemoryCacheOptions());
         var disabled = new GreenhouseChartCache(disabledMemory, Options.Create(new GreenhouseChartCacheOptions { Seconds = 0 }));
         await disabled.GetAsync(key, Load, default);
         await disabled.GetAsync(key, Load, default);
-        check("Zero seconds disables caching", loads == 5);
+        check("Zero seconds disables caching", loads == 6);
     }
 
     public static async Task DatabaseAsync(string connection, DateTime now, Action<string, bool> check)
