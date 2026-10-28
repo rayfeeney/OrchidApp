@@ -21,6 +21,30 @@ internal static class PhotoRecoveryChecks
         void Check(bool pass, string name) { if (!pass) throw new Exception("Recovery check failed: " + name); count++; }
         var fixtures = Path.Combine(AppContext.BaseDirectory, "fixtures");
         var isolated = Path.Combine(root, "recovery"); Directory.CreateDirectory(isolated);
+        var emptyListRoot = Path.Combine(isolated, "empty-tracking-list"); Directory.CreateDirectory(emptyListRoot);
+        using (var emptyList = new PhotoWriteBatch(emptyListRoot, registry, NullLogger<PhotoWriteBatch>.Instance))
+        {
+            emptyList.Begin(); emptyList.Track(Array.Empty<string>()); emptyList.Committed();
+        }
+        Check(!Directory.Exists(Path.Combine(emptyListRoot, ".photo-recovery")), "empty tracking list creates no recovery journal");
+        foreach (var outcome in new[] { "commit", "rollback" })
+        {
+            var folder = Path.Combine(isolated, "no-photo-" + outcome); Directory.CreateDirectory(folder);
+            using (var empty = new PhotoWriteBatch(folder, registry, NullLogger<PhotoWriteBatch>.Instance))
+            {
+                empty.Begin();
+                if (outcome == "commit") empty.Committed(); else empty.RolledBack();
+            }
+            Check(!Directory.Exists(Path.Combine(folder, ".photo-recovery")), outcome + " without photos creates no false recovery journal");
+            var file = Path.Combine(folder, "subsequent.jpg");
+            using (var next = new PhotoWriteBatch(folder, registry, NullLogger<PhotoWriteBatch>.Instance))
+            {
+                next.Begin(); next.Track(new[] { file }); File.WriteAllText(file, "subsequent photo bytes");
+                next.BeforeCommit(); next.Committed();
+            }
+            Check(File.ReadAllText(file) == "subsequent photo bytes" &&
+                !Directory.EnumerateFiles(Path.Combine(folder, ".photo-recovery")).Any(), outcome + " allows a later photo commit");
+        }
         var original = Path.Combine(isolated, "existing.jpg"); File.WriteAllText(original, "original bytes");
         var failedPair = new PhotoPipeline(Options.Create(new MediaIngestionOptions()), NullLogger<PhotoPipeline>.Instance,
             publisher: new FailSecondPublish());

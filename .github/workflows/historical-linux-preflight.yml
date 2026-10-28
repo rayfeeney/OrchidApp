@@ -1,4 +1,4 @@
-name: Historical Linux database upgrade checks
+name: Historical Linux package upgrade and recovery checks
 
 on:
   workflow_dispatch:
@@ -13,15 +13,20 @@ on:
         required: true
         default: true
         type: boolean
+      application_checks:
+        description: Build/run ARM64 packages, plant actions, app-only update and paired recovery (requires reviewed adoption)
+        required: true
+        default: true
+        type: boolean
 
 permissions:
   contents: read
 
 jobs:
   preflight:
-    name: Verify reviewed historical database adoption and migration
+    name: Verify historical Linux package, actions and recovery
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -32,6 +37,48 @@ jobs:
           python-version: '3.x'
       - name: Verify fixture validation rules without a database
         run: python tests/HistoricalUpgrade.Checks/checks.py
+      - name: Verify package failure and output protection
+        shell: pwsh
+        run: ./tests/HistoricalUpgrade.Checks/Packaging.Checks.ps1
+      - name: Validate selected phases
+        env:
+          APPLICATION_CHECKS: ${{ inputs.application_checks }}
+          REVIEWED_ADOPTION: ${{ inputs.reviewed_adoption }}
+        run: |
+          if [[ "$APPLICATION_CHECKS" == 'true' && "$REVIEWED_ADOPTION" != 'true' ]]; then
+            echo 'Application checks require reviewed adoption. Disable both to reproduce original read-only refusal.'
+            exit 1
+          fi
+      - name: Enable ARM64 execution
+        if: inputs.application_checks
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
+        with:
+          platforms: arm64
+      - name: Build actual Linux packages without changing tracked version files
+        if: inputs.application_checks
+        id: packages
+        shell: pwsh
+        env:
+          SOURCE_REVISION: ${{ github.sha }}
+        run: |
+          $ErrorActionPreference='Stop'
+          $before=(Get-FileHash Directory.Build.props).Hash
+          foreach ($label in @('a','b')) {
+            $out=Join-Path $PWD "artifacts/historical-upgrade/package-$label"
+            & ./scripts/package-linuxpi.ps1 -NoVersionStamp -OutputRoot $out `
+              -InformationalVersionOverride "1.3.0+ci-$($env:SOURCE_REVISION.Substring(0,12))-$label"
+            $zip=@(Get-ChildItem -LiteralPath $out -Filter '*.zip')
+            if ($zip.Count -ne 1) { throw 'Expected exactly one complete Linux package.' }
+            "package_$label=$($zip[0].FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          }
+          if ((Get-FileHash Directory.Build.props).Hash -cne $before) { throw 'CI changed tracked version metadata.' }
+      - name: Build the pinned ARM64 native runtime
+        if: inputs.application_checks
+        run: >-
+          docker build --platform linux/arm64
+          -f tests/HistoricalUpgrade.Checks/Runtime.Dockerfile
+          -t orchidapp-historical-acceptance:ci
+          tests/HistoricalUpgrade.Checks
       - name: Download only the pinned sanitised release asset
         env:
           GH_TOKEN: ${{ github.token }}
@@ -48,11 +95,17 @@ jobs:
       - name: Restore into an owned server and run the selected database checks
         env:
           REVIEWED_ADOPTION: ${{ inputs.reviewed_adoption }}
+          APPLICATION_CHECKS: ${{ inputs.application_checks }}
+          PACKAGE_A: ${{ steps.packages.outputs.package_a }}
+          PACKAGE_B: ${{ steps.packages.outputs.package_b }}
         shell: bash
         run: |
           set -euo pipefail
           options=()
           if [[ "$REVIEWED_ADOPTION" == 'true' ]]; then options+=(--adopt-and-migrate); fi
+          if [[ "$APPLICATION_CHECKS" == 'true' ]]; then
+            options+=(--application-checks --package-a "$PACKAGE_A" --package-b "$PACKAGE_B" --runtime-image orchidapp-historical-acceptance:ci)
+          fi
           python tests/HistoricalUpgrade.Checks/preflight.py \
             --specimen artifacts/historical-upgrade/input/OrchidApp-Pi-specimen-1.3.0-080ba9c-review.tar.gz \
             "${options[@]}"
@@ -70,4 +123,14 @@ jobs:
             artifacts/historical-upgrade/**/adopted-plan.log
             artifacts/historical-upgrade/**/apply.log
             artifacts/historical-upgrade/**/second-apply.log
+            artifacts/historical-upgrade/**/timeout-processes.log
+            artifacts/historical-upgrade/**/application/application-report.json
+            artifacts/historical-upgrade/**/application/baseline.log
+            artifacts/historical-upgrade/**/application/upgraded.log
+            artifacts/historical-upgrade/**/application/rollback-old.log
+            artifacts/historical-upgrade/**/application/injected-migration.log
+            artifacts/historical-upgrade/**/application/blocked-retry.log
+            artifacts/historical-upgrade/**/application/reports/*-report.json
+            artifacts/historical-upgrade/**/application/reports/actions/actions-report.json
+            artifacts/historical-upgrade/**/application/reports/actions.log
           if-no-files-found: warn

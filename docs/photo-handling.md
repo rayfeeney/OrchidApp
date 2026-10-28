@@ -10,6 +10,8 @@ Deploy `202610271200_PhotoTaxonTransaction.sql` with the app. It changes `spUpda
 
 Plant photo/observation writes and taxon add/edit writes use a request database transaction. A failed image, invalid handler result or database write rolls back that request and removes only its newly generated main, thumbnail and temporary files after confirmed rollback. Taxon replacement retains prior files and restores prior metadata on failure. Before publishing files, the app durably records their generated names under the upload root's `.photo-recovery` directory. Successful database commit clears that record. An uncertain commit, rollback, interrupted request or failed cleanup retains files and a recovery record for review. This is compensation across two storage systems, not one atomic database/filesystem transaction.
 
+A request that tracks no photo files does not create or clean a photo journal. This includes ordinary plant/note writes and empty tracking lists. The clean-upload-root regression is covered by native checks and actual Linux ARM64 upgrade/action acceptance; see [CHAT-R12 evidence](maintenance/historical-linux-application-recovery.md). Genuine unresolved journals retain the same protection.
+
 The app never automatically deletes orphan recovery records or assumes that a failed commit means SQL did not commit. Another photo upload is refused while unresolved records are present. Existing non-photo/read routes can still be available; stop all writers before recovery review. Recovery records and readiness probes are not served through `/uploads`.
 
 ## Readiness

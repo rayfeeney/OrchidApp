@@ -39,3 +39,8 @@ The successful native command emitted NU1900 because NuGet vulnerability metadat
 Run CI on the actual revision, including Linux native policy and SQL/HTTP checks. Validate Linux/Pi native libraries, service account access and real service start/restore. Rebuild/package Windows and test the actual launcher/installer with a representative older isolated installation. Source builds do not certify those environments.
 
 Readiness checks current active references for presence/nonzero length, not decoding every historical photo or certifying complete schema/backup integrity. SQL and files remain separate resources. Windows Normal backup still does not stop all writers across SQL dump and file copy; Linux backup coordination covers only configured units. Preserve copied journals after restore and review them with stopped writers. The synthetic paired archive checks do not certify the production backup scripts, remote provider, systemd, installer or physical recovery. C18 and C20 remain separate work.
+
+
+## Later historical ARM64 acceptance: empty photo batches
+
+The package/application checks exposed a clean-root no-photo commit creating a false recovery record, then blocking photo upload. Empty Track/Committed/RolledBack now avoid journal I/O. Five new assertions bring the native pair/transaction count to 37; all 611 metadata/orientation/colour checks and all 37 recovery checks passed locally on Windows libvips 8.18.2. The corrected current ARM64 package passed the 17 selected plant actions including photo plus note. Genuine uncertain commit/rollback and cleanup records remain protected. No SQL/settings/Word user-flow change is introduced. See [current package/recovery evidence and actual limits](historical-linux-application-recovery.md).

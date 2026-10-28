@@ -181,7 +181,14 @@ def main():
     parser.add_argument('--output', type=Path, default=REPO/'artifacts/historical-upgrade')
     parser.add_argument('--adopt-and-migrate', action='store_true',
         help='Verify the exact reviewed historical schema, archive its ledger and test actual forward migrations ONLY in this new disposable restore')
+    parser.add_argument('--application-checks', action='store_true',
+        help='Also execute real ARM64 packages, plant actions, app-only replacement and paired recovery')
+    parser.add_argument('--package-a', type=Path)
+    parser.add_argument('--package-b', type=Path)
+    parser.add_argument('--runtime-image')
     args = parser.parse_args()
+    if args.application_checks and not (args.adopt_and_migrate and args.package_a and args.package_b and args.runtime_image):
+        parser.error('Application checks require reviewed adoption, two actual Linux packages and the ARM64 runtime image')
     manifest = json.loads((HERE/'fixture.json').read_text())
     token = uuid.uuid4().hex
     output = args.output.resolve()/(datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')+'-'+token[:8])
@@ -194,6 +201,7 @@ def main():
         'phase': 'read-only migration preflight', 'fullUpgradeAcceptance': 'not performed',
         'specimenPlatform': manifest['platform'], 'databasePlatform': manifest['preflightDatabasePlatform']}
     container = None
+    app_stage = None
     try:
         report['fixtureVerification'] = verify_fixture(args.specimen.resolve(), manifest, stage)
         print('Pinned sanitised specimen and inner files verified.', flush=True)
@@ -224,6 +232,12 @@ def main():
                          for name in manifest['rowCounts']}
         if counts_before != manifest['rowCounts']:
             raise ValueError('Restored specimen row counts differ')
+        if args.application_checks:
+            from application_stage import ApplicationStage
+            app_stage = ApplicationStage(container, token, args.runtime_image, args.package_a, args.package_b,
+                output/'application', args.specimen.resolve(), manifest)
+            report['applicationExecutionAttempted'] = True
+            app_stage.phase('baseline')
         history = {bytes.fromhex(line.split('\t')[0]).decode(): line.split('\t')[1]
                    for line in query(container, 'SELECT HEX(scriptName),checksum FROM orchids.schemaversion;').splitlines()}
         review = ledger_review(history, REPO/'database/migrations')
@@ -308,7 +322,14 @@ def main():
                 owned(container, token)
                 if label == 'apply':
                     report['migrationApplicationAttempted'] = True
-                run = subprocess.run(runner+options, env=env, cwd=REPO, capture_output=True, timeout=240)
+                try:
+                    run = subprocess.run(runner+options, env=env, cwd=REPO, capture_output=True, timeout=240)
+                except subprocess.TimeoutExpired as timeout:
+                    (output/(label+'.log')).write_bytes((timeout.stdout or b'')+(timeout.stderr or b''))
+                    diagnostic = query(container, "SELECT ID,USER,HOST,COMMAND,TIME,IFNULL(STATE,'') "
+                        "FROM information_schema.PROCESSLIST ORDER BY ID;")
+                    (output/'timeout-processes.log').write_text(diagnostic)
+                    raise RuntimeError('Canonical '+label+' timed out; partial output and owned-server process states retained') from timeout
                 log = (run.stdout+run.stderr).decode('utf-8', 'replace')
                 (output/(label+'.log')).write_bytes(run.stdout+run.stderr)
                 runs.append({'step': label, 'exitCode': run.returncode})
@@ -348,10 +369,32 @@ def main():
             report['fullUpgradeAcceptance'] = 'not performed: application package, app-only update and recovery still required'
             report['status'] = 'passed'
             report.pop('blocker', None)
+            if app_stage:
+                report['phase'] = 'historical Linux ARM64 package, application and recovery acceptance'
+                report['preservationCheckScope'] = 'after actual migrations, before intentional application workflow writes'
+                report['applicationExecuted'] = True
+                app_stage.phase('upgraded')
+                app_stage.fail_migration(proxy, env)
+                app_stage.phase('rollback-old')
+                require_schema(snapshot(lambda sql: query(container, sql)), contract['schemaIdentity'])
+                if query(container, history_sql) != history_before:
+                    raise ValueError('Recovered historical ledger differs from original')
+                app_stage.finish()
+                report['applicationAcceptance'] = 'passed: current self-contained ARM64 package, plant actions and persistence'
+                report['appOnlyAcceptance'] = 'passed: distinct app build, unchanged database and successful paired recovery after broken app'
+                report['failedMigrationRecovery'] = 'passed: actual partial DDL, blocked retry, full historical app/data/files/configuration recovery'
+                report['finalDatabaseState'] = 'recovered historical schema/ledger after injected migration failure; CI-only save/reopen verified'
+                report['fullUpgradeAcceptance'] = 'passed for isolated Linux ARM64 package/application/recovery harness; real Pi/systemd/provider and Windows acceptance remain separate'
     except Exception as error:
         report['status'] = 'failed'
         report['error'] = str(error)
     finally:
+        if app_stage:
+            try:
+                app_stage.close()
+            except Exception as error:
+                report['applicationCleanupError'] = str(error)
+                report['status'] = 'failed'
         if container:
             try:
                 owned(container, token)

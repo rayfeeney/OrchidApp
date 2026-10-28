@@ -23,6 +23,9 @@ jobs:
         run: python tests/FeatureEvidence.Checks/checks.py
       - name: Check historical fixture validation rules (no specimen restore)
         run: python tests/HistoricalUpgrade.Checks/checks.py
+      - name: Check Linux package failure and output protection
+        shell: pwsh
+        run: ./tests/HistoricalUpgrade.Checks/Packaging.Checks.ps1
       - name: Run isolated feature checks
         run: python scripts/run-feature-checks.py
       - name: Retain commands, results and environment even on failure

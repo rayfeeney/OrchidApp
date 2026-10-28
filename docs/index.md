@@ -9,7 +9,7 @@ Use current guides below. For each procedure, check its stated implementation li
 - [Reproducible feature checks and release evidence](testing-evidence.md), with [C20 validation](maintenance/c20-reproducible-checks.md)
 - [Greenhouse CI execution-mode deduplication (CHAT-R04)](maintenance/ci-greenhouse-modes.md)
 - [Migration runners and incomplete-upgrade handling](migration-runners.md)
-- [Historical Linux reviewed database upgrade checks](historical-linux-upgrade.md), with [technical fixture review](maintenance/historical-linux-fixture-review.md) and [historical investigation](maintenance/historical-ledger-compatibility.md) and [reviewed adoption](maintenance/historical-linux-adoption.md)
+- [Historical Linux package, application and recovery checks](historical-linux-upgrade.md), with [technical fixture review](maintenance/historical-linux-fixture-review.md) and [historical investigation](maintenance/historical-ledger-compatibility.md) and [reviewed adoption](maintenance/historical-linux-adoption.md), followed by [package/application/recovery evidence](maintenance/historical-linux-application-recovery.md)
 - [Schema-only database creation and future migrations](database-creation.md), with [C01/C02 evidence](maintenance/c01-c02-schema-baseline.md) and [C05 CI checks](maintenance/c05-ci-database-acceptance.md)
 - [Architecture](architecture.md) and [temporal design](temporal-design.md)
 - [Manual lifecycle closure and C11 upgrade acceptance](maintenance/c11-manual-closure.md)

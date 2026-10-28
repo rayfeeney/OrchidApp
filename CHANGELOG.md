@@ -1,54 +1,66 @@
-# Historical Linux reviewed database adoption and upgrade checks
+# Historical Linux application, app-only and recovery changes
 
-## Status and application
+## Apply this delivery
 
-The exact frozen specimen now passes the database adoption/forward-migration phase locally. Full C18 application-package, app-only and recovery acceptance is NOT complete. This ZIP supersedes OrchidApp-Historical-Linux-Preflight-changes-only.zip and includes its source changes.
+Apply AFTER merged PR #361 (383bec7d019c8f102802f5e61e19ef32989663d9). This is a delta from that exact merged source, not a full repository. Extract the 28 listed source/documentation files at the OrchidApp repository root, review overlapping newer edits, then create a PR and merge only after normal CI passes. Root CHANGELOG.md is delivery documentation; preserve/merge any existing project changelog. No files are deleted.
 
-Apply at the OrchidApp repository root AFTER CHAT-R01-R03 and merged CHAT-R04. The earlier preflight-only ZIP is optional; this ZIP includes/replaces that work. Review overlapping newer branch edits. Root CHANGELOG.md describes this delivery; preserve/merge any existing project changelog. No files are deleted. Do not copy the entire ChatGPT workspace, private capture or large specimen into Git.
+The existing specimen release/asset stays unchanged. No new specimen upload or GitHub release is needed. After merging, manually run Historical Linux package upgrade and recovery checks on main, leaving reviewed_adoption and application_checks true. The extended hosted job has not yet run; the earlier successful database-only job is not presented as full application acceptance.
 
-The 23 listed repository files plus this root CHANGELOG.md are the complete delivery. There is no application/installer binary, data dump, credential file, captured Git object, fixture tarball, generated metadata SQL or build directory. The large reviewed fixture remains outside Git. No GitHub upload/remote CI run is claimed.
-
-Run from the repository root with Python 3.9+, .NET SDK targeting net8.0, PowerShell 7+ and Docker Linux containers. First: python tests/HistoricalUpgrade.Checks/checks.py. Then: python tests/HistoricalUpgrade.Checks/preflight.py --specimen "PATH/OrchidApp-Pi-specimen-1.3.0-080ba9c-review.tar.gz" --adopt-and-migrate. Without the last flag the original checksum refusal remains expected. See the README for details.
+This ZIP contains no fixture archive, private capture/credentials, SQL export, application binary/package, backup archive, native library, generated lockfile, runtime tree or private log. No SQL migration, generated schema, .gitattributes, canonical runner/Desktop policy, dependency-lock or tracked product version property is changed.
 
 ## Every added or modified file
 
-- `.github/workflows/historical-linux-preflight.yml`: Manual database workflow with reviewed-adoption option, original-refusal option and bounded reports/logs.
-- `.github/workflows/ci.yml`: Run the 17 pure historical verification/adoption checks in feature CI.
-- `.gitignore`: Ignore historical database staging/evidence.
-- `CONTRIBUTING.md`: Document commands, reviewed adoption scope and remaining boundaries.
-- `RELEASE_NOTES.md`: Record actual database acceptance and incomplete package/recovery scope.
-- `docs/index.md`: Link historical checks, investigation and adoption evidence.
-- `docs/documentation-map.md`: Register documentation ownership for the reviewed database phase.
-- `docs/testing-evidence.md`: Separate pure checks, actual fixture database acceptance and full C18 acceptance.
-- `docs/code-change-backlog.md`: Update R05/R07 partial implementation and fixture-specific R10/R11 resolution.
-- `docs/upgrade-checklist.md`: Document source-owner checks and absence of a live operational adoption action.
-- `docs/historical-linux-upgrade.md`: Current results, original refusal evidence and remaining C18 stages.
-- `docs/maintenance/historical-linux-fixture-review.md`: Bounded technical review of the exact frozen input and later acceptance boundary.
-- `docs/maintenance/historical-ledger-compatibility.md`: Original findings, release artifact comparisons, owner provenance and implemented resolution.
-- `tests/HistoricalUpgrade.Checks/fixture.json`: Exact frozen specimen/history/counts/runtime/archive limits.
-- `tests/HistoricalUpgrade.Checks/preflight.py`: Verify/restore, reproduce original refusal, optionally adopt reviewed structure and test four actual migrations/zero-work repeat with unchanged data/history.
-- `tests/HistoricalUpgrade.Checks/checks.py`: 17 unit tests including unsafe input, schema/security identity, ownership, ledger retention and partial-adoption refusal.
-- `tests/HistoricalUpgrade.Checks/README.md`: Prerequisites, commands, outputs, manual workflow and exact scope.
-- `tests/HistoricalUpgrade.Checks/ClientProxy/ClientProxy.csproj`: Native .NET 8 client transport executable project.
-- `tests/HistoricalUpgrade.Checks/ClientProxy/Program.cs`: Restrict unchanged canonical client transport to the identity-verified isolated fixture.
-- `tests/HistoricalUpgrade.Checks/schema_contract.py`: Exact 13-category schema metadata and deterministic identities without blanket normalisation.
-- `tests/HistoricalUpgrade.Checks/legacy_adoption.py`: Fixture-only admission, staged marker and atomic original-ledger archival; no old row deletion or checksum rewrite.
-- `tests/HistoricalUpgrade.Checks/legacy-adoption.json`: Versioned exact pre/post schema contracts, historical/current source inventories and explicitly reviewed differences.
-- `docs/maintenance/historical-linux-adoption.md`: Independent structural comparison, explicitly reviewed differences and actual migration/retention evidence.
+- `.github/workflows/ci.yml`: Add Linux package policy checks to normal feature CI.
+- `.github/workflows/historical-linux-preflight.yml`: Build/run actual ARM64 packages with QEMU; select full or database-only phases; retain bounded failure/recovery evidence.
+- `CONTRIBUTING.md`: Document new commands, actual phase boundaries and existing published asset.
+- `RELEASE_NOTES.md`: Record application/recovery tooling, photo regression fix and package failure handling.
+- `docs/code-change-backlog.md`: Update R05/R07 scope and record R12/R13 findings, fixes and remaining acceptance.
+- `docs/documentation-map.md`: Register ownership for historical package/application/recovery evidence.
+- `docs/historical-linux-upgrade.md`: Describe the complete isolated workflow and platform limits.
+- `docs/index.md`: Link current package/action/recovery evidence.
+- `docs/maintenance/c15-c19-photo-handling.md`: Record later empty-photo-batch regression and native evidence.
+- `docs/maintenance/historical-linux-adoption.md`: Link completed database phase to new application/recovery evidence without rewriting historical results.
+- `docs/maintenance/historical-linux-fixture-review.md`: Record owner publication of exact reviewed artifact and verified identity.
+- `docs/photo-handling.md`: Clarify no-photo requests create no recovery journal; preserve genuine recovery rules.
+- `docs/testing-evidence.md`: Distinguish new package/action/recovery testing from prior hosted database-only success.
+- `docs/upgrade-checklist.md`: Update Windows/Linux deployment, package flags, photo regression and remaining acceptance actions.
+- `scripts/package-linuxpi.ps1`: Add non-stamping unattended build/output/identity options, explicit native failure detection and guarded output handling.
+- `src/OrchidApp.Web/Services/PhotoWriteBatch.cs`: Avoid journal I/O for empty tracking lists and no-photo commit/rollback; retain genuine recovery behavior.
+- `tests/DevelopmentNative.Checks/PhotoRecoveryChecks.cs`: Five regressions for empty lists, no-photo outcomes and later successful photo commits.
+- `tests/HistoricalUpgrade.Checks/README.md`: Prerequisites, complete package/runtime commands, modes and evidence boundaries.
+- `tests/HistoricalUpgrade.Checks/checks.py`: Expand pure checks from 17 to 21 with package/path/resource and application-namespace guards.
+- `tests/HistoricalUpgrade.Checks/preflight.py`: Integrate baseline/current/action/app-only/failed-DDL recovery phases and partial-output timeout diagnostics.
+- `tests/HistoricalUpgrade.Checks/Runtime.Dockerfile`: Pinned ARM64 .NET 8.0.33 base and libvips42 8.14.1 runtime with real backup tools.
+- `tests/HistoricalUpgrade.Checks/application_stage.py`: Validate packages/owned resources, orchestrate phases and real canonical failure/retry refusal, collect scoped reports and clean up.
+- `tests/HistoricalUpgrade.Checks/container_driver.py`: Run web child as UID 1654, real paired capture/restore, state comparison, broken-app recovery and historical rollback.
+- `tests/HistoricalUpgrade.Checks/http_support.py`: Loopback-only actual cookie/antiforgery/multipart HTTP forms and synthetic image checks using standard library.
+- `tests/HistoricalUpgrade.Checks/plant_actions.py`: 17 post-upgrade plant-action checks, including quick actions/photo/note, moving, flowering, repotting and split/lineage.
+- `tests/HistoricalUpgrade.Checks/package_contract.py`: Reject unsafe/missing/duplicate/special/resource-exceeding complete Linux ZIPs.
+- `tests/HistoricalUpgrade.Checks/Packaging.Checks.ps1`: Three meaningful real-script checks for publish failure, existing output protection and unchanged version properties.
+- `docs/maintenance/historical-linux-application-recovery.md`: Implementation, actual results, issue reproduction, failures and explicit limits.
 
 ## Actual validation
 
-- 17 verifier/adoption unit tests passed; Python compilation and both workflow actionlint syntax checks passed (optional shellcheck/pyflakes disabled). 271 local documentation links resolve.
-- Independently built 87 historical schema files from captured revision 080ba9c and the current canonical schema in separate pinned isolated MariaDB servers. Reviewed all 13 metadata categories, including object definitions, columns/indexes/constraints, security/creation context, partitions and event inventory. Exact historical/final fingerprints and explicit differences are documented.
-- Final real disposable acceptance: added an unreviewed view, confirmed schema admission refused it with original history unchanged, removed the owned probe and verified the exact starting schema again.
-- Atomically retained the original schemaversion table as schemaversion_legacy_pi_130, preserving all 245 original IDs/names/checksums/timestamps, including the owner-identified local June test. A reviewed contract-identified baseline through 202606041820 starts active accounting. No original record or migration file was rewritten/deleted.
-- The unchanged canonical runner planned/applied four real forward migrations; second apply returned zero with zero pending/applied files. Active ledger contains exactly the reviewed baseline plus four current raw hashes. Exact post-upgrade schema check passed.
-- All 23 application-table data-only dump bytes and counts matched before/after. SHA-256: 6b8b8350197dc87b0a56cc145942ce162ef9596347cbb9dd4e7d49d4bb94cec6. Original audit history matched. All owned container/volume resources removed.
-- Frozen input remains SHA-256 7ffd16949ae07238f31447ad7d64e1444e898a00248b8e14757533bcbf00f3b5. 1,073 files/798 synthetic image hashes verified. Published v1.2.0/v1.2.1/v1.3.0 artifact investigation and original failed preflight remain documented.
-- Final acceptance used source immediately before a report-field naming clarification and documentation-only changes; no further SQL/contract/behavior change followed that successful database run. Final pure checks/syntax validation passed.
+- Full local Linux ARM64 package/application/recovery run returned zero and passed all phases (28 October 2026, 20:45-20:56 UTC). Actual complete self-contained ARM64 ZIPs were built with distinct compiled informational identities from the same reviewed functional source/SQL.
+- Verified frozen input: 1,073 files, 798 synthetic image hashes and original 245-row history; pre-upgrade actual paired snapshot plus matching old application/configuration/uploads recovery set verified. Input SHA-256 remains 7ffd16949ae07238f31447ad7d64e1444e898a00248b8e14757533bcbf00f3b5.
+- Exact structural admission, archived original history, all four actual forward migrations and zero-work repeat passed. Pre-workflow application data remained SHA-256 6b8b8350197dc87b0a56cc145942ce162ef9596347cbb9dd4e7d49d4bb94cec6; final upgraded structure matched the unchanged reviewed contract.
+- Current readiness/core pages/existing photo and all 17 HTTP action cases passed. Source monitoring flag was disabled and current build made no owner-energy queries. Full state survived restart.
+- App-only distinct build passed readiness, unchanged database schema/history/data, uploads/settings before test writes, and save/reopen. Deliberately broken DLL failed startup; actual production paired restore recovered exact current snapshot/app/files/configuration and passed readiness/photo/save/reopen.
+- Actual injected canonical SQL left partial DDL and a durable pending checksum; retry was rejected. Original historical app/data/files/settings/schema/history were recovered through production paired restore, followed by working save/reopen. No pending marker was deleted to retry. Both owned containers/volumes were removed.
+- Real C17 backup read locks and actual rclone crypt upload/read-back ran over isolated local storage. ARM64 .NET 8.0.33 and libvips42 8.14.1 used; backup client 10.11.19 and database server 10.11.14 are recorded separately.
+- 21 pure checks and three real-script packaging policy checks passed. Windows native checks passed 611 metadata/orientation/colour and 37 recovery assertions, including five new regressions. NuGet vulnerability metadata was unavailable (NU1900); no complete vulnerability audit is claimed.
+- Python compilation, workflow actionlint (optional shellcheck/pyflakes disabled) and 285 local documentation links passed. ZIP member inventory and source bytes verified.
 
-## Limits and remaining work
+## Issues corrected and failed attempts retained
 
-This is fixture-only adoption in a new unbound network-none Linux amd64 MariaDB container. It cannot select or update a live collection server. The ARM64 specimen application is not executed by this command. Full current package deployment, post-upgrade plant actions, app-only upgrades, failed-state recovery, real Pi/systemd/Windows acceptance, general offline operational adoption and remote CI are not claimed. No old SQL, .gitattributes, canonical runner, C# migration policy, production setting or normal startup change is included. Raw checking remains intact for forward migrations. Do not use the fixture contract as a general force/bypass/adoption mechanism for other installations.
+CHAT-R12: the pre-fix current ARM64 build created an empty false recovery journal after no-photo save and then blocked a real photo. Empty batches now avoid journal I/O; true failed/uncertain photo recovery remains unchanged. No existing journal is automatically removed and no new setting/migration is introduced.
 
-The manual workflow defaults to reviewed database adoption and requires the future reviewed fixture release asset; missing input fails. Do not label this green database phase full C18 acceptance. Preserve all evidence and the immutable input; a failed/interrupted disposable run is discarded and restored rather than automatically repaired.
+CHAT-R13: Linux packaging prompted/stamped source and ignored native publishing failure. Optional unattended non-stamping builds and protected explicit outputs now support CI; failed publish stops before ZIP creation. Existing normal release stamping remains.
+
+Other nonpassing local attempts exposed Docker overlay directory staging behavior (corrected in the harness), plus one unexplained canonical command timeout. They were not counted as successful application acceptance. Partial timeout output/process-state diagnostics are now retained; the final fresh full run passed without relaxing checks.
+
+## Limits
+
+All destructive replacement/recovery is inside new owned disposable containers with no host bind mounts, published ports or external runtime network. No live Pi/collection is touched. The application is actual ARM64 under emulation; MariaDB runs amd64. A PID-derived fixture service-state adapter is used instead of real systemd. The encrypted backend is real rclone crypt over private local storage, not a cloud provider. HTTP forms do not execute browser JavaScript or certify mobile/visual behavior. Windows specimen/installer, real Pi service/account/permissions/provider and general live adoption acceptance remain separate. A failed fixture is discarded/restored rather than force-retried.
+
+Authoritative source/test, photo, historical upgrade, checklist, backlog, contributor/release/index/ownership documentation is updated. Existing Word user flows did not change, so no Word edits/rendering were needed. See docs/maintenance/historical-linux-application-recovery.md for full evidence and tests/HistoricalUpgrade.Checks/README.md for commands.

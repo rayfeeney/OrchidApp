@@ -6,10 +6,15 @@ from pathlib import Path
 import tarfile
 import tempfile
 import unittest
+import zipfile
+import warnings
+from types import SimpleNamespace
 from unittest.mock import patch
 from preflight import verify_fixture, ledger_review, plan_status, owned
 from schema_contract import checksum, identity, require_schema, application_schema
 from legacy_adoption import adopt, HISTORY_SQL, ARCHIVE
+from package_contract import validate_package
+from application_stage import ApplicationStage
 
 
 TEMP_ROOT = Path(__file__).resolve().parents[2]/'artifacts/historical-upgrade/unit-tests'
@@ -19,6 +24,57 @@ TEMP_ROOT.mkdir(parents=True, exist_ok=True)
 
 
 class HistoricalPreflightChecks(unittest.TestCase):
+    def test_complete_linux_package_inventory(self):
+        stream=io.BytesIO()
+        with zipfile.ZipFile(stream,'w') as archive:
+            archive.writestr('OrchidApp/app/OrchidApp.Web.dll',b'synthetic package inventory only')
+            archive.writestr('OrchidApp/infrastructure/backups/orchid_backup.py',b'not executed')
+        with zipfile.ZipFile(stream) as archive:self.assertEqual(validate_package(archive),2)
+
+    def test_linux_package_rejects_unsafe_missing_or_duplicate_members(self):
+        for unsafe in ('../escape','OrchidApp/app/../../escape','OrchidApp/.env','/OrchidApp/absolute',
+                       'OrchidApp/app/back\\slash','OtherRoot/file','OrchidApp/app//double'):
+            with self.subTest(unsafe=unsafe):
+                stream=io.BytesIO()
+                with zipfile.ZipFile(stream,'w') as archive:archive.writestr(unsafe,b'x')
+                with zipfile.ZipFile(stream) as archive:
+                    with self.assertRaises(ValueError):validate_package(archive)
+        for special in ('duplicate','link','missing'):
+            with self.subTest(special=special):
+                stream=io.BytesIO()
+                with warnings.catch_warnings():
+                    warnings.simplefilter('ignore',UserWarning)
+                    with zipfile.ZipFile(stream,'w') as archive:
+                        item=zipfile.ZipInfo('OrchidApp/app/item')
+                        if special=='link':item.external_attr=0o120777<<16
+                        archive.writestr(item,b'not executable')
+                        if special=='duplicate':archive.writestr(item,b'again')
+                with zipfile.ZipFile(stream) as archive:
+                    with self.assertRaises(ValueError):validate_package(archive)
+
+    def test_linux_package_resource_limits(self):
+        for members in ([SimpleNamespace(file_size=3*1024**3)], [SimpleNamespace(file_size=0)]*15001):
+            archive=SimpleNamespace(infolist=lambda:members)
+            with self.assertRaisesRegex(ValueError,'resource'):validate_package(archive)
+
+    def test_application_container_rejects_wrong_namespace_exposure_or_identity(self):
+        app=ApplicationStage.__new__(ApplicationStage)
+        app.container='c'*64;app.database='a'*64;app.token='b'*32
+        state={'Id':app.container,'Config':{'Labels':{'org.orchidapp.fixture-token':app.token}},
+               'HostConfig':{'NetworkMode':'container:'+app.database,'Binds':None,'PortBindings':{}},'Mounts':[]}
+        with patch('application_stage.p.owned'),patch('application_stage.p.docker',return_value=json.dumps([state]).encode()):
+            self.assertEqual(app.owned()['Id'],app.container)
+        for change in ('namespace','identity','bind','ports','mount','label'):
+            bad=json.loads(json.dumps(state))
+            if change=='namespace':bad['HostConfig']['NetworkMode']='host'
+            elif change=='identity':bad['Id']='d'*64
+            elif change=='bind':bad['HostConfig']['Binds']=['/host:/specimen']
+            elif change=='ports':bad['HostConfig']['PortBindings']={'5080/tcp':[{}]}
+            elif change=='mount':bad['Mounts']=[{'Type':'bind'}]
+            else:bad['Config']['Labels']['org.orchidapp.fixture-token']='other'
+            with self.subTest(change=change),patch('application_stage.p.owned'),patch('application_stage.p.docker',return_value=json.dumps([bad]).encode()):
+                with self.assertRaises(ValueError):app.owned()
+
     def adoption_fixture(self):
         schema = {'tables': ['plant\tInnoDB'], 'columns': ['plant\t1\tplantId'],
                   'views': ['history\tdefinition\tutf8mb4_unicode_ci'], 'events': []}

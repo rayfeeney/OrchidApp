@@ -1,8 +1,12 @@
 # Release notes
 
-## Historical Linux reviewed database upgrade checks
+## Historical Linux package, actions and recovery checks
 
-The exact sanitised specimen now passes reviewed structural adoption and four actual forward migrations locally, with zero work on a second apply. All 245 historical records survive in an audit table; all application-table data hashes/counts match. Seventeen unit checks run in feature CI and a manual workflow defaults to reviewed adoption; original refusal remains selectable. No old SQL/checksum policy, production startup or live Pi is changed. Full package/app-only/recovery acceptance, fixture publication and remote CI remain pending. See [scope](docs/historical-linux-upgrade.md) and [evidence](docs/maintenance/historical-linux-adoption.md).
+The historical CI tooling now builds/executes actual self-contained Linux ARM64 packages, plant actions, app-only replacement and production paired recovery around the existing verified database admission. The published specimen and migration payloads are unchanged. Extended hosted acceptance needs a run after this delivery is applied; real Pi/systemd/provider/browser and Windows installer acceptance remain separate. See [scope/results](docs/maintenance/historical-linux-application-recovery.md).
+
+The test exposed a false photo-recovery journal after a no-photo save on a clean upload root. Empty photo batches now avoid journal I/O while preserving real failure/uncertainty safeguards. Five new native assertions cover the regression. No database migration, setting or automatic journal cleanup is introduced.
+
+Linux packaging now supports explicit unattended non-stamping output/build-identity options, refuses an existing explicit output, and stops if native publishing fails. Default interactive release stamping remains. CI test builds do not create a product release or change tracked version metadata.
 
 ## Greenhouse CI deduplication (CHAT-R04)
 
