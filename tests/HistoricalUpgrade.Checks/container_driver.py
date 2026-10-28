@@ -11,6 +11,7 @@ from pathlib import Path
 import re
 import shutil
 import signal
+import stat
 import subprocess
 import sys
 import time
@@ -313,6 +314,13 @@ def main():
         report['error']=str(error)
         raise
     finally:
+        report['fixtureProtection']={'operatorUid':os.geteuid(),'files':{}}
+        for name in ('admin.cnf','backup-settings.json','rclone.conf','backup.log'):
+            path=ROOT/name
+            if path.exists():
+                info=path.stat()
+                report['fixtureProtection']['files'][name]={'uid':info.st_uid,'gid':info.st_gid,
+                    'mode':oct(stat.S_IMODE(info.st_mode))}
         stop();(OUT/(phase+'-report.json')).write_text(json.dumps(report,indent=2))
     print(json.dumps(report),flush=True)
 

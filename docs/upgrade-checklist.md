@@ -196,3 +196,5 @@ CI owners: the policy script's expected failing publish must not leave a nonzero
 ### Hosted paired-backup diagnostics
 
 CI owners: historical acceptance retains the production paired CLI's sanitized ERROR summary when backup/restore fails; raw native diagnostics, credentials and backup contents remain excluded from uploaded artifacts. A failed pre-upgrade backup stops migration/application replacement. This test-reporting change requires no operator/database setting or live Pi action.
+
+Hosted CI fixture setup additionally assigns/verifies copied admin configuration as root:root mode 600 after a deliberate foreign-owner probe. Do not relax the production backup protected-file requirement. This is isolated fixture provisioning and requires no live configuration changes.
