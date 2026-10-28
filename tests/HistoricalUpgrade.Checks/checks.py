@@ -13,7 +13,7 @@ from unittest.mock import patch
 from preflight import verify_fixture, ledger_review, plan_status, owned
 from schema_contract import checksum, identity, require_schema, application_schema
 from legacy_adoption import adopt, HISTORY_SQL, ARCHIVE
-from package_contract import validate_package
+from package_contract import validate_package, paired_failure_message
 from application_stage import ApplicationStage
 
 
@@ -24,6 +24,17 @@ TEMP_ROOT.mkdir(parents=True, exist_ok=True)
 
 
 class HistoricalPreflightChecks(unittest.TestCase):
+    def test_paired_cli_exposes_only_its_sanitized_error(self):
+        args=['python3','/checks/orchid_backup.py','backup']
+        self.assertEqual(paired_failure_message(args,b'2026 | ERROR: Writer unit must be stopped\n',b''),
+                         'Writer unit must be stopped')
+        self.assertEqual(paired_failure_message(args,b'',b'ERROR: Required protected configuration file is missing\n'),
+                         'Required protected configuration file is missing')
+        self.assertIsNone(paired_failure_message(args,b'',b'raw private native diagnostic'))
+
+    def test_other_tool_diagnostics_remain_private(self):
+        for args in (['curl'],['python3','/other.py','backup'],['python3','/checks/orchid_backup.py','unknown']):
+            self.assertIsNone(paired_failure_message(args,b'ERROR: password=private\n',b'private stderr'))
     def test_complete_linux_package_inventory(self):
         stream=io.BytesIO()
         with zipfile.ZipFile(stream,'w') as archive:

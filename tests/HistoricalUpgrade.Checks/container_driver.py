@@ -27,7 +27,7 @@ OUT.mkdir(exist_ok=True)
 os.environ['ORCHID_ACTION_OUTPUT'] = str(OUT)
 from http_support import fetch, get_form, save
 from schema_contract import snapshot, checksum
-from package_contract import validate_package
+from package_contract import validate_package, paired_failure_message
 
 APP = None
 LOG = None
@@ -37,7 +37,8 @@ def run(args, *, data=None, timeout=900):
     result = subprocess.run(args, input=data, capture_output=True, timeout=timeout)
     if result.returncode:
         (OUT/'private-command-error.log').write_bytes(result.stdout+result.stderr)
-        raise RuntimeError('Fixture command failed: '+Path(args[0]).name)
+        public=paired_failure_message(args,result.stdout,result.stderr)
+        raise RuntimeError('Paired '+args[2]+' failed: '+public if public else 'Fixture command failed: '+Path(args[0]).name)
     return result.stdout
 
 
