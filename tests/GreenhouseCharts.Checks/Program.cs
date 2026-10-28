@@ -12,6 +12,59 @@ using OrchidApp.Web.Services;
 var checks = 0;
 void Check(string name, bool ok) { if (!ok) throw new Exception(name); checks++; }
 var now = new DateTime(2026, 10, 23, 12, 0, 0, DateTimeKind.Utc);
+if (Environment.GetEnvironmentVariable("GREENHOUSE_TEST_CONNECTION") is { Length: > 0 } connection)
+{
+    Console.WriteLine("Greenhouse check mode: database");
+    if (args.Length != 0)
+        throw new Exception("Database checks cannot be combined with preview arguments; clear the connection for isolated previews.");
+    var settings = new MySqlConnectionStringBuilder(connection);
+    if (settings.Server != "127.0.0.1" || settings.Port != 33317)
+        throw new Exception("Integration fixtures require the disposable loopback database on port 33317.");
+    if (Environment.GetEnvironmentVariable("GREENHOUSE_DISPOSABLE_INSTANCE") != "1")
+        throw new Exception("Integration fixtures require explicit GREENHOUSE_DISPOSABLE_INSTANCE=1 confirmation for a new empty disposable server.");
+    await using var sql = new MySqlConnection(new MySqlConnectionStringBuilder(connection) { Database = "" }.ConnectionString);
+    await sql.OpenAsync();
+    // This fixture owns two fixed schema names. Refuse all existing user schemas,
+    // including leftovers from a prior run, before executing any fixture SQL.
+    await using (var guard = new MySqlCommand("SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME NOT IN ('mysql','information_schema','performance_schema','sys')", sql))
+        if (Convert.ToInt32(await guard.ExecuteScalarAsync()) != 0)
+            throw new Exception("Greenhouse fixtures require a new empty disposable server; no fixture SQL was executed.");
+    Console.WriteLine($"Disposable MariaDB version: {sql.ServerVersion}");
+    var fixture = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Fixtures", "setup.sql"));
+    await using (var command = new MySqlCommand(fixture, sql)) await command.ExecuteNonQueryAsync();
+    connection = new MySqlConnectionStringBuilder(connection) { Database = "orchids" }.ConnectionString;
+    var options = new DbContextOptionsBuilder<OrchidDbContext>().UseMySql(connection, new MariaDbServerVersion(new Version(10, 11, 16))).Options;
+    await using var db = new OrchidDbContext(options);
+    Console.WriteLine("Greenhouse suite: database-loading");
+    var loaded = await new GreenhouseChartService(db).LoadAsync(["Cool side", "Hot side"], now, default);
+    Check("MariaDB queries load both charts", loaded.Count == 2);
+    Check("MariaDB raw reading-weighted mean", loaded[0].Periods.Single(p => p.Label.StartsWith("16 Oct Day")).Average == 20);
+    Check("MariaDB configured 16:00 exclusion", loaded[0].Temperatures[18].Y == 50);
+    Check("MariaDB historical cost", loaded[0].Costs[12].Y == .25m);
+    Check("MariaDB other location uses its own heater", loaded[1].Costs[12].Y == .5m);
+    Check("MariaDB night assigned to start date", loaded[0].Periods.Single(p => p.Label.StartsWith("15 Oct Night")).Average == 15);
+    var summaries = await db.EnvironmentLastSevenDaysSummaries.FromSqlRaw(EnvironmentSummarySql.Query, GreenhouseChartService.Local(now).Date).ToListAsync();
+    Check("Parameterized summary query executes", summaries.Count == 2);
+    Check("Summary remains weighted over classified readings", summaries.Single(s => s.LocationName == "Cool side").AverageDayTemperatureCelsius == 20);
+    Check("Summary uses the exact eight-date boundaries", summaries.Single(s => s.LocationName == "Cool side") is
+        { ReadingCount: 5, FirstReadingDateTime: var first, LastReadingDateTime: var last } &&
+        first == new DateTime(2026, 10, 16, 2, 0, 0) && last == new DateTime(2026, 10, 23, 12, 0, 0));
+    await using (var command = new MySqlCommand("UPDATE orchids.environmenttargetrule SET isActive=0 WHERE environmentTargetRuleId=1", sql))
+        await command.ExecuteNonQueryAsync();
+    var missingTarget = await db.EnvironmentLastSevenDaysSummaries.FromSqlRaw(EnvironmentSummarySql.Query, GreenhouseChartService.Local(now).Date).AsNoTracking().ToListAsync();
+    Check("Missing targets retain the location summary", missingTarget.Count == 2 && missingTarget.Single(s => s.LocationName == "Cool side").ExpectedDayTemperatureCelsius is null);
+    await using (var command = new MySqlCommand("UPDATE orchids.environmenttargetrule SET isActive=1 WHERE environmentTargetRuleId=1", sql))
+        await command.ExecuteNonQueryAsync();
+    Console.WriteLine("Greenhouse suite: database-performance");
+    await PerformanceChecks.DatabaseAsync(connection, now, Check);
+    Console.WriteLine("Greenhouse suite: database-net-cost");
+    await NetCostChecks.DatabaseAsync(connection, Check);
+    Console.WriteLine($"{checks} greenhouse database checks passed.");
+    return;
+}
+
+Console.WriteLine("Greenhouse check mode: isolated");
+Console.WriteLine("Greenhouse suite: isolated-calculations");
 var range = GreenhouseChartService.Range(now);
 Check("Seven 24-hour periods ending with yesterday 21:00", range.Start == new DateTime(2026, 10, 15, 22, 0, 0) && range.End == new DateTime(2026, 10, 22, 22, 0, 0));
 var rules = new List<GreenhousePeriodRule> {
@@ -93,51 +146,11 @@ periods.Add(periods[0]);
 Check("Duplicate classified reading does not bias mean", Build().Periods.Single(p => p.Label.StartsWith("16 Oct Day")).Average is null);
 periods.RemoveAt(periods.Count - 1);
 
-// Optional disposable MariaDB integration. Never point this at an existing instance.
+Console.WriteLine("Greenhouse suite: isolated-cache");
 await PerformanceChecks.CacheAsync(Check);
+Console.WriteLine("Greenhouse suite: isolated-net-cost");
 NetCostChecks.Run(Check);
-if (Environment.GetEnvironmentVariable("GREENHOUSE_TEST_CONNECTION") is { Length: > 0 } connection)
-{
-    var settings = new MySqlConnectionStringBuilder(connection);
-    if (settings.Server != "127.0.0.1" || settings.Port != 33317)
-        throw new Exception("Integration fixtures require the disposable loopback database on port 33317.");
-    if (Environment.GetEnvironmentVariable("GREENHOUSE_DISPOSABLE_INSTANCE") != "1")
-        throw new Exception("Integration fixtures require explicit GREENHOUSE_DISPOSABLE_INSTANCE=1 confirmation for a new empty disposable server.");
-    await using var sql = new MySqlConnection(new MySqlConnectionStringBuilder(connection) { Database = "" }.ConnectionString);
-    await sql.OpenAsync();
-    // This fixture owns two fixed schema names. Refuse all existing user schemas,
-    // including leftovers from a prior run, before executing any fixture SQL.
-    await using (var guard = new MySqlCommand("SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME NOT IN ('mysql','information_schema','performance_schema','sys')", sql))
-        if (Convert.ToInt32(await guard.ExecuteScalarAsync()) != 0)
-            throw new Exception("Greenhouse fixtures require a new empty disposable server; no fixture SQL was executed.");
-    Console.WriteLine($"Disposable MariaDB version: {sql.ServerVersion}");
-    var fixture = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Fixtures", "setup.sql"));
-    await using (var command = new MySqlCommand(fixture, sql)) await command.ExecuteNonQueryAsync();
-    connection = new MySqlConnectionStringBuilder(connection) { Database = "orchids" }.ConnectionString;
-    var options = new DbContextOptionsBuilder<OrchidDbContext>().UseMySql(connection, new MariaDbServerVersion(new Version(10, 11, 16))).Options;
-    await using var db = new OrchidDbContext(options);
-    var loaded = await new GreenhouseChartService(db).LoadAsync(["Cool side", "Hot side"], now, default);
-    Check("MariaDB queries load both charts", loaded.Count == 2);
-    Check("MariaDB raw reading-weighted mean", loaded[0].Periods.Single(p => p.Label.StartsWith("16 Oct Day")).Average == 20);
-    Check("MariaDB configured 16:00 exclusion", loaded[0].Temperatures[18].Y == 50);
-    Check("MariaDB historical cost", loaded[0].Costs[12].Y == .25m);
-    Check("MariaDB other location uses its own heater", loaded[1].Costs[12].Y == .5m);
-    Check("MariaDB night assigned to start date", loaded[0].Periods.Single(p => p.Label.StartsWith("15 Oct Night")).Average == 15);
-    var summaries = await db.EnvironmentLastSevenDaysSummaries.FromSqlRaw(EnvironmentSummarySql.Query, GreenhouseChartService.Local(now).Date).ToListAsync();
-    Check("Parameterized summary query executes", summaries.Count == 2);
-    Check("Summary remains weighted over classified readings", summaries.Single(s => s.LocationName == "Cool side").AverageDayTemperatureCelsius == 20);
-    Check("Summary uses the exact eight-date boundaries", summaries.Single(s => s.LocationName == "Cool side") is
-        { ReadingCount: 5, FirstReadingDateTime: var first, LastReadingDateTime: var last } &&
-        first == new DateTime(2026, 10, 16, 2, 0, 0) && last == new DateTime(2026, 10, 23, 12, 0, 0));
-    await using (var command = new MySqlCommand("UPDATE orchids.environmenttargetrule SET isActive=0 WHERE environmentTargetRuleId=1", sql))
-        await command.ExecuteNonQueryAsync();
-    var missingTarget = await db.EnvironmentLastSevenDaysSummaries.FromSqlRaw(EnvironmentSummarySql.Query, GreenhouseChartService.Local(now).Date).AsNoTracking().ToListAsync();
-    Check("Missing targets retain the location summary", missingTarget.Count == 2 && missingTarget.Single(s => s.LocationName == "Cool side").ExpectedDayTemperatureCelsius is null);
-    await using (var command = new MySqlCommand("UPDATE orchids.environmenttargetrule SET isActive=1 WHERE environmentTargetRuleId=1", sql))
-        await command.ExecuteNonQueryAsync();
-    await PerformanceChecks.DatabaseAsync(connection, now, Check);
-    await NetCostChecks.DatabaseAsync(connection, Check);
-}
+
 
 if (args.Length == 2 && args[0] == "--fixture-output")
     await File.WriteAllTextAsync(args[1], JsonSerializer.Serialize(Build(), new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));

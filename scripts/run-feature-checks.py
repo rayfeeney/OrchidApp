@@ -67,6 +67,22 @@ def child_environment(mode):
     return env
 
 
+def greenhouse_mode_evidence(text, mode):
+    """Require the selected suites and reject mixed runs, without fixed counts."""
+    expected = 'database' if mode == 'greenhouse-db' else 'isolated'
+    other = 'isolated' if expected == 'database' else 'database'
+    suites = (('database-loading', 'database-performance', 'database-net-cost')
+              if expected == 'database' else
+              ('isolated-calculations', 'isolated-cache', 'isolated-net-cost'))
+    lines = set(text.splitlines())
+    missing = [value for value in ('Greenhouse check mode: '+expected,
+               *('Greenhouse suite: '+suite for suite in suites)) if value not in lines]
+    mixed = any(line == 'Greenhouse check mode: '+other or
+                line.startswith('Greenhouse suite: '+other+'-') for line in lines)
+    return {'expectedMode': expected, 'status': 'passed' if not missing and not mixed else 'failed',
+            'missing': missing, 'mixedModes': mixed}
+
+
 def run(root, output, mode, timeout):
     output.mkdir(parents=True, exist_ok=False)
     top = metadata(['git', 'rev-parse', '--show-toplevel'], root)
@@ -93,6 +109,7 @@ def run(root, output, mode, timeout):
             log = output / f'{name}.log'
             code = None
             error = None
+            mode_evidence = None
             print(f'Running {name} ({mode})', flush=True)
             with log.open('w', encoding='utf-8') as stream:
                 try:
@@ -102,9 +119,14 @@ def run(root, output, mode, timeout):
                 except (OSError, subprocess.TimeoutExpired) as exc:
                     error = type(exc).__name__
                     stream.write(f'\nRunner failure: {error}\n')
+            if name == 'GreenhouseCharts' and code == 0:
+                mode_evidence = greenhouse_mode_evidence(log.read_text(encoding='utf-8'), mode)
+                if mode_evidence['status'] != 'passed':
+                    error = 'GreenhouseModeMismatch'
             report['checks'].append({'name': name, 'category': mode, 'command': command,
-                                     'exitCode': code, 'status': 'passed' if code == 0 else 'failed',
+                                     'exitCode': code, 'status': 'passed' if code == 0 and error is None else 'failed',
                                      'runnerError': error, 'seconds': round(time.monotonic()-started, 3),
+                                     'modeEvidence': mode_evidence,
                                      'log': log.name, 'logSha256': hashlib.sha256(log.read_bytes()).hexdigest()})
             print(f'{name}: {report["checks"][-1]["status"]}', flush=True)
     except ValueError as exc:

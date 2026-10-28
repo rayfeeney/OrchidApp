@@ -26,4 +26,6 @@ Restores emitted NU1900 warnings because vulnerability-feed access was unavailab
 
 ## Deployment impact and guide review
 
+Subsequent [CHAT-R04 execution-mode correction](ci-greenhouse-modes.md) removes the repeated isolated greenhouse suites from database mode, adds explicit disjoint mode/suite evidence and retains all SQL coverage. The counts above describe the original combined execution, not expected totals for the new split execution. The same three CI jobs and commands remain.
+
 No database artifact, applied migration, application feature code, monitoring switch, cache setting, normal development startup or credential contract changes. No Windows/Linux operator configuration is introduced. Release owners retain the current revision-specific reports alongside existing database/installer/native evidence and complete actual device acceptance. Windows and Linux Word installation/use guides were reviewed for impact; their user flows and screenshots are unchanged, so no Word edit/render was needed for this CI/test-only item.

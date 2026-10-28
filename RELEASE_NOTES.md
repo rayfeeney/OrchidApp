@@ -1,5 +1,9 @@
 # Release notes
 
+## Greenhouse CI deduplication (CHAT-R04)
+
+The database job now runs only its SQL loading/performance/net-cost suites; isolated calculation/cache/policy coverage remains in the feature job. Reports reject mixed or missing mode evidence even when an executable exits successfully. All three CI jobs and disposable database guards remain. No application behavior, migration or production setting changes. See [validation](docs/maintenance/ci-greenhouse-modes.md) and [release actions](docs/upgrade-checklist.md#chat-r04-greenhouse-ci-deduplication).
+
 ## Plant-event validation explanations (CHAT-R01–R03)
 
 Invalid observation/move/repotting dates, flowering dates, an absent new repotting medium and empty observation notes now display the existing explanation beside the affected field. Rules and stored data are unchanged. The lifecycle CI runner includes real HTTP rejection and corrected-save checks. No new migration, setting or startup change. See [validation evidence](docs/maintenance/event-validation-messages.md) and [Windows/Linux upgrade actions](docs/upgrade-checklist.md#chat-r01r03-plant-event-message-correction).

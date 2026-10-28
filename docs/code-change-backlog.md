@@ -336,6 +336,14 @@ The current add-event form reproduced the historical specimen's missing explanat
 
 Affected paths: `src/OrchidApp.Web/Pages/Plants/Events/Add.cshtml`; `tests/LifecycleClosure.Checks/ValidationMessages.Checks.py`; the existing lifecycle runner and linked contributor/test/upgrade documentation. No migration or setting is introduced. Acceptance requires readable errors, no writes on rejection and successful corrected saves on the current build. The frozen older specimen and all applied SQL/history remain unchanged. C18 historical package upgrade/recovery work remains separate.
 
+## CHAT-R04: greenhouse CI deduplication
+
+**Status: implemented in source; isolated/database local checks passed; applied/merged-revision CI pending.**
+
+Database mode now exits after its guarded SQL loading, performance and net-cost suites; isolated calculation/cache/policy suites run only in isolated mode. The evidence runner rejects missing/mixed mode labels even after a zero-exit executable. No SQL assertions, helper implementations, workflow jobs, fixture guards or application behavior were removed. See [measured mode validation](maintenance/ci-greenhouse-modes.md) and [test procedure](testing-evidence.md).
+
+Affected paths: `tests/GreenhouseCharts.Checks/Program.cs`, `scripts/run-feature-checks.py`, `tests/FeatureEvidence.Checks/checks.py` and linked documentation. No migration or production configuration/startup change. Preserve the three separate CI jobs and finish C18 historical upgrade/recovery work independently.
+
 ## Closure rules
 
 For each item, record actual changed paths, implementation revision, updated document owners from documentation-map.md, checks run/results and remaining limitations. Keep schema/current exports aligned using the normal export process; never edit applied migrations. Validate destructive workflows only in isolated targets. A code item is complete only after its acceptance is demonstrated and affected guides are updated in the same change. Link related documentation review findings as needed under history/documentation-review/; those reports describe the original snapshot and may contain superseded paths/requirements.
