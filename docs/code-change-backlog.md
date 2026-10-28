@@ -344,6 +344,16 @@ Database mode now exits after its guarded SQL loading, performance and net-cost 
 
 Affected paths: `tests/GreenhouseCharts.Checks/Program.cs`, `scripts/run-feature-checks.py`, `tests/FeatureEvidence.Checks/checks.py` and linked documentation. No migration or production configuration/startup change. Preserve the three separate CI jobs and finish C18 historical upgrade/recovery work independently.
 
+## CHAT-R05/R07: historical Linux database acceptance
+
+**Status: reviewed specimen structure/adoption and actual forward database upgrade implemented and passed locally. Full package/recovery and post-upgrade application tests remain incomplete.** The pinned sanitised restore must match exact schema/history, preserves all original history in an audit table, plans/applies all four forward migrations, proves a second apply does nothing and verifies every application-table data dump hash/count. Seventeen verifier/adoption checks run in feature CI; the manual workflow selects reviewed adoption by default and retains bounded reports/logs. No fixture publication or remote CI run is claimed. See [scope and remaining C18 stages](historical-linux-upgrade.md) and [actual adoption evidence](maintenance/historical-linux-adoption.md). This does not replace C05 or establish Windows compatibility.
+
+## CHAT-R10/R11: historical ledger and raw-byte packaging compatibility
+
+**Status: immediate blocker resolved for the exact disposable specimen through reviewed adoption; general operational adoption and wider packaging reproducibility remain open.** The original history is preserved unchanged in `schemaversion_legacy_pi_130`. Its verified final schema is represented by the existing baseline contract through `202606041820`; the real unmodified runner then applies only new SQL and preserves normal raw-byte checking. The owner-identified June local test entry and superseded February view checksum no longer participate in active planning, but are not erased from audit evidence.
+
+The original refusal is still tested; no old SQL, `.gitattributes`, migration policy or C# startup behavior is changed. Production adoption needs a separately accepted offline/recovery/account contract; unreviewed schemas/ledgers must fail. See [investigation](maintenance/historical-ledger-compatibility.md) and [controlled implementation](maintenance/historical-linux-adoption.md).
+
 ## Closure rules
 
 For each item, record actual changed paths, implementation revision, updated document owners from documentation-map.md, checks run/results and remaining limitations. Keep schema/current exports aligned using the normal export process; never edit applied migrations. Validate destructive workflows only in isolated targets. A code item is complete only after its acceptance is demonstrated and affected guides are updated in the same change. Link related documentation review findings as needed under history/documentation-review/; those reports describe the original snapshot and may contain superseded paths/requirements.

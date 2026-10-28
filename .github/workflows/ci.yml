@@ -21,6 +21,8 @@ jobs:
           python-version: '3.x'
       - name: Check evidence failure and isolation handling
         run: python tests/FeatureEvidence.Checks/checks.py
+      - name: Check historical fixture validation rules (no specimen restore)
+        run: python tests/HistoricalUpgrade.Checks/checks.py
       - name: Run isolated feature checks
         run: python scripts/run-feature-checks.py
       - name: Retain commands, results and environment even on failure
