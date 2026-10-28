@@ -12,6 +12,7 @@ Use current guides below. For each procedure, check its stated implementation li
 - [Architecture](architecture.md) and [temporal design](temporal-design.md)
 - [Manual lifecycle closure and C11 upgrade acceptance](maintenance/c11-manual-closure.md)
 - [Ended plant policy and C12 upgrade acceptance](maintenance/c12-ended-plant-policy.md)
+- [Plant-event validation-message correction and checks (CHAT-R01–R03)](maintenance/event-validation-messages.md)
 - [Structural transactions and C13 acceptance](maintenance/c13-structural-transactions.md)
 - [History ordering and C14 acceptance](maintenance/c14-history-ordering.md)
 - [Windows upgrade contract](windows-upgrade-contract.md)

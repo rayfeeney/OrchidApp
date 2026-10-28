@@ -107,6 +107,7 @@
                    type="date"
                    class="form-control"
                    asp-format="{0:yyyy-MM-dd}" />
+            <span asp-validation-for="EventDate" class="text-danger"></span>
         </div>
 
         @if (Model.ShowPhotoSection)
@@ -127,6 +128,7 @@
                       class="form-control"
                       rows="4"
                       placeholder="e.g. Noticed new root growth, leaves firm and glossy"></textarea>
+            <span asp-validation-for="EventDetails" class="text-danger"></span>
         </div>
     }
 
@@ -155,6 +157,7 @@
             <input asp-for="EventDate"
                    type="date"
                    class="form-control" />
+            <span asp-validation-for="EventDate" class="text-danger"></span>
         </div>
 
         <div class="mb-3">
@@ -179,6 +182,7 @@
             <input asp-for="StartDate"
                    type="date"
                    class="form-control" />
+            <span asp-validation-for="StartDate" class="text-danger"></span>
         </div>
 
         <div class="mb-3">
@@ -186,6 +190,7 @@
             <input asp-for="EndDate"
                    type="date"
                    class="form-control" />
+            <span asp-validation-for="EndDate" class="text-danger"></span>
             <small class="text-muted d-block fw-normal">
                 Leave blank if currently flowering.
             </small>
@@ -224,6 +229,7 @@
             <input asp-for="EventDate"
                 type="date"
                 class="form-control" />
+            <span asp-validation-for="EventDate" class="text-danger"></span>
         </div>
 
         <hr class="my-4" />
@@ -274,6 +280,7 @@
                     </option>
                 }
             </select>
+            <span asp-validation-for="NewGrowthMediumId" class="text-danger"></span>
         </div>
 
         <div class="mb-3">

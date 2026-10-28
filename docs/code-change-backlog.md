@@ -328,6 +328,14 @@ Acceptance: CI/local reports distinguish isolated, DB, benchmark and device chec
 
 Implementation: [testing/evidence owner](testing-evidence.md) selects isolated feature executables and an explicitly empty disposable greenhouse server in separate CI jobs. Domain-unavailable cache results, exceptions and expiry/recovery are tested separately. Reports retain commands, source identity, environment, failures and omissions without fixed historical pass-count assertions. [C20 evidence](maintenance/c20-reproducible-checks.md) records measured local isolated/SQL results; merged-revision Linux CI and real device/older-release acceptance remain pending.
 
+## CHAT-R01–R03: plant-event validation explanations
+
+**Status: implemented in source; local HTTP checks passed; merged-revision CI and installed acceptance pending.**
+
+The current add-event form reproduced the historical specimen's missing explanations for a future observation, flowering end before start and absent new repotting medium. Related date and empty-note errors had the same display gap. Field-message elements now show the existing handler errors without changing rules or database state. See [implementation and measured evidence](maintenance/event-validation-messages.md).
+
+Affected paths: `src/OrchidApp.Web/Pages/Plants/Events/Add.cshtml`; `tests/LifecycleClosure.Checks/ValidationMessages.Checks.py`; the existing lifecycle runner and linked contributor/test/upgrade documentation. No migration or setting is introduced. Acceptance requires readable errors, no writes on rejection and successful corrected saves on the current build. The frozen older specimen and all applied SQL/history remain unchanged. C18 historical package upgrade/recovery work remains separate.
+
 ## Closure rules
 
 For each item, record actual changed paths, implementation revision, updated document owners from documentation-map.md, checks run/results and remaining limitations. Keep schema/current exports aligned using the normal export process; never edit applied migrations. Validate destructive workflows only in isolated targets. A code item is complete only after its acceptance is demonstrated and affected guides are updated in the same change. Link related documentation review findings as needed under history/documentation-review/; those reports describe the original snapshot and may contain superseded paths/requirements.

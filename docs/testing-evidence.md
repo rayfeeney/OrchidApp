@@ -42,7 +42,7 @@ GitHub CI uploads the feature and greenhouse database evidence even when their r
 | --- | --- | --- |
 | Isolated feature/policy | Eight executable projects selected by `scripts/run-feature-checks.py`; evidence-runner behavior via `python tests/FeatureEvidence.Checks/checks.py` | A local HTTP fixture is not a physical ARM browser/server check |
 | Greenhouse database | Explicit empty-server `greenhouse-db` mode; dedicated CI service | Owner monitoring deployment, external feed/grant compatibility and real sensor values |
-| Schema/migration/lifecycle DB | Existing SchemaBaseline, MigrationHistory, DevelopmentSetup and LifecycleClosure `.ps1` runners in CI; upgraded/fresh SQL and HTTP scenarios | Representative old release installations and live collection recovery |
+| Schema/migration/lifecycle DB | Existing SchemaBaseline, MigrationHistory, DevelopmentSetup and LifecycleClosure `.ps1` runners in CI; upgraded/fresh SQL and HTTP scenarios, including `ValidationMessages.Checks.py` for rejected field errors and corrected saves | Representative old release installations and live collection recovery |
 | Native photo and Desktop/installer | Existing DevelopmentNative, BackupRestore, InstallerUpgrade jobs and C18 artifact evidence | Actual supported OS/native runtime combinations and production administrator installation |
 | Linux paired recovery | Existing LinuxBackup CI fixtures and disposable DB runner | Real systemd/cron/cloud provider/Pi acceptance |
 | Dense benchmark | Direct greenhouse executable only with explicit disposable connection/confirmation plus `GREENHOUSE_BENCHMARK=1` | Not run by this runner or default CI; timing is synthetic and machine-specific |

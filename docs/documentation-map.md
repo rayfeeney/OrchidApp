@@ -17,6 +17,7 @@ Use one current owner for each subject. Other documents link to that owner rathe
 | Linux installation and upgrades | [Linux installation](user-guides/linux/installation-upgrade.md) | [Full pre-upgrade backup](user-guides/linux/Full-App-Backup-Pre-Upgrade.md) |
 | Linux routine paired backup and restore | [Runbook](user-guides/linux/OrchidApp-MariaDB-Backup-and-Restore-Runbook.md) | [C17 evidence](maintenance/c17-linux-paired-backup.md); distinguish data restore from whole-machine recovery |
 | Shared plant workflows | Windows 03 and Linux 02 Word guides | Maintain shared wording together; platform launch/support details differ |
+| Plant-event field error display and regression evidence | [Validation messages](maintenance/event-validation-messages.md) | Existing temporal rules remain in temporal-design.md; platform deployment actions remain in the upgrade checklist |
 | Browser client setup | [iOS](user-guides/ios/home-screen-web-app.md), [macOS](user-guides/macos/safari-web-app.md) | These are clients, not server installations |
 | Owner's bespoke monitoring | [Local monitoring](local-installation/greenhouse-monitoring.md) | [Current implementation scope](environment-summary-platform.md) |
 | Pending implementation work | [Code backlog](code-change-backlog.md) | Stable IDs linked by current guides |

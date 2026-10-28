@@ -1,47 +1,44 @@
-# C20 - reproducible feature checks and release evidence
+# CHAT-R01–R03: plant-event validation explanations
 
-Changes only: 11 modified and 4 added repository files, plus this CHANGELOG.md. No deletions or moves. No .env, credentials, collection data, runtime binaries, generated reports/logs or installers are included.
+Invalid plant-event submissions now explain the existing rejection beside the affected field. This patch does not change validation rules, transaction policy, stored data or the frozen historical specimen.
 
 ## Apply
 
-1. Extract into the source repository root containing OrchidApp.sln, after the merged C18 and its CI correction. Replace only the listed files. Review/commit the resulting Git changes and run CI.
-2. No database migration, schema export change, .env edit, development startup change or Windows/Linux application setting is needed for C20. Ordinary dotnet run remains unchanged.
-3. This is a source/test/CI delivery, not a deployed installer or application update. No Program Files/data replacement is required to adopt its checks.
+1. Review/extract the 11 repository-relative files below into a clean source checkout (the directory containing OrchidApp.sln). Preserve any unrelated local edits. This is a source patch, not an installed application package.
+2. Build the web application: `dotnet build src/OrchidApp.Web/OrchidApp.Web.csproj --configuration Release`.
+3. Commit/run the normal CI. Its existing lifecycle job now executes the new HTTP checks against generated upgraded and fresh schema-only fixtures. The full lifecycle command remains `pwsh ./tests/LifecycleClosure.Checks/Database.Checks.ps1` with its existing explicit disposable-server credentials and prerequisites. Never point fixture checks at a collection server.
+4. Package/deploy through the normal Windows installer or Linux publishing procedure. Preserve the normal backup/recovery route, including C18 app-only backups. On disposable records verify readable rejection messages and corrected save/reopen.
 
-## Windows and Linux release actions
+**No new database migration, .env change, startup setting or historical repair is required by this patch.** It does not replace the existing instructions for any other pending migrations.
 
-Run `python scripts/run-feature-checks.py` with Python 3/.NET 8 available. Retain generated report.json and per-suite logs under ignored artifacts/feature-checks/. CI uploads those artifacts even on failed checks. Review actual results, source revision, environment and every notRun category. Existing schema/lifecycle/native/backup/installer jobs must still pass; keep C18 artifact checksum/signature evidence and the completed docs/upgrade-checklist.md record alongside these results.
+## Every added/modified repository file
 
-The greenhouse database job uses its own NEW EMPTY disposable MariaDB service on 127.0.0.1:33317. Manual integration requires GREENHOUSE_TEST_CONNECTION and GREENHOUSE_DISPOSABLE_INSTANCE=1, then `python scripts/run-feature-checks.py --mode greenhouse-db`. It refuses existing user schemas before fixture SQL. Its fixed orchids/EnergyMonitoring names belong only to that synthetic fixture. Never use the owner/development server from .env or a collection server. Default feature execution strips optional DB/benchmark variables; the runner never enables the dense benchmark. Read docs/testing-evidence.md before manual integration.
+- **Modified `src/OrchidApp.Web/Pages/Plants/Events/Add.cshtml`** — Render seven existing field-error positions for dates, missing repotting medium and empty observation notes; validation rules unchanged.
+- **Modified `tests/LifecycleClosure.Checks/Database.Checks.ps1`** — Run the new HTTP regression suite for both generated upgraded and schema-only fixtures in the existing lifecycle job.
+- **Modified `CONTRIBUTING.md`** — Document the lifecycle validation-message checks and isolated target requirement.
+- **Modified `RELEASE_NOTES.md`** — Describe the UI correction, regression coverage and no-migration deployment impact.
+- **Modified `docs/index.md`** — Link the validation-message owner/evidence.
+- **Modified `docs/documentation-map.md`** — Identify the validation-message documentation owner.
+- **Modified `docs/upgrade-checklist.md`** — Record Windows/Linux app-only deployment and disposable invalid/corrected-input acceptance; preserve C18 backup obligations.
+- **Modified `docs/code-change-backlog.md`** — Track CHAT-R01–R03 as source implemented with local validation; leave merged CI/installed acceptance pending.
+- **Modified `docs/testing-evidence.md`** — Include rendered field errors and corrected saves in lifecycle coverage.
+- **Added `tests/LifecycleClosure.Checks/ValidationMessages.Checks.py`** — Add nine HTTP test methods covering rejection explanations, unchanged records, date binding and valid correction/save/reopen.
+- **Added `docs/maintenance/event-validation-messages.md`** — Record problem, implementation, actual before/after tests, Word-guide impact review and remaining limits.
 
-Physical device, provider/service, production installer and representative older-release acceptance remain separate. No benchmark/production/hardware certification is claimed. Record skipped cases explicitly; a passing feature report is not an installed-upgrade approval.
+The root CHANGELOG.md is included only in this delivery ZIP; it is not an additional application change.
 
-## Validation
+## Actual validation
 
-- All eight selected feature suites passed locally. The greenhouse isolated run reported 65 assertions, as an observation rather than a frozen pass count.
-- Real empty disposable MariaDB 10.11.16 integration passed, reporting 83 assertions. An existing synthetic sentinel schema was refused without alteration or fixture schema creation. The owned server was shut down after identity verification.
-- Six evidence behavior tests passed, including failure continuation, timeout/launch reporting, optional-mode isolation, private-settings exclusion and log hashes.
-- Workflow lint (actionlint; external shellcheck/pyflakes disabled), Python parsing, current changed-document links and ZIP content verification passed.
-- All database artifacts, application code, app tools and Word guide bytes remain unchanged from the C20 baseline. Word guides required no edits because their user flows/screenshots did not change.
-- Local reports identify Windows 11 AMD64, Python 3.12.14, .NET SDK 9.0.315 and installed runtimes. Extracted review source has no Git revision; its recorded source fingerprint is e2ae3c8496f5af3d9b5a31ad729ab8a403fd39951fc0d566e0d80b0a442bf138. GitHub will record the merged revision. Local restore warnings indicate unavailable vulnerability-feed access; no dependency audit is claimed.
-- GitHub/Linux CI execution and actual installed/device/older-release acceptance remain pending.
+- Current extracted review mirror, Windows AMD64, .NET SDK 9.0.315 targeting net8.0, MariaDB 10.11.16. Fresh private database data directories, generated canonical-schema databases and loopback-only hosts; no private .env or live/development database used.
+- Pre-fix current build: nine test methods, 13 failing assertions/subtests reproduced missing errors; the valid-save method worked.
+- Corrected build: all nine new HTTP test methods passed. Rendered messages are checked at the affected fields; rejected requests preserve records, and corrected requests save/reopen.
+- All 16 existing ended-plant/date/read-only HTTP tests passed.
+- Release build: zero warnings, zero errors. Python source compiled, lifecycle PowerShell parsed, existing CI workflow passed actionlint with optional ShellCheck/Pyflakes integrations disabled; changed Markdown local targets resolve.
+- Windows 03 and Linux/Pi 02 plant-management Word guides reviewed: neither describes exact validation strings; controls and valid-state appearance are unchanged, so no Word/screenshot edits were required.
 
-## Exact file list
+## Remaining limits
 
-| File | Change | Purpose |
-|---|---|---|
-| `.github/workflows/ci.yml` | Modified | Run isolated feature and dedicated disposable greenhouse SQL jobs; retain evidence on failure. |
-| `.gitignore` | Modified | Exclude generated feature-check evidence from source control. |
-| `CONTRIBUTING.md` | Modified | Document curated checks, explicit DB opt-in and evidence boundaries. |
-| `RELEASE_NOTES.md` | Modified | Describe C20 behavior and pending release acceptance. |
-| `docs/code-change-backlog.md` | Modified | Align C20 status and recorded implementation/acceptance. |
-| `docs/documentation-map.md` | Modified | Assign testing/evidence documentation ownership. |
-| `docs/index.md` | Modified | Link the reproducible checks procedure and C20 evidence. |
-| `docs/local-installation/greenhouse-monitoring.md` | Modified | Clarify disposable-instance guards, benchmark selection and current evidence. |
-| `docs/maintenance/c20-reproducible-checks.md` | Added | Record measured validation, source identity, affected guides and remaining limits. |
-| `docs/testing-evidence.md` | Added | Own commands, check inventory, JSON/log evidence and CI/device boundaries. |
-| `docs/upgrade-checklist.md` | Modified | Add Windows/Linux release evidence actions; retain pending installed acceptance. |
-| `scripts/run-feature-checks.py` | Added | Select intended fixtures; record commands/source/environment/results/log hashes without optional-mode leakage. |
-| `tests/FeatureEvidence.Checks/checks.py` | Added | Verify failed/timeout/launch evidence, optional-mode isolation, private-file exclusion and log integrity. |
-| `tests/GreenhouseCharts.Checks/PerformanceChecks.cs` | Modified | Distinguish cached domain-unavailable results, expiry/recovery and uncached exceptions. |
-| `tests/GreenhouseCharts.Checks/Program.cs` | Modified | Require an explicitly empty disposable server before fixture SQL and select created fixture DB explicitly. |
+- The complete upgraded/fresh lifecycle matrix has not been rerun locally as a whole for this patch; the new suite and related existing policy suite were run directly against fresh canonical-schema fixtures. The existing CI runner is wired for both paths; retain its actual applied/merged-revision result.
+- Git revision is unavailable for this extracted mirror. Merged-revision GitHub CI, Linux/current ARM64 execution, browser visual/JavaScript and installed-machine checks remain pending.
+- The immutable old specimen is unchanged and continues to represent the historical behaviour. This patch does not implement C18 historical upgrades/recovery, Windows specimen creation, CI deduplication or other register items.
+- No application repository files outside the listed set, synced sources, private settings, fixture data, binaries or whole-repository contents are packaged.
