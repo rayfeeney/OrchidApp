@@ -39,6 +39,8 @@ Move superseded/inapplicable docs to docs/history/, preserve their context and u
 
 ## Validate locally
 
+The existing lifecycle database runner also executes `tests/LifecycleClosure.Checks/ValidationMessages.Checks.py` against its generated upgraded and schema-only fixtures. It verifies rendered server-side errors, unchanged records on rejection and valid correction/save/reopen. See [plant-event message evidence](docs/maintenance/event-validation-messages.md); never run fixture tests against an installed collection.
+
 Build the affected web application:
 
 ```powershell

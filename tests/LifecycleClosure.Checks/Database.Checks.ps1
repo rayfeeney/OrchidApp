@@ -153,6 +153,8 @@ try {
         if($LASTEXITCODE -ne 0){throw 'Lifecycle closure database/HTTP checks failed.'}
         & $PythonExe (Join-Path $PSScriptRoot 'EndedPlant.Checks.py')
         if($LASTEXITCODE -ne 0){throw 'Ended-plant/date database/HTTP checks failed.'}
+        & $PythonExe (Join-Path $PSScriptRoot 'ValidationMessages.Checks.py')
+        if($LASTEXITCODE -ne 0){throw 'Plant event field-validation HTTP checks failed.'}
         & $PythonExe (Join-Path $PSScriptRoot 'Structural.Checks.py')
         if($LASTEXITCODE -ne 0){throw 'Structural transaction/concurrency checks failed.'}
         & $PythonExe (Join-Path $PSScriptRoot 'HistoryOrdering.Checks.py')

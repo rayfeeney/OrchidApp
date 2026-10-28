@@ -1,5 +1,9 @@
 # Release notes
 
+## Plant-event validation explanations (CHAT-R01–R03)
+
+Invalid observation/move/repotting dates, flowering dates, an absent new repotting medium and empty observation notes now display the existing explanation beside the affected field. Rules and stored data are unchanged. The lifecycle CI runner includes real HTTP rejection and corrected-save checks. No new migration, setting or startup change. See [validation evidence](docs/maintenance/event-validation-messages.md) and [Windows/Linux upgrade actions](docs/upgrade-checklist.md#chat-r01r03-plant-event-message-correction).
+
 ## C20 reproducible feature checks and evidence
 
 CI now runs isolated feature/calculation/cache checks and separate empty-disposable-server greenhouse SQL fixtures, retaining command/source/environment/result reports even on failure. Cached domain-unavailable results and propagated exceptions have separate checks. Existing user schemas block greenhouse fixture setup. No production setting, database migration or normal development startup change. See [test inventory](docs/testing-evidence.md), [local evidence and pending acceptance](docs/maintenance/c20-reproducible-checks.md) and the [Windows/Linux upgrade action list](docs/upgrade-checklist.md).
