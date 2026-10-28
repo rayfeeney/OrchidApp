@@ -1,0 +1,851 @@
+{
+  "formatVersion": 1,
+  "scope": "owned-disposable-fixture-only",
+  "id": "pi-130-reviewed-structure-v1",
+  "fixtureSha256": "7ffd16949ae07238f31447ad7d64e1444e898a00248b8e14757533bcbf00f3b5",
+  "originalHistorySha256": "9d15929936d9461991608744ab512875045bddf0bd9b882edead8f7f02056b44",
+  "throughMigration": "202606041820",
+  "schemaIdentity": {
+    "database": {
+      "rows": 1,
+      "sha256": "289e72a00ede36f5a03e4de21a574fb621439f632c564f3506b9d7b29862168d"
+    },
+    "tables": {
+      "rows": 24,
+      "sha256": "81ef37d3ed18df8aab9277c22ddbfa41a5b56e31b54993366d136c8ba91ed871"
+    },
+    "columns": {
+      "rows": 371,
+      "sha256": "02922de2aec17ec252a712ba39473c680ae2d8df4f7aaccb53c64db26502660c"
+    },
+    "indexes": {
+      "rows": 116,
+      "sha256": "0a9d89d107793bc7ce3eeb00e49d0c56cd48467d7f4b176eec636fbf74a468e2"
+    },
+    "foreignKeys": {
+      "rows": 19,
+      "sha256": "b642e88cb90f5b4625e4d8576d047b6347841b92650051c7615720d31cb94b28"
+    },
+    "referentialRules": {
+      "rows": 19,
+      "sha256": "5444f65ae75dae408f7738fa3c0a50f90b517f112a2229b59d486cde323dc40f"
+    },
+    "checks": {
+      "rows": 24,
+      "sha256": "e09330588a632e56bec15f2cd5a324f73acd24bd7e19c265ba5a827ba8ea1e2a"
+    },
+    "views": {
+      "rows": 16,
+      "sha256": "1c009373df9988759dccfd3f9ab1289685bc39de120012a4669004bef102f4a5"
+    },
+    "routines": {
+      "rows": 23,
+      "sha256": "56198456d8ef335d4af2da8f9c944c572492cb048a5b0a4abe8f83cc6719561d"
+    },
+    "parameters": {
+      "rows": 86,
+      "sha256": "ec9250f3d226ed3394624487936e2fb6617d98b4852c35e8120e31ad474d30ef"
+    },
+    "triggers": {
+      "rows": 2,
+      "sha256": "371a95e7c202be1844466ba96b9e33cb2fb4aa961d8e13159ba48527da9735af"
+    },
+    "partitions": {
+      "rows": 24,
+      "sha256": "4c137ba54aecf2aa571ccbc095b847d4bf3ece916e35cc98528227bddd4c3887"
+    },
+    "events": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  },
+  "schemaSha256": "1db8365341bc8f9e05b2d08b44b5e651259103a13eee1ba2866cb0f5171ca1b0",
+  "reference": {
+    "observedSourceRevision": "080ba9c377fc22b781640272d7d32ecc3ae46a42",
+    "schemaSourceInventory": [
+      {
+        "path": "database/schema/tables/environmentimportfile.sql",
+        "sha256": "a111affe816b819bf58abfe0c38917aa2479d51eace4207664a061b8fab9293c"
+      },
+      {
+        "path": "database/schema/tables/environmentimportrow.sql",
+        "sha256": "d5ae681a1b55be7e2f4631932658a8610257cdc4387b51af8bfee39e2b44af8b"
+      },
+      {
+        "path": "database/schema/tables/environmentperiodrule.sql",
+        "sha256": "af17fa2533083a3ead938affbb8fd7720fedff7e46abd8a7f1f7e9c3c12f33d5"
+      },
+      {
+        "path": "database/schema/tables/environmentreading.sql",
+        "sha256": "51816ddb5451d90393199ca0b66679243265e3610c3da24ae02907c4a853fca6"
+      },
+      {
+        "path": "database/schema/tables/environmentsensor.sql",
+        "sha256": "f1ef4ac95f77edc8e4b8f56d81ad1745a51b9468ce4a581e7edf5293c58398a1"
+      },
+      {
+        "path": "database/schema/tables/environmenttargetrule.sql",
+        "sha256": "2ebc4a8e5a1ed9639fcd42a7bf52890e6bfcaefa8968e8afc78488a67262113b"
+      },
+      {
+        "path": "database/schema/tables/flowering.sql",
+        "sha256": "84de0e2d1c15b24d451358a7099af0d2b050be48e7dd2357bd7e276a2a171d4b"
+      },
+      {
+        "path": "database/schema/tables/genus.sql",
+        "sha256": "2ab6f0a6519bcc26a99c3d3f126c95bf94d825979f5276d19d290497f46f16cf"
+      },
+      {
+        "path": "database/schema/tables/growthmedium.sql",
+        "sha256": "a2fa02607671d0440d6c7d381ae70c4d3f55f141178a247a16607bba37f3ca4a"
+      },
+      {
+        "path": "database/schema/tables/location.sql",
+        "sha256": "992498ab23eae0af3f399fb76dce1f49756502d1ea53de243746a032af11979e"
+      },
+      {
+        "path": "database/schema/tables/observationtype.sql",
+        "sha256": "8384921abedc512bb1c6354266ca6bd65d8659eee9f001bf46884f92afc568ee"
+      },
+      {
+        "path": "database/schema/tables/phoneticprefix.sql",
+        "sha256": "38bdb02f9d5402541abe3af9e8b72b5245f47f0031742883a122ebb791b021f2"
+      },
+      {
+        "path": "database/schema/tables/plant.sql",
+        "sha256": "c6145138d84aa6d8486b28957719a349522ce56c8d25613a17f0219b3a53fdbb"
+      },
+      {
+        "path": "database/schema/tables/plantevent.sql",
+        "sha256": "91f2ac18d707357e5b770c0a22bda194213dd2d4a76af2a205ff1151ea060177"
+      },
+      {
+        "path": "database/schema/tables/plantlocationhistory.sql",
+        "sha256": "361a4b92e6fbb8a12380cd42bbcce0cd1c83147a9fa9c177b7b5b422db59366b"
+      },
+      {
+        "path": "database/schema/tables/plantphoto.sql",
+        "sha256": "88ceaf62df53997aef5b993d92370baa3defeafdead000655349c5f726cb31fe"
+      },
+      {
+        "path": "database/schema/tables/plantpropagation.sql",
+        "sha256": "78aea9fbe2c67bbe49b527ccc9cde98996b92a12b756231098055959ce4395b3"
+      },
+      {
+        "path": "database/schema/tables/plantsplit.sql",
+        "sha256": "23d4744e836858b1fae9bf46f7a016e0f7bd3765875bd0edea4b4074f4f742b5"
+      },
+      {
+        "path": "database/schema/tables/plantsplitchild.sql",
+        "sha256": "4c050abf2887f2eb532e1e22cefc1c1daff5e9428b975d547245316136f6a43c"
+      },
+      {
+        "path": "database/schema/tables/propagationtype.sql",
+        "sha256": "fdbdd86d58dd3169b9c17b69146cf330fddbeef5527846123b344d01715d9aa2"
+      },
+      {
+        "path": "database/schema/tables/repotting.sql",
+        "sha256": "c0406a84b2c74ee38cc922f5385547f4c27d190bd2c73c2173d5a1f1759b2a17"
+      },
+      {
+        "path": "database/schema/tables/schemaversion.sql",
+        "sha256": "89d7a53fd6843243cc563c48d04ea47709929ae3c12557504b9db76c17e916bf"
+      },
+      {
+        "path": "database/schema/tables/taxon.sql",
+        "sha256": "5e0b54dd5e6d87baa5d98fad3a7fd21c024ac62497335a7bbe1b1e98c8e4275c"
+      },
+      {
+        "path": "database/schema/tables/taxonphoto.sql",
+        "sha256": "c938d40e3fbe85e98963e7c0b63c91e6c291f8c797e505ff7a03b7265d17494e"
+      },
+      {
+        "path": "database/schema/constraints/fkFloweringPlant.sql",
+        "sha256": "6871945782654f548a310ca8d2ff1872fda1054ca4934ff727c0bfe87e5f2edb"
+      },
+      {
+        "path": "database/schema/constraints/fkPlantEventObservationType.sql",
+        "sha256": "8e009e10f0f2c8c27ee6bd51ee064358bf1b14f8574ddaabca4ee34f8fcbb28d"
+      },
+      {
+        "path": "database/schema/constraints/fkPlantEventPlant.sql",
+        "sha256": "83e9b31240afadd5d212826bd335b159f2ba2d95fca9aa0a1729a149290d4d89"
+      },
+      {
+        "path": "database/schema/constraints/fkPlantLocationHistoryLocation.sql",
+        "sha256": "9d0db76d383871577cb38b5a392d0c2c6a9e40fdee130af32041291b31d36696"
+      },
+      {
+        "path": "database/schema/constraints/fkPlantLocationHistoryPlant.sql",
+        "sha256": "23d975bffdb65be8f9ac077d0730f213d2243147449b05e9eccdfa023f446692"
+      },
+      {
+        "path": "database/schema/constraints/fkPlantPhotoPlant.sql",
+        "sha256": "b4b3f6b15074ae8840fe96fd2f51709d0f9045b4b332e8c22b48a65a8e3593da"
+      },
+      {
+        "path": "database/schema/constraints/fkPlantPhotoPlantEvent.sql",
+        "sha256": "694244cd4eb1e05980d02576f8852044eb69e03f62e39886a6445f2923949050"
+      },
+      {
+        "path": "database/schema/constraints/fkPlantPropagation_childPlantId.sql",
+        "sha256": "50058419067d84fc68bfa1850a187e88bf76474f2b75c95c65e20eabbd0f7aa5"
+      },
+      {
+        "path": "database/schema/constraints/fkPlantPropagation_parentPlantId.sql",
+        "sha256": "f9ebb47798b471a54a31f8e61d8d1c446115418435f0d8e4b15490a83f8ab387"
+      },
+      {
+        "path": "database/schema/constraints/fkPlantPropagation_propagationTypeId.sql",
+        "sha256": "564781ff3044136aea7cb18058be56c98b0c8b3cfc332791c38a4f2a2830edec"
+      },
+      {
+        "path": "database/schema/constraints/fkPlantSplitChildPlant.sql",
+        "sha256": "a699f5c496f5b6b225e11cb8b4657f10cc6357e20640d53f01d9a8c91ddc926e"
+      },
+      {
+        "path": "database/schema/constraints/fkPlantSplitChildSplit.sql",
+        "sha256": "3cf0871d0e3d6cdf3793aa2063a07586c1ca9fc748548608699487653f8d3f81"
+      },
+      {
+        "path": "database/schema/constraints/fkPlantSplitParent.sql",
+        "sha256": "f517f1c93c6df0a0cfa2206021180a0561813c5ccbf97cd0fa08921e14d8cbd5"
+      },
+      {
+        "path": "database/schema/constraints/fkPlantTaxon.sql",
+        "sha256": "ba0ac896d383dc35cafeefcd9ab60b0568b34c8ddbd43ff801d40f31f638c76f"
+      },
+      {
+        "path": "database/schema/constraints/fkRepottingNewGrowthMedium.sql",
+        "sha256": "a7c84d918de5da33819d3580192078ad70e9989093c05803afe63e2746e54785"
+      },
+      {
+        "path": "database/schema/constraints/fkRepottingOldGrowthMedium.sql",
+        "sha256": "49a8e2520b00bd310e80b5b5814e403d5d58f96b005ae0207abcfcdf845e625c"
+      },
+      {
+        "path": "database/schema/constraints/fkRepottingPlant.sql",
+        "sha256": "0161f6d95d3c65e9b4d8ec434f73cf72d1e755b4dc99ed98bf3f9904083c8bce"
+      },
+      {
+        "path": "database/schema/constraints/fkTaxonGenus.sql",
+        "sha256": "afc1539c59572b85a699ecd966d6623a7cd9ade029f16b55765f5e1a91d4b0fb"
+      },
+      {
+        "path": "database/schema/constraints/fkTaxonPhotoTaxon.sql",
+        "sha256": "b4b966ae1a741a1de678160b3f1c03db51a9b7ad5696271da9d921879b13feba"
+      },
+      {
+        "path": "database/schema/routines/fnGeneratePlantTag.sql",
+        "sha256": "ba16010b23dfc8385300f1fb8beb251aec2f26017095c47072051ae1c3b9ec97"
+      },
+      {
+        "path": "database/schema/routines/spAddGenus.sql",
+        "sha256": "2a27241fee79a3c562fa5a16e29341eb1b46e930bab432d56bd4a1c8de271c09"
+      },
+      {
+        "path": "database/schema/routines/spAddLocation.sql",
+        "sha256": "8c84c42d7531ca9f1adb457775f3738fd25835c5d1e9f7bcca92ee295b603089"
+      },
+      {
+        "path": "database/schema/routines/spAddPlant.sql",
+        "sha256": "f26a797c43acfe75bc865dd9f0a1a34e29c6c65838b465d4bbeeb952b1e671ca"
+      },
+      {
+        "path": "database/schema/routines/spAddTaxon.sql",
+        "sha256": "58a16b616b926875d9b7a4b9b30bd61a986e4c219d02027eba09a08bcbba2ca8"
+      },
+      {
+        "path": "database/schema/routines/spAddTaxonInternal.sql",
+        "sha256": "f8c0a8c4d946e9752f339d11f944fe376130010ac71ee6407d4a1d2ac2b9f7b3"
+      },
+      {
+        "path": "database/schema/routines/spEditPlantLocation.sql",
+        "sha256": "36089d3d70a14b057081dac20644ef9e95993a53c2010ab8a2e842881a632587"
+      },
+      {
+        "path": "database/schema/routines/spGetPlantLineage.sql",
+        "sha256": "1930da1846a3a3578315518f1c2061518336cf142d642fa2a9dbf16c2c60af3e"
+      },
+      {
+        "path": "database/schema/routines/spMovePlantToLocation.sql",
+        "sha256": "4a72d606c7e4371abcd6b725f3243dd8945fc0da2c4c7cb5f96d8979d56ac05b"
+      },
+      {
+        "path": "database/schema/routines/spPropagatePlant.sql",
+        "sha256": "6204f00e28ef82e917ed02a9f9ab20732615c0c9e22bc8d0f04c4fdf99439ff8"
+      },
+      {
+        "path": "database/schema/routines/spRemovePlantLocation.sql",
+        "sha256": "6499396d4454df5f9990d2e00d301acceac9ebc8be82790b367562367c0121d6"
+      },
+      {
+        "path": "database/schema/routines/spSetGenusActiveState.sql",
+        "sha256": "324663627f0fc3fd9816319f1e6eaae66b0ae02d5045f9d63666cc4d344759ff"
+      },
+      {
+        "path": "database/schema/routines/spSetGrowthMediumActiveState.sql",
+        "sha256": "a376a8d901027d46f113cc6bddc69169653f1209bf68a363e14b04e60f6109c8"
+      },
+      {
+        "path": "database/schema/routines/spSetHeroPhoto.sql",
+        "sha256": "8f427932c4917ec55376e3f3c53baa2c2c2efa8316972082966977ce578df605"
+      },
+      {
+        "path": "database/schema/routines/spSetLocationActiveState.sql",
+        "sha256": "ccf6797a82d69ec7a920ff66be72e5967cca665293bd0dd011e46f4bf04c9494"
+      },
+      {
+        "path": "database/schema/routines/spSetTaxonActiveState.sql",
+        "sha256": "18ca7cf196ddbb0613873d367a7a5464d59e4dbd874c8410245a169e33400a6d"
+      },
+      {
+        "path": "database/schema/routines/spSplitPlant.sql",
+        "sha256": "b2786e728125b723b188145591255d481e72ed7ddfa1d3659711553b4f181842"
+      },
+      {
+        "path": "database/schema/routines/spUpdateGenus.sql",
+        "sha256": "f81c22a9e18b7315c33d9608e8d4ef6bbbc7b0326f8a0cce24ab36a3609e29a3"
+      },
+      {
+        "path": "database/schema/routines/spUpdateGrowthMediumDetails.sql",
+        "sha256": "c9dcd8ee932e3dc851ecadc960fc23e0d1fb1c7ec02dc472e0a44c11aff731cf"
+      },
+      {
+        "path": "database/schema/routines/spUpdateLocationDetails.sql",
+        "sha256": "d1d6b90aea059467396b4e50f453185b531f9fb5c4045a600405134d770e4c3e"
+      },
+      {
+        "path": "database/schema/routines/spUpdatePlantDetails.sql",
+        "sha256": "d1a1f92002b5017104f5bb98f4eedc8fb67962d6aa3b2e44e6d74c74e294d343"
+      },
+      {
+        "path": "database/schema/routines/spUpdateTaxonDetails.sql",
+        "sha256": "d9de6eb504c74d10005f1b0d2609604ba610f7060f93911c8f3a6c09dcd895e3"
+      },
+      {
+        "path": "database/schema/routines/spUpsertEnvironmentReadings.sql",
+        "sha256": "974de28e4e6a14a76202b2e23847614d1f147d69904552cc834320a7d0954995"
+      },
+      {
+        "path": "database/schema/views/venvironmentreadingperiod.sql",
+        "sha256": "f1ef60f41504935f6a77344aaa231407857e5006dfcd7b177e7f4637b4fa75c1"
+      },
+      {
+        "path": "database/schema/views/vlocationactivelist.sql",
+        "sha256": "0b73aeece431f3626095bf40cd0fbe807cb4b47a6471c1800d2029d153001ad7"
+      },
+      {
+        "path": "database/schema/views/vplantactivecurrentlocation.sql",
+        "sha256": "df788146fbf90c3b59a3f6f290d88ecb82915e5c5dc4fa7efda1aa1d40864ab2"
+      },
+      {
+        "path": "database/schema/views/vplantactivesummary.sql",
+        "sha256": "71fb55f4b77d9e48a5c380688a0a0303eb5144e5f4d0f872f5ab2e5648f0a3cb"
+      },
+      {
+        "path": "database/schema/views/vplantcurrentgrowthmedium.sql",
+        "sha256": "1ebf8e0bbfe2663499b1808c6a92ca0194f5f9d2167d2c95832c8b923d25e22e"
+      },
+      {
+        "path": "database/schema/views/vplantcurrentlocation.sql",
+        "sha256": "a46218244e93fba92f34e1abbecc2a1bec0f3d526337ae80fe08b94149ca8500"
+      },
+      {
+        "path": "database/schema/views/vplantcurrentlyflowering.sql",
+        "sha256": "f34827ba712d1bc36493fbe5dd59fdfa563e1ef7cbbd6facaef337bf8cc813f9"
+      },
+      {
+        "path": "database/schema/views/vplantlifecyclehistory.sql",
+        "sha256": "1be7a888d2b84d2f05d7968fc49383d76dc80ae63b277a9370df5a9cc20e1a11"
+      },
+      {
+        "path": "database/schema/views/vplantlineage.sql",
+        "sha256": "a8e55ed6546628110fd5549269f3d3525fdb6dadddf89f2a79bb51b96bb8dafc"
+      },
+      {
+        "path": "database/schema/views/vplantrepotstatus.sql",
+        "sha256": "c25ee102d2c1cf8102cac9f23183de88f55e8f4497507a2cf17b989314c8b5ba"
+      },
+      {
+        "path": "database/schema/views/vplantsincelastflowered.sql",
+        "sha256": "7e8c74c0a71a6e3cb7b1d89138e204ac0ad09fc288ebdaeda3979bb9988bf533"
+      },
+      {
+        "path": "database/schema/views/vplantsplitchildren.sql",
+        "sha256": "81c63c1fc5d6c397b161dec7f4a4d6fee1e0f141f690ee4dbce4cee1c6a0ebf0"
+      },
+      {
+        "path": "database/schema/views/vplantstatus.sql",
+        "sha256": "f3c3dae8d8449f4ecc4c37cd5e9fc2fea4c2404d9b928a471f6a752f14c334ec"
+      },
+      {
+        "path": "database/schema/views/vtaxonidentity.sql",
+        "sha256": "84b766312f1a9a2c1fdb57fc31010f5a376285b312f088e664b9d2e536830baa"
+      },
+      {
+        "path": "database/schema/views/venvironmentdailyperiodsummary.sql",
+        "sha256": "405a73e390b3baa23b863ca8401c1415197747b1f50aca174bae6ac2d4b46221"
+      },
+      {
+        "path": "database/schema/views/venvironmentlastsevendayssummary.sql",
+        "sha256": "d188ea282f4e2755f0fa290c44eac3382ea2669f86c9865824a806a118a0cba5"
+      },
+      {
+        "path": "database/schema/triggers/trgPlantLocationHistoryBeforeInsert.sql",
+        "sha256": "436bfbe96ac7cebd54fbeb7878e60235441ca82a08dae2da9b718ea8061cc7bd"
+      },
+      {
+        "path": "database/schema/triggers/trgPlantLocationHistoryBeforeUpdate.sql",
+        "sha256": "77450a54bd0970c5792802250ae40c72b1f6619f8f7b741cb44dfe9e4e378901"
+      },
+      {
+        "path": "database/schema/seeds/observationtype_records.sql",
+        "sha256": "c9a61e817ab2dcc64b4b30fe8c12e7146c84116abd24f0722b4bce72e7e4cc7a"
+      },
+      {
+        "path": "database/schema/seeds/phoneticprefix_records.sql",
+        "sha256": "903e5bcfe0ef2b4813ab764672102aae58c48cf08836898962709cdc7ff9a58d"
+      },
+      {
+        "path": "database/schema/seeds/propagationtype_records.sql",
+        "sha256": "2f76532b671a5420be350691b0e55b70fc3018d5f6cdc012e979367ac21c64a1"
+      }
+    ],
+    "independentReferenceSchemaSha256": "8da99a82e966cf325ba82eea5ef6f5ff0dab802a0dbb6881780926ce21daced2",
+    "mariadbImage": "mariadb:10.11.14@sha256:dbe56e20372fc6d6b8e0e396866ba89c4c7f128c38c4f59aaa54d957db95790c",
+    "comparison": "Strict metadata comparison with exact, documented historical differences; no blanket normalisation"
+  },
+  "reviewedDifferences": {
+    "indexes": "Three nonunique FK-supporting index names differ; indexed columns, order, type and FK rules match.",
+    "creationContext": "Seven views, nineteen routines and two triggers retain utf8mb3/general_ci creation context; definitions/security metadata otherwise match except explicit differences below.",
+    "repotStatus": "vplantrepotstatus literal From acquisition versus FROM acquisition and two output column collation/charset differences. Accepted unchanged as historical input, not a claim of uniform utf8mb4.",
+    "routineWhitespace": "spPropagatePlant and spSplitPlant each contain one extra whitespace-only line.",
+    "lifecycleView": "All selected lifecycle view metadata, definition and security context match exactly."
+  },
+  "retiredLocalEntry": {
+    "name": "202606031900_TestViewMigrationRunner.sql",
+    "checksum": "b5d82329b85413c2070e175afc6b3f4a9fd5b4e366c48c37dcc32dfcff408d4d",
+    "provenance": "Owner identifies uncontrolled local Pi work; no recoverable migration file. Preserved in original ledger archive, excluded from active migration planning."
+  },
+  "supersededEntry": {
+    "name": "202602182031_FixVPlantLifecycleHistoryCollation.sql",
+    "checksum": "F3EFA51C249421986E14487D68477CEC3E06006567749213C91CD2104D6210E5",
+    "resolution": "Original bytes unknown. Final lifecycle view exactly matches independent historical schema; old ledger retained unchanged."
+  },
+  "expectedForwardMigrations": [
+    "202610261200_AtomicManualPlantClosure.sql",
+    "202610261800_EndedPlantReadOnly.sql",
+    "202610262000_StructuralTransactions.sql",
+    "202610271200_PhotoTaxonTransaction.sql"
+  ],
+  "postUpgradeSchemaIdentity": {
+    "database": {
+      "rows": 1,
+      "sha256": "289e72a00ede36f5a03e4de21a574fb621439f632c564f3506b9d7b29862168d"
+    },
+    "tables": {
+      "rows": 23,
+      "sha256": "9279d7c5ce300e614a019fc9a95f5bf4343ec273819c6c3f88f2c10f9272b4f5"
+    },
+    "columns": {
+      "rows": 367,
+      "sha256": "04bdbe68332cc812804b8c9fbab6ec5d5a9fc536ea5cb63776d05916b697f131"
+    },
+    "indexes": {
+      "rows": 114,
+      "sha256": "13f16fc0401f107deea17051f1c0ca6047bf50122346ae13f409244248778ae2"
+    },
+    "foreignKeys": {
+      "rows": 19,
+      "sha256": "b642e88cb90f5b4625e4d8576d047b6347841b92650051c7615720d31cb94b28"
+    },
+    "referentialRules": {
+      "rows": 19,
+      "sha256": "5444f65ae75dae408f7738fa3c0a50f90b517f112a2229b59d486cde323dc40f"
+    },
+    "checks": {
+      "rows": 24,
+      "sha256": "e09330588a632e56bec15f2cd5a324f73acd24bd7e19c265ba5a827ba8ea1e2a"
+    },
+    "views": {
+      "rows": 16,
+      "sha256": "1c009373df9988759dccfd3f9ab1289685bc39de120012a4669004bef102f4a5"
+    },
+    "routines": {
+      "rows": 23,
+      "sha256": "d95959473f154b57c6989b0529c542ff61b1b8584fb999fa342d8888f58f4afa"
+    },
+    "parameters": {
+      "rows": 86,
+      "sha256": "ec9250f3d226ed3394624487936e2fb6617d98b4852c35e8120e31ad474d30ef"
+    },
+    "triggers": {
+      "rows": 2,
+      "sha256": "371a95e7c202be1844466ba96b9e33cb2fb4aa961d8e13159ba48527da9735af"
+    },
+    "partitions": {
+      "rows": 23,
+      "sha256": "ec160671a123334166727a33a201456637c046844d1a7233f4c602d37fd5d3c3"
+    },
+    "events": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  },
+  "postUpgradeSchemaSha256": "56675363e3ece25fbdc21c03722d15f0a6eecdc7c0ffa069c86f6a14cbc07800",
+  "postUpgradeReference": {
+    "independentCurrentSchemaSha256": "386f06030f4346821d09e6927b128ad6cdf75288d1fafacf3a3f6095a8f9d4a7",
+    "sourceInventory": [
+      {
+        "path": "database/schema/tables/environmentimportfile.sql",
+        "sha256": "998aeea190cb895a843e44ab162cd0ad75671ad7beb3f29a01d116e70f406096"
+      },
+      {
+        "path": "database/schema/tables/environmentimportrow.sql",
+        "sha256": "78e6f5b93f9e5f0af0eafe67ad45cbadc006ada8c6e994d8cc0608658591f662"
+      },
+      {
+        "path": "database/schema/tables/environmentperiodrule.sql",
+        "sha256": "23c70262f22997b173b2b9c31c57423e699186440a1db4a9d2e824d7855ee5da"
+      },
+      {
+        "path": "database/schema/tables/environmentreading.sql",
+        "sha256": "4c1571a6cba2e37f3dfcdc51b36ff7daa7eabc0b61689bd87d48bd4a7b102b10"
+      },
+      {
+        "path": "database/schema/tables/environmentsensor.sql",
+        "sha256": "61497a9fa80085eb8bef7553c8ea01f696976677846ec99bc14ed2345eaa7861"
+      },
+      {
+        "path": "database/schema/tables/environmenttargetrule.sql",
+        "sha256": "0ee695844f02530dfcc5e8f97e6f589a67edbb541c9faa4c9406fc20a99b8a3f"
+      },
+      {
+        "path": "database/schema/tables/flowering.sql",
+        "sha256": "0060ad3dd654c97d60839201070cea85041394b1e39484786895e0204b0bc4bf"
+      },
+      {
+        "path": "database/schema/tables/genus.sql",
+        "sha256": "5660f03bc980eca0e18b627e31aa4c17c84e28f992a7591d8dab9771e6b79370"
+      },
+      {
+        "path": "database/schema/tables/growthmedium.sql",
+        "sha256": "08077475f57369ebb56e6737a28a3f5b287a948cea4db17e071f2a49a4a13120"
+      },
+      {
+        "path": "database/schema/tables/location.sql",
+        "sha256": "a15178b3bd4645ad805ac6749a0de200ca87e0d755e7642089a33725ebcc834c"
+      },
+      {
+        "path": "database/schema/tables/observationtype.sql",
+        "sha256": "fe2d9faefc8183c783dc39f191b1f6b5cdfc2c53ee93dd1799e644858a0d1038"
+      },
+      {
+        "path": "database/schema/tables/phoneticprefix.sql",
+        "sha256": "494c233b81ce5bfa4c5c1b76a4cede1ae71bcf828667635e20c7b80300e219e7"
+      },
+      {
+        "path": "database/schema/tables/plant.sql",
+        "sha256": "2ea4800d6452576bacdd784d9680e2affe473ce715a603a20747e4d4f3032f90"
+      },
+      {
+        "path": "database/schema/tables/plantevent.sql",
+        "sha256": "f335e686e378cc347f6212b91924b35102c27a2ba24dc558080f69b43b7c3f62"
+      },
+      {
+        "path": "database/schema/tables/plantlocationhistory.sql",
+        "sha256": "c8e5d420a401d8a1b375c0d6793b61019bc43c930cb777fd6cd5a360ad814140"
+      },
+      {
+        "path": "database/schema/tables/plantphoto.sql",
+        "sha256": "0e7fd8c43b11e70297904fc34af89522862235b2ddaffec9a23132cc99699872"
+      },
+      {
+        "path": "database/schema/tables/plantpropagation.sql",
+        "sha256": "04a5e8121e1539dfe3812bdc5cd7b48969b1a31addab2ade43cdaa77836843c9"
+      },
+      {
+        "path": "database/schema/tables/plantsplit.sql",
+        "sha256": "afdf64599b5cf2fa973f1e803d226b2e8ea437c49ad1ac76bf0bc0f0a6980719"
+      },
+      {
+        "path": "database/schema/tables/plantsplitchild.sql",
+        "sha256": "e989938e4284162a925a782735ab55bc54d5c925b833582875f50e9c9c4e664b"
+      },
+      {
+        "path": "database/schema/tables/propagationtype.sql",
+        "sha256": "3bc75c3779dd7415f7066028ac6f3864ed31c8912d94a3df1b0ee64c1a21d5fc"
+      },
+      {
+        "path": "database/schema/tables/repotting.sql",
+        "sha256": "b68827706e32a5fcb3853d2721ad55817bea411fc0064e4a8400bc1e7e48a7eb"
+      },
+      {
+        "path": "database/schema/tables/schemaversion.sql",
+        "sha256": "1a7fe0e43c22e9a08c72724834cdd473d5ac3f8fa20e5b1c3f02670bf38a4185"
+      },
+      {
+        "path": "database/schema/tables/taxon.sql",
+        "sha256": "16251110f755c1adc0e7c4f73328b2eeef0aec4d97da1afa8b46f1f65d373f48"
+      },
+      {
+        "path": "database/schema/tables/taxonphoto.sql",
+        "sha256": "3bc7023ac78e0cde8c50e22be95bd620fd8230681ff7e742764c2d7dbbe7cf3c"
+      },
+      {
+        "path": "database/schema/constraints/fkFloweringPlant.sql",
+        "sha256": "45196e2eb1adf8cebee216be65e336b62284c5735b57d1d50b65dac49e2ce409"
+      },
+      {
+        "path": "database/schema/constraints/fkPlantEventObservationType.sql",
+        "sha256": "6d2684dcee9b0a498ee333103aaabfdde6256853874d83104bc55671b45058f4"
+      },
+      {
+        "path": "database/schema/constraints/fkPlantEventPlant.sql",
+        "sha256": "bbdf87d096580148d2e9b4bee1a2cae4192651761fdcb48e07d1b82d79138d92"
+      },
+      {
+        "path": "database/schema/constraints/fkPlantLocationHistoryLocation.sql",
+        "sha256": "93c757c90c146e42d907d2e2499b5a0b9011b7e24584edeed79504f523a42b75"
+      },
+      {
+        "path": "database/schema/constraints/fkPlantLocationHistoryPlant.sql",
+        "sha256": "54da76e408a9ad3b074425879b2d7a61c0a78ccf61312e0afb610d8822341d03"
+      },
+      {
+        "path": "database/schema/constraints/fkPlantPhotoPlant.sql",
+        "sha256": "0e069ff3492dfeef19577f09019e3e66244b2ed9c37bee4cf58db18508b55a28"
+      },
+      {
+        "path": "database/schema/constraints/fkPlantPhotoPlantEvent.sql",
+        "sha256": "f7f6b4b15af4602b81efbce06ec8a1903225dccdd8cc4650125eeaad71db2911"
+      },
+      {
+        "path": "database/schema/constraints/fkPlantPropagation_childPlantId.sql",
+        "sha256": "a09eef2e633d97476f36cfb7f16bece3e032cd4bf4d87b48645aca416452f818"
+      },
+      {
+        "path": "database/schema/constraints/fkPlantPropagation_parentPlantId.sql",
+        "sha256": "3b8b175e8d87c3cea7523b65cb437b0c127bcb22c9342b32aab8373314f12884"
+      },
+      {
+        "path": "database/schema/constraints/fkPlantPropagation_propagationTypeId.sql",
+        "sha256": "6c69104b071ba49a201b8f57b4807b4c5b523fc8aa6fa709338c4352356a5d1f"
+      },
+      {
+        "path": "database/schema/constraints/fkPlantSplitChildPlant.sql",
+        "sha256": "ac9611d61f5c908640a317407e6882577395bee846fa66eedf40b1f1d1556b7e"
+      },
+      {
+        "path": "database/schema/constraints/fkPlantSplitChildSplit.sql",
+        "sha256": "99508d7309205c4713972f2e527ec9c99aaab00e167898b5484628c336476f72"
+      },
+      {
+        "path": "database/schema/constraints/fkPlantSplitParent.sql",
+        "sha256": "6c8b4b7df8035ad58718325fba5ed0e797bec01b20189d586adb5e7efff7e557"
+      },
+      {
+        "path": "database/schema/constraints/fkPlantTaxon.sql",
+        "sha256": "d05bd0ac8234f3886d37e983829b21c43070b4ef9deccde0a9ba4c8f0f9f094e"
+      },
+      {
+        "path": "database/schema/constraints/fkRepottingNewGrowthMedium.sql",
+        "sha256": "cb160c052211e8cff6ea8e41a14196d09ddd5c93992d24d5b7aeb052b9a0d7a4"
+      },
+      {
+        "path": "database/schema/constraints/fkRepottingOldGrowthMedium.sql",
+        "sha256": "8f48e8e6ce40c4bf625666613d37042bdd870b0095ee1f1bc2093d78d0ac1476"
+      },
+      {
+        "path": "database/schema/constraints/fkRepottingPlant.sql",
+        "sha256": "34c3b74d4d4fe92016286392a0312ed7a7346dfbc15aefebbcc33661e2ae65f6"
+      },
+      {
+        "path": "database/schema/constraints/fkTaxonGenus.sql",
+        "sha256": "595bfae78ec90f6128b8be7c99755ee41cb44aaf2cd4d68d64e8d73df1836276"
+      },
+      {
+        "path": "database/schema/constraints/fkTaxonPhotoTaxon.sql",
+        "sha256": "aebbe416b6b0f4993b0937a3c075708345d1e9da6ed88eb7a74700c33676e849"
+      },
+      {
+        "path": "database/schema/routines/fnGeneratePlantTag.sql",
+        "sha256": "094251523e78cfc3a080bebbf2a0968dbd630afa81568418809baa98b87ec72b"
+      },
+      {
+        "path": "database/schema/routines/spAddGenus.sql",
+        "sha256": "e2a9e1c5fde7872119671eaf08ed9b524f77ac015e588981ebb1a47bc092b9c4"
+      },
+      {
+        "path": "database/schema/routines/spAddLocation.sql",
+        "sha256": "061bbcda9d905baa5144e2bc282e71ef23f1645c9da4e13502fd892bed1f90ce"
+      },
+      {
+        "path": "database/schema/routines/spAddPlant.sql",
+        "sha256": "b135f928816a2becabed05351d93eeaaf800c350209ad1dbad982570641ff616"
+      },
+      {
+        "path": "database/schema/routines/spAddTaxon.sql",
+        "sha256": "ea360a78ca384e1e1a550f51bd265890389a28ec6d1d6a0246f3deb4284f1da5"
+      },
+      {
+        "path": "database/schema/routines/spAddTaxonInternal.sql",
+        "sha256": "333317560b00221efa93ba488a2d6fdb8b229de3f49e481f0e14d1af6fa19517"
+      },
+      {
+        "path": "database/schema/routines/spEditPlantLocation.sql",
+        "sha256": "2add342a9e14dff8f51116bf4188148aa24325c85f206d6d757654a070af0eb7"
+      },
+      {
+        "path": "database/schema/routines/spGetPlantLineage.sql",
+        "sha256": "72f9a8197a27d5ed6849f740cd1c8c8cf6de9593eeb38e036b92d10a6a047b31"
+      },
+      {
+        "path": "database/schema/routines/spMovePlantToLocation.sql",
+        "sha256": "d373d6481f6b99c133b5302f04f6fc9f15023d32693a1be915eba29cbbef6db8"
+      },
+      {
+        "path": "database/schema/routines/spPropagatePlant.sql",
+        "sha256": "cd30718fb4aa489f3d43b631c5bd08544358301fb0ec858c6b328638d24f189a"
+      },
+      {
+        "path": "database/schema/routines/spRemovePlantLocation.sql",
+        "sha256": "7c87dd2dbd99220347accd4f3f1b736d4dfa3d4a15bbeb3c952cc72d32130f59"
+      },
+      {
+        "path": "database/schema/routines/spSetGenusActiveState.sql",
+        "sha256": "a152e5ee0e24dd58aae329cb603927decdb7835bbf9bd65986f91b76e3266aca"
+      },
+      {
+        "path": "database/schema/routines/spSetGrowthMediumActiveState.sql",
+        "sha256": "2c11f9cdcb289cf588fdcf58417905ede484d3bffd953e134becce745938b938"
+      },
+      {
+        "path": "database/schema/routines/spSetHeroPhoto.sql",
+        "sha256": "cf85e43c63f17bedc6119da8020bd51ee442436e70eaeb826066c6eab676c563"
+      },
+      {
+        "path": "database/schema/routines/spSetLocationActiveState.sql",
+        "sha256": "75c9c4029ac75c8fb20d951871dd6cf5866947649111e2ce97de8f87e54b32d5"
+      },
+      {
+        "path": "database/schema/routines/spSetTaxonActiveState.sql",
+        "sha256": "457b3db678cebb2488465807de8906941ab8d422a0bbd43110d525c88db381bb"
+      },
+      {
+        "path": "database/schema/routines/spSplitPlant.sql",
+        "sha256": "24dc9541bcb87060939adca68f6be5c35ee3b3efa1a65d5e02ac489a42ae43f7"
+      },
+      {
+        "path": "database/schema/routines/spUpdateGenus.sql",
+        "sha256": "3f35b5d83b38267264725ee4d79b23c0d5afe0dda59238aaa3731e893540982a"
+      },
+      {
+        "path": "database/schema/routines/spUpdateGrowthMediumDetails.sql",
+        "sha256": "1d8e8d85bf33a176e756fd1e7a238b04d1c74e796b66ef3bfbd7f3521d02309a"
+      },
+      {
+        "path": "database/schema/routines/spUpdateLocationDetails.sql",
+        "sha256": "032e3e62d0fb6c5e54f8de29694d73298ef5e1fe388c9ba4a6589b63f1a624ac"
+      },
+      {
+        "path": "database/schema/routines/spUpdatePlantDetails.sql",
+        "sha256": "52f257d827b3b79e9f6ba99b81fe29df5d4434ccd58c410dbdfe80d3a209cc5f"
+      },
+      {
+        "path": "database/schema/routines/spUpdateTaxonDetails.sql",
+        "sha256": "30522584dccb3a28671c79ae9134f6d1a753dd9a200ad2272739442cb9980cec"
+      },
+      {
+        "path": "database/schema/routines/spUpsertEnvironmentReadings.sql",
+        "sha256": "8486c5ead7b5981413a66cab5dd71cfd42044646e30dca0c7277394569afc0f9"
+      },
+      {
+        "path": "database/schema/views/venvironmentreadingperiod.sql",
+        "sha256": "982a67c0051e19ef092f76b18e78038428153e099a7d85db3988149d257583e4"
+      },
+      {
+        "path": "database/schema/views/vlocationactivelist.sql",
+        "sha256": "85ff7cc3652854395289455cff3a9fc3d969997993e03baa2322a375d4a332ad"
+      },
+      {
+        "path": "database/schema/views/vplantactivecurrentlocation.sql",
+        "sha256": "cbf45b0bc38161a5a2980e81b8a9998c28a75168b6b521b6e8d9c202667ad1d9"
+      },
+      {
+        "path": "database/schema/views/vplantactivesummary.sql",
+        "sha256": "08e445f3c205dcf6fd772e6bcf0e431f60b567f470b557f102d62799e64ffa6e"
+      },
+      {
+        "path": "database/schema/views/vplantcurrentgrowthmedium.sql",
+        "sha256": "e384cf3672196958156cdec7bcce3ebed179938f591668694bddeba5d6d0c44a"
+      },
+      {
+        "path": "database/schema/views/vplantcurrentlocation.sql",
+        "sha256": "14eabcdb8ae11b3c1b21889762ee4a6170c04265ffba6988ea19946d74df9afe"
+      },
+      {
+        "path": "database/schema/views/vplantcurrentlyflowering.sql",
+        "sha256": "339c071658e20de994a9cf9313d2a6618fa469d009c379b9edf741546efe0f30"
+      },
+      {
+        "path": "database/schema/views/vplantlifecyclehistory.sql",
+        "sha256": "aca2669a693ec3a3b796b510943cb5830f136ef5082cb3a162ffa0983e840c2d"
+      },
+      {
+        "path": "database/schema/views/vplantlineage.sql",
+        "sha256": "a5b27173857994a7eba6324587f843e5223046d134eca3d307342ec137d18c47"
+      },
+      {
+        "path": "database/schema/views/vplantrepotstatus.sql",
+        "sha256": "e0636492433d1ad923c317c9d46bcc0f52036deefb5e24599c9fc15b8a8b139c"
+      },
+      {
+        "path": "database/schema/views/vplantsincelastflowered.sql",
+        "sha256": "88e8be2ae65707ca1789d950fefd81801f1f37b28a62439fff15c2f03d299a90"
+      },
+      {
+        "path": "database/schema/views/vplantsplitchildren.sql",
+        "sha256": "7003bae9afb06542146ad60a475c6a76286674f409fc67638a77fd45914a98c2"
+      },
+      {
+        "path": "database/schema/views/vtaxonidentity.sql",
+        "sha256": "88976e36aead301d9f7c3cab627c5a1fca6b00b18ecb9360d49d8cfa96814d7b"
+      },
+      {
+        "path": "database/schema/views/venvironmentdailyperiodsummary.sql",
+        "sha256": "6c028190281325a8fb4b0bb3c792140d6ec355effb358feb65834c61b89f7090"
+      },
+      {
+        "path": "database/schema/views/venvironmentlastsevendayssummary.sql",
+        "sha256": "5bb4f36d495caf9c32f1c9bf5b925aae132c76be3c3bf4cbb501edf1a265e36e"
+      },
+      {
+        "path": "database/schema/views/vplantstatus.sql",
+        "sha256": "968a80e9cc9667c3342721dfea728d334d04b8711eb338afc8806bb884b4a65a"
+      },
+      {
+        "path": "database/schema/triggers/trgPlantLocationHistoryBeforeInsert.sql",
+        "sha256": "5f74aaab226769a4a190b90a03f34d146064db0459569cda3f4cf8ee728b4459"
+      },
+      {
+        "path": "database/schema/triggers/trgPlantLocationHistoryBeforeUpdate.sql",
+        "sha256": "3cb3da97b0f32a0bdd6136fc6124d941c3f67f000e2b51c92231bdd866bd4b14"
+      },
+      {
+        "path": "database/schema/seeds/observationtype_records.sql",
+        "sha256": "db4cd368989719cc667eee6b7f7fc743db942eebfa19f1caab559ebf374ed31b"
+      },
+      {
+        "path": "database/schema/seeds/phoneticprefix_records.sql",
+        "sha256": "78c33cdfbf879401c6f060bd76d62c52426b873cc963de62dc643e20b860dbe9"
+      },
+      {
+        "path": "database/schema/seeds/propagationtype_records.sql",
+        "sha256": "2c0f29f452cf30fe45886d2fa6728af41cd6251025b2b3d01293bfe96fb3a462"
+      }
+    ],
+    "review": "All remaining differences are the pinned historical index names, retained creation contexts/repot label/output collations, eight TCP-created routine definers root@% versus socket-reference root@localhost, and one blank line in spSetHeroPhoto. Routine bodies and security types otherwise agree; no arbitrary definer is ignored."
+  }
+}

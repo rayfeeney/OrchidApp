@@ -75,3 +75,4 @@ app/runtime/
 
 # Generated feature-check logs and revision/environment evidence.
 artifacts/feature-checks/
+artifacts/historical-upgrade/
