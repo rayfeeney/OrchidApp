@@ -1,44 +1,46 @@
-# CHAT-R01–R03: plant-event validation explanations
+# CHAT-R04 — greenhouse CI deduplication
 
-Invalid plant-event submissions now explain the existing rejection beside the affected field. This patch does not change validation rules, transaction policy, stored data or the frozen historical specimen.
+Database execution no longer repeats isolated greenhouse calculations/cache/net-cost policy tests. The existing isolated, greenhouse database and lifecycle jobs remain separate. No SQL assertion/helper/fixture coverage is removed.
 
 ## Apply
 
-1. Review/extract the 11 repository-relative files below into a clean source checkout (the directory containing OrchidApp.sln). Preserve any unrelated local edits. This is a source patch, not an installed application package.
-2. Build the web application: `dotnet build src/OrchidApp.Web/OrchidApp.Web.csproj --configuration Release`.
-3. Commit/run the normal CI. Its existing lifecycle job now executes the new HTTP checks against generated upgraded and fresh schema-only fixtures. The full lifecycle command remains `pwsh ./tests/LifecycleClosure.Checks/Database.Checks.ps1` with its existing explicit disposable-server credentials and prerequisites. Never point fixture checks at a collection server.
-4. Package/deploy through the normal Windows installer or Linux publishing procedure. Preserve the normal backup/recovery route, including C18 app-only backups. On disposable records verify readable rejection messages and corrected save/reopen.
+1. Apply after `OrchidApp-CHAT-R01-R03-changes-only.zip`. Shared documentation includes that preceding correction. Review/extract the repository-relative files below into the source root containing OrchidApp.sln, preserving unrelated local changes.
+2. Commit and run the existing CI. Commands and job names are unchanged: `python scripts/run-feature-checks.py` and, only on the configured new empty disposable service, `python scripts/run-feature-checks.py --mode greenhouse-db`.
+3. Require passed greenhouse `modeEvidence` with no mixed modes. Keep all job results and retained logs. The database assertion total is smaller because the isolated assertions run once in their own job, not because SQL coverage was removed.
+4. For direct manual preview use, clear optional connection variables before `--fixture-output`/`--serve`. With a connection, direct execution now selects database-only mode; database-plus-preview arguments are refused before setup.
 
-**No new database migration, .env change, startup setting or historical repair is required by this patch.** It does not replace the existing instructions for any other pending migrations.
+**No application deployment/rebuild solely for this correction, database migration, .env setting, credential or normal startup change is required.** Other included changes retain their normal deployment/backup obligations. Fixture SQL must never run on a collection/development server.
 
 ## Every added/modified repository file
 
-- **Modified `src/OrchidApp.Web/Pages/Plants/Events/Add.cshtml`** — Render seven existing field-error positions for dates, missing repotting medium and empty observation notes; validation rules unchanged.
-- **Modified `tests/LifecycleClosure.Checks/Database.Checks.ps1`** — Run the new HTTP regression suite for both generated upgraded and schema-only fixtures in the existing lifecycle job.
-- **Modified `CONTRIBUTING.md`** — Document the lifecycle validation-message checks and isolated target requirement.
-- **Modified `RELEASE_NOTES.md`** — Describe the UI correction, regression coverage and no-migration deployment impact.
-- **Modified `docs/index.md`** — Link the validation-message owner/evidence.
-- **Modified `docs/documentation-map.md`** — Identify the validation-message documentation owner.
-- **Modified `docs/upgrade-checklist.md`** — Record Windows/Linux app-only deployment and disposable invalid/corrected-input acceptance; preserve C18 backup obligations.
-- **Modified `docs/code-change-backlog.md`** — Track CHAT-R01–R03 as source implemented with local validation; leave merged CI/installed acceptance pending.
-- **Modified `docs/testing-evidence.md`** — Include rendered field errors and corrected saves in lifecycle coverage.
-- **Added `tests/LifecycleClosure.Checks/ValidationMessages.Checks.py`** — Add nine HTTP test methods covering rejection explanations, unchanged records, date binding and valid correction/save/reopen.
-- **Added `docs/maintenance/event-validation-messages.md`** — Record problem, implementation, actual before/after tests, Word-guide impact review and remaining limits.
+- **Modified `tests/GreenhouseCharts.Checks/Program.cs`** — Select guarded database-only execution before isolated suites, retain SQL coverage, emit mode/suite labels and refuse database-plus-preview arguments before setup.
+- **Modified `scripts/run-feature-checks.py`** — Record greenhouse mode evidence and fail missing/mixed suite selection even when the process exits zero; keep commands, guards, log hashes and other suite handling.
+- **Modified `tests/FeatureEvidence.Checks/checks.py`** — Add exclusive-mode/suite evidence cases and zero-exit wrong-mode failure-report regression coverage.
+- **Modified `CONTRIBUTING.md`** — Explain disjoint execution, evidence requirements and preview constraints.
+- **Modified `RELEASE_NOTES.md`** — Describe CI deduplication and unchanged operator/migration requirements.
+- **Modified `docs/testing-evidence.md`** — Document SQL-only mode, direct-executable behavior and additive modeEvidence results.
+- **Modified `docs/upgrade-checklist.md`** — Record release-owner evidence checks and no Windows/Linux operator action for this test-only change.
+- **Modified `docs/code-change-backlog.md`** — Track CHAT-R04 implementation and local validation, leaving applied/merged CI pending.
+- **Modified `docs/index.md`** — Link measured CI-mode evidence.
+- **Modified `docs/maintenance/c20-reproducible-checks.md`** — Preserve original C20 observations and link the subsequent disjoint-mode change.
+- **Added `docs/maintenance/ci-greenhouse-modes.md`** — Record execution contract, actual tests, guards, warning/failure history and remaining limits.
 
-The root CHANGELOG.md is included only in this delivery ZIP; it is not an additional application change.
+Root CHANGELOG.md is included only as this delivery inventory. No other application/source files, logs, private settings, data or binaries are packaged.
 
 ## Actual validation
 
-- Current extracted review mirror, Windows AMD64, .NET SDK 9.0.315 targeting net8.0, MariaDB 10.11.16. Fresh private database data directories, generated canonical-schema databases and loopback-only hosts; no private .env or live/development database used.
-- Pre-fix current build: nine test methods, 13 failing assertions/subtests reproduced missing errors; the valid-save method worked.
-- Corrected build: all nine new HTTP test methods passed. Rendered messages are checked at the affected fields; rejected requests preserve records, and corrected requests save/reopen.
-- All 16 existing ended-plant/date/read-only HTTP tests passed.
-- Release build: zero warnings, zero errors. Python source compiled, lifecycle PowerShell parsed, existing CI workflow passed actionlint with optional ShellCheck/Pyflakes integrations disabled; changed Markdown local targets resolve.
-- Windows 03 and Linux/Pi 02 plant-management Word guides reviewed: neither describes exact validation strings; controls and valid-state appearance are unchanged, so no Word/screenshot edits were required.
+- Eight evidence-runner unit tests passed, including complete/missing/mixed suite labels and an executable that exits zero in the wrong mode producing a failed report.
+- All eight selected isolated feature executables passed in the final run; greenhouse reported 65 isolated assertions with only its isolated suites.
+- Fresh private MariaDB 10.11.16 database-only execution passed, reporting 18 SQL assertions with loading/summary, performance and net-cost suites, with no isolated execution. SQL/cache/net-cost helper implementations and all named Program assertions are retained.
+- Nonempty disposable-server guard refused setup before fixture SQL, left the synthetic sentinel value 42 unchanged and created neither greenhouse fixture schema. Only the owned private server was shut down.
+- Database-plus-preview execution refused a synthetic invalid connection before parsing/setup and wrote no preview file.
+- Final isolated/database reports have matching selected-source fingerprint `7c43a7b77c2ab892287ecd91a3fbf6927eeed5700aea1d3725424cfcba74bfad`. This is source evidence, not a release-package hash or Git revision.
+- Python sources parsed; unchanged workflow passed actionlint with optional ShellCheck/Pyflakes disabled; changed Markdown local links resolve. User/operator and plant-management guides need no changes for this test-only execution update.
 
-## Remaining limits
+## Limits and retained failures
 
-- The complete upgraded/fresh lifecycle matrix has not been rerun locally as a whole for this patch; the new suite and related existing policy suite were run directly against fresh canonical-schema fixtures. The existing CI runner is wired for both paths; retain its actual applied/merged-revision result.
-- Git revision is unavailable for this extracted mirror. Merged-revision GitHub CI, Linux/current ARM64 execution, browser visual/JavaScript and installed-machine checks remain pending.
-- The immutable old specimen is unchanged and continues to represent the historical behaviour. This patch does not implement C18 historical upgrades/recovery, Windows specimen creation, CI deduplication or other register items.
-- No application repository files outside the listed set, synced sources, private settings, fixture data, binaries or whole-repository contents are packaged.
+- Windows AMD64, .NET SDK 9.0.315 targeting net8.0, Python 3, private MariaDB 10.11.16. This extracted source mirror has no Git revision identity.
+- The initial restricted full feature run retained an EnvironmentSummary socket/loopback failure; the subsequent run with loopback access passed. That environmental failure was not erased or labelled successful.
+- Restore emitted NU1900 warnings because the NuGet vulnerability service was unavailable; this is not a vulnerability audit.
+- Applied/merged-revision GitHub CI, Linux runtime and device/installed acceptance remain pending. No C18 historical upgrade/recovery or Windows fixture work is claimed. The frozen historical specimen is unchanged.
+- Assertion totals above are measured observations, never fixed pass criteria.

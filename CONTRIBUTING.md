@@ -39,6 +39,8 @@ Move superseded/inapplicable docs to docs/history/, preserve their context and u
 
 ## Validate locally
 
+Greenhouse execution is disjoint: the normal feature run covers isolated calculations/cache/policy; `--mode greenhouse-db` covers only guarded SQL loading/performance/net-cost suites. Successful logs must identify the selected suites with no mixed mode; the runner records/fails `modeEvidence` accordingly. Direct preview arguments require the connection to be cleared. See [CI mode evidence](docs/maintenance/ci-greenhouse-modes.md). Existing CI jobs and database safeguards remain separate and unchanged.
+
 The existing lifecycle database runner also executes `tests/LifecycleClosure.Checks/ValidationMessages.Checks.py` against its generated upgraded and schema-only fixtures. It verifies rendered server-side errors, unchanged records on rejection and valid correction/save/reopen. See [plant-event message evidence](docs/maintenance/event-validation-messages.md); never run fixture tests against an installed collection.
 
 Build the affected web application:

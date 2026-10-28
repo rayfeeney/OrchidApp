@@ -17,6 +17,39 @@ spec.loader.exec_module(runner)
 
 
 class EvidenceChecks(unittest.TestCase):
+    def test_greenhouse_modes_require_all_suites_and_no_overlap(self):
+        for mode, prefix, suites in [
+                ('isolated', 'isolated', ('calculations', 'cache', 'net-cost')),
+                ('greenhouse-db', 'database', ('loading', 'performance', 'net-cost'))]:
+            with self.subTest(mode=mode):
+                text = '\n'.join(['Greenhouse check mode: '+prefix,
+                                 *('Greenhouse suite: '+prefix+'-'+s for s in suites)])
+                self.assertEqual(runner.greenhouse_mode_evidence(text, mode)['status'], 'passed')
+                self.assertEqual(runner.greenhouse_mode_evidence(text.rsplit('\n', 1)[0], mode)['status'], 'failed')
+                other = 'database' if prefix == 'isolated' else 'isolated'
+                mixed = runner.greenhouse_mode_evidence(text+'\nGreenhouse suite: '+other+'-net-cost', mode)
+                self.assertEqual(mixed['status'], 'failed')
+                self.assertTrue(mixed['mixedModes'])
+
+    def test_zero_exit_wrong_greenhouse_mode_is_failed_evidence(self):
+        with tempfile.TemporaryDirectory(prefix='evidence-test-', dir=TEMP_ROOT) as folder, \
+                patch.dict(os.environ, {'GREENHOUSE_DISPOSABLE_INSTANCE': '1',
+                                       'GREENHOUSE_TEST_CONNECTION': 'synthetic-not-used'}), \
+                patch.object(runner, 'metadata', return_value='fixture'):
+            output = Path(folder)/'evidence'
+            def wrong_mode(command, **kwargs):
+                kwargs['stdout'].write('Greenhouse check mode: isolated\n'
+                    'Greenhouse suite: isolated-calculations\nGreenhouse suite: isolated-cache\n'
+                    'Greenhouse suite: isolated-net-cost\n')
+                return type('Result', (), {'returncode': 0})()
+            with patch.object(runner.subprocess, 'run', side_effect=wrong_mode):
+                self.assertEqual(runner.run(ROOT, output, 'greenhouse-db', 5), 1)
+            report = json.loads((output/'report.json').read_text())
+            self.assertEqual(report['status'], 'failed')
+            self.assertEqual(report['checks'][0]['exitCode'], 0)
+            self.assertEqual(report['checks'][0]['runnerError'], 'GreenhouseModeMismatch')
+            self.assertEqual(report['checks'][0]['modeEvidence']['status'], 'failed')
+
     def test_isolated_environment_removes_optional_modes(self):
         with patch.dict(os.environ, {'GREENHOUSE_TEST_CONNECTION': 'private', 'GREENHOUSE_BENCHMARK': '1',
                                      'GREENHOUSE_DISPOSABLE_INSTANCE': '1', 'MARIADB_PASSWORD': 'private'}):
