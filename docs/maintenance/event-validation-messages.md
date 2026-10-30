@@ -1,5 +1,7 @@
 # Plant-event validation messages: CHAT-R01–R03
 
+> Status reconciliation, 30 October 2026: this article preserves the original implementation/test record. Its earlier next-step, merge and CI-pending statements describe that delivery stage. See [current status and scope](../current-state.md) for confirmed later CI, the remaining machine acceptance, and the v1.4.0 Windows baseline decision. Original results and limitations below are retained.
+
 The add-event handlers rejected invalid dates and a missing repotting medium by adding field-specific model errors. The form used a `ModelOnly` summary but omitted message elements for those fields, so the field could be highlighted without explaining the rejection. Historical specimen testing found three examples; fresh current-source HTTP tests reproduced the same problem.
 
 ## Change

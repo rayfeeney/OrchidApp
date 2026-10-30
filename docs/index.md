@@ -2,6 +2,8 @@
 
 Use current guides below. For each procedure, check its stated implementation limits before acting. Implementation status and pending acceptance are tracked in the [code backlog](code-change-backlog.md).
 
+- [Current status, fixed v1.4.0 work list and scope decisions](current-state.md)
+
 ## Develop and maintain
 
 - [Developer machine and first run](development-setup.md), with [C16 evidence and remaining acceptance](maintenance/c16-developer-setup.md)

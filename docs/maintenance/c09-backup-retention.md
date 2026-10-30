@@ -1,5 +1,7 @@
 # C09 protected backup retention
 
+> Status reconciliation, 30 October 2026: this article preserves the original implementation/test record. Its earlier next-step, merge and CI-pending statements describe that delivery stage. See [current status and scope](../current-state.md) for confirmed later CI, the remaining machine acceptance, and the v1.4.0 Windows baseline decision. Original results and limitations below are retained.
+
 The backup script now uses its declared SkipOldBackupPruning and BackupsToKeep controls instead of an undeclared PruneOldBackups variable. Normal defaults to three verified unprotected ZIPs and requires a minimum of one. The new ZIP is always retained. PreUpgrade never prunes; safety directories and paths recorded in restore/migration history are protected.
 
 Only direct, recognised routine archives with matching metadata and supported payload validation can be counted/deleted. Unknown, corrupt, foreign or locked archives remain for review. Unreadable protection state stops pruning. Retention runs after new-backup verification and rechecks hashes/protection before removal; warnings leave the new valid backup usable. A same-directory backup lock serialises cooperating runs.

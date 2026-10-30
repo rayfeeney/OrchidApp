@@ -1,5 +1,7 @@
 # C20 reproducible feature checks and evidence
 
+> Status reconciliation, 30 October 2026: this article preserves the original implementation/test record. Its earlier next-step, merge and CI-pending statements describe that delivery stage. See [current status and scope](../current-state.md) for confirmed later CI, the remaining machine acceptance, and the v1.4.0 Windows baseline decision. Original results and limitations below are retained.
+
 Implemented in source: curated feature CI, a separate disposable greenhouse MariaDB job, retained command/environment/result reports, and distinct cached domain-unavailable versus exception tests. The owner is [testing and evidence](../testing-evidence.md). Source review mirror has no Git revision; the generated evidence records `unavailable` plus its source fingerprint. Record the actual merged revision and CI artifact identity when accepting a release.
 
 ## Changes

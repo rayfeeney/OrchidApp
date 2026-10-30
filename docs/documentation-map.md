@@ -5,6 +5,7 @@ Use one current owner for each subject. Other documents link to that owner rathe
 | Subject | Current owner | Related material |
 | --- | --- | --- |
 | Cross-platform upgrade actions and per-release completion | [C01–C20 upgrade checklist](upgrade-checklist.md) | Platform contracts/runbooks below; backlog owns implementation status |
+| Current baseline, fixed acceptance work list and scope decisions | [Current state](current-state.md) | Backlog owns C-item implementation detail; upgrade checklist owns platform actions |
 | Project overview and starting links | [README](../README.md) | [Documentation index](index.md) |
 | Development machine and first run | [Developer setup](development-setup.md) | [Contributing](../CONTRIBUTING.md), [C16 evidence](maintenance/c16-developer-setup.md) |
 | Fresh schema creation and later migrations | [Database creation](database-creation.md) | [Architecture](architecture.md), contributor workflow, [C05 CI evidence](maintenance/c05-ci-database-acceptance.md) |

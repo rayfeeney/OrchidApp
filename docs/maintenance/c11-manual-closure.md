@@ -1,5 +1,7 @@
 # C11 manual plant closure
 
+> Status reconciliation, 30 October 2026: this article preserves the original implementation/test record. Its earlier next-step, merge and CI-pending statements describe that delivery stage. See [current status and scope](../current-state.md) for confirmed later CI, the remaining machine acceptance, and the v1.4.0 Windows baseline decision. Original results and limitations below are retained.
+
 This report records C11 at delivery. [C12](c12-ended-plant-policy.md) now supersedes the earlier direct end-date correction/clearing behavior: ended plants cannot be edited or reactivated through normal workflows or spUpdatePlantDetails. Atomic first closure is preserved. The lifecycle suite now upgrades through the current migration package and checks the C12 policy on both upgraded and fresh databases.
 
 ## Change and upgrade action

@@ -1,5 +1,7 @@
 # C08 Windows restore recovery
 
+> Status reconciliation, 30 October 2026: this article preserves the original implementation/test record. Its earlier next-step, merge and CI-pending statements describe that delivery stage. See [current status and scope](../current-state.md) for confirmed later CI, the remaining machine acceptance, and the v1.4.0 Windows baseline decision. Original results and limitations below are retained.
+
 Restore now preserves a validated local copy of the selected ZIP and requires a verified safety backup before replacing the collection. Safety archives and recovery journals live outside routine backup retention. A persisted pending marker prevents normal launcher startup, migrations and normal backups after destructive interruption. Recovery explicitly chooses retained input or the original safety backup; partial state is never promoted to a new safety copy.
 
 The launcher keeps Restore available after failure, reports a stopped web app accurately and protects recorded recovery inputs from subsequent fixed-name cloud overwrite. Completed journals remain so that protection survives restart. The maintained procedure and support commands are in the [archive contract](../windows-backup-format.md#failure-and-acceptance-boundaries).

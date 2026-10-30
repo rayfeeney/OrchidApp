@@ -1,5 +1,7 @@
 # C16 developer setup evidence
 
+> Status reconciliation, 30 October 2026: this article preserves the original implementation/test record. Its earlier next-step, merge and CI-pending statements describe that delivery stage. See [current status and scope](../current-state.md) for confirmed later CI, the remaining machine acceptance, and the v1.4.0 Windows baseline decision. Original results and limitations below are retained.
+
 ## Delivered behavior
 
 One explicit set of MARIADB_HOST, MARIADB_PORT, MARIADB_DATABASE, MARIADB_USER and MARIADB_PASSWORD values now serves setup, schema export and the generated ConnectionStrings__OrchidDb value. configure.ps1 uses a connection-string builder to quote credentials, requires an absolute Storage__UploadRoot, selects Development and disables bespoke monitoring. The committed Development JSON contains only logging/detailed-error settings. No password, endpoint or personal photo path remains there.

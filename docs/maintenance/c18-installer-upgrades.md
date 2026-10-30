@@ -1,5 +1,7 @@
 # C18 installer backup and acceptance evidence
 
+> Status reconciliation, 30 October 2026: this article preserves the original implementation/test record. Its earlier next-step, merge and CI-pending statements describe that delivery stage. See [current status and scope](../current-state.md) for confirmed later CI, the remaining machine acceptance, and the v1.4.0 Windows baseline decision. Original results and limitations below are retained.
+
 C18 now requires a new verified offline snapshot before an installer replaces existing application/persistent files, even when only application code changes and no SQL migration is pending. [Installer backup and recovery](../windows-installer-recovery.md) owns the format/procedure and [the upgrade checklist](../upgrade-checklist.md) owns Windows/Linux adoption actions.
 
 ## Implementation
