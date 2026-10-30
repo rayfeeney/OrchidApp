@@ -1,5 +1,7 @@
 # Documentation correction handover
 
+> Status reconciliation, 30 October 2026: this article preserves the original implementation/test record. Its earlier next-step, merge and CI-pending statements describe that delivery stage. See [current status and scope](../current-state.md) for confirmed later CI, the remaining machine acceptance, and the v1.4.0 Windows baseline decision. Original results and limitations below are retained.
+
 Baseline: supplied OrchidApp-clean.zip. Documentation corrected 24 October 2026. The original Downloads ZIP and live repository were not modified; this is an updated working snapshot for review/integration, not an installed app or deployment package.
 
 ## Delivered

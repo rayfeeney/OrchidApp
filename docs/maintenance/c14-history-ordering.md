@@ -1,5 +1,7 @@
 # C14 history ordering
 
+> Status reconciliation, 30 October 2026: this article preserves the original implementation/test record. Its earlier next-step, merge and CI-pending statements describe that delivery stage. See [current status and scope](../current-state.md) for confirmed later CI, the remaining machine acceptance, and the v1.4.0 Windows baseline decision. Original results and limitations below are retained.
+
 The agreed display order is newest stored date/time first. When those values
 match, the event type decides the order: Flowering, LocationChange (shown as Move),
 Observation, Repotting. Records within the same timestamp and type use descending

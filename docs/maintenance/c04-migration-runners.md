@@ -1,5 +1,7 @@
 # C04 - migration runner validation and evidence
 
+> Status reconciliation, 30 October 2026: this article preserves the original implementation/test record. Its earlier next-step, merge and CI-pending statements describe that delivery stage. See [current status and scope](../current-state.md) for confirmed later CI, the remaining machine acceptance, and the v1.4.0 Windows baseline decision. Original results and limitations below are retained.
+
 24 October 2026. Changes are in the local review-work/OrchidApp source copy. No live installation, production database, production grants or owner configuration was changed.
 
 ## Implemented contract

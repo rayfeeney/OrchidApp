@@ -1,5 +1,7 @@
 # C03 monitoring isolation - 24 October 2026
 
+> Status reconciliation, 30 October 2026: this article preserves the original implementation/test record. Its earlier next-step, merge and CI-pending statements describe that delivery stage. See [current status and scope](../current-state.md) for confirmed later CI, the remaining machine acceptance, and the v1.4.0 Windows baseline decision. Original results and limitations below are retained.
+
 Implemented in the local review-work/OrchidApp source copy. No live installation or owner service configuration was changed.
 
 ## Behaviour

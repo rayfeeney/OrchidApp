@@ -1,5 +1,7 @@
 # Technical review of the frozen Linux specimen
 
+> Status reconciliation, 30 October 2026: this article preserves the original implementation/test record. Its earlier next-step, merge and CI-pending statements describe that delivery stage. See [current status and scope](../current-state.md) for confirmed later CI, the remaining machine acceptance, and the v1.4.0 Windows baseline decision. Original results and limitations below are retained.
+
 Reviewed locally on 28 October 2026. The owner subsequently published the exact reviewed archive and sidecar under [the dedicated fixture pre-release](https://github.com/rayfeeney/OrchidApp/releases/tag/ci-fixture-linux-arm64-1.3.0-080ba9c-v1); published hashes were verified. The private capture was not uploaded. This review is of the exact CI specimen, not the original private capture or an installed application release. The exact fixture database phase subsequently passed [reviewed adoption](historical-linux-adoption.md); technical sanitisation checks alone do not establish full C18 package/application/recovery acceptance.
 
 | Identity | Value |

@@ -1,5 +1,7 @@
 # C12 ended plants and temporal corrections
 
+> Status reconciliation, 30 October 2026: this article preserves the original implementation/test record. Its earlier next-step, merge and CI-pending statements describe that delivery stage. See [current status and scope](../current-state.md) for confirmed later CI, the remaining machine acceptance, and the v1.4.0 Windows baseline decision. Original results and limitations below are retained.
+
 ## Agreed rule and implementation
 
 The owner confirmed that ending a plant should not allow editing. Ended plants are therefore read-only through normal workflows: details, acquisition/end dates, events and photos cannot be changed or reactivated, and split/propagation cannot create descendants. History and photographs remain viewable. No exceptional repair/reactivation workflow is added.

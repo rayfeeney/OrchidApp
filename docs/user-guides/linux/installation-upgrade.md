@@ -2,7 +2,7 @@
 
 This guide covers a general OrchidApp server using MariaDB and systemd. It does not install the owner's bespoke monitoring feeds/importer or EnergyMonitoring. Monitoring defaults off; leave Monitoring:Enabled absent or false. See the [activation boundary](../../environment-summary-platform.md).
 
-Fresh creation uses canonical schema, required seeds and the generated baseline manifest, with no historical migration replay. The non-overwriting creation script is implemented; Linux/MariaDB and native-photo acceptance remain pending. Validate on a disposable target before deployment; see the [creation contract](../../database-creation.md) and [local evidence](../../maintenance/c01-c02-schema-baseline.md).
+Fresh creation uses canonical schema, required seeds and the generated baseline manifest, with no historical migration replay. The non-overwriting creation script is implemented; Linux/MariaDB and native-photo CI passed. Real installed Pi acceptance remains pending under the [current work list](../../current-state.md). Validate on a disposable target before deployment; see the [creation contract](../../database-creation.md) and [local evidence](../../maintenance/c01-c02-schema-baseline.md).
 
 ## Prerequisites and target
 

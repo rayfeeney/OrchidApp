@@ -1,5 +1,7 @@
 # Historical Linux ARM64 package, application and recovery acceptance
 
+> Status reconciliation, 30 October 2026: this article preserves the original implementation/test record. Its earlier next-step, merge and CI-pending statements describe that delivery stage. See [current status and scope](../current-state.md) for confirmed later CI, the remaining machine acceptance, and the v1.4.0 Windows baseline decision. Original results and limitations below are retained.
+
 Implementation date: 28 October 2026. Local end-to-end acceptance passed on 28 October 2026, 20:45–20:56 UTC; extended hosted CI remains to be run after this delivery is merged. This extends the already merged/passed historical database workflow, using the same published immutable specimen. It is automated container acceptance, not real Pi/systemd, browser JavaScript, cloud-provider or Windows installer acceptance.
 
 ## What actually runs

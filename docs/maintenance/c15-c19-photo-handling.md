@@ -1,5 +1,7 @@
 # C15 and C19 photo handling evidence
 
+> Status reconciliation, 30 October 2026: this article preserves the original implementation/test record. Its earlier next-step, merge and CI-pending statements describe that delivery stage. See [current status and scope](../current-state.md) for confirmed later CI, the remaining machine acceptance, and the v1.4.0 Windows baseline decision. Original results and limitations below are retained.
+
 C15 implements the existing metadata setting and orientation policy. C19 adds photo request compensation, durable recovery records and database/files/native readiness. [Photo handling and recovery](../photo-handling.md) owns the operational procedure; the [upgrade checklist](../upgrade-checklist.md) contains separate Windows/Linux adoption actions.
 
 ## Implementation

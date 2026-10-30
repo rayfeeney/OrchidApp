@@ -1,5 +1,7 @@
 # C05 CI database acceptance
 
+> Status reconciliation, 30 October 2026: this article preserves the original implementation/test record. Its earlier next-step, merge and CI-pending statements describe that delivery stage. See [current status and scope](../current-state.md) for confirmed later CI, the remaining machine acceptance, and the v1.4.0 Windows baseline decision. Original results and limitations below are retained.
+
 ## Scope and behavior
 
 The owner agreed to test a database created from the current schema, followed by a later migration. Testing upgrades from actual older releases is a separate future task requiring a reviewed historical schema fixture or sanitised backup. No older-installation fixture is supplied or claimed here.

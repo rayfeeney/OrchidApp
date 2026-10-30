@@ -1,5 +1,7 @@
 # C13 structural transactions and concurrency
 
+> Status reconciliation, 30 October 2026: this article preserves the original implementation/test record. Its earlier next-step, merge and CI-pending statements describe that delivery stage. See [current status and scope](../current-state.md) for confirmed later CI, the remaining machine acceptance, and the v1.4.0 Windows baseline decision. Original results and limitations below are retained.
+
 C13 coordinates normal plant writes with lifecycle closure and makes the affected
 multi-row SQL procedures roll back failures. It follows the C12 ended read-only
 policy. Existing installations need the migration and matching application as one

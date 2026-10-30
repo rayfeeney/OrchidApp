@@ -1,5 +1,7 @@
 # C10 legacy migration reconciliation
 
+> Status reconciliation, 30 October 2026: this article preserves the original implementation/test record. Its earlier next-step, merge and CI-pending statements describe that delivery stage. See [current status and scope](../current-state.md) for confirmed later CI, the remaining machine acceptance, and the v1.4.0 Windows baseline decision. Original results and limitations below are retained.
+
 The launcher now records version 2 ownership and copy inventory before writing ProgramData. Interrupted copying resumes only missing files from the same unchanged, backed-up capture; existing destination files must match the recorded inventory. Each new file is checked in separate work space and moved into place without overwriting an existing target. Unknown/changed data stops for support rather than being discarded.
 
 After verified copy, state becomes AwaitingReadiness. Database failure, web failure or completion-write failure leaves that phase pending. A later launch retries readiness against the same target, never recopies raw database files that startup may have modified. Completion follows database-directory identity and successful web response. A matching target token and completed version 2 state establish precedence over the exact preserved source. Changed or unrelated legacy sources still stop.

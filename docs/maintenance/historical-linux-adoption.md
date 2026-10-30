@@ -1,5 +1,7 @@
 # Reviewed historical Pi database adoption
 
+> Status reconciliation, 30 October 2026: this article preserves the original implementation/test record. Its earlier next-step, merge and CI-pending statements describe that delivery stage. See [current status and scope](../current-state.md) for confirmed later CI, the remaining machine acceptance, and the v1.4.0 Windows baseline decision. Original results and limitations below are retained.
+
 Status, 28 October 2026: the exact sanitised specimen has passed reviewed database adoption and four real forward migrations locally; a second invocation applied nothing. This resolves the historical-ledger blocker for this fixture's database checks. It does not establish live-Pi, installed-package, app-only or recovery acceptance.
 
 ## Independent structure investigation
