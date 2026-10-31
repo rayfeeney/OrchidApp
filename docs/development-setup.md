@@ -36,27 +36,67 @@ The pre-commit hook now uses `scripts/DevSetup/export-schema.ps1`, which reads t
 
 ## Prerequisites and platform scope
 
-| Component | Requirement and evidence |
+| Component | Requirement, scope and how it is provided |
 | --- | --- |
 | Git | Command-line Git, including its shell for the pre-commit hook; tested with the installed Git for Windows |
+| Repository access and checkout | Obtain GitHub access and clone `https://github.com/rayfeeney/OrchidApp.git` using Git or GitHub Desktop. An extracted source ZIP cannot configure the required Git hooks. |
+| Editor and graphical Git client | VS Code is an optional editor; GitHub Desktop is an optional graphical Git client. Neither replaces the command-line Git, PowerShell or .NET requirements. |
 | PowerShell | 7 or newer; use pwsh, including on Linux |
 | .NET | SDK 8 or newer plus .NET 8 and ASP.NET Core 8 runtimes; the application targets net8.0. Local C16 checks used SDK 9.0.315 and the installed .NET 8 runtimes |
-| MariaDB | Server, mariadb and mariadb-dump 10.11; tested locally with 10.11.16. MySQL server and mysql/mysqldump aliases are not the setup contract |
-| Windows native images | Windows x64; the source-run command restores the complete libvips 8.18.2 archive, verifies its SHA-256 and checks required DLLs/version |
-| Linux native images | A system libvips installation with PNG/JPEG support; the Ubuntu CI check installs libvips-tools and reports its actual version. The new Linux check still needs CI confirmation |
+| MariaDB | **Download and install MariaDB 10.11**, including the server and the `mariadb` and `mariadb-dump` command-line tools. On Windows, install into `C:\Program Files\MariaDB 10.11`. Set a root password during installation and keep it private. |
+| Photo processing | **Download and install libvips separately; it is not included in a fresh clone.** On Windows x64, run `pwsh ./scripts/restore-windows-runtime.ps1 -LibVipsOnly` from the repository root; this downloads, verifies and installs libvips 8.18.2 into `app/runtime/libvips/win-x64` without Chocolatey or a manual installer. On Linux, install libvips with PNG/JPEG support using your distribution's package manager (Ubuntu CI uses `libvips-tools`). After installation, run `pwsh ./scripts/DevSetup/run.ps1 -CheckOnly` to verify native photo processing. |
+| .NET application packages | **No manual download or installation required.** The required packages are defined in the repository and downloaded automatically by .NET when you first build or run the app. Internet access is required for that first download. |
+| Formatted-text editor | Quill 2.0.3 JavaScript and CSS are already bundled under `src/OrchidApp.Web/wwwroot/lib/quill/`. No separate installation or CDN download is required. Retain the bundled editor assets and legal notices when packaging. |
+| Development configuration and storage | Prepare a separate MariaDB instance/account permitted to create the development database and its objects, private connection settings and a writable development upload directory. The app and development update/export wrappers read the repository-root `.env`; direct administration scripts use the explicit environment settings below. Keep credentials out of Git. |
+| Browser | Required for testing database-backed pages, formatted notes and photo upload/reopen at `http://localhost:5285`. A successful build alone does not verify these workflows. |
+| Python 3 | **Download and install Python 3 separately.** It is not included in the repository. On Windows, enable the installer option to add Python to PATH. Open a new terminal and run `python --version` (or `python3 --version` on Linux) to confirm Python 3 is available. It is required to run the repository checks. |
+| Windows launcher | **No additional installation required** once the .NET SDK is installed. The launcher source is included in the repository. Develop and build it on Windows. |
+| Windows installer creation | **Download and install [Inno Setup 7](https://jrsoftware.org/isdl.php) on your Windows PC.** Install it in `C:\Program Files\Inno Setup 7`, where the repository build script expects it. It is not included in the repository. |
+| Windows packaged runtimes | **No additional manual download required** when MariaDB 10.11 is installed as described below. The repository script prepares the runtime files needed for the installer; see Windows packaging preparation below. |
 
-Install Git, PowerShell, the SDK/ASP.NET runtime and MariaDB using your platform's supported installers/package manager. Start an isolated MariaDB instance and prepare an account permitted to create the intended development database and its objects. setup.ps1 verifies tools, server connectivity/version and hooks; it does not install these tools, start a server, create accounts or change database objects. Windows source development does not require Chocolatey: the -LibVipsOnly restore path downloads only libvips. Windows packaging retains its separate MariaDB runtime restore path.
+### Check installed software
 
-Check installed tools:
+On the PC being set up, open a new PowerShell 7 terminal after installing the software. Run these checks; they do not install anything.
 
-```powershell
-git --version
-pwsh --version
-dotnet --list-sdks
-dotnet --list-runtimes
-```
+| Component | Check | Expected result |
+| --- | --- | --- |
+| Git | `git --version` | A Git version is displayed. |
+| PowerShell | `pwsh --version` | Version 7 or newer. |
+| .NET SDK | `dotnet --list-sdks` | At least one SDK version 8 or newer. |
+| .NET runtimes | `dotnet --list-runtimes` | Both `Microsoft.NETCore.App 8.x` and `Microsoft.AspNetCore.App 8.x`. |
+| Python | `python --version` (Linux: `python3 --version`) | Python 3.x. |
+| MariaDB client (Windows) | `& 'C:\Program Files\MariaDB 10.11\bin\mariadb.exe' --no-defaults --version` | MariaDB 10.11.x. |
+| MariaDB backup tool (Windows) | `& 'C:\Program Files\MariaDB 10.11\bin\mariadb-dump.exe' --no-defaults --version` | MariaDB 10.11.x. |
+| MariaDB server executable (Windows) | `& 'C:\Program Files\MariaDB 10.11\bin\mariadbd.exe' --no-defaults --version` | MariaDB 10.11.x. This does not prove the server is running. |
+| MariaDB tools (Linux) | Run `mariadb --no-defaults --version`, `mariadb-dump --no-defaults --version` and `mariadbd --no-defaults --version`. | Each reports MariaDB 10.11.x. |
+| libvips (Windows, after runtime preparation) | `& './app/runtime/libvips/win-x64/bin/vips.exe' --version` | `vips-8.18.2`. Run from the repository root. |
+| libvips (Linux) | `vips --version` | A libvips version is displayed. Check photo support using the diagnostic below. |
+| Inno Setup (Windows installer development) | Open Inno Setup and select Help > About to check the version. Run `Test-Path 'C:\Program Files\Inno Setup 7\ISCC.exe'` to check the compiler is at the expected location. | The application reports version 7.x and the path check returns `True`. |
+| VS Code (optional) | `code --version` | A VS Code version is displayed if its command is on PATH. Otherwise use Help > About in VS Code. |
+| GitHub Desktop (optional) | Open Help > About GitHub Desktop. | The installed version is displayed. |
+
+If a command cannot be found, check that the software is installed and its command is on PATH, or use its full installation path. Adjust the explicit Windows paths if you installed elsewhere.
+
+Quill is bundled and .NET packages are downloaded automatically; neither needs a separate PC installation check. After cloning, `dotnet restore OrchidApp.sln` checks that the .NET packages can be restored. After preparing libvips, `pwsh ./scripts/DevSetup/run.ps1 -CheckOnly` checks actual native photo processing.
+
+After configuring the development database connection below, run `pwsh ./scripts/DevSetup/setup.ps1`. It checks the required tools and the running MariaDB server version/connectivity, and enables Git hooks. It does not install software, start the server, create accounts or create the database.
 
 For MariaDB tools, MARIADB_EXE and MARIADB_DUMP_EXE may hold explicit executable paths, including paths with spaces. Otherwise discovery uses mariadb/mariadb-dump on PATH, then the Windows MariaDB 10.11 installation directory. One executable is selected even if PATH exposes multiple copies.
+
+
+## Windows packaging preparation
+
+With MariaDB installed at the location in the prerequisites table, the preparation script copies its runtime into the repository and downloads libvips if needed.
+
+From the repository root, run:
+
+```powershell
+pwsh ./scripts/restore-windows-runtime.ps1
+```
+
+If MariaDB is missing from that location, stop and correct its installation first: the script otherwise attempts to install MariaDB through Chocolatey.
+
+These runtime files are preparation for packaging. The Windows release payload must also be built before running `scripts/build-windows-installer.ps1`. If Inno Setup is installed elsewhere, supply `-InnoCompiler <absolute-ISCC-path>` to that script.
 
 ## Configure administration scripts and hooks (when needed)
 
