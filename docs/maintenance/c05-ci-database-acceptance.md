@@ -46,4 +46,4 @@ The source mirror is not itself a Git checkout. The local drift comparison used 
 
 The modified GitHub Actions workflow has not been executed here; its Ubuntu/MariaDB run still requires confirmation. Local Windows tests do not establish Linux filesystem case behavior. The C16 Windows/Linux native steps remain in CI and still need their own passing run confirmed. Device/installer, historical-version upgrades, representative real backup recovery and broader feature checks are outside this acceptance scope.
 
-After C05 review/CI confirmation, the agreed next step is C06+C07: bind legacy safety backup to the detected source and restore settings from the format written by backup. See [database creation](../database-creation.md), [contribution checks](../../CONTRIBUTING.md) and [the backlog](../code-change-backlog.md).
+After C05 review/CI confirmation, the agreed next step is C06+C07: bind legacy safety backup to the detected source and restore settings from the format written by backup. See [database creation](../database-creation.md), [contribution checks](../../CONTRIBUTING.md) and [the backlog](../history/code-change-backlog.md).

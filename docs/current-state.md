@@ -1,6 +1,6 @@
 # Current state and fixed v1.4.0 work list
 
-Last reconciled: 30 October 2026. This is the owner-agreed bounded work list, not evidence that pending tasks passed.
+Last reconciled: 1 November 2026. This is the owner-agreed bounded work list, not evidence that pending tasks passed.
 
 ## Confirmed baseline
 
@@ -10,13 +10,13 @@ The owner designates this source baseline for the planned v1.4.0 release; that i
 
 ## C01–C20 status
 
-All twenty items have implementation. C05 is complete within its agreed current-schema seeded creation/future-migration CI scope. C16 implementation and Windows/Linux CI passed; fresh new-PC developer acceptance remains task 2. Other real installed acceptance remains explicit in the [backlog](code-change-backlog.md) and [upgrade checklist](upgrade-checklist.md). Source/CI success is not installed acceptance.
+All C01–C20 code changes are complete within the agreed scope; the [completed backlog](history/code-change-backlog.md) is archived as historical evidence. C05 is complete within its agreed current-schema seeded creation/future-migration CI scope. C16 is complete: implementation and Windows/Linux CI passed, and the owner accepted the clean Windows developer-PC setup on 1 November 2026. Remaining installed release and operational acceptance is tracked in the fixed work list below and the [upgrade checklist](upgrade-checklist.md). Source/CI success is not installed acceptance.
 
 ## Fixed work list
 
 1. **Procure the new Pi.**
-2. **Complete developer setup on the new PC.** Follow the guide, run from source, and verify schema-only database creation, photo upload/reopen and the Git hook/schema-export workflow to close C16.
-3. **Reconcile status documents.** Correct C05/C16 and superseded pending statements, preserve historical evidence, and record agreed scope decisions. This documentation delivery addresses the task; application/merge of the delivery remains to be recorded.
+2. **Complete — developer setup on the new PC (C16).** Owner accepted on 1 November 2026: schema-only database creation, source startup/basic database use, photo testing and libvips 8.18.2 native checks passed. The actual hook/schema export passed in a temporary Git fixture without changing the original index or schema. The setup guide is corrected; see [C16 closure evidence](maintenance/c16-developer-setup.md#closure-1-november-2026).
+3. **Complete — reconcile status documents (1 November 2026).** C01–C20 code work is closed, including C05 and C16 within their agreed scopes. The backlog is archived with original evidence retained; current references point here for remaining release/operational work.
 4. **Record the live Pi baseline.** Software versions, database schema/history, configuration, services, scheduled jobs and file locations.
 5. **Create a complete recovery backup of the live Pi.** Matching database, photos, binaries, configuration and service definitions; verified off-device copy.
 6. **Restore onto the empty new Pi.** Verify functionality/data/photos/services; disable standby scheduled jobs and external writers.

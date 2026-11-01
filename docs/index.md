@@ -1,6 +1,6 @@
 # OrchidApp documentation
 
-Use current guides below. For each procedure, check its stated implementation limits before acting. Implementation status and pending acceptance are tracked in the [code backlog](code-change-backlog.md).
+Use current guides below. For each procedure, check its stated implementation limits before acting. The C01–C20 code changes are complete. Remaining release and operational acceptance is tracked in the [current work list](current-state.md); implementation evidence is preserved in the [completed backlog](history/code-change-backlog.md).
 
 - [Current status, fixed v1.4.0 work list and scope decisions](current-state.md)
 
@@ -26,7 +26,7 @@ Use current guides below. For each procedure, check its stated implementation li
 - [Protected backup retention evidence](maintenance/c09-backup-retention.md)
 - [Linux paired backup and recovery evidence](maintenance/c17-linux-paired-backup.md)
 - [Documentation ownership and maintenance](documentation-map.md)
-- [Code change backlog](code-change-backlog.md)
+- [Completed C01–C20 code backlog (history)](history/code-change-backlog.md)
 - [Release notes](../RELEASE_NOTES.md) and [third-party notices](../THIRD_PARTY_NOTICES.md)
 
 ## Install and protect data
