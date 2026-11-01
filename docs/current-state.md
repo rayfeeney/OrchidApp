@@ -18,6 +18,8 @@ MySqlConnector GHSA-473q-m89c-ghf8: launcher 2.5.0 and Web transitive 2.4.0 upda
 
 ## Fixed work list
 
+Individual plant photo deletion: source implementation adds explicit confirmation/cancel, ownership and ended-plant checks, main-image replacement and database-first file cleanup with retained recovery evidence. No SQL migration/settings change. See [photo handling](photo-handling.md). Validation results are recorded in [deletion evidence](maintenance/plant-photo-deletion.md). Pending: hosted Windows/Linux CI, installed Windows/Pi/mobile browser acceptance, and corresponding updates/rendered review of the Windows 03/Linux 02 Word guides. Existing gallery screenshots remain useful but omit the new delete panel; do not treat them as complete deletion instructions.
+
 1. **Procure the new Pi.**
 2. **Complete — developer setup on the new PC (C16).** Owner accepted on 1 November 2026: schema-only database creation, source startup/basic database use, photo testing and libvips 8.18.2 native checks passed. The actual hook/schema export passed in a temporary Git fixture without changing the original index or schema. The setup guide is corrected; see [C16 closure evidence](maintenance/c16-developer-setup.md#closure-1-november-2026).
 3. **Complete — reconcile status documents (1 November 2026).** C01–C20 code work is closed, including C05 and C16 within their agreed scopes. The backlog is archived with original evidence retained; current references point here for remaining release/operational work.

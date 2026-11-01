@@ -6,6 +6,12 @@ This is the single list of deployment actions arising from C01–C20. Use the Wi
 
 ## How to use and maintain this list
 
+### Individual photo deletion (subsequent C15/C19 maintenance)
+
+- Windows and Linux: deploy the rebuilt app; no additional migration or configuration is required. Preserve the existing C19 schema requirement. On a disposable plant verify confirmation/Cancel, deletion of a main and last photo, unchanged other photos/history, and ended-plant rejection. Check `/health/ready` after adoption.
+- Both platforms: preserve `.photo-recovery` in paired backups. On cleanup/uncertain-outcome warnings stop writers and follow [photo recovery review](photo-handling.md); do not blindly retry deletion or clear journals. Retained deletion files may be referenced (rollback/unknown outcome) or unreferenced (committed metadata removal).
+- Release acceptance: run storage and isolated SQL/HTTP checks, record hosted Windows/Linux CI, then installed Windows/Pi browser acceptance. Word guide updates and device acceptance remain pending in [current status](current-state.md). Existing C15/C19 coverage now includes individual deletion; no historical migration changes.
+
 - For each release, record the exact version/commit, target machine and platform below. Tick each applicable action and record evidence; mark inapplicable actions with a reason. A tick from another machine/release does not carry forward automatically.
 - One-time configuration is needed on first adoption or when the setting/path changes. Every-upgrade checks must still be repeated. Failure/recovery actions apply only when that condition occurs.
 - Each remaining C-item implementation must update its coverage row and the applicable platform steps in the same change. Record actual migration filenames, supported upgrade origins, changed settings/defaults and recovery instructions. Do not leave deployment consequences only in release notes or a delivery changelog.

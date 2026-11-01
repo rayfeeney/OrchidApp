@@ -25,7 +25,7 @@ function Read-PhotoRecovery {
                 if($record.version -ne 1 -or -not $record.state -or -not $record.files){throw "Invalid recovery journal: $($journal.Name)."}
                 foreach($relative in $record.files) {
                     $relative=([string]$relative).Replace('\','/')
-                    if($relative -cnotmatch '\A(plants|taxa)/([0-9]+)/([a-f0-9]{32}(?:_thumb)?\.jpg(?:\.tmp)?)\z'){throw "Unsafe recovery path in $($journal.Name). Preserve it for review."}
+                    if($relative -cnotmatch '\A(plants|taxa)/([0-9]+)/([a-zA-Z0-9_-]+\.(?i:jpg|jpeg|png|webp)(?:\.tmp)?)\z'){throw "Unsafe recovery path in $($journal.Name). Preserve it for review."}
                     $entity=$Matches[1];$id=$Matches[2];$name=$Matches[3]
                     $table=if($entity -eq 'plants'){'plantphoto'}else{'taxonphoto'}
                     $key=if($entity -eq 'plants'){'plantId'}else{'taxonId'}
