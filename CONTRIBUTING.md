@@ -33,7 +33,7 @@ Use shared Razor components and preserve validated local return destinations on 
 
 ## Documentation and history
 
-Follow [AGENTS.md](AGENTS.md). Every code, SQL, config, dependency, script or packaging change requires a documentation impact check and affected guide updates in the same change. State which docs changed, or specifically why none were affected. Keep new supporting reports under docs/. Maintain [the code backlog](docs/code-change-backlog.md) for unresolved gaps and actual closure evidence.
+Follow [AGENTS.md](AGENTS.md). Every code, SQL, config, dependency, script or packaging change requires a documentation impact check and affected guide updates in the same change. State which docs changed, or specifically why none were affected. Keep new supporting reports under docs/. Record new unresolved gaps and remaining acceptance in [the current work list](docs/current-state.md). The [completed C01–C20 backlog](docs/history/code-change-backlog.md) preserves implementation and closure evidence.
 
 Move superseded/inapplicable docs to docs/history/, preserve their context and update current incoming links. Do not delete recent change evidence simply because its intermediate behaviour is superseded. Maintain shared content in both platform Word guides together, preserve useful screenshots and render/inspect all pages after edits. Word originals are the maintained sources; historic release PDFs are not current editing masters. Preserve licence texts and required notices.
 
