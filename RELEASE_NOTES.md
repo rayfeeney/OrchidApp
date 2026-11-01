@@ -1,5 +1,9 @@
 # Release notes
 
+## MySqlConnector security maintenance
+
+The Web application and Windows launcher now reference MySqlConnector 2.6.1 to address [GHSA-473q-m89c-ghf8](https://github.com/advisories/GHSA-473q-m89c-ghf8), a password-disclosure issue in specific remote TLS configurations. Rebuild and deploy both Windows components or the Linux Web payload through the normal release process; source changes do not patch existing installations. No migration or new setting is required. See [validation and adoption](docs/maintenance/mysqlconnector-security.md) and the [release checklist](docs/upgrade-checklist.md#mysqlconnector-security-update).
+
 ## Historical Linux package, actions and recovery checks
 
 The historical CI tooling now builds/executes actual self-contained Linux ARM64 packages, plant actions, app-only replacement and production paired recovery around the existing verified database admission. The published specimen and migration payloads are unchanged. Extended hosted acceptance needs a run after this delivery is applied; real Pi/systemd/provider/browser and Windows installer acceptance remain separate. See [scope/results](docs/maintenance/historical-linux-application-recovery.md).

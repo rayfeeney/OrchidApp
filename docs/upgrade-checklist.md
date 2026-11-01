@@ -198,3 +198,11 @@ CI owners: the policy script's expected failing publish must not leave a nonzero
 CI owners: historical acceptance retains the production paired CLI's sanitized ERROR summary when backup/restore fails; raw native diagnostics, credentials and backup contents remain excluded from uploaded artifacts. A failed pre-upgrade backup stops migration/application replacement. This test-reporting change requires no operator/database setting or live Pi action.
 
 Hosted CI fixture setup additionally assigns/verifies copied admin configuration as root:root mode 600 after a deliberate foreign-owner probe. Do not relax the production backup protected-file requirement. This is isolated fixture provisioning and requires no live configuration changes.
+
+## MySqlConnector security update
+
+This subsequent security maintenance addresses GHSA-473q-m89c-ghf8; C01–C20 remain closed. See [evidence and limits](maintenance/mysqlconnector-security.md).
+
+- [ ] **Windows release and adoption:** build the complete Web and launcher payloads resolving MySqlConnector 2.6.1; verify both components and package inventory, then install through the normal stopped-app/verified-backup procedure. Check database-backed save/reopen, photos and readiness after restart.
+- [ ] **Linux/Pi release and adoption:** rebuild the linux-arm64 Web payload resolving MySqlConnector 2.6.1; retain the normal paired backup and stopped-writer upgrade process. Verify package identity, restart, database-backed save/reopen, photos and readiness.
+- [ ] **Both platforms:** retain revision/package identity and dependency-audit/CI evidence. No database migration/recreation or new setting is required; preserve TLS settings and private configuration. Old rollback binaries remain affected; recovery must retain matching application/configuration/data without treating that rollback as a security fix.
