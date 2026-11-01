@@ -200,6 +200,9 @@ jobs:
       - name: Install native photo dependencies
         run: sudo apt-get update && sudo apt-get install -y libvips-tools
 
+      - name: Check individual photo deletion storage safety
+        run: dotnet run --configuration Release --project tests/PhotoDeletion.Checks/PhotoDeletion.Checks.csproj
+
       - name: Check native photo save and reopen
         env:
           Storage__UploadRoot: ${{ runner.temp }}/orchidapp-native-check
@@ -328,6 +331,9 @@ jobs:
 
       - name: Check direct Development startup configuration
         run: dotnet run --configuration Release --project tests/DevelopmentConfiguration.Checks/DevelopmentConfiguration.Checks.csproj
+
+      - name: Check individual photo deletion storage safety
+        run: dotnet run --configuration Release --project tests/PhotoDeletion.Checks/PhotoDeletion.Checks.csproj
 
       - name: Check native photo save and reopen
         shell: pwsh

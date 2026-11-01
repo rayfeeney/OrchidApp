@@ -1,5 +1,15 @@
 # Photo handling and recovery
 
+## Delete an individual plant photo
+
+In a plant's Photos gallery, open the photo, choose **Delete this photo**, then **Delete permanently** in the confirmation panel. **Cancel** returns to the same photo without changing anything. Ended plants remain read-only. Inactive taxonomy retains the gallery's existing edit policy.
+
+Deletion removes only the selected active photo's database metadata, main image and optional thumbnail. The observation and other photos remain. Deleting the main image makes the newest remaining active photo the main image (photo ID breaks timestamp ties). Deleting the last photo leaves an empty gallery. Missing historical files do not block deletion. Unsafe names, linked paths and files referenced by other plant-photo rows are refused.
+
+The existing parent-row transaction lock serializes deletion with plant lifecycle/photo writes. The server requires a confirmed POST, normal anti-forgery token and matching plant/photo IDs. Before changing metadata it records file paths in `.photo-recovery`. Files are deleted only after confirmed database commit; rollback leaves them intact. A crash or uncertain commit retains files and the journal for the read-only review procedure below. A committed deletion with failed file cleanup removes the photo from the gallery and shows a recovery warning; it does not claim that all files were deleted. Review the journal against SQL before removing any retained files. Recovery reports now accept safe legacy image basenames as well as generated GUID names.
+
+No schema migration or new setting is required. Back up SQL and uploads together as usual. Automated storage checks: `dotnet run --configuration Release --project tests/PhotoDeletion.Checks/PhotoDeletion.Checks.csproj` (Windows/Linux CI). The existing isolated lifecycle database runner includes deletion HTTP checks. Installed Windows/Pi browser acceptance and shared Word-guide screenshots remain pending in [current status](current-state.md).
+
 New plant and taxon photos are rotated upright before either JPEG is generated. `MediaIngestion:StripGpsMetadata` defaults to `true`: GPS, EXIF camera fields, XMP, IPTC and comments are removed from the saved photo and thumbnail. ICC colour profiles are retained. Setting it to `false` deliberately retains source metadata, while still normalizing orientation. Audit any explicit override before deploying. Existing photos are not rewritten and original uploads are not retained separately.
 
 Uploads are limited to 10 MiB and 40 million pixels; detected animated/multipage images are rejected. Defaults remain a maximum 3072-pixel main image, JPEG quality 90, and a maximum 300-pixel thumbnail. Smaller images are not enlarged; transparency becomes white. Both outputs must succeed. There is no fallback that reports a failed thumbnail as success.
