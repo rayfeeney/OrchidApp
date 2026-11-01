@@ -6,6 +6,8 @@ Use current guides below. For each procedure, check its stated implementation li
 
 ## Develop and maintain
 
+- [MySqlConnector security update (GHSA-473q-m89c-ghf8)](maintenance/mysqlconnector-security.md)
+
 - [Developer machine and first run](development-setup.md), with [C16 evidence and remaining acceptance](maintenance/c16-developer-setup.md)
 - [Contributing and validation](../CONTRIBUTING.md)
 - [Reproducible feature checks and release evidence](testing-evidence.md), with [C20 validation](maintenance/c20-reproducible-checks.md)
