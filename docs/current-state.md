@@ -32,7 +32,7 @@ Individual plant photo deletion: source implementation adds explicit confirmatio
 10. **Monitor freshness and send failure alerts through GMX.** Confirm new scheduled backup/upload and restoration of that exact backup. Agree recipient and maximum age; report failed/overdue stages and last successful recovery point; test sending. Outgoing GMX configuration remains to be validated. Decide whether independent monitoring is needed when both Pis are offline.
 11. **Complete operational acceptance.** Reboot/autostart, service/file permissions, usual browsers/devices and photo upload; Home Screen/installed web-app behavior where used; monitoring feeds/charts and scheduled backups during takeover.
 12. **Document and rehearse takeover.** Isolate the former live Pi, switch access, enable required jobs and ensure only one Pi is live. Repair the former live Pi and establish it as the new warm standby; no automatic switch-back.
-13. **Establish the v1.4.0 Windows baseline.** Actual installer on a clean PC; representative data, functionality/photos/restart/backup/recovery, and identify/retest the previously reported but unspecified Windows bugs. Record commit/checksum/signing status/results. Preserve a sanitised specimen, installer and records in GitHub for future upgrade/recovery CI. Earlier Windows upgrade paths are outside scope.
+13. **Establish the v1.4.0 Windows baseline.** The [baseline acceptance record](testing/Windows-v1.4.0-Baseline-Acceptance.md) captures release identity, the owner-confirmed clean install, the preserved specimen, restart evidence and known defects. Independent restoration remains outstanding. Earlier Windows upgrade paths are outside scope.
 
 ## Scope and accepted records
 
