@@ -6,7 +6,7 @@ This reference describes the .NET 8 Razor Pages app, MariaDB data model and Wind
 
 The database owns structural integrity and intended lifecycle operations. The app collects/validates input and orchestrates workflows. Tooling exports schema, builds packages and performs checks. Operators configure trusted access, back up durable state and validate recovery. A rule is not proven merely because it is assigned to a layer.
 
-Structural lifecycle operations use stored procedures; narrative writes use EF Core. C13 adds rollback handlers and caller-preserving savepoints to move/edit/remove location, split, propagation and hero-photo selection. Normal plant POST handlers hold the same parent-row lock until their database transaction completes, coordinating them with manual closure. Direct administrative writes remain outside this protocol. [C11â€“C14](code-change-backlog.md) track implementation and platform acceptance; see [C13 evidence](maintenance/c13-structural-transactions.md).
+Structural lifecycle operations use stored procedures; narrative writes use EF Core. C13 adds rollback handlers and caller-preserving savepoints to move/edit/remove location, split, propagation and hero-photo selection. Normal plant POST handlers hold the same parent-row lock until their database transaction completes, coordinating them with manual closure. Direct administrative writes remain outside this protocol. [C11â€“C14](history/code-change-backlog.md) track implementation and platform acceptance; see [C13 evidence](maintenance/c13-structural-transactions.md).
 
 ## Configuration and readiness
 
@@ -36,7 +36,7 @@ Creation now validates schema/bootstrap.json, imports required seeds in dependen
 
 See [migration runners](migration-runners.md) for exact baseline exceptions, parameters, pending-marker recovery and intentional backup/export differences. These rules validate history, not universal live schema drift; DDL failures can leave partial state. Cooperating runners use the existing schemaversion unique key and pending marker; no new schema table or rewritten applied history is needed.
 
-Schema and checksum files are generated; do not edit them manually. The hook exports/stages the configured development DB on every commit. CI reconstructs/exports a schema and is now configured for C04 policy and disposable runner checks. Broader seeded application first-use/upgrade acceptance and representative history replay remain separate. See [contributor checks](../CONTRIBUTING.md) and [C05](code-change-backlog.md#c05).
+Schema and checksum files are generated; do not edit them manually. The hook exports/stages the configured development DB on every commit. CI reconstructs/exports a schema and is now configured for C04 policy and disposable runner checks. Broader seeded application first-use/upgrade acceptance and representative history replay remain separate. See [contributor checks](../CONTRIBUTING.md) and [C05](history/code-change-backlog.md#c05).
 
 ## Lifecycle and writes
 
@@ -72,4 +72,4 @@ Keep trusted-network access: there is no built-in multi-user authentication, and
 
 Directory.Build.props currently carries public version 1.3.0 and internal build metadata. Launcher version metadata drives Windows packaging/operational decisions; matching web metadata is for display/diagnostics. Package scripts update versions before building; empty version input increments the internal build, while explicit input resets it. Do not derive app version from user data or invent a release date from a documentation review.
 
-CI cross-publishes linux-arm64, reconstructs/exports a MariaDB 10.11 schema and builds a Windows package. It does not run all executable feature check projects, prove schema-only seeded first run, test all migration history, build the Inno installer or perform device recovery. Requirements and acceptance remain in [the code backlog](code-change-backlog.md). Code changes must update the affected [document owner](documentation-map.md) in the same change.
+CI cross-publishes linux-arm64, reconstructs/exports a MariaDB 10.11 schema and builds a Windows package. CI includes curated feature checks, schema-only seeded creation/future-migration checks and Inno installer compilation. It does not test every historical migration or prove real device installation/recovery; see [testing and evidence](testing-evidence.md). Completed implementation is recorded in the [archived backlog](history/code-change-backlog.md); remaining installed acceptance is in the [current work list](current-state.md). Code changes must update the affected [document owner](documentation-map.md) in the same change.

@@ -11,6 +11,7 @@
     <PackageReference Include="HtmlSanitizer" Version="9.2.1039" />
     <PackageReference Include="NetVips" Version="2.4.2" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
+    <PackageReference Include="MySqlConnector" Version="2.6.1" />
     <PackageReference Include="SkiaSharp" Version="3.119.2" />
     <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="3.119.2" />
   </ItemGroup>

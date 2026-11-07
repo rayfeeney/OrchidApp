@@ -20,6 +20,7 @@ public class IndexModel : PageModel
     private readonly PhotoPipeline _photoPipeline;
     private readonly ILogger<IndexModel> _logger;
     private readonly PhotoUrlService _photoUrlService;
+    private readonly PhotoWriteBatch _photoWriteBatch;
 
     public IndexModel(
         OrchidDbContext context,
@@ -27,7 +28,8 @@ public class IndexModel : PageModel
         PhotoPipeline photoPipeline,
         StoragePathService storagePathService,
         ILogger<IndexModel> logger,
-        PhotoUrlService photoUrlService)
+        PhotoUrlService photoUrlService,
+        PhotoWriteBatch photoWriteBatch)
     {
         _context = context;
         _resolver = resolver;
@@ -35,6 +37,7 @@ public class IndexModel : PageModel
         _storagePathService = storagePathService;
         _logger = logger;
         _photoUrlService = photoUrlService;
+        _photoWriteBatch = photoWriteBatch;
     }
 
     public int PlantId { get; private set; }
@@ -102,6 +105,49 @@ public class IndexModel : PageModel
             ct);
 
         return RedirectToPage(new { plantId, focusPhotoId = photoId, returnUrl = ReturnUrl });
+    }
+
+    public async Task<IActionResult> OnPostDeleteAsync(int plantId, int photoId, bool confirmDelete, CancellationToken ct)
+    {
+        // PlantWriteFilter holds the parent row lock and enforces ended-plant policy.
+        if (!confirmDelete)
+            return RedirectToPage(new { plantId, focusPhotoId = photoId, returnUrl = ReturnUrl });
+        var photo = await _context.PlantPhotos.SingleOrDefaultAsync(
+            p => p.PlantId == plantId && p.PlantPhotoId == photoId && p.IsActive, ct);
+        if (photo == null) return NotFound();
+
+        try
+        {
+            var names = new[] { photo.FileName, photo.ThumbnailFileName }
+                .Where(name => !string.IsNullOrWhiteSpace(name)).Select(name => name!).Distinct().ToArray();
+            // Do not remove a file shared by other metadata, including inactive rows.
+            if (await _context.PlantPhotos.AnyAsync(p => p.PlantId == plantId && p.PlantPhotoId != photoId &&
+                (names.Contains(p.FileName) || names.Contains(p.ThumbnailFileName!)), ct))
+                throw new InvalidOperationException("Photo files are shared by another record.");
+            _photoWriteBatch.TrackDeletion(plantId, names);
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or IOException or UnauthorizedAccessException)
+        {
+            _logger.LogWarning(ex, "Photo deletion preparation failed for plant {PlantId}, photo {PhotoId}", plantId, photoId);
+            ModelState.AddModelError(string.Empty, "The photo could not be deleted. No photo files were removed. If the problem persists, review the application log.");
+            PlantId = plantId;
+            FocusPhotoId = photoId;
+            await LoadAsync(plantId, photoId, ct);
+            return Page();
+        }
+        _context.PlantPhotos.Remove(photo);
+        await _context.SaveChangesAsync(ct);
+        if (photo.IsHero)
+        {
+            var replacement = await _context.PlantPhotos.Where(p => p.PlantId == plantId && p.IsActive)
+                .OrderByDescending(p => p.CreatedDateTime).ThenByDescending(p => p.PlantPhotoId).FirstOrDefaultAsync(ct);
+            if (replacement != null)
+            {
+                replacement.IsHero = true;
+                await _context.SaveChangesAsync(ct);
+            }
+        }
+        return RedirectToPage(new { plantId, returnUrl = ReturnUrl });
     }
 
     public async Task<IActionResult> OnPostUploadAsync(int plantId, string? returnUrl, CancellationToken ct)

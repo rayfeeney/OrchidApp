@@ -11,7 +11,7 @@ Baseline: supplied OrchidApp-clean.zip. Documentation corrected 24 October 2026.
 - General installation is independent of the owner's bespoke monitoring. The local monitoring guide describes actual calculations and pending explicit installation opt-in; no imaginary setting or external feed setup is required of other users.
 - Linux and Windows operating guides describe known backup/restore/creation limits, select/preserve exact recovery inputs and avoid promising unimplemented safeguards. Browser client setup is separate from incident investigations.
 - Seven Word originals were corrected while preserving all embedded screenshots. Current release notes identify the v1.3.0 source without inventing a release date; historical releases, superseded recent deliveries and fixed evidence remain in history.
-- [The 20-item code backlog](../code-change-backlog.md) records open fixes, affected files, priority, dependencies and acceptance. Application code, SQL, scripts, config and CI are unchanged. The bundled descriptive third-party notice matches the root note; licence texts are unchanged.
+- [The 20-item code backlog](../history/code-change-backlog.md) records open fixes, affected files, priority, dependencies and acceptance. Application code, SQL, scripts, config and CI are unchanged. The bundled descriptive third-party notice matches the root note; licence texts are unchanged.
 
 ## Validation
 

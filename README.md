@@ -6,7 +6,7 @@ OrchidApp is a self-hosted orchid collection manager for plants, taxonomy, locat
 
 - Users: [installation, first-use, backup and recovery guides](docs/index.md).
 - Developers: [development machine and first run](docs/development-setup.md), then [contributing](CONTRIBUTING.md).
-- Maintainers: [documentation ownership](docs/documentation-map.md), [database creation contract](docs/database-creation.md) and [open code changes](docs/code-change-backlog.md).
+- Maintainers: [documentation ownership](docs/documentation-map.md), [database creation contract](docs/database-creation.md) and [current work list](docs/current-state.md).
 - Releases: [release notes](RELEASE_NOTES.md). Retired instructions and recent superseded deliveries are preserved in [documentation history](docs/history/index.md).
 
 ## Platforms and scope
@@ -28,7 +28,7 @@ The data model assigns structural lifecycle work to stored procedures and uses E
 
 A new database must be built from database/schema/ and required reference seeds alone. Historical migrations are not a creation mechanism. Baseline metadata must permit only subsequent changes to be applied later. The [creation contract](docs/database-creation.md) identifies current automation gaps; do not replay migrations to work around them.
 
-Back up and verify a recovery path before upgrades. Application binaries are replaceable; the database, photos, configuration and settings are durable data. Windows legacy migration and settings restore have [known pending fixes](docs/code-change-backlog.md); user guides identify those limits rather than promise validated recovery.
+Back up and verify a recovery path before upgrades. Application binaries are replaceable; the database, photos, configuration and settings are durable data. The [C01–C20 code changes are complete](docs/history/code-change-backlog.md). Remaining installed release and recovery acceptance is tracked in the [current work list](docs/current-state.md); earlier Windows upgrade paths are outside the agreed v1.4.0 scope.
 
 ## Security and licence
 

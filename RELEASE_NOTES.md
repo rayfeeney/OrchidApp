@@ -1,5 +1,9 @@
 # Release notes
 
+## MySqlConnector security maintenance
+
+The Web application and Windows launcher now reference MySqlConnector 2.6.1 to address [GHSA-473q-m89c-ghf8](https://github.com/advisories/GHSA-473q-m89c-ghf8), a password-disclosure issue in specific remote TLS configurations. Rebuild and deploy both Windows components or the Linux Web payload through the normal release process; source changes do not patch existing installations. No migration or new setting is required. See [validation and adoption](docs/maintenance/mysqlconnector-security.md) and the [release checklist](docs/upgrade-checklist.md#mysqlconnector-security-update).
+
 ## Historical Linux package, actions and recovery checks
 
 The historical CI tooling now builds/executes actual self-contained Linux ARM64 packages, plant actions, app-only replacement and production paired recovery around the existing verified database admission. The published specimen and migration payloads are unchanged. Extended hosted acceptance needs a run after this delivery is applied; real Pi/systemd/provider/browser and Windows installer acceptance remain separate. See [scope/results](docs/maintenance/historical-linux-application-recovery.md).
@@ -120,7 +124,7 @@ Monitoring requires explicit Monitoring:Enabled=true and Linux ARM/ARM64. Distri
 
 The supplied source declares public version 1.3.0 in Directory.Build.props. A verified public release date/change manifest was not supplied; this entry does not invent a release date or certify an existing installer. The source includes name search, formatted genus/taxon notes, client manifest/icons and recent bespoke greenhouse changes. The latter apply only to the owner's installation; explicit installation isolation remains pending code work.
 
-This documentation correction clarifies schema-only new-database creation, later-migration scope, developer prerequisites, current recovery limits and document ownership. It adds the [open code backlog](docs/code-change-backlog.md), [maintenance rules](AGENTS.md), corrected platform guidance and [history](docs/history/index.md). No application/script/SQL/CI fixes or new release binaries are included. Runtime/setup/restore/device validation remains necessary.
+This documentation correction clarifies schema-only new-database creation, later-migration scope, developer prerequisites, current recovery limits and document ownership. It adds the [open code backlog](docs/history/code-change-backlog.md), [maintenance rules](AGENTS.md), corrected platform guidance and [history](docs/history/index.md). No application/script/SQL/CI fixes or new release binaries are included. Runtime/setup/restore/device validation remains necessary.
 
 ## v1.2.0 Windows installer model 2026-05-24
 

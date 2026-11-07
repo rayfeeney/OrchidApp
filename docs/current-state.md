@@ -10,7 +10,11 @@ The owner designates this source baseline for the planned v1.4.0 release; that i
 
 ## C01–C20 status
 
-All twenty items have implementation. C05 is complete within its agreed current-schema seeded creation/future-migration CI scope. C16 implementation and Windows/Linux CI passed; fresh new-PC developer acceptance remains task 2. Other real installed acceptance remains explicit in the [backlog](code-change-backlog.md) and [upgrade checklist](upgrade-checklist.md). Source/CI success is not installed acceptance.
+All C01–C20 code changes are complete within the agreed scope; the [completed backlog](history/code-change-backlog.md) is archived as historical evidence. C05 is complete within its agreed current-schema seeded creation/future-migration CI scope. C16 is complete: implementation and Windows/Linux CI passed, and the owner accepted the clean Windows developer-PC setup on 1 November 2026. Remaining installed release and operational acceptance is tracked in the fixed work list below and the [upgrade checklist](upgrade-checklist.md). Source/CI success is not installed acceptance.
+
+## Subsequent security maintenance
+
+MySqlConnector GHSA-473q-m89c-ghf8: launcher 2.5.0 and Web transitive 2.4.0 updated in source to 2.6.1. Local build, configuration/policy checks, dependency audit and all 186 isolated SQL/HTTP tests passed. GitHub CI and rebuilt installed release acceptance remain pending. See [security update evidence and adoption](maintenance/mysqlconnector-security.md). This is new maintenance after closure of C01–C20.
 
 ## Fixed work list
 

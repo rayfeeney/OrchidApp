@@ -68,6 +68,76 @@ class Photos(unittest.TestCase):
         self.assertEqual(sql(f'SELECT COUNT(*) FROM plantphoto WHERE plantId={self.p} AND isHero=1;'),['1'])
         self.assertEqual(self.ready()[0],200)
 
+    def photo_rows(self):
+        return [row.split('\t') for row in sql(f'SELECT plantPhotoId,fileName,thumbnailFileName FROM plantphoto WHERE plantId={self.p} ORDER BY isHero DESC,plantPhotoId;')]
+
+    def test_delete_confirmation_cancel_and_antiforgery(self):
+        self.upload();photo=self.photo_rows()[0];before=self.snapshot()
+        page=self.opener.open(self.base+f'/Plants/Photos/{self.p}').read().decode()
+        self.assertIn('Permanently delete this photo',page);self.assertIn('Cancel',page)
+        self.assertEqual(self.snapshot(),before) # Opening confirmation is read-only.
+        self.assertEqual(self.post(f'/Plants/Photos/{self.p}?handler=Delete',{'photoId':photo[0]})[0],200)
+        self.assertEqual(self.snapshot(),before)
+        request=urllib.request.Request(self.base+f'/Plants/Photos/{self.p}?handler=Delete',urllib.parse.urlencode({'photoId':photo[0],'confirmDelete':'true'}).encode())
+        with self.assertRaises(urllib.error.HTTPError) as error:self.opener.open(request)
+        self.assertEqual(error.exception.code,400);self.assertEqual(self.snapshot(),before)
+
+    def test_delete_hero_then_last_photo_preserves_observation(self):
+        self.upload(2);rows=self.photo_rows();folder=self.root/'plants'/str(self.p)
+        self.assertEqual(self.post(f'/Plants/Photos/{self.p}?handler=Delete',{'photoId':rows[0][0],'confirmDelete':'true'})[0],200)
+        self.assertEqual(sql(f'SELECT plantPhotoId FROM plantphoto WHERE plantId={self.p} AND isHero=1;'),[rows[1][0]])
+        for name in rows[0][1:]:self.assertFalse((folder/name).exists())
+        for name in rows[1][1:]:self.assertTrue((folder/name).exists())
+        self.assertEqual(self.post(f'/Plants/Photos/{self.p}?handler=Delete',{'photoId':rows[1][0],'confirmDelete':'true'})[0],200)
+        self.assertEqual(self.photo_rows(),[])
+        self.assertEqual(sql(f'SELECT COUNT(*) FROM plantevent WHERE plantId={self.p};'),['1'])
+        self.assertEqual(self.ready()[0],200)
+
+    def test_delete_missing_files(self):
+        self.upload();row=self.photo_rows()[0]
+        for name in row[1:]:(self.root/'plants'/str(self.p)/name).unlink()
+        status,text=self.post(f'/Plants/Photos/{self.p}?handler=Delete',{'photoId':row[0],'confirmDelete':'true'})
+        self.assertEqual(status,200);self.assertIn('Photo deleted.',text);self.assertEqual(self.photo_rows(),[])
+
+    def test_delete_wrong_plant_and_route_override(self):
+        self.upload();row=self.photo_rows()[0];before=self.snapshot()
+        self.assertEqual(self.post(f'/Plants/Photos/{self.p}?handler=Delete',{'photoId':int(row[0])+100000,'confirmDelete':'true'})[0],404)
+        self.assertEqual(self.post(f'/Plants/Photos/{self.p}?handler=Delete',{'plantId':self.p+1,'photoId':row[0],'confirmDelete':'true'})[0],400)
+        self.assertEqual(self.snapshot(),before)
+
+    def test_delete_other_plant_photo_rejected(self):
+        self.upload();row=self.photo_rows()[0]
+        sql(f"CALL spAddPlant({self.t},'2020-01-01','fixture','other plant','fixture');")
+        other=int(sql('SELECT MAX(plantId) FROM plant;')[0]);before=self.snapshot()
+        self.assertEqual(self.post(f'/Plants/Photos/{other}?handler=Delete',{'photoId':row[0],'confirmDelete':'true'})[0],404)
+        self.assertEqual(self.snapshot(),before)
+
+    def test_delete_shared_and_unsafe_filenames_rejected(self):
+        self.upload(2);rows=self.photo_rows()
+        sql(f"UPDATE plantphoto SET thumbnailFileName='{rows[0][1]}' WHERE plantPhotoId={rows[1][0]};")
+        before=self.snapshot()
+        status,text=self.post(f'/Plants/Photos/{self.p}?handler=Delete',{'photoId':rows[0][0],'confirmDelete':'true'})
+        self.assertEqual(status,200);self.assertIn('could not be deleted',text);self.assertEqual(self.snapshot(),before)
+        sql(f"UPDATE plantphoto SET thumbnailFileName='{rows[1][2]}' WHERE plantPhotoId={rows[1][0]};")
+        sql(f"UPDATE plantphoto SET fileName='../outside.jpg' WHERE plantPhotoId={rows[0][0]};")
+        before=self.snapshot()
+        status,text=self.post(f'/Plants/Photos/{self.p}?handler=Delete',{'photoId':rows[0][0],'confirmDelete':'true'})
+        self.assertEqual(status,200);self.assertIn('could not be deleted',text);self.assertEqual(self.snapshot(),before)
+        sql(f"UPDATE plantphoto SET fileName='{rows[0][1]}' WHERE plantPhotoId={rows[0][0]};")
+
+    def test_delete_database_failure_retains_metadata_and_files(self):
+        self.upload();row=self.photo_rows()[0];before=self.snapshot()
+        sql("CREATE TRIGGER c19_failure BEFORE DELETE ON plantphoto FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='injected deletion failure';")
+        status,text=self.post(f'/Plants/Photos/{self.p}?handler=Delete',{'photoId':row[0],'confirmDelete':'true'})
+        self.assertEqual(status,200);self.assertIn('could not be deleted',text);self.assertEqual(self.snapshot(),before)
+
+    def test_delete_ended_plant_rejected(self):
+        self.upload();row=self.photo_rows()[0]
+        sql(f"UPDATE plant SET endDate='2025-01-01' WHERE plantId={self.p};")
+        before=self.snapshot()
+        self.assertEqual(self.post(f'/Plants/Photos/{self.p}?handler=Delete',{'photoId':row[0],'confirmDelete':'true'})[0],400)
+        self.assertEqual(self.snapshot(),before)
+
     def test_second_photo_failure_rolls_back_entire_batch(self):
         before=self.snapshot()
         status,text=self.post(f'/Plants/Photos/{self.p}?handler=Upload',files=[('UploadFiles','valid.jpg',self.image),('UploadFiles','bad.jpg',b'not an image')])

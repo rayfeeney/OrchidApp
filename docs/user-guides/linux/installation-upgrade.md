@@ -6,7 +6,7 @@ Fresh creation uses canonical schema, required seeds and the generated baseline 
 
 ## Prerequisites and target
 
-Use a maintainer-validated Raspberry Pi OS/Linux release and architecture, .NET 8 SDK for source publishing, MariaDB 10.11 server/client tools, PowerShell 7+, Git, native libvips image dependencies and systemd. Paired data backups also need Python 3.9+, Bash and rclone; full application backups need rsync, tar/gzip and an off-device copy route such as SCP. Package names/repositories differ by OS image; no universal apt list has been validated by this documentation cleanup. Track repeatable platform setup in [C16](../../code-change-backlog.md#c16).
+Use a maintainer-validated Raspberry Pi OS/Linux release and architecture, .NET 8 SDK for source publishing, MariaDB 10.11 server/client tools, PowerShell 7+, Git, native libvips image dependencies and systemd. Paired data backups also need Python 3.9+, Bash and rclone; full application backups need rsync, tar/gzip and an off-device copy route such as SCP. Package names/repositories differ by OS image; no universal apt list has been validated by this documentation cleanup. Track repeatable platform setup in [C16](../../history/code-change-backlog.md#c16).
 
 Choose an application service account, app root (examples /opt/orchidapp), external configuration directory (/etc/orchidapp), MariaDB endpoint/account and uploads path. Use the same values throughout. Install/configure MariaDB with utf8mb4 and utf8mb4_unicode_ci; verify actual server/database settings with your administrative tools. Distribution paths such as /etc/mysql and option group mysqld are normal MariaDB compatibility names.
 
@@ -95,7 +95,7 @@ Publish as above, require success, start the app and repeat live checks. Resume 
 
 Follow the [routine backup/restore runbook](OrchidApp-MariaDB-Backup-and-Restore-Runbook.md) for account/path/remotes/scheduling checks and explicit backup selection. A fresh-source schema creation is different from restoring a backup. Recovery must not route a restored database through the destructive fresh-creation step. Restore app/configuration/service definitions and the compatible version, then publish/start only; apply only explicitly required subsequent migrations after a verified recovery copy.
 
-For failures, inspect service/application logs without printing secret files into support output. Check selected endpoint, variable names, upload permissions and native libvips availability. Source-only validation and this guide do not certify a fresh machine or a backup restore; track acceptance with [C01–C05, C16/C17](../../code-change-backlog.md).
+For failures, inspect service/application logs without printing secret files into support output. Check selected endpoint, variable names, upload permissions and native libvips availability. Source-only validation and this guide do not certify a fresh machine or a backup restore; track remaining installed acceptance in the [current work list](../../current-state.md).
 
 ## C15/C19 photo readiness after upgrade
 

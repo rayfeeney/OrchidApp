@@ -4,8 +4,8 @@ Use one current owner for each subject. Other documents link to that owner rathe
 
 | Subject | Current owner | Related material |
 | --- | --- | --- |
-| Cross-platform upgrade actions and per-release completion | [C01–C20 upgrade checklist](upgrade-checklist.md) | Platform contracts/runbooks below; backlog owns implementation status |
-| Current baseline, fixed acceptance work list and scope decisions | [Current state](current-state.md) | Backlog owns C-item implementation detail; upgrade checklist owns platform actions |
+| Cross-platform upgrade actions and per-release completion | [C01–C20 upgrade checklist](upgrade-checklist.md) | Platform contracts/runbooks below; current state owns remaining acceptance |
+| Current baseline, fixed acceptance work list and scope decisions | [Current state](current-state.md) | Archived backlog preserves completed C-item implementation detail; upgrade checklist owns platform actions |
 | Project overview and starting links | [README](../README.md) | [Documentation index](index.md) |
 | Development machine and first run | [Developer setup](development-setup.md) | [Contributing](../CONTRIBUTING.md), [C16 evidence](maintenance/c16-developer-setup.md) |
 | Fresh schema creation and later migrations | [Database creation](database-creation.md) | [Architecture](architecture.md), contributor workflow, [C05 CI evidence](maintenance/c05-ci-database-acceptance.md) |
@@ -22,7 +22,7 @@ Use one current owner for each subject. Other documents link to that owner rathe
 | Plant-event field error display and regression evidence | [Validation messages](maintenance/event-validation-messages.md) | Existing temporal rules remain in temporal-design.md; platform deployment actions remain in the upgrade checklist |
 | Browser client setup | [iOS](user-guides/ios/home-screen-web-app.md), [macOS](user-guides/macos/safari-web-app.md) | These are clients, not server installations |
 | Owner's bespoke monitoring | [Local monitoring](local-installation/greenhouse-monitoring.md) | [Current implementation scope](environment-summary-platform.md) |
-| Pending implementation work | [Code backlog](code-change-backlog.md) | Stable IDs linked by current guides |
+| Completed C01–C20 implementation evidence | [Archived code backlog](history/code-change-backlog.md) | Stable historical IDs; current state owns new work and remaining acceptance |
 | Release history and retired documents | [Release notes](../RELEASE_NOTES.md), [history](history/index.md) | Recent delivery stages remain identifiable |
 
 ## Word guides and publication
