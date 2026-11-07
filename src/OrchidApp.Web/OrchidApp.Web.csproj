@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="HtmlSanitizer" Version="9.2.1039" />
+    <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="15.1.0" GeneratePathProperty="true" />
     <PackageReference Include="NetVips" Version="2.4.2" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
     <PackageReference Include="MySqlConnector" Version="2.6.1" />
@@ -17,6 +18,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="$(PkgMagick_NET-Q8-AnyCPU)/Notice.txt" Condition="'$(PkgMagick_NET-Q8-AnyCPU)' != ''">
+      <Link>Legal/magick-net/Notice.txt</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
     <Content Include="Legal\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>

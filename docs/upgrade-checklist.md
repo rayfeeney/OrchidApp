@@ -6,6 +6,12 @@ This is the single list of deployment actions arising from C01–C20. Use the Wi
 
 ## How to use and maintain this list
 
+### Mobile photo ingestion (WIN-PHOTO-02, C15/C19 maintenance)
+
+- Windows x64 and Linux ARM64 use the rebuilt application. There is no new migration or setting. Windows needs the published Magick.NET native decoder alongside the existing libvips runtime. Linux needs libvips with HEVC decoding enabled.
+- Run the native suite against the runtime used by the candidate release. Then use a disposable installation on each platform to upload ordinary iPhone HEIC and Android/iPhone JPEG files through the browser, including portrait orientation and a 48–50 MP image. Reopen both JPEG outputs. On Pi record peak memory and response time, especially for large HEIC.
+- Confirm corrupt and over-limit uploads leave the previous data and files intact. Recovery continues to use the existing journal and paired backup procedure. Review [the evidence and open acceptance items](maintenance/win-photo-02.md).
+
 ### Individual photo deletion (subsequent C15/C19 maintenance)
 
 - Windows and Linux: deploy the rebuilt app; no additional migration or configuration is required. Preserve the existing C19 schema requirement. On a disposable plant verify confirmation/Cancel, deletion of a main and last photo, unchanged other photos/history, and ended-plant rejection. Check `/health/ready` after adoption.
@@ -128,7 +134,7 @@ Every issue is listed, including those with no site configuration. This table is
 | C12 | Apply `202610261800_EndedPlantReadOnly.sql`; deploy app and test ended read-only/active corrections | Same via canonical manual runner | Approved read-only policy implemented/local SQL+HTTP passed; Linux CI passed; installed acceptance pending; no retrospective repair |
 | C13 | Apply `202610262000_StructuralTransactions.sql` with matching app; disposable rollback/concurrency and installed save/reopen | Same via canonical runner after backup | Implemented; native SQL/HTTP checks recorded in C13 evidence; Linux CI passed; installed acceptance pending; use cache-aware test revision v3; no additional migration/settings/action change |
 | C14 | Deploy updated app; verify newest time, event type, ID order on disposable history | Same; no migration/configuration/data action | Agreed order implemented; local SQL/HTTP evidence in C14 report; Linux CI passed; installed UI acceptance pending |
-| C15 | Verify default stripping, rotation, ICC and alpha; audit explicit false override | Same on installed Linux native runtime | Source implemented; existing files unchanged; Linux CI passed; installed acceptance pending |
+| C15 | Verify default stripping, rotation, ICC, alpha, and mobile JPEG/HEIC with the Windows x64 decoder | Verify the same using installed libvips with HEVC support | Existing C15 checks passed Linux CI. WIN-PHOTO-02 hosted and installed acceptance pending. |
 | C16 | Developer setup separate; deployed runtime/upload settings still checked | Same; preserve production settings/native dependencies | C16 complete: new Windows developer-PC acceptance confirmed 1 November 2026; .env is Development-only; installed release acceptance remains separate |
 | C17 | No Linux-backup configuration on Windows | One-time backup reconfiguration, restore/schedule tests and ongoing monitoring | Linux CI passed; real services/cron/provider/Pi acceptance pending |
 | C18 | Stop writers; mandatory verified offline snapshot even for app-only updates; inspect artifact signing evidence | Existing stopped-writer paired backup and compatible app/config rollback remain mandatory for app-only updates too | Source and isolated Inno/MariaDB checks implemented; v1.4.0 administrator installer-baseline and Linux device acceptance pending; earlier Windows upgrades outside scope |

@@ -198,7 +198,7 @@ jobs:
         run: dotnet run --configuration Release --project tests/DevelopmentConfiguration.Checks/DevelopmentConfiguration.Checks.csproj
 
       - name: Install native photo dependencies
-        run: sudo apt-get update && sudo apt-get install -y libvips-tools
+        run: sudo apt-get update && sudo apt-get install -y libvips-tools libheif-plugin-libde265
 
       - name: Check individual photo deletion storage safety
         run: dotnet run --configuration Release --project tests/PhotoDeletion.Checks/PhotoDeletion.Checks.csproj
