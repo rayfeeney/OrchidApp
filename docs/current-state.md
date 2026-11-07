@@ -1,6 +1,6 @@
 # Current state and fixed v1.4.0 work list
 
-Last reconciled: 30 October 2026. This is the owner-agreed bounded work list, not evidence that pending tasks passed.
+Last reconciled: 7 November 2026. This is the owner-agreed bounded work list, not evidence that pending tasks passed.
 
 ## Confirmed baseline
 
@@ -14,19 +14,19 @@ All twenty items have implementation. C05 is complete within its agreed current-
 
 ## Fixed work list
 
-1. **Procure the new Pi.**
-2. **Complete developer setup on the new PC.** Follow the guide, run from source, and verify schema-only database creation, photo upload/reopen and the Git hook/schema-export workflow to close C16.
-3. **Reconcile status documents.** Correct C05/C16 and superseded pending statements, preserve historical evidence, and record agreed scope decisions. This documentation delivery addresses the task; application/merge of the delivery remains to be recorded.
-4. **Record the live Pi baseline.** Software versions, database schema/history, configuration, services, scheduled jobs and file locations.
+1. **Procure the new Pi.** Complete. Raspberry Pi 2 has been received and is available for the planned recovery, upgrade rehearsal and standby implementation. Installation and recovery acceptance remain covered by subsequent work-list items.
+2. **Complete developer setup on the new PC.** Complete - 7 November 2026 reconciliation. New-PC development environment established and verified. Developer setup acceptance completed, closing the remaining C16 new-PC acceptance requirement.
+3. **Reconcile status documents.** Complete. C05/C16 status, superseded pending statements and agreed scope decisions reconciled. Historical acceptance evidence preserved. Documentation changes applied and merged into `main`.
+4. **Record the live Pi baseline.** Complete - 7 November 2026. Read-only evidence collected for hardware, operating system, software versions, published application, database schema and migration history, configuration structure, services, scheduled jobs, backup arrangements and file locations. See [Live Raspberry Pi Baseline](live-pi-baseline-2026-11-07.md). The deliberately absent test migration is an accepted exception. Exact binary provenance remains unverified. Remote backup objects were confirmed present, but backup integrity and restoration are reserved for item 5.
 5. **Create a complete recovery backup of the live Pi.** Matching database, photos, binaries, configuration and service definitions; verified off-device copy.
 6. **Restore onto the empty new Pi.** Verify functionality/data/photos/services; disable standby scheduled jobs and external writers.
 7. **Rehearse the restored Pi upgrade to v1.4.0.** Build the actual release package from the agreed baseline; record commit/checksum, resolve compatibility, verify functionality and data/photo preservation, and retain the proven procedure/results.
 8. **Upgrade the live Pi.** Take a fresh recovery backup, follow the proven procedure and verify the result.
-9. **Implement daily cloud-backup restoration to the second Pi.** Matching data/photos/configuration and compatible software; readiness/photo/disposable add-save-reopen checks; retain the last working recovery state on failure. Standby test writes must never reach live data or cloud backups.
+9. **Implement daily cloud-backup restoration to the second Pi.** Matching data/photos/configuration and compatible software; readiness/photo/disposable add-save-reopen checks; retain the last working recovery state on failure. Standby test writes must never reach live data or cloud backups. Verify that historical database backups cannot be paired silently with incompatible or missing photographs. Recovery must preserve the last known working state and report incomplete or inconsistent backup pairs.
 10. **Monitor freshness and send failure alerts through GMX.** Confirm new scheduled backup/upload and restoration of that exact backup. Agree recipient and maximum age; report failed/overdue stages and last successful recovery point; test sending. Outgoing GMX configuration remains to be validated. Decide whether independent monitoring is needed when both Pis are offline.
-11. **Complete operational acceptance.** Reboot/autostart, service/file permissions, usual browsers/devices and photo upload; Home Screen/installed web-app behavior where used; monitoring feeds/charts and scheduled backups during takeover.
+11. **Complete operational acceptance.** Reboot/autostart, service/file permissions, usual browsers/devices and photo upload; Home Screen/installed web-app behavior where used; monitoring feeds/charts and scheduled backups during takeover. Include representative plant lifecycle and history operations, transaction-failure and concurrency checks where appropriate, and photo metadata, orientation and consistency checks. Use existing automated evidence where sufficient; reserve installed-system testing for behaviour that requires it.
 12. **Document and rehearse takeover.** Isolate the former live Pi, switch access, enable required jobs and ensure only one Pi is live. Repair the former live Pi and establish it as the new warm standby; no automatic switch-back.
-13. **Establish the v1.4.0 Windows baseline.** Actual installer on a clean PC; representative data, functionality/photos/restart/backup/recovery, and identify/retest the previously reported but unspecified Windows bugs. Record commit/checksum/signing status/results. Preserve a sanitised specimen, installer and records in GitHub for future upgrade/recovery CI. Earlier Windows upgrade paths are outside scope.
+13. **Establish the v1.4.0 Windows baseline.** Complete. Clean installation and independent offline restore passed, including the restart check. The sanitised Windows v1.4.0 specimen was established for future upgrade and recovery testing. Launcher backup/restore defects and large JPG/HEIC photo-upload defects remain open and must not be recorded as passed. Earlier Windows upgrade paths remain outside scope.
 
 ## Scope and accepted records
 
