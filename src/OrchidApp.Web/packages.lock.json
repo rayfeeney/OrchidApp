@@ -12,6 +12,15 @@
           "AngleSharp.Css": "1.0.2"
         }
       },
+      "Magick.NET-Q8-AnyCPU": {
+        "type": "Direct",
+        "requested": "[15.1.0, )",
+        "resolved": "15.1.0",
+        "contentHash": "nHJpUfEkhiDu5XJAymHWQBCinVQJABTK2j6haHqs650UPUP9iEMqN73VNu8m+YyoyEp5gGwO65hqivhgzzpfnQ==",
+        "dependencies": {
+          "Magick.NET.Core": "15.1.0"
+        }
+      },
       "MySqlConnector": {
         "type": "Direct",
         "requested": "[2.6.1, )",
@@ -69,6 +78,11 @@
         "dependencies": {
           "AngleSharp": "[1.5.0, 2.0.0)"
         }
+      },
+      "Magick.NET.Core": {
+        "type": "Transitive",
+        "resolved": "15.1.0",
+        "contentHash": "WIaemRN4tJvw5BNUfsO8/V3LojV5FOCojQ/sQ4ruXme1o2frRYfcvHPhKV5E6TbYoEdVEvtGX+8Wbut0F2lJHg=="
       },
       "Microsoft.EntityFrameworkCore": {
         "type": "Transitive",

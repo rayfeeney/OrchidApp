@@ -108,3 +108,14 @@ Greenhouse charts:
 - Bundled @kurkle/color 0.3.2: MIT, https://github.com/kurkle/color
 Licence texts are included in Legal/chartjs/ and wwwroot/lib/chartjs/.
 Chart.js is served locally; no CDN, Luxon or date adapter is required.
+
+Magick.NET and ImageMagick
+--------------------------
+
+The Windows x64 app uses Magick.NET-Q8-AnyCPU 15.1.0 to decode HEIF/HEIC.
+Magick.NET is Copyright Dirk Lemstra and licensed under Apache-2.0.
+The package includes ImageMagick and native decoder components. Their
+copyright and licence notices are distributed in Legal/magick-net/Notice.txt.
+
+https://github.com/dlemstra/Magick.NET
+https://imagemagick.org/license/

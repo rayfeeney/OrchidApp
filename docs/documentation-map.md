@@ -35,7 +35,7 @@ For a behaviour change, update the owner, its index entry and any affected platf
 
 ## Photo policy ownership
 
-[Photo handling and recovery](photo-handling.md) owns C15/C19 metadata, orientation, readiness and recovery-record procedures. [Validation evidence](maintenance/c15-c19-photo-handling.md) records measured checks. Windows/Linux guides link here; the upgrade checklist owns adoption actions.
+[Photo handling and recovery](photo-handling.md) owns C15/C19 metadata, orientation, readiness and recovery-record procedures. [C15/C19 evidence](maintenance/c15-c19-photo-handling.md) and [mobile photo evidence](maintenance/win-photo-02.md) record measured checks. Windows/Linux guides link here; the upgrade checklist owns adoption actions.
 
 ## Installer backup ownership
 
