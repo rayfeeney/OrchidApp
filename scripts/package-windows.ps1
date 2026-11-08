@@ -516,6 +516,7 @@ Write-Step "Validating package contents"
         (Join-Path $DistRoot "tools\Backup-Contract.ps1"),
         (Join-Path $DistRoot "tools\Backup-Retention.ps1"),
         (Join-Path $DistRoot "tools\Restore-Recovery.ps1"),
+        (Join-Path $DistRoot "tools\Restore-Input.ps1"),
         (Join-Path $DistRoot "tools\Installer-Snapshot.ps1"),
         (Join-Path $DistRoot "tools\prepare-installer-upgrade.ps1"),
         (Join-Path $DistRoot "tools\review-installer-snapshot.ps1"),

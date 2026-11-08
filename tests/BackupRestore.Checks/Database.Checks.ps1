@@ -69,7 +69,7 @@ function Run-Tool([string]$Name,[string[]]$Arguments,[string]$ErrorText='') {
     $result=$records[0].Substring('ORCHID_BACKUP_CHECK:'.Length) | ConvertFrom-Json
     if (($code -eq 0) -ne $result.success) { throw 'Child exit code/result disagree.' }
     if ($ErrorText) { Check "Rejected: $ErrorText" (-not $result.Success -and $result.Message.IndexOf($ErrorText,[StringComparison]::OrdinalIgnoreCase) -ge 0) }
-    elseif (-not $result.Success) { throw ($output -join "`n") }
+    elseif (-not $result.Success) { throw "$Name failed in $root ($($Arguments -join ' ')): $($output -join "`n")" }
     else { $script:checks++ }
 }
 try {
@@ -143,6 +143,32 @@ try {
     Query $TargetPort "UPDATE orchids.plant SET plantNotes='changed';" | Out-Null
     'changed' | Set-Content (Join-Path $target "uploads/plants/$plantId/photo.jpg")
     '{"CloudBackupFolderPath":"wrong"}' | Set-Content (Join-Path $target 'launcher-settings.json')
+    Stop-Fixture $TargetPort
+    $pipe='orchid-fixture-'+[guid]::NewGuid().ToString('N')
+    $pipeServer=Start-Process -FilePath $server -ArgumentList "--no-defaults --basedir=`"$MariaDbRuntimeRoot`" --datadir=`"$expectedData`" --skip-networking --enable-named-pipe --socket=$pipe --console" -PassThru -WindowStyle Hidden -RedirectStandardOutput (Join-Path $root 'pipe-server.log') -RedirectStandardError (Join-Path $root 'pipe-server-error.log')
+    $processes.Add($pipeServer)
+    $previousPassword=$env:MYSQL_PWD
+    try {
+        $env:MYSQL_PWD='isolated-backup-test'
+        $ready=$false
+        for ($attempt=0;$attempt -lt 30;$attempt++) {
+            if ($pipeServer.HasExited) { throw 'Non-TCP fixture exited before becoming ready.' }
+            & $admin --no-defaults --protocol=PIPE "--socket=$pipe" --user=root ping 2>&1 | Out-Null
+            if ($LASTEXITCODE -eq 0) { $ready=$true; break }
+            Start-Sleep -Seconds 1
+        }
+        Check 'Target fixture is running without a TCP listener' ($ready -and -not (Get-NetTCPConnection -LocalPort $TargetPort -State Listen -ErrorAction SilentlyContinue))
+        Run-Tool 'restore-orchidapp.ps1' @('-BackupZip',$zip,'-MariaDbPort',"$TargetPort") "MariaDB process $($pipeServer.Id) is still running"
+        Check 'Busy preflight retains the original process and starts no import' (-not $pipeServer.HasExited -and -not (Test-Path -LiteralPath (Join-Path $target 'restore-pending.json')))
+        & $admin --no-defaults --protocol=PIPE "--socket=$pipe" --user=root shutdown | Out-Null
+        Check 'Non-TCP fixture stops cleanly' ($LASTEXITCODE -eq 0 -and $pipeServer.WaitForExit(10000))
+    }
+    finally {
+        $env:MYSQL_PWD=$previousPassword
+        if (-not $pipeServer.HasExited) { $pipeServer.Kill(); $pipeServer.WaitForExit() }
+    }
+    Start-Fixture $expectedData $TargetPort
+    Check 'Busy preflight preserves target data' ((Query $TargetPort 'SELECT plantNotes FROM orchids.plant;') -ceq 'changed')
     Run-Tool 'restore-orchidapp.ps1' @('-BackupZip',$zip,'-MariaDbPort',"$TargetPort")
     Check 'Restored plant record and Unicode notes' ((Query $TargetPort 'SELECT plantNotes FROM orchids.plant;') -ceq 'Round trip café')
     foreach ($relative in @("plants/$plantId/photo.jpg","plants/$plantId/thumb.jpg","taxa/$taxonId/taxon.jpg","taxa/$taxonId/taxon-thumb.jpg")) { Check "Restored $relative" ((Get-FileHash -LiteralPath (Join-Path $uploads $relative)).Hash -eq (Get-FileHash -LiteralPath (Join-Path $target "uploads/$relative")).Hash) }

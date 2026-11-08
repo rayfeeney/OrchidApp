@@ -6,6 +6,7 @@ param(
 $ErrorActionPreference='Stop'
 . (Join-Path $PSScriptRoot 'Backup-Contract.ps1')
 . (Join-Path $PSScriptRoot 'Restore-Recovery.ps1')
+. (Join-Path $PSScriptRoot 'Restore-Input.ps1')
 $AppRoot=(Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $MariaDbRoot=Join-Path $AppRoot 'runtime/mariadb/win-x64'
 $MariaDbServer=Join-Path $MariaDbRoot 'bin/mariadbd.exe'
@@ -55,21 +56,17 @@ try {
     elseif ($RecoveryAction) { throw 'No interrupted restore is recorded. Select a normal backup instead.' }
     if ([string]::IsNullOrWhiteSpace($BackupZip)) { throw 'Select a BackupZip.' }
     $BackupZip=(Resolve-Path -LiteralPath $BackupZip).Path
-    Assert-NoPathAlias $BackupZip
+    if ($RecoveryAction) { Assert-NoPathAlias $BackupZip }
+    $uploadsPrefix=(Get-FullLocalPath $UploadsRoot)+'\'
+    if ($BackupZip.StartsWith($uploadsPrefix,[StringComparison]::OrdinalIgnoreCase)) { throw 'Keep the selected recovery ZIP outside the uploads directory being replaced.' }
     Assert-ChildPath $RestoreRoot $ProgramDataRoot
-    New-Item -ItemType Directory -Path $PayloadRoot -Force | Out-Null
-    # Hold a read handle denying writers/deletion until a verified local copy exists.
+    New-Item -ItemType Directory -Path $RestoreRoot | Out-Null
+    Assert-NoPathAlias $RestoreRoot
     $preservedInput=Join-Path $RestoreRoot 'recovery-input.zip'
-    $sourceStream=[IO.File]::Open($BackupZip,[IO.FileMode]::Open,[IO.FileAccess]::Read,[IO.FileShare]::Read)
-    try {
-        $copyStream=[IO.File]::Create($preservedInput)
-        try { $sourceStream.CopyTo($copyStream) } finally { $copyStream.Dispose() }
-    } finally { $sourceStream.Dispose() }
+    Copy-OrchidRestoreInput $BackupZip $preservedInput
     # All structural, settings and component validation precedes database import.
     Expand-CheckedBackup $preservedInput $PayloadRoot
     $payload=Read-BackupPayload $PayloadRoot
-    $uploadsPrefix=(Get-FullLocalPath $UploadsRoot)+'\'
-    if ($BackupZip.StartsWith($uploadsPrefix,[StringComparison]::OrdinalIgnoreCase)) { throw 'Keep the selected recovery ZIP outside the uploads directory being replaced.' }
     $safetyBackup=$null
     $RecoveryRecord=[ordered]@{version=1;status='Prepared';phase='CreatingSafetyBackup';updatedUtc=[DateTime]::UtcNow.ToString('o');originalInput=$BackupZip;preservedInput=$preservedInput;safetyBackup=$null;operationRoot=$RestoreRoot;error=$null;importProcessId=$null;importStartedUtc=$null}
     Save-RestorePhase 'CreatingSafetyBackup'
