@@ -143,7 +143,14 @@ try {
     Query $TargetPort "UPDATE orchids.plant SET plantNotes='changed';" | Out-Null
     'changed' | Set-Content (Join-Path $target "uploads/plants/$plantId/photo.jpg")
     '{"CloudBackupFolderPath":"wrong"}' | Set-Content (Join-Path $target 'launcher-settings.json')
+    $backupAlias=Join-Path $root 'aliased backups'
+    New-Item -ItemType Junction -Path $backupAlias -Target (Split-Path -Parent $zip) | Out-Null
+    $aliasedZip=Join-Path $backupAlias (Split-Path -Leaf $zip)
+    Run-Tool 'restore-orchidapp.ps1' @('-BackupZip',$aliasedZip,'-MariaDbPort',"$TargetPort") 'Copy the ZIP to a regular local folder'
+    Check 'Aliased backup path leaves the plant unchanged' ((Query $TargetPort 'SELECT plantNotes FROM orchids.plant;') -ceq 'changed')
     Run-Tool 'restore-orchidapp.ps1' @('-BackupZip',$zip,'-MariaDbPort',"$TargetPort")
+    $restoreHistory=Join-Path $target 'restore-recovery'
+    Check 'Restore and safety backup reused the running database' (@(Get-ChildItem -LiteralPath $restoreHistory -Recurse -File -Filter 'mariadb-server-error.log').Count -eq 0)
     Check 'Restored plant record and Unicode notes' ((Query $TargetPort 'SELECT plantNotes FROM orchids.plant;') -ceq 'Round trip café')
     foreach ($relative in @("plants/$plantId/photo.jpg","plants/$plantId/thumb.jpg","taxa/$taxonId/taxon.jpg","taxa/$taxonId/taxon-thumb.jpg")) { Check "Restored $relative" ((Get-FileHash -LiteralPath (Join-Path $uploads $relative)).Hash -eq (Get-FileHash -LiteralPath (Join-Path $target "uploads/$relative")).Hash) }
     Check 'Nested settings restored exactly' ((Get-FileHash -LiteralPath $settings).Hash -eq (Get-FileHash -LiteralPath (Join-Path $target 'launcher-settings.json')).Hash)

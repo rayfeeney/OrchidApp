@@ -6,6 +6,11 @@ This is the single list of deployment actions arising from C01–C20. Use the Wi
 
 ## How to use and maintain this list
 
+### Windows restore preflight
+
+- Rebuild the Windows installer to update the restore and backup helpers. No schema or settings change is required.
+- On a disposable installed fixture, test a valid local backup while launcher-owned MariaDB is running. Verify the safety ZIP, restored records/photos/settings and readiness after restart. Check that a synced ZIP with a reparse point directs the operator to a regular local copy and leaves the fixture untouched. See [Windows restore safeguards](windows-backup-format.md).
+
 ### .NET 8 startup dependency correction
 
 - Windows x64 and Linux ARM64 require rebuilt packages with the EF Core 8 dependency graph. This change adds no migration, setting or data conversion.

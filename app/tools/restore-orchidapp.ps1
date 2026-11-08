@@ -55,7 +55,8 @@ try {
     elseif ($RecoveryAction) { throw 'No interrupted restore is recorded. Select a normal backup instead.' }
     if ([string]::IsNullOrWhiteSpace($BackupZip)) { throw 'Select a BackupZip.' }
     $BackupZip=(Resolve-Path -LiteralPath $BackupZip).Path
-    Assert-NoPathAlias $BackupZip
+    try { Assert-NoPathAlias $BackupZip }
+    catch { throw "Cannot use the selected backup path. Copy the ZIP to a regular local folder outside OneDrive or other synced folders and select that copy. Details: $($_.Exception.Message)" }
     Assert-ChildPath $RestoreRoot $ProgramDataRoot
     New-Item -ItemType Directory -Path $PayloadRoot -Force | Out-Null
     # Hold a read handle denying writers/deletion until a verified local copy exists.
