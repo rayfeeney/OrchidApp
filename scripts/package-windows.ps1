@@ -1,7 +1,6 @@
 param(
     [string]$Configuration = "Release",
-    [string]$Runtime = "win-x64",
-    [int]$MariaDbPort = 3308
+    [string]$Runtime = "win-x64"
 )
 
 $ErrorActionPreference = "Stop"
@@ -11,19 +10,6 @@ function Write-Step {
 
     Write-Host ""
     Write-Host "==> $Message"
-}
-
-function Test-PortListening {
-    param(
-        [int]$Port
-    )
-
-    $listener = Get-NetTCPConnection `
-        -LocalPort $Port `
-        -State Listen `
-        -ErrorAction SilentlyContinue
-
-    return $null -ne $listener
 }
 
 function Get-OrchidAppVersion {
@@ -218,12 +204,6 @@ Write-Step "Checking source paths"
         throw "Backup script not found: $BackupScriptSource"
     }
 
-Write-Step "Checking MariaDB port is free"
-
-    if (Test-PortListening -Port $MariaDbPort) {
-        throw "Port $MariaDbPort is already in use. Close OrchidApp/MariaDB before packaging."
-    }
-
 Write-Step "Cleaning package folder"
 
     if (Test-Path $DistRoot) {
@@ -232,6 +212,20 @@ Write-Step "Cleaning package folder"
 
 New-Item -ItemType Directory -Path $DistRoot | Out-Null
 
+Write-Step "Publishing OrchidApp.Launcher"
+
+    dotnet publish $LauncherProject `
+        -c $Configuration `
+        -r $Runtime `
+        --self-contained true `
+        -p:SkipLauncherPackageContent=true `
+        -o $DistRoot
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "Launcher publish failed."
+    }
+
+# Publish Web last so the shared files match its startup dependency graph.
 Write-Step "Publishing OrchidApp.Web"
 
     dotnet publish $WebProject `
@@ -244,16 +238,12 @@ Write-Step "Publishing OrchidApp.Web"
         throw "Web publish failed."
     }
 
-Write-Step "Publishing OrchidApp.Launcher"
+Write-Step "Checking packaged .NET 8 startup dependencies"
 
-    dotnet publish $LauncherProject `
-        -c $Configuration `
-        -r $Runtime `
-        --self-contained true `
-        -o $DistRoot
-
-    if ($LASTEXITCODE -ne 0) {
-        throw "Launcher publish failed."
+    $diagnosticSource = Join-Path $DistRoot "System.Diagnostics.DiagnosticSource.dll"
+    $assemblyVersion = [Reflection.AssemblyName]::GetAssemblyName($diagnosticSource).Version
+    if ($assemblyVersion.Major -ne 8) {
+        throw "Expected .NET 8 DiagnosticSource in the Windows package, found $assemblyVersion."
     }
 
 Write-Step "Copying database scripts"
@@ -352,12 +342,16 @@ Write-Step "Removing packaged application database cleanly"
         throw "MariaDB admin executable not found: $MariaDbAdmin"
     }
 
+    # Use a private local pipe so packaging cannot connect to an installed server.
+    $packagePipe = "OrchidAppPackage-$([Guid]::NewGuid().ToString('N'))"
+    $connectionArgs = @('--no-defaults', '--protocol=PIPE', "--socket=$packagePipe")
+
     $mariaDbProcess = Start-Process `
         -FilePath $MariaDbExe `
-        -ArgumentList "--datadir=`"$MariaDbDataDest`" --port=$MariaDbPort --bind-address=127.0.0.1 --console" `
+        -ArgumentList "--no-defaults --datadir=`"$MariaDbDataDest`" --skip-networking --enable-named-pipe --socket=$packagePipe --console" `
         -WorkingDirectory $DistRoot `
         -PassThru `
-        -NoNewWindow
+        -WindowStyle Hidden
 
     try {
         Write-Host "Waiting for packaged MariaDB to accept connections..."
@@ -366,8 +360,7 @@ Write-Step "Removing packaged application database cleanly"
 
         for ($i = 0; $i -lt 30; $i++) {
             & $MariaDbClient `
-                -h 127.0.0.1 `
-                -P $MariaDbPort `
+                @connectionArgs `
                 -u orchid `
                 -porchid `
                 -e "SELECT 1;" `
@@ -392,8 +385,7 @@ Write-Step "Removing packaged application database cleanly"
         Write-Host "Dropping packaged orchids database..."
 
         & $MariaDbClient `
-            -h 127.0.0.1 `
-            -P $MariaDbPort `
+            @connectionArgs `
             -u orchid `
             -porchid `
             -e "DROP DATABASE IF EXISTS orchids;"
@@ -405,8 +397,7 @@ Write-Step "Removing packaged application database cleanly"
         Write-Host "Requesting clean MariaDB shutdown..."
 
         & $MariaDbAdmin `
-            -h 127.0.0.1 `
-            -P $MariaDbPort `
+            @connectionArgs `
             -u orchid_shutdown `
             -porchid_shutdown `
             shutdown
@@ -432,21 +423,6 @@ Write-Step "Removing packaged application database cleanly"
             Stop-Process -Id $mariaDbProcess.Id -Force
             throw "Packaged MariaDB had to be force-stopped during cleanup."
         }
-    }
-
-Write-Host "Checking MariaDB listener has stopped..."
-
-    for ($i = 0; $i -lt 15; $i++) {
-        if (-not (Test-PortListening -Port $MariaDbPort)) {
-            Write-Host "MariaDB listener stopped."
-            break
-        }
-
-        Start-Sleep -Milliseconds 500
-    }
-
-    if (Test-PortListening -Port $MariaDbPort) {
-        throw "MariaDB stopped, but port $MariaDbPort is still listening."
     }
 
 Write-Step "Checking packaged MariaDB data state"
@@ -553,10 +529,6 @@ Write-Step "Validating package contents"
 
         Write-Host "OK: $Path" -ForegroundColor Green
     } 
-
-    if (Test-PortListening -Port $MariaDbPort) {
-        throw "Package validation failed. Port $MariaDbPort is still in use."
-    }
 
     Write-Host "Package validation passed." -ForegroundColor Green
 

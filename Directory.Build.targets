@@ -1,0 +1,6 @@
+<Project>
+  <Target Name="RequireNet8Target" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp' Or '$(TargetFrameworkVersion)' != 'v8.0'"
+           Text="OrchidApp projects must target .NET 8. Found $(TargetFramework)." />
+  </Target>
+</Project>

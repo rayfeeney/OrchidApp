@@ -12,6 +12,14 @@ The owner designates this source baseline for the planned v1.4.0 release; that i
 
 MySqlConnector GHSA-473q-m89c-ghf8: launcher 2.5.0 and Web transitive 2.4.0 updated in source to 2.6.1. Local build, configuration/policy checks, dependency audit and all 186 isolated SQL/HTTP tests passed. GitHub CI and rebuilt installed release acceptance remain pending. See [security update evidence and adoption](maintenance/mysqlconnector-security.md). This is new maintenance after closure of C01–C20.
 
+## Windows .NET 8 startup maintenance
+
+An installed Windows build reset browser requests when EF Core tried to load DiagnosticSource 9. The web project targeted .NET 8, but Pomelo 9 resolved EF Core 9 and its logging dependencies. The package also published the launcher over the web app in a shared directory, where the launcher could replace shared runtime files. The installer copies that directory, including DLLs.
+
+The candidate uses Pomelo 8.0.3, EF Core 8.0.33 and the existing patched MySqlConnector 2.6.1. The Windows build publishes the launcher first, skips its development content bundles and checks the final DiagnosticSource assembly. Package database cleanup uses a unique local named pipe with TCP disabled to isolate the staged copy from installed MariaDB. The repo selects SDK 8, checks project frameworks at build time and verifies the web lockfile in CI.
+
+Local checks passed for locked restore, Release build, Linux ARM64 publish, Windows package inventory, unsigned Inno installer compilation and isolated application, migration-policy, installer-policy and native photo suites. The Windows package contains DiagnosticSource assembly version 8.0.0.0. Hosted CI and release-machine acceptance are pending. Record Windows clean install and v1.4.0 upgrade readiness, database and photo preservation, photo upload/reopen and restart on disposable fixtures. Confirm the Linux ARM64 build and readiness separately. See the [upgrade checklist](upgrade-checklist.md).
+
 ## Fixed work list
 
 1. **Procure the new Pi.** Complete. Raspberry Pi 2 has been received and is available for the planned recovery, upgrade rehearsal and standby implementation. Installation and recovery acceptance remain covered by subsequent work-list items.

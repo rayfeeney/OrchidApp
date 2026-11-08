@@ -9,7 +9,7 @@
     <ApplicationIcon>Assets\OrchidApp.ico</ApplicationIcon>
   </PropertyGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(SkipLauncherPackageContent)' != 'true'">
     <Content Include="..\..\app\runtime\mariadb\**\*">
       <Link>runtime\mariadb\%(RecursiveDir)%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -23,7 +23,7 @@
     </Content>
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(SkipLauncherPackageContent)' != 'true'">
     <Content Include="..\OrchidApp.Web\bin\Release\net8.0\win-x64\publish\**\*">
       <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
