@@ -29,8 +29,24 @@ function Assert-DatabaseIdentity {
     }
 }
 function Start-OrchidDatabase {
-    $listener = Get-NetTCPConnection -LocalPort $MariaDbPort -State Listen -ErrorAction SilentlyContinue
-    if ($null -eq $listener) {
+    # Probe the same endpoint the MariaDB client uses. Listener enumeration can
+    # fail under the launcher account even while its MariaDB is accepting TCP.
+    $connection = New-Object Net.Sockets.TcpClient
+    $listening = $false
+    try {
+        $pending = $connection.ConnectAsync([Net.IPAddress]::Loopback, $MariaDbPort)
+        if (-not ([IAsyncResult]$pending).AsyncWaitHandle.WaitOne(5000)) {
+            throw 'Timed out checking the local MariaDB endpoint. No server was started.'
+        }
+        $pending.GetAwaiter().GetResult()
+        $listening = $true
+    }
+    catch [Net.Sockets.SocketException] {
+        if ($_.Exception.SocketErrorCode -ne [Net.Sockets.SocketError]::ConnectionRefused) { throw }
+    }
+    finally { $connection.Dispose() }
+
+    if (-not $listening) {
         $script:MariaDbProcess = Start-Process -FilePath $MariaDbServer `
             -ArgumentList "--no-defaults --basedir=`"$MariaDbRoot`" --datadir=`"$MariaDbData`" --port=$MariaDbPort --bind-address=127.0.0.1 --console" `
             -WorkingDirectory $AppRoot -RedirectStandardOutput $MariaDbServerLogPath -RedirectStandardError $MariaDbServerErrorLogPath -PassThru -WindowStyle Hidden
@@ -39,7 +55,10 @@ function Start-OrchidDatabase {
         $script:StartedMariaDb = $true
         $ready = $false
         for ($attempt=0; $attempt -lt 30; $attempt++) {
-            if ($MariaDbProcess.HasExited) { throw 'Selected MariaDB exited before becoming ready; inspect its log.' }
+            if ($MariaDbProcess.HasExited) {
+                $script:StartedMariaDb = $false
+                throw "Selected MariaDB exited before becoming ready (exit $($MariaDbProcess.ExitCode)). See $MariaDbServerErrorLogPath."
+            }
             try { Assert-DatabaseIdentity; $ready=$true; break } catch { Start-Sleep -Seconds 1 }
         }
         if (-not $ready) { throw 'Selected MariaDB did not become ready with the required directory identity.' }

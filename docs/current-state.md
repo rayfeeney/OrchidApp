@@ -20,6 +20,12 @@ The candidate uses Pomelo 8.0.3, EF Core 8.0.33 and the existing patched MySqlCo
 
 Local checks passed for locked restore, Release build, Linux ARM64 publish, Windows package inventory, unsigned Inno installer compilation and isolated application, migration-policy, installer-policy and native photo suites. The Windows package contains DiagnosticSource assembly version 8.0.0.0. Hosted CI and release-machine acceptance are pending. Record Windows clean install and v1.4.0 upgrade readiness, database and photo preservation, photo upload/reopen and restart on disposable fixtures. Confirm the Linux ARM64 build and readiness separately. See the [upgrade checklist](upgrade-checklist.md).
 
+## Windows restore preflight maintenance
+
+Installed testing found two pre-replacement failures. A OneDrive reparse-point ZIP was rejected before opening, and a regular local ZIP passed archive validation but stopped during safety backup when a second MariaDB process tried to open the running database's data directory. No restore SQL started. The retained copy remains available for recovery.
+
+The candidate checks the actual loopback endpoint and verifies its database directory before reusing it. Only a refused connection permits a new server start. The archive path guard now explains how to select a regular local copy. The 57 source/recovery checks and 80 disposable Windows database checks passed, including alias rejection and restore with an already running database. Rebuild the installer and verify both cases with disposable installed data before collection recovery. See the [Windows backup and restore contract](windows-backup-format.md).
+
 ## Fixed work list
 
 1. **Procure the new Pi.** Complete. Raspberry Pi 2 has been received and is available for the planned recovery, upgrade rehearsal and standby implementation. Installation and recovery acceptance remain covered by subsequent work-list items.
