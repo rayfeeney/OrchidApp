@@ -163,6 +163,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget-
 
+      - name: Verify the committed NuGet lockfile
+        run: dotnet restore src/OrchidApp.Web --locked-mode
+
       - name: Restore
         run: dotnet restore src/OrchidApp.Web -r linux-arm64
 

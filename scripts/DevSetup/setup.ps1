@@ -8,7 +8,7 @@ foreach ($command in @('git','dotnet','pwsh')) {
     Get-Command $command -CommandType Application -ErrorAction Stop | Select-Object -First 1 | Out-Null
 }
 $sdkVersions = & dotnet --list-sdks
-if ($LASTEXITCODE -ne 0 -or -not ($sdkVersions -match '^(8|9|[1-9][0-9])\.')) { throw '.NET SDK 8 or newer is required (dotnet --list-sdks).' }
+if ($LASTEXITCODE -ne 0 -or -not ($sdkVersions -match '^8\.')) { throw '.NET SDK 8 is required (dotnet --list-sdks).' }
 $runtimeVersions = & dotnet --list-runtimes
 foreach ($runtime in @('Microsoft.NETCore.App','Microsoft.AspNetCore.App')) {
     if (-not ($runtimeVersions -match ('^' + [regex]::Escape($runtime) + ' 8\.'))) { throw "The .NET 8 runtime $runtime is required." }

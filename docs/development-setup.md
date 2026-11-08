@@ -55,7 +55,7 @@ The pre-commit hook now uses `scripts/DevSetup/export-schema.ps1`, which reads t
 | Repository access and checkout | Obtain GitHub access and clone `https://github.com/rayfeeney/OrchidApp.git` using Git or GitHub Desktop. An extracted source ZIP cannot configure the required Git hooks. |
 | Editor and graphical Git client | VS Code is an optional editor; GitHub Desktop is an optional graphical Git client. Neither replaces the command-line Git, PowerShell or .NET requirements. |
 | PowerShell | 7 or newer; use pwsh, including on Linux |
-| .NET | SDK 8 or newer plus .NET 8 and ASP.NET Core 8 runtimes; the application targets net8.0. Local C16 checks used SDK 9.0.315 and the installed .NET 8 runtimes |
+| .NET | SDK 8 plus .NET 8 and ASP.NET Core 8 runtimes. The repository selects an installed .NET 8 SDK through global.json. |
 | MariaDB | **Download and install MariaDB 10.11**, including the server and the `mariadb` and `mariadb-dump` command-line tools. On Windows, install into `C:\Program Files\MariaDB 10.11`. Set a root password during installation and keep it private. |
 | Photo processing | **Check the Windows native runtime before testing.** Git tracks libvips 8.18.2 support files here, but not the ignored `bin` DLLs/executables; a clone alone does not supply the complete runtime. On Windows x64, run `pwsh ./scripts/restore-windows-runtime.ps1 -LibVipsOnly` from the repository root; this checks an existing runtime or downloads, verifies and installs the full pinned libvips 8.18.2 archive into `app/runtime/libvips/win-x64` when `libvips-42.dll` is absent without Chocolatey or a manual installer. On Linux, install libvips with PNG, JPEG and HEVC HEIF decoding support using your distribution's package manager (Ubuntu CI uses `libvips-tools`). After installation, run `pwsh ./scripts/DevSetup/run.ps1 -CheckOnly` to verify native photo processing. |
 | .NET application packages | **No manual download or installation required.** The required packages are defined in the repository and downloaded automatically by .NET when you first build or run the app. Internet access is required for that first download. |
@@ -75,7 +75,7 @@ On the PC being set up, open a new PowerShell 7 terminal after installing the so
 | --- | --- | --- |
 | Git | `git --version` | A Git version is displayed. |
 | PowerShell | `pwsh --version` | Version 7 or newer. |
-| .NET SDK | `dotnet --list-sdks` | At least one SDK version 8 or newer. |
+| .NET SDK | `dotnet --list-sdks` | At least one .NET 8 SDK. Run `dotnet --version` from the repository root to check the selected SDK. |
 | .NET runtimes | `dotnet --list-runtimes` | Both `Microsoft.NETCore.App 8.x` and `Microsoft.AspNetCore.App 8.x`. |
 | Python | `python --version` (Linux: `python3 --version`) | Python 3.x. |
 | MariaDB client (Windows) | `& 'C:\Program Files\MariaDB 10.11\bin\mariadb.exe' --no-defaults --version` | MariaDB 10.11.x. |

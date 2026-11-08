@@ -6,6 +6,12 @@ This is the single list of deployment actions arising from C01–C20. Use the Wi
 
 ## How to use and maintain this list
 
+### .NET 8 startup dependency correction
+
+- Windows x64 and Linux ARM64 require rebuilt packages with the EF Core 8 dependency graph. This change adds no migration, setting or data conversion.
+- On Windows verify the candidate installer checksum and signing evidence, preserve the paired backup, and verify launcher startup, browser readiness, photo upload/reopen and restart on an isolated v1.4.0 installation. Follow the existing installer recovery procedure if startup fails.
+- On Linux verify the ARM64 publish and readiness on the supported target, including a database-backed read and save/reopen. Retain the prior application package and follow the existing rollback procedure if acceptance fails.
+
 ### Mobile photo ingestion (WIN-PHOTO-02, C15/C19 maintenance)
 
 - Windows x64 and Linux ARM64 use the rebuilt application. There is no new migration or setting. Windows needs the published Magick.NET native decoder alongside the existing libvips runtime. Linux needs libvips with HEVC decoding enabled.
