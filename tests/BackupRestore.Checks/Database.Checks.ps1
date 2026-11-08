@@ -202,13 +202,16 @@ try {
     Check 'Normal backup/restore round trip' ((Query $TargetPort 'SELECT plantNotes FROM orchids.plant;') -ceq 'preserve validation witness')
     $pendingPath=Join-Path $target 'restore-pending.json'
     $historyRoot=Join-Path $target 'restore-recovery'
+    $previousRecords=@(Get-ChildItem -LiteralPath $historyRoot -Filter recovery.json -Recurse -File | Select-Object -ExpandProperty FullName)
     $preflightLock=[IO.File]::Open((Join-Path $target "uploads/plants/$plantId/photo.jpg"),[IO.FileMode]::Open,[IO.FileAccess]::Read,[IO.FileShare]::None)
     try { Run-Tool 'restore-orchidapp.ps1' @('-BackupZip',$zip,'-MariaDbPort',"$TargetPort") 'before replacement' }
     finally { $preflightLock.Dispose() }
     Check 'Safety-copy failure creates no pending destructive restore' (-not (Test-Path -LiteralPath $pendingPath))
     Check 'Safety-copy failure leaves current SQL untouched' ((Query $TargetPort 'SELECT plantNotes FROM orchids.plant;') -ceq 'preserve validation witness')
-    $preflightRecords=@(Get-ChildItem -LiteralPath $historyRoot -Filter recovery.json -Recurse -File | ForEach-Object { Get-Content -LiteralPath $_.FullName -Raw | ConvertFrom-Json } | Where-Object { $_.status -eq 'PreflightFailed' })
-    Check 'Safety-copy failure retains input and protection history' ($preflightRecords.Count -eq 1 -and (Test-Path -LiteralPath $preflightRecords[0].preservedInput))
+    $preflightRecords=@(Get-ChildItem -LiteralPath $historyRoot -Filter recovery.json -Recurse -File |
+        Where-Object { $_.FullName -notin $previousRecords } |
+        ForEach-Object { Get-Content -LiteralPath $_.FullName -Raw | ConvertFrom-Json })
+    Check 'Safety-copy failure retains input and protection history' ($preflightRecords.Count -eq 1 -and $preflightRecords[0].status -eq 'PreflightFailed' -and (Test-Path -LiteralPath $preflightRecords[0].preservedInput))
     $failedSqlRoot=Join-Path $root 'sql failure archive'
     Expand-Archive -LiteralPath $oldZip -DestinationPath $failedSqlRoot
     Add-Content -LiteralPath (Join-Path $failedSqlRoot 'orchids.sql') "SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Intentional restore failure';"
