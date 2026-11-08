@@ -362,16 +362,7 @@ jobs:
 
       - name: Check Windows backup and restore round trip
         shell: pwsh
-        run: |
-          # The hosted Windows image includes MySQL. Isolate the offline-start
-          # fixture from its service process while keeping the ownership guard active.
-          Get-Service | Where-Object { $_.Name -match '^MySQL\d*$' -and $_.Status -ne 'Stopped' } |
-            ForEach-Object {
-              Write-Host "Stopping hosted runner service $($_.Name) for the database fixture."
-              Stop-Service -InputObject $_ -ErrorAction Stop
-              $_.WaitForStatus('Stopped', [TimeSpan]::FromSeconds(30))
-            }
-          ./tests/BackupRestore.Checks/Database.Checks.ps1 -MariaDbRuntimeRoot ./app/runtime/mariadb/win-x64
+        run: ./tests/BackupRestore.Checks/Database.Checks.ps1 -MariaDbRuntimeRoot ./app/runtime/mariadb/win-x64
 
       - name: Create Windows package
         shell: pwsh

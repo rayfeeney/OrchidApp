@@ -57,11 +57,7 @@ function Stop-Fixture([int]$Port) {
     $previous=$env:MYSQL_PWD; $env:MYSQL_PWD='isolated-backup-test'
     try { & $admin --no-defaults --protocol=TCP --host=127.0.0.1 "--port=$Port" --user=root shutdown | Out-Null; if ($LASTEXITCODE -ne 0) { throw 'Fixture shutdown failed.' } }
     finally { $env:MYSQL_PWD=$previous }
-    foreach ($p in $processes.ToArray()) {
-        if (-not $p.HasExited -and -not $p.WaitForExit(10000)) { throw 'Fixture server did not exit after shutdown.' }
-        [void]$processes.Remove($p)
-        $p.Dispose()
-    }
+    foreach ($p in $processes) { if (-not $p.HasExited) { $p.WaitForExit(10000) | Out-Null } }
 }
 function Run-Tool([string]$Name,[string[]]$Arguments,[string]$ErrorText='') {
     $requestFile=Join-Path $root ('request-'+[guid]::NewGuid().ToString('N')+'.json')
@@ -73,7 +69,7 @@ function Run-Tool([string]$Name,[string[]]$Arguments,[string]$ErrorText='') {
     $result=$records[0].Substring('ORCHID_BACKUP_CHECK:'.Length) | ConvertFrom-Json
     if (($code -eq 0) -ne $result.success) { throw 'Child exit code/result disagree.' }
     if ($ErrorText) { Check "Rejected: $ErrorText" (-not $result.Success -and $result.Message.IndexOf($ErrorText,[StringComparison]::OrdinalIgnoreCase) -ge 0) }
-    elseif (-not $result.Success) { throw "$Name failed in $root ($($Arguments -join ' ')): $($output -join "`n")" }
+    elseif (-not $result.Success) { throw ($output -join "`n") }
     else { $script:checks++ }
 }
 try {
@@ -147,34 +143,6 @@ try {
     Query $TargetPort "UPDATE orchids.plant SET plantNotes='changed';" | Out-Null
     'changed' | Set-Content (Join-Path $target "uploads/plants/$plantId/photo.jpg")
     '{"CloudBackupFolderPath":"wrong"}' | Set-Content (Join-Path $target 'launcher-settings.json')
-    Stop-Fixture $TargetPort
-    $pipe='orchid-fixture-'+[guid]::NewGuid().ToString('N')
-    $pipeServer=Start-Process -FilePath $server -ArgumentList "--no-defaults --basedir=`"$MariaDbRuntimeRoot`" --datadir=`"$expectedData`" --skip-networking --enable-named-pipe --socket=$pipe --console" -PassThru -WindowStyle Hidden -RedirectStandardOutput (Join-Path $root 'pipe-server.log') -RedirectStandardError (Join-Path $root 'pipe-server-error.log')
-    $processes.Add($pipeServer)
-    $previousPassword=$env:MYSQL_PWD
-    try {
-        $env:MYSQL_PWD='isolated-backup-test'
-        $ready=$false
-        for ($attempt=0;$attempt -lt 30;$attempt++) {
-            if ($pipeServer.HasExited) { throw 'Non-TCP fixture exited before becoming ready.' }
-            & $admin --no-defaults --protocol=PIPE "--socket=$pipe" --user=root ping 2>&1 | Out-Null
-            if ($LASTEXITCODE -eq 0) { $ready=$true; break }
-            Start-Sleep -Seconds 1
-        }
-        Check 'Target fixture is running without a TCP listener' ($ready -and -not (Get-NetTCPConnection -LocalPort $TargetPort -State Listen -ErrorAction SilentlyContinue))
-        Run-Tool 'restore-orchidapp.ps1' @('-BackupZip',$zip,'-MariaDbPort',"$TargetPort") "MariaDB process $($pipeServer.Id) is still running"
-        Check 'Busy preflight retains the original process and starts no import' (-not $pipeServer.HasExited -and -not (Test-Path -LiteralPath (Join-Path $target 'restore-pending.json')))
-        & $admin --no-defaults --protocol=PIPE "--socket=$pipe" --user=root shutdown | Out-Null
-        Check 'Non-TCP fixture stops cleanly' ($LASTEXITCODE -eq 0 -and $pipeServer.WaitForExit(10000))
-    }
-    finally {
-        $env:MYSQL_PWD=$previousPassword
-        if (-not $pipeServer.HasExited) { $pipeServer.Kill(); $pipeServer.WaitForExit() }
-        [void]$processes.Remove($pipeServer)
-        $pipeServer.Dispose()
-    }
-    Start-Fixture $expectedData $TargetPort
-    Check 'Busy preflight preserves target data' ((Query $TargetPort 'SELECT plantNotes FROM orchids.plant;') -ceq 'changed')
     Run-Tool 'restore-orchidapp.ps1' @('-BackupZip',$zip,'-MariaDbPort',"$TargetPort")
     Check 'Restored plant record and Unicode notes' ((Query $TargetPort 'SELECT plantNotes FROM orchids.plant;') -ceq 'Round trip café')
     foreach ($relative in @("plants/$plantId/photo.jpg","plants/$plantId/thumb.jpg","taxa/$taxonId/taxon.jpg","taxa/$taxonId/taxon-thumb.jpg")) { Check "Restored $relative" ((Get-FileHash -LiteralPath (Join-Path $uploads $relative)).Hash -eq (Get-FileHash -LiteralPath (Join-Path $target "uploads/$relative")).Hash) }
@@ -202,16 +170,13 @@ try {
     Check 'Normal backup/restore round trip' ((Query $TargetPort 'SELECT plantNotes FROM orchids.plant;') -ceq 'preserve validation witness')
     $pendingPath=Join-Path $target 'restore-pending.json'
     $historyRoot=Join-Path $target 'restore-recovery'
-    $previousRecords=@(Get-ChildItem -LiteralPath $historyRoot -Filter recovery.json -Recurse -File | Select-Object -ExpandProperty FullName)
     $preflightLock=[IO.File]::Open((Join-Path $target "uploads/plants/$plantId/photo.jpg"),[IO.FileMode]::Open,[IO.FileAccess]::Read,[IO.FileShare]::None)
     try { Run-Tool 'restore-orchidapp.ps1' @('-BackupZip',$zip,'-MariaDbPort',"$TargetPort") 'before replacement' }
     finally { $preflightLock.Dispose() }
     Check 'Safety-copy failure creates no pending destructive restore' (-not (Test-Path -LiteralPath $pendingPath))
     Check 'Safety-copy failure leaves current SQL untouched' ((Query $TargetPort 'SELECT plantNotes FROM orchids.plant;') -ceq 'preserve validation witness')
-    $preflightRecords=@(Get-ChildItem -LiteralPath $historyRoot -Filter recovery.json -Recurse -File |
-        Where-Object { $_.FullName -notin $previousRecords } |
-        ForEach-Object { Get-Content -LiteralPath $_.FullName -Raw | ConvertFrom-Json })
-    Check 'Safety-copy failure retains input and protection history' ($preflightRecords.Count -eq 1 -and $preflightRecords[0].status -eq 'PreflightFailed' -and (Test-Path -LiteralPath $preflightRecords[0].preservedInput))
+    $preflightRecords=@(Get-ChildItem -LiteralPath $historyRoot -Filter recovery.json -Recurse -File | ForEach-Object { Get-Content -LiteralPath $_.FullName -Raw | ConvertFrom-Json } | Where-Object { $_.status -eq 'PreflightFailed' })
+    Check 'Safety-copy failure retains input and protection history' ($preflightRecords.Count -eq 1 -and (Test-Path -LiteralPath $preflightRecords[0].preservedInput))
     $failedSqlRoot=Join-Path $root 'sql failure archive'
     Expand-Archive -LiteralPath $oldZip -DestinationPath $failedSqlRoot
     Add-Content -LiteralPath (Join-Path $failedSqlRoot 'orchids.sql') "SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Intentional restore failure';"

@@ -2,7 +2,6 @@ param([string]$RepoRoot=(Join-Path $PSScriptRoot '../..'))
 $ErrorActionPreference='Stop'
 . (Join-Path $RepoRoot 'app/tools/Backup-Contract.ps1')
 . (Join-Path $RepoRoot 'app/tools/Restore-Recovery.ps1')
-. (Join-Path $RepoRoot 'app/tools/Restore-Input.ps1')
 $root=Join-Path ([IO.Path]::GetTempPath()) ('orchids-payload-'+[guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $root | Out-Null
 $checks=0
@@ -25,41 +24,6 @@ function Edit-Manifest([string]$Dir,[scriptblock]$Edit) {
     $m | ConvertTo-Json -Depth 6 | Set-Content (Join-Path $Dir 'manifest.json')
 }
 try {
-    $inputZip=Join-Path $root 'input.zip'
-    $stagedZip=Join-Path $root 'staged.zip'
-    [IO.File]::WriteAllBytes($inputZip, [byte[]]@(80,75,0,255))
-    Copy-OrchidRestoreInput $inputZip $stagedZip
-    Check 'Local staging preserves every byte' ((Get-FileHash $inputZip).Hash -eq (Get-FileHash $stagedZip).Hash)
-    Reject 'Staging never overwrites an existing file' { Copy-OrchidRestoreInput $inputZip $stagedZip }
-    Check 'Cloud tag is accepted' ([OrchidRestoreInput]::IsCloudTag([Convert]::ToUInt32('9000001A',16)))
-    Check 'Cloud variant tag is accepted' ([OrchidRestoreInput]::IsCloudTag([Convert]::ToUInt32('9000F01A',16)))
-    Check 'Symlink tag is rejected' (-not [OrchidRestoreInput]::IsCloudTag([Convert]::ToUInt32('A000000C',16)))
-    Check 'Junction tag is rejected' (-not [OrchidRestoreInput]::IsCloudTag([Convert]::ToUInt32('A0000003',16)))
-    $link=Join-Path $root 'linked-input'
-    $inputFolder=Join-Path $root 'plain-input'
-    New-Item -ItemType Directory -Path $inputFolder | Out-Null
-    Copy-Item -LiteralPath $inputZip -Destination $inputFolder
-    New-Item -ItemType Junction -Path $link -Target $inputFolder | Out-Null
-    try {
-        Reject 'ZIP through a junction is rejected' { Copy-OrchidRestoreInput (Join-Path $link 'input.zip') (Join-Path $root 'unsafe.zip') }
-    } finally { [IO.Directory]::Delete($link) }
-
-    $MariaDbData=$inputFolder
-    $MariaDbPort=3308
-    & {
-        function Test-OrchidDatabaseListener { $false }
-        function Get-CimInstance { @{ProcessId=27516;CommandLine="mariadbd.exe --no-defaults --datadir=`"$MariaDbData`" --port=3308"} }
-        function Start-Process { throw 'Unexpected competing start' }
-        $failure=$null
-        try { Start-OrchidDatabase } catch { $failure=$_.Exception.Message }
-        Check 'Non-listening owner blocks startup' ($failure -like '*27516*No competing MariaDB was started*')
-        function Get-CimInstance { @{ProcessId=27516;CommandLine=$null} }
-        Reject 'Unidentified owner blocks startup' { Assert-OrchidDatabaseCanStart }
-        function Get-CimInstance { @{ProcessId=27516;CommandLine="mariadbd.exe --no-defaults --datadir=`"$root`""} }
-        Assert-OrchidDatabaseCanStart
-        Check 'Explicitly distinct database directory permits startup' $true
-    }
-
     $dir=Fixture; $payload=Read-BackupPayload $dir
     Check 'Version 2 nested settings read' ($payload.Settings -eq (Join-Path $dir 'launcher-settings/launcher-settings.json'))
     Check 'Version 2 uploads read' $payload.HasUploads

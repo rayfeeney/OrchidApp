@@ -28,60 +28,9 @@ function Assert-DatabaseIdentity {
         throw 'MariaDB source/target identity mismatch: listener data directory differs from the selected directory. No dump/import is authorised.'
     }
 }
-function Assert-OrchidDatabaseCanStart {
-    $servers = Get-CimInstance Win32_Process -Filter "Name='mariadbd.exe' OR Name='mysqld.exe'" -ErrorAction Stop
-    $possibleOwner = $null
-    foreach ($server in $servers) {
-        $command = [string]$server.CommandLine
-        $dataOptions = [regex]::Matches($command, '(?i)(?:^|\s)--datadir(?:=|\s+)(?:"([^"]+)"|([^\s"]+))(?=\s|$)')
-        # Only rule out an owner when its command identifies a different, ordinary data directory.
-        if ($dataOptions.Count -eq 1 -and $command -match '(?:^|\s)--no-defaults(?=\s|$)') {
-            $data = $dataOptions[0].Groups[1].Value + $dataOptions[0].Groups[2].Value
-            if ($data -match '^[a-zA-Z]:[\\/][^:]+$') {
-                $verifiedDirectory = $null
-                try {
-                    $data = Get-FullLocalPath $data
-                    Assert-NoPathAlias $data
-                    $verifiedDirectory = (Get-Item -LiteralPath $data).FullName
-                } catch {
-                    # Unverifiable process identity must block a competing start.
-                }
-                if ($verifiedDirectory) {
-                    if ($verifiedDirectory -ine (Get-FullLocalPath $MariaDbData)) { continue }
-                    $possibleOwner = $server
-                    break
-                }
-            }
-        }
-        if (-not $possibleOwner) { $possibleOwner = $server }
-    }
-    if ($possibleOwner) {
-        throw "MariaDB process $($possibleOwner.ProcessId) is still running and may own the selected database, but port $MariaDbPort is not listening. Wait for it to exit or close OrchidApp before retrying. No competing MariaDB was started."
-    }
-}
 function Start-OrchidDatabase {
-    # Share the startup lock across the Windows backup and restore tools.
-    $dataParent = Split-Path -Parent $MariaDbData
-    $lockPath = Join-Path $dataParent '.orchidapp-mariadb-start.lock'
-    Assert-ChildPath $lockPath $dataParent
-    $startupLock = [IO.File]::Open($lockPath,[IO.FileMode]::OpenOrCreate,[IO.FileAccess]::ReadWrite,[IO.FileShare]::None)
-    try { Open-OrchidDatabase } finally { $startupLock.Dispose() }
-}
-function Test-OrchidDatabaseListener {
-    # Check the loopback endpoint the SQL client will actually use.
-    $tcp = [Net.Sockets.TcpClient]::new()
-    try {
-        return $tcp.ConnectAsync([Net.IPAddress]::Loopback, $MariaDbPort).Wait(1000)
-    } catch [AggregateException] {
-        if ($_.Exception.GetBaseException() -is [Net.Sockets.SocketException]) { return $false }
-        throw
-    } finally {
-        $tcp.Dispose()
-    }
-}
-function Open-OrchidDatabase {
-    if (-not (Test-OrchidDatabaseListener)) {
-        Assert-OrchidDatabaseCanStart
+    $listener = Get-NetTCPConnection -LocalPort $MariaDbPort -State Listen -ErrorAction SilentlyContinue
+    if ($null -eq $listener) {
         $script:MariaDbProcess = Start-Process -FilePath $MariaDbServer `
             -ArgumentList "--no-defaults --basedir=`"$MariaDbRoot`" --datadir=`"$MariaDbData`" --port=$MariaDbPort --bind-address=127.0.0.1 --console" `
             -WorkingDirectory $AppRoot -RedirectStandardOutput $MariaDbServerLogPath -RedirectStandardError $MariaDbServerErrorLogPath -PassThru -WindowStyle Hidden
