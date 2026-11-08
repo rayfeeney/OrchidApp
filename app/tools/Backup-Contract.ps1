@@ -6,7 +6,6 @@ function Test-CloudFileReparsePoint([string]$Path) {
     if (-not ('OrchidApp.CloudFileTag' -as [type])) {
         Add-Type -TypeDefinition @"
 using System;
-using System.ComponentModel;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
 
@@ -44,12 +43,12 @@ namespace OrchidApp
                 IntPtr.Zero, OpenExisting, OpenReparsePoint | BackupSemantics, IntPtr.Zero))
             {
                 if (handle.IsInvalid)
-                    throw new Win32Exception(Marshal.GetLastWin32Error());
+                    throw new InvalidOperationException("Cannot read the Windows file tag. Win32 error: " + Marshal.GetLastWin32Error());
 
                 AttributeTagInfo info;
                 if (!GetFileInformationByHandleEx(handle, FileAttributeTagInfo, out info,
                     (uint)Marshal.SizeOf(typeof(AttributeTagInfo))))
-                    throw new Win32Exception(Marshal.GetLastWin32Error());
+                    throw new InvalidOperationException("Cannot read the Windows file tag. Win32 error: " + Marshal.GetLastWin32Error());
 
                 return (info.Tag & ~CloudVariantMask) == CloudTag;
             }
