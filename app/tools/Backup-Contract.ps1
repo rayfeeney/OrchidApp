@@ -2,12 +2,73 @@
 function Get-FullLocalPath([string]$Path) {
     [IO.Path]::GetFullPath($Path).TrimEnd([char[]]@('\','/'))
 }
-function Assert-NoPathAlias([string]$Path) {
+function Test-CloudFileReparsePoint([string]$Path) {
+    if (-not ('OrchidApp.CloudFileTag' -as [type])) {
+        Add-Type -TypeDefinition @"
+using System;
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+using Microsoft.Win32.SafeHandles;
+
+namespace OrchidApp
+{
+    public static class CloudFileTag
+    {
+        [StructLayout(LayoutKind.Sequential)]
+        private struct AttributeTagInfo
+        {
+            public uint Attributes;
+            public uint Tag;
+        }
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern SafeFileHandle CreateFile(string path, uint access, uint share,
+            IntPtr security, uint disposition, uint flags, IntPtr template);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool GetFileInformationByHandleEx(SafeFileHandle handle,
+            int infoClass, out AttributeTagInfo info, uint size);
+
+        public static bool IsCloudFile(string path)
+        {
+            const uint ReadAttributes = 0x80;
+            const uint ShareReadWriteDelete = 7;
+            const uint OpenExisting = 3;
+            const uint OpenReparsePoint = 0x00200000;
+            const uint BackupSemantics = 0x02000000; // Allow directory handles.
+            const int FileAttributeTagInfo = 9;
+            const uint CloudTag = 0x9000001A;
+            const uint CloudVariantMask = 0x0000F000;
+
+            using (var handle = CreateFile(path, ReadAttributes, ShareReadWriteDelete,
+                IntPtr.Zero, OpenExisting, OpenReparsePoint | BackupSemantics, IntPtr.Zero))
+            {
+                if (handle.IsInvalid)
+                    throw new Win32Exception(Marshal.GetLastWin32Error());
+
+                AttributeTagInfo info;
+                if (!GetFileInformationByHandleEx(handle, FileAttributeTagInfo, out info,
+                    (uint)Marshal.SizeOf(typeof(AttributeTagInfo))))
+                    throw new Win32Exception(Marshal.GetLastWin32Error());
+
+                return (info.Tag & ~CloudVariantMask) == CloudTag;
+            }
+        }
+    }
+}
+"@
+    }
+    [OrchidApp.CloudFileTag]::IsCloudFile($Path)
+}
+
+function Assert-NoPathAlias([string]$Path, [switch]$AllowCloudFiles) {
     $item = Get-Item -LiteralPath $Path -Force -ErrorAction Stop
-    if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw 'Data file is a reparse point.' }
+    if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0 -and
+            -not ($AllowCloudFiles -and (Test-CloudFileReparsePoint $item.FullName))) { throw 'Data file is a reparse point.' }
     if ($item -is [IO.FileInfo]) { $item = $item.Directory }
     while ($null -ne $item) {
-        if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw 'Data path contains a reparse point; review the source/target.' }
+        if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0 -and
+            -not ($AllowCloudFiles -and (Test-CloudFileReparsePoint $item.FullName))) { throw 'Data path contains a reparse point; review the source/target.' }
         $item = $item.Parent
     }
 }
