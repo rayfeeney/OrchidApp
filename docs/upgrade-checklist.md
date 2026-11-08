@@ -9,7 +9,7 @@ This is the single list of deployment actions arising from C01–C20. Use the Wi
 ### Windows restore preflight
 
 - Rebuild the Windows installer to update the restore and backup helpers. No schema or settings change is required.
-- On a disposable installed fixture, test a valid local backup while launcher-owned MariaDB is running. Verify the safety ZIP, restored records/photos/settings and readiness after restart. Check that a synced ZIP with a reparse point directs the operator to a regular local copy and leaves the fixture untouched. See [Windows restore safeguards](windows-backup-format.md).
+- On a disposable installed fixture, test a valid local backup while launcher-owned MariaDB is running. Verify the safety ZIP, restored records/photos/settings and readiness after restart. Verify a OneDrive ZIP is copied to local recovery staging before validation and restores successfully. Check that an unavailable cloud file or a ZIP reached through a junction stops before replacement. See [Windows restore safeguards](windows-backup-format.md).
 
 ### .NET 8 startup dependency correction
 

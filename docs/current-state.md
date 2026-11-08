@@ -24,7 +24,7 @@ Local checks passed for locked restore, Release build, Linux ARM64 publish, Wind
 
 Installed testing found two pre-replacement failures. A OneDrive reparse-point ZIP was rejected before opening, and a regular local ZIP passed archive validation but stopped during safety backup when a second MariaDB process tried to open the running database's data directory. No restore SQL started. The retained copy remains available for recovery.
 
-The candidate checks the actual loopback endpoint and verifies its database directory before reusing it. Only a refused connection permits a new server start. The archive path guard now explains how to select a regular local copy. The 57 source/recovery checks and 80 disposable Windows database checks passed, including alias rejection and restore with an already running database. Rebuild the installer and verify both cases with disposable installed data before collection recovery. See the [Windows backup and restore contract](windows-backup-format.md).
+The candidate checks the actual loopback endpoint and verifies its database directory before reusing it. Only a refused connection permits a new server start. The archive path guard now explains how to select a regular local copy. The 57 source/recovery checks and 80 disposable Windows database checks passed, including alias rejection and restore with an already running database. Installed testing confirmed local restore. OneDrive input now accepts Windows Cloud Files tags and stages the ZIP in the existing local recovery directory before validation. Installed OneDrive restore and unavailable-file handling remain pending. See the [Windows backup and restore contract](windows-backup-format.md).
 
 ## Fixed work list
 
