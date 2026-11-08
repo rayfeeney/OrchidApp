@@ -57,7 +57,11 @@ function Stop-Fixture([int]$Port) {
     $previous=$env:MYSQL_PWD; $env:MYSQL_PWD='isolated-backup-test'
     try { & $admin --no-defaults --protocol=TCP --host=127.0.0.1 "--port=$Port" --user=root shutdown | Out-Null; if ($LASTEXITCODE -ne 0) { throw 'Fixture shutdown failed.' } }
     finally { $env:MYSQL_PWD=$previous }
-    foreach ($p in $processes) { if (-not $p.HasExited) { $p.WaitForExit(10000) | Out-Null } }
+    foreach ($p in $processes.ToArray()) {
+        if (-not $p.HasExited -and -not $p.WaitForExit(10000)) { throw 'Fixture server did not exit after shutdown.' }
+        [void]$processes.Remove($p)
+        $p.Dispose()
+    }
 }
 function Run-Tool([string]$Name,[string[]]$Arguments,[string]$ErrorText='') {
     $requestFile=Join-Path $root ('request-'+[guid]::NewGuid().ToString('N')+'.json')
@@ -166,6 +170,8 @@ try {
     finally {
         $env:MYSQL_PWD=$previousPassword
         if (-not $pipeServer.HasExited) { $pipeServer.Kill(); $pipeServer.WaitForExit() }
+        [void]$processes.Remove($pipeServer)
+        $pipeServer.Dispose()
     }
     Start-Fixture $expectedData $TargetPort
     Check 'Busy preflight preserves target data' ((Query $TargetPort 'SELECT plantNotes FROM orchids.plant;') -ceq 'changed')

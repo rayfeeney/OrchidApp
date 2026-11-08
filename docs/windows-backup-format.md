@@ -67,7 +67,7 @@ Completed operation journals remain. The launcher refuses to copy a later fixed-
 
 If web shutdown fails before restore starts, the launcher reports that no restore began and restores usable controls. If the web app has stopped but preflight fails, Open and Backup stay disabled and Restore remains available; close and reopen for normal startup when no pending marker exists. After a destructive failure, the persistent recovery state takes precedence.
 
-WIN-RESTORE-01 source checks passed for a normal backup and local ZIP restore on disposable MariaDB data, with the safety ZIP retained. A second fixture with TCP disabled stopped restore before import and kept its original MariaDB process running. The full database suite did not complete on the development host because the startup guard found a MariaDB process whose data directory Windows did not expose. Installed acceptance with an online-only OneDrive ZIP remains pending.
+WIN-RESTORE-01 source checks passed for a normal backup and local ZIP restore on disposable MariaDB data, with the safety ZIP retained. A second fixture with TCP disabled stopped restore before import and kept its original MariaDB process running. The full database suite did not complete on the development host because the startup guard found a database process whose data directory Windows did not expose. The hosted Windows job stops the runner image's MySQL service before testing offline database startup with disposable data. Installed acceptance with an online-only OneDrive ZIP remains pending.
 
 ## Routine backup retention
 
