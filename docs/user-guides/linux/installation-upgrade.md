@@ -312,24 +312,85 @@ Record the resulting commit SHA for the upgrade record. The pre-upgrade backup r
 
 ### 4. Migrate
 
-Export explicit `MARIADB_HOST`, `MARIADB_PORT`, `MARIADB_DATABASE`,
-`MARIADB_USER` and `MARIADB_PASSWORD` from secure operator credentials.
-Use the migration account. The systemd environment file is for the app.
-Check the plan against the release and confirm its target before applying.
+Apply any pending database migrations using the existing migration runner.
+
+The migration runner requires five explicit MariaDB connection variables. These must be supplied in the current shell; they are not automatically loaded from the systemd application environment.
+
+The commands below use the standard local MariaDB configuration. Confirm the host, port, database and migration account match the installation before proceeding. Adjust them if the installation uses different values.
+
+The migration password is entered interactively without displaying it or placing it in shell history.
+
+**Run the following block in Bash:**
 
 ```bash
-pwsh -NoProfile -File ./database/scripts/Apply-Migrations.ps1 -PlanOnly
-# Continue after verifying the target and pending list.
-pwsh -NoProfile -File ./database/scripts/Apply-Migrations.ps1
-pwsh -NoProfile -File ./database/scripts/Apply-Migrations.ps1 -PlanOnly
+(
+set -euo pipefail
+cd ~/OrchidApp
+
+# Database connection - verify for this installation.
+export MARIADB_HOST="127.0.0.1"
+export MARIADB_PORT="3306"
+export MARIADB_DATABASE="orchids"
+export MARIADB_USER="orchid_migrator"
+
+# Securely request the existing migration password.
+read -rsp "MariaDB migration password: " MARIADB_PASSWORD
+echo
+
+if [[ -z "$MARIADB_PASSWORD" ]]; then
+    echo "ERROR: Migration password cannot be empty."
+    exit 1
+fi
+
+export MARIADB_PASSWORD
+
+echo "=== 1. Check pending migrations ==="
+
+pwsh -NoProfile -File \
+    ./database/scripts/Apply-Migrations.ps1 -PlanOnly
+
+echo
+echo "Review the database target and pending migrations."
+read -rp "Type APPLY to continue: " confirmation
+
+if [[ "$confirmation" != "APPLY" ]]; then
+    echo "Migration cancelled. No migrations applied."
+    exit 0
+fi
+
+echo "=== 2. Apply migrations ==="
+
+pwsh -NoProfile -File \
+    ./database/scripts/Apply-Migrations.ps1
+
+echo "=== 3. Verify migration status ==="
+
+pwsh -NoProfile -File \
+    ./database/scripts/Apply-Migrations.ps1 -PlanOnly
+
+echo "=== Migration process completed ==="
+)
 ```
 
-Require zero pending after applying. The [runner contract](../../migration-runners.md)
-describes ledger and checksum validation. If it rejects a historical ledger,
-stop for [compatibility review](../../historical-linux-upgrade.md). If SQL
-fails, keep services stopped and preserve diagnostics and any
-`migration:pending` marker. DDL can be partially applied. Use verified
-recovery before retrying.
+**Acceptance requirements**
+
+- The initial plan identifies the correct MariaDB host, port and `orchids` database.
+- All pending migrations are reviewed before confirmation.
+- The migration runner completes without errors.
+- The final planning run reports `pending: 0`.
+- Any migration-history or checksum validation failure is investigated rather than bypassed.
+
+The parentheses run the commands in a subshell. Database credentials are available to the migration runner for this operation but do not remain exported in the parent SSH session afterwards.
+
+The [migration runner contract](../../migration-runners.md) describes ledger and checksum validation.
+
+If the runner rejects a historical ledger, stop and follow the [compatibility review](../../historical-linux-upgrade.md).
+
+If a SQL migration fails, keep OrchidApp and other database writers stopped. Preserve the diagnostic output and any `migration:pending` marker. MariaDB DDL can be partially applied, and the migration runner does not guarantee automatic rollback.
+
+**Do not automatically retry a failed migration.** Investigate the database state and use the verified pre-upgrade recovery backup where necessary before proceeding.
+
+Only continue to **Step 5 — Publish and deploy** when migration verification reports zero pending migrations.
 
 ### 5. Publish and deploy
 
