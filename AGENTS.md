@@ -46,3 +46,5 @@ if ($LASTEXITCODE -ne 0) { throw 'Archive creation failed.' }
 ```
 
 Only the root dist is excluded; nested vendored web-library dist folders are required. The broad .env.* exclusion also omits .env.example from the ZIP. This is not a full backup or a guarantee that other files contain no secrets. See the [database creation contract](docs/database-creation.md) and [current work list](docs/current-state.md) for remaining release and operational work.
+
+Keep the installed Raspberry Pi/Linux process in the [Linux user guide](docs/user-guides/linux/installation-upgrade.md). Link other operator documents to it. The sequence is stop writers, verify backups, fetch the approved release, apply pending migrations, publish and deploy, then start and verify.

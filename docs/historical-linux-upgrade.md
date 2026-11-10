@@ -1,5 +1,7 @@
 # Historical Linux upgrade acceptance
 
+For installed deployments, see the [Linux installation and upgrade guide](user-guides/linux/installation-upgrade.md). This page records historical fixture and recovery evidence.
+
 Verified 30 October 2026: source baseline `283eb06c9bcb3a9d8fc220b9d21e4c6fe7daecac`; [normal CI 40780100240 passed](https://github.com/rayfeeney/OrchidApp/actions/runs/40780100240). [Full historical Linux acceptance 40777537302 passed](https://github.com/rayfeeney/OrchidApp/actions/runs/40777537302) on PR head `0f5a3b825a52dc104b4d245f36c5e899356d7b34`, whose Git tree is identical to the merged baseline (`7cb0497de9716c141f2472c09ea81d15a5e141af`). This is isolated package/application/recovery evidence, not live Pi/systemd/provider/browser or Windows installed acceptance. See the [current work list](current-state.md). Local phase records remain in [application/recovery evidence](maintenance/historical-linux-application-recovery.md).
 
 ## Input and platforms

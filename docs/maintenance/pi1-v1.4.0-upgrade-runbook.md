@@ -1,5 +1,7 @@
 # OrchidApp v1.4.0 upgrade runbook for Pi 1
 
+> This runbook records the Pi 1 v1.4.0 deployment. For current installations and upgrades, use the [Linux installation and upgrade guide](../user-guides/linux/installation-upgrade.md).
+
 This runbook records the Pi 2 rehearsal and the checks to repeat on Pi 1. Pi 1 still needs its own maintenance window, baseline, recovery evidence and migration account verification.
 
 **Recovery gate.** Before any ledger or migration writes, prove that the stopped Pi 1 installation can be recovered from its own matching SQL and file backups. After any migration starts, recover the database and application as a set. Restoring the previous publish directory alone cannot undo database changes.

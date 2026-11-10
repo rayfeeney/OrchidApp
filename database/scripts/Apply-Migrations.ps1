@@ -21,10 +21,18 @@ $previousPassword = $env:MYSQL_PWD
 try {
     $env:MYSQL_PWD = $env:MARIADB_PASSWORD
     function Invoke-MigrationSql([string]$Sql) {
-        $output = $Sql | & $MariaDbExe @clientArguments 2>&1
-        $exitCode = $LASTEXITCODE
-        if ($exitCode -ne 0) { throw "MariaDB command failed (exit $exitCode): $($output -join "`n")" }
-        $output
+        $diagnosticFile = New-TemporaryFile
+        try {
+            $output = $Sql | & $MariaDbExe @clientArguments 2> $diagnosticFile.FullName
+            $exitCode = $LASTEXITCODE
+            $diagnostics = Get-Content -LiteralPath $diagnosticFile.FullName -Raw
+            if ($exitCode -ne 0) { throw "MariaDB command failed (exit $exitCode): $diagnostics" }
+            if ($diagnostics) { [Console]::Error.Write($diagnostics) }
+            $output
+        }
+        finally {
+            Remove-Item -LiteralPath $diagnosticFile.FullName
+        }
     }
     function Read-MigrationHistory {
         $engine = @(Invoke-MigrationSql "SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='schemaversion';")
