@@ -312,8 +312,6 @@ Record the resulting commit SHA for the upgrade record. The pre-upgrade backup r
 
 ### 4. Migrate
 
-### 4. Migrate
-
 Export explicit `MARIADB_HOST`, `MARIADB_PORT`, `MARIADB_DATABASE`,
 `MARIADB_USER` and `MARIADB_PASSWORD` from secure operator credentials.
 Use the migration account. The systemd environment file is for the app.
