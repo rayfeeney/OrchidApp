@@ -394,36 +394,153 @@ Only continue to **Step 5 — Publish and deploy** when migration verification r
 
 ### 5. Publish and deploy
 
-Use the committed portable NuGet lock with a framework-dependent DLL on
-the ARM64 .NET 8 host. The installed runtime and native libvips supply
-platform dependencies. Treat a locked restore failure as a release issue.
+Build the latest checked-out `main` source using the .NET 8 SDK and deploy the published application.
+
+The application is published as a framework-dependent DLL. The Linux host must already have the .NET 8 runtime and required native libvips dependencies installed.
+
+The commands support .NET installed either on the system `PATH` or in the operator's `~/.dotnet` directory.
+
+**Prerequisites:**
+
+- The pre-upgrade recovery backup has completed successfully.
+- Database migrations have completed and verification reports zero pending.
+- OrchidApp remains stopped.
+- The Git working tree is clean.
+- The installed .NET SDK is version 8.
+
+**Run the following block in Bash:**
 
 ```bash
-project=src/OrchidApp.Web/OrchidApp.Web.csproj
+(
+set -euo pipefail
+cd ~/OrchidApp
+
+project="src/OrchidApp.Web/OrchidApp.Web.csproj"
+publish_root="/opt/orchidapp/publish"
+
+echo "=== 1. Validate environment ==="
+
+# Locate the existing .NET installation.
+if command -v dotnet >/dev/null 2>&1; then
+    dotnet_cmd=$(command -v dotnet)
+elif [[ -x "$HOME/.dotnet/dotnet" ]]; then
+    dotnet_cmd="$HOME/.dotnet/dotnet"
+else
+    echo "ERROR: .NET SDK not found."
+    exit 1
+fi
+
+sdk_version=$("$dotnet_cmd" --version)
+echo ".NET SDK: $sdk_version"
+
+[[ "$sdk_version" == 8.* ]] || {
+    echo "ERROR: .NET 8 SDK required."
+    exit 1
+}
+
+# Application must remain stopped.
+test "$(systemctl show orchidapp.service \
+    -p ActiveState --value)" = "inactive"
+
+test -d "$publish_root"
+test ! -L "$publish_root"
+test -z "$(git status --porcelain)"
+
+echo "Source revision: $(git rev-parse --short HEAD)"
+
+echo "=== 2. Restore locked dependencies ==="
+
+"$dotnet_cmd" restore "$project" --locked-mode
+
+echo "=== 3. Publish application ==="
+
 stage=$(mktemp -d)
-dotnet restore "$project" --locked-mode
-dotnet publish "$project" -c Release --no-restore --self-contained false -p:UseAppHost=false -o "$stage"
+trap 'rm -rf -- "$stage"' EXIT
+
+"$dotnet_cmd" publish "$project" \
+    -c Release \
+    --no-restore \
+    --self-contained false \
+    -p:UseAppHost=false \
+    -o "$stage"
+
 test -s "$stage/OrchidApp.Web.dll"
 test -z "$(git status --porcelain)"
 
-incoming=$(sudo mktemp -d /opt/orchidapp/.publish-next.XXXXXXXX)
+echo "=== 4. Stage deployment ==="
+
+incoming=$(sudo mktemp -d \
+    /opt/orchidapp/.publish-next.XXXXXXXX)
+
 previous="${incoming/.publish-next./.publish-before.}"
+
+sudo test ! -e "$previous"
+sudo test ! -L "$previous"
+
 sudo rsync -a "$stage/" "$incoming/"
 sudo chmod 755 "$incoming"
-sudo test ! -e "$previous"
+
+# Confirm the existing and staged directories
+# are on the same filesystem.
+test "$(stat -c %d "$publish_root")" = \
+     "$(stat -c %d "$incoming")"
+
+# Check access using the configured service account.
+service_user=$(systemctl show orchidapp.service \
+    -p User --value)
+
+test -n "$service_user"
+
+sudo -u "$service_user" \
+    test -r "$incoming/OrchidApp.Web.dll"
+
+sudo -u "$service_user" \
+    test -r "$incoming/appsettings.json"
+
+echo "=== 5. Deploy new application ==="
+
+# Preserve the existing published application.
+sudo mv -T "$publish_root" "$previous"
+
+# Install the new published application.
+if ! sudo mv -T "$incoming" "$publish_root"; then
+    echo "ERROR: Deployment failed. Restoring previous files."
+    sudo mv -T "$previous" "$publish_root"
+    exit 1
+fi
+
+echo "=== DEPLOYMENT COMPLETED ==="
+echo "Published: $publish_root"
+echo "Previous:  $previous"
+echo "Commit:    $(git rev-parse HEAD)"
+
+)
 ```
 
-Check that the service account can traverse and read the staged tree and
-that the existing publish directory is a regular directory on the same
-filesystem. Then replace it while the service is stopped.
+**Acceptance requirements**
 
-```bash
-sudo mv -T /opt/orchidapp/publish "$previous"
-sudo mv -T "$incoming" /opt/orchidapp/publish
-```
+- The .NET 8 SDK is available.
+- NuGet restore succeeds using the committed lock file in locked mode.
+- The Release publish completes without errors.
+- `OrchidApp.Web.dll` exists in the staged output.
+- The Git working tree remains clean.
+- The service account can access the staged application.
+- The existing published directory is preserved.
+- The new published application replaces the old directory successfully.
 
-If a move fails, inspect both paths before restarting. If migrations ran,
-recover matching SQL, uploads, configuration and app binaries together.
+The existing published application is retained in `/opt/orchidapp/.publish-before.*` until the upgrade is accepted.
+
+Do not remove this directory or the pre-upgrade recovery archive until Step 6 has completed successfully.
+
+**If deployment fails**
+
+If replacing the published directory fails, the command block attempts to restore the previous application directory. Check the resulting directories before restarting the service.
+
+If database migrations have already been applied, restoring application files alone does not constitute a complete rollback. The pre-upgrade application, database, photographs and configuration must be restored as a consistent set using the verified recovery backup.
+
+Do not automatically rerun migrations or delete existing deployment directories after a failure.
+
+**Continue to Step 6 — Start processes and verify** only after deployment completes successfully.
 
 ### 6. Start processes and verify
 
