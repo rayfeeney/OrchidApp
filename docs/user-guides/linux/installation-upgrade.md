@@ -1,6 +1,6 @@
 # Raspberry Pi and Linux installation and upgrades
 
-> For the Pi 1 v1.4.0 upgrade, follow the [Pi 1 runbook](../../maintenance/pi1-v1.4.0-upgrade-runbook.md) for the historical ledger adoption and recovery checks.
+> For previous deployment evidence, see the [Pi 1 v1.4.0 record](../../maintenance/pi1-v1.4.0-upgrade-runbook.md).
 
 This guide covers a general OrchidApp server using MariaDB and systemd. It does not install the owner's bespoke monitoring feeds/importer or EnergyMonitoring. Monitoring defaults off; leave Monitoring:Enabled absent or false. See the [activation boundary](../../environment-summary-platform.md).
 
@@ -8,14 +8,14 @@ Fresh creation uses canonical schema, required seeds and the generated baseline 
 
 ## Prerequisites and target
 
-Use a maintainer-validated Raspberry Pi OS/Linux release and architecture, .NET 8 SDK for source publishing, MariaDB 10.11 server/client tools, PowerShell 7+, Git, native libvips image dependencies and systemd. Paired data backups also need Python 3.9+, Bash and rclone; full application backups need rsync, tar/gzip and an off-device copy route such as SCP. Package names/repositories differ by OS image; no universal apt list has been validated by this documentation cleanup. Track repeatable platform setup in [C16](../../history/code-change-backlog.md#c16).
+Use a maintainer-validated Raspberry Pi OS/Linux release and architecture, .NET 8 SDK for source publishing, MariaDB 10.11 server/client tools, PowerShell 7+, Git, native libvips image dependencies and systemd. Routine paired backups also need Python 3.9+, Bash and rclone. Pre-upgrade archives need Bash, rsync, tar/gzip and protected off-device storage. Package names/repositories differ by OS image; no universal apt list has been validated by this documentation cleanup. Track repeatable platform setup in [C16](../../history/code-change-backlog.md#c16).
 
 Choose an application service account, app root (examples /opt/orchidapp), external configuration directory (/etc/orchidapp), MariaDB endpoint/account and uploads path. Use the same values throughout. Install/configure MariaDB with utf8mb4 and utf8mb4_unicode_ci; verify actual server/database settings with your administrative tools. Distribution paths such as /etc/mysql and option group mysqld are normal MariaDB compatibility names.
 
 ## Fresh environment
 
 1. Install and verify the tools above on the chosen image; enable MariaDB and verify the intended endpoint.
-2. Obtain the trusted repository at the selected app root, owned appropriately for publishing. Use the agreed remote/release revision; do not publish an unknown checkout.
+2. Obtain the trusted repository in a source checkout separate from the deployed app. Use the agreed remote/release revision; do not publish an unknown checkout.
 3. Select an absent/empty target and supply the seven explicit MARIADB_* values in the [schema-only creation contract](../../database-creation.md). Run pwsh ./database/scripts/rebuild.ps1 -ConfirmDatabase $env:MARIADB_DATABASE from the checkout root. The script resolves mariadb on PATH, refuses nonempty targets and records completion only after all seeds. Run the supplied isolated checks on your Linux image before treating platform acceptance as complete.
 4. Configure the app's runtime account/connection and isolated durable uploads before starting. Runtime privileges and migration/admin privileges differ; do not run the web process as MariaDB root.
 5. Build/publish and register the service below. Verify live application workflows and a real test-photo upload/reopen, then configure backups and validate an isolated recovery.
@@ -31,7 +31,8 @@ The env file can be root-owned mode 600 because systemd reads it for a system se
 After schema/native prerequisites pass, publish from the checkout root:
 
 ```bash
-dotnet publish src/OrchidApp.Web/OrchidApp.Web.csproj -c Release -o /opt/orchidapp/publish
+dotnet restore src/OrchidApp.Web/OrchidApp.Web.csproj --locked-mode
+dotnet publish src/OrchidApp.Web/OrchidApp.Web.csproj -c Release --no-restore --self-contained false -p:UseAppHost=false -o /opt/orchidapp/publish
 ```
 
 Require a successful exit. Create /etc/systemd/system/orchidapp.service, replacing the service-account placeholder and paths with the selected values:
@@ -68,41 +69,174 @@ Open the operator-provided URL (for the example listener, http://<pi-host>:5000)
 
 ## Upgrade an existing correctly baselined database
 
-Complete the [full pre-upgrade backup](Full-App-Backup-Pre-Upgrade.md), verify its off-device copy and a recovery route, then leave app/other writers stopped. The owner's importer must be stopped only on that bespoke installation. Never rebuild the restored or existing database.
+Follow these six steps in order. Stop at a failed command or failed check. The
+Pi 2 example uses Debian 13 ARM64, .NET SDK 8.0.426, source in `~/OrchidApp`,
+MariaDB database `orchids`, publish directory `/opt/orchidapp/publish` and
+settings in `/etc/orchidapp/orchidapp.env`. Confirm the actual paths, units
+and versions before downtime. Keep uploads and secrets outside publish.
 
-Check checkout revision and clean tracked state, then obtain the intended update:
+### 1. Stop processes
+
+Check the trusted Git origin, release tag and full approved commit, available
+space, `uname -m`, `dotnet --version`, and `git status --short` before
+stopping services. Review changes to `src/OrchidApp.Web/packages.lock.json`.
+If a previous RID-specific restore generated the change, save the diff
+outside the checkout, then restore that file from HEAD. Resolve other local
+changes before continuing.
+
+Record active services and timers. Pause scheduled backup jobs and stop
+timers that can start writers, then stop the writers and the web app. The
+bespoke importer units apply only where installed. Leave MariaDB running.
 
 ```bash
-cd /opt/orchidapp
-git status --short --branch
-git log -1 --format='%h %s'
-git pull --ff-only
+sudo systemctl stop orchidapp.service
+systemctl show orchidapp.service -p ActiveState
 ```
 
-Stop on conflicts or unexpected local changes. Preserve publish, uploads, imports and external configuration. Do not clean them away. Prepare migration credentials in the operator terminal through local secret management: MARIADB_HOST, MARIADB_PORT, MARIADB_DATABASE=orchids, MARIADB_USER and MARIADB_PASSWORD. Ensure every value refers to the selected target; the runtime connection string does not supply these variables automatically.
+Verify every stopped writer reports `ActiveState=inactive`. Keep them stopped
+until the upgraded app passes validation.
 
-If using /etc/orchidapp/orchidapp-migrations.env, create it separately with restricted root/operator access and Bash-compatible quoted assignments, validate successful reading before sourcing it, and export its variables in a subshell. It is not automatically created or loaded by this repository, and a systemd env file is not automatically a safe Bash script. Do not invoke the runner after a failed/empty credential load or fall back to inherited targets.
+### 2. Back up and verify recovery
 
-With verified exported variables and compatible baseline, run:
+In Bash, set `upload_root` to the verified absolute, resolved upload directory.
+Check that it exists and that backup storage has room for both copies and the
+archive. Capture the active service definitions, including custom drop-ins and
+auxiliary units, and retain the grants and MariaDB configuration needed to
+restore routines and run the application.
 
 ```bash
-pwsh ./database/scripts/Apply-Migrations.ps1
+set -o pipefail
+cd ~/OrchidApp
+backup="/opt/orchidapp-rollbacks/$(date -u +%Y%m%dT%H%M%SZ)"
+sudo test -d "${upload_root:?Set the verified upload directory}"
+sudo mkdir -p /opt/orchidapp-rollbacks
+sudo mkdir -m 700 "$backup"
+sudo mkdir "$backup/publish" "$backup/uploads" "$backup/systemd"
+sudo rsync -aHAX --numeric-ids /opt/orchidapp/publish/ "$backup/publish/"
+sudo rsync -aHAX --numeric-ids "$upload_root/" "$backup/uploads/"
+sudo cp -a /etc/orchidapp "$backup/configuration"
+sudo find /etc/systemd/system -maxdepth 1 -name 'orchidapp*' \
+  -exec cp -a -t "$backup/systemd/" -- {} +
+systemctl cat orchidapp.service | sudo tee "$backup/systemd-effective.txt" >/dev/null
+git rev-parse HEAD | sudo tee "$backup/source-revision.txt" >/dev/null
+printf '%s\n' "$upload_root" | sudo tee "$backup/upload-root.txt" >/dev/null
+sudo bash -c 'umask 077; mariadb-dump --user=root --password --single-transaction --routines --triggers --events --hex-blob --databases orchids > "$1"' _ "$backup/orchids.sql"
+sudo test -s "$backup/orchids.sql"
+sudo tail -n 5 "$backup/orchids.sql"
+sudo rsync -aHAXnc --numeric-ids --itemize-changes /opt/orchidapp/publish/ "$backup/publish/"
+sudo rsync -aHAXnc --numeric-ids --itemize-changes "$upload_root/" "$backup/uploads/"
+sudo bash -c 'umask 077; tar --acls --xattrs -czpf "$1.tar.gz" -C "$(dirname "$1")" "$(basename "$1")"' _ "$backup"
+sudo tar -tzf "$backup.tar.gz" >/dev/null
+sudo sha256sum "$backup.tar.gz"
 ```
 
-Require exit code 0 and review output before publishing. The [runner contract](../../migration-runners.md) now enforces checksum, timestamp, chronology and missing-file rules. Failed/uncertain SQL leaves migration:pending and blocks retries. Preserve the error and use a verified recovery path; do not delete that marker to force another attempt. DDL may remain partially applied.
+Require a successful dump ending in `Dump completed` and no differences
+from either rsync comparison. Copy the archive to protected off-device
+storage and compare its SHA-256 there. It contains credentials and photos.
+If copying with SCP, make the archive readable by the transferring operator
+only and keep the destination private.
+Confirm the recovery set works on an isolated host and MariaDB instance
+before relying on it. See [recovery](#recover-a-pre-upgrade-archive).
 
-Publish as above, require success, start the app and repeat live checks. Resume only services/timers previously active; do not install an importer on other deployments. Keep the recovery set until the upgraded system has passed validation. Installer/ZIP copying is not a substitute for the maintained platform deployment process.
+### 3. Pull the approved release
 
-## Backup and recovery prerequisites
+Set `release` and `expected_commit` from the approved release record.
+Fetch the exact tag from the trusted origin and check out the verified
+commit. This is the pull step for a pinned deployment.
 
-Follow the [routine backup/restore runbook](OrchidApp-MariaDB-Backup-and-Restore-Runbook.md) for account/path/remotes/scheduling checks and explicit backup selection. A fresh-source schema creation is different from restoring a backup. Recovery must not route a restored database through the destructive fresh-creation step. Restore app/configuration/service definitions and the compatible version, then publish/start only; apply only explicitly required subsequent migrations after a verified recovery copy.
+```bash
+cd ~/OrchidApp
+test -z "$(git status --porcelain)"
+git remote get-url origin
+git fetch origin "refs/tags/${release:?Set the approved tag}:refs/tags/$release"
+test "$(git rev-parse --verify "refs/tags/$release^{commit}")" = "${expected_commit:?Set the approved commit}"
+git switch --detach "$expected_commit"
+```
 
-For failures, inspect service/application logs without printing secret files into support output. Check selected endpoint, variable names, upload permissions and native libvips availability. Source-only validation and this guide do not certify a fresh machine or a backup restore; track remaining installed acceptance in the [current work list](../../current-state.md).
+### 4. Migrate
 
-## C15/C19 photo readiness after upgrade
+Export explicit `MARIADB_HOST`, `MARIADB_PORT`, `MARIADB_DATABASE`,
+`MARIADB_USER` and `MARIADB_PASSWORD` from secure operator credentials.
+Use the migration account. The systemd environment file is for the app.
+Check the plan against the release and confirm its target before applying.
 
-Apply `202610271200_PhotoTaxonTransaction.sql` through the canonical migration runner before accepting the new app. With the service started, require `curl --fail http://127.0.0.1:5000/health/ready` using its actual listener. A responding Home page or active service alone is insufficient. On 503 inspect component flags and protected application logs, check database history, writable uploads, native libvips and referenced files. Preserve unresolved `.photo-recovery` records and matching SQL/uploads; [photo recovery](../../photo-handling.md) defines review. New photos are upright and stripped of private metadata by default, preserving ICC colour; an explicit false override retains metadata. Existing photos are not rewritten. Use libvips with HEVC decoding for iPhone HEIC uploads. Run the native photo checks on the installed Linux architecture and verify browser upload/reopen with a disposable photo. See [photo limits and decoder checks](../../photo-handling.md).
+```bash
+pwsh -NoProfile -File ./database/scripts/Apply-Migrations.ps1 -PlanOnly
+# Continue after verifying the target and pending list.
+pwsh -NoProfile -File ./database/scripts/Apply-Migrations.ps1
+pwsh -NoProfile -File ./database/scripts/Apply-Migrations.ps1 -PlanOnly
+```
 
-## App-only upgrade backup policy
+Require zero pending after applying. The [runner contract](../../migration-runners.md)
+describes ledger and checksum validation. If it rejects a historical ledger,
+stop for [compatibility review](../../historical-linux-upgrade.md). If SQL
+fails, keep services stopped and preserve diagnostics and any
+`migration:pending` marker. DDL can be partially applied. Use verified
+recovery before retrying.
 
-C18 adds a Windows installer gate; it adds no Linux setting, migration or automatic Linux installer. For Linux app-only updates, keep the existing stopped-writer paired backup and off-device copy, preserving compatible prior app/configuration as well as data. Continue the [upgrade checklist](../../upgrade-checklist.md) and verify the actual service/native photo readiness after deployment. Windows installer fixture checks do not certify Linux/Pi recovery.
+### 5. Publish and deploy
+
+Use the committed portable NuGet lock with a framework-dependent DLL on
+the ARM64 .NET 8 host. The installed runtime and native libvips supply
+platform dependencies. Treat a locked restore failure as a release issue.
+
+```bash
+project=src/OrchidApp.Web/OrchidApp.Web.csproj
+stage=$(mktemp -d)
+dotnet restore "$project" --locked-mode
+dotnet publish "$project" -c Release --no-restore --self-contained false -p:UseAppHost=false -o "$stage"
+test -s "$stage/OrchidApp.Web.dll"
+test -z "$(git status --porcelain)"
+
+incoming=$(sudo mktemp -d /opt/orchidapp/.publish-next.XXXXXXXX)
+previous="${incoming/.publish-next./.publish-before.}"
+sudo rsync -a "$stage/" "$incoming/"
+sudo chmod 755 "$incoming"
+sudo test ! -e "$previous"
+```
+
+Check that the service account can traverse and read the staged tree and
+that the existing publish directory is a regular directory on the same
+filesystem. Then replace it while the service is stopped.
+
+```bash
+sudo mv -T /opt/orchidapp/publish "$previous"
+sudo mv -T "$incoming" /opt/orchidapp/publish
+```
+
+If a move fails, inspect both paths before restarting. If migrations ran,
+recover matching SQL, uploads, configuration and app binaries together.
+
+### 6. Start processes and verify
+
+```bash
+sudo systemctl start orchidapp.service
+systemctl is-active orchidapp.service
+curl --fail --show-error http://127.0.0.1:5000/health/ready
+sudo journalctl -u orchidapp.service --since '5 minutes ago' --no-pager
+```
+
+Allow startup to complete and use the actual listener. Verify a representative
+read and disposable save/reopen. Open existing plant and taxon photos,
+upload a disposable photo, reopen its thumbnail and full image, then delete
+it and confirm existing photos still open. See [photo handling](../../photo-handling.md)
+for native decoder checks and recovery records. Resume only previously active
+auxiliary services, timers and backup jobs after validation. Record the
+deployed commit, SDK and results and retain the verified recovery set.
+
+## Recover a pre-upgrade archive
+
+Verify SHA-256 and extract into a private scratch directory with ACLs and
+extended attributes preserved. On a separate host and MariaDB instance,
+restore `orchids.sql` into an empty instance with no existing `orchids`
+database. The dump selects that database by name. Recreate the needed
+grants, including routine definers. Restore the captured publish tree,
+service definitions, configuration and matching uploads from the archive.
+Use isolated credentials and paths for the rehearsal and preserve required
+file ownership. Follow the [application acceptance checks](OrchidApp-MariaDB-Backup-and-Restore-Runbook.md#application-and-replacement-acceptance).
+For production recovery, stop writers and preserve failed-upgrade state
+before restoring the same compatible set. Never run fresh schema creation
+over the recovered collection.
+
+The [routine backup and restore runbook](OrchidApp-MariaDB-Backup-and-Restore-Runbook.md)
+covers scheduled paired snapshots and their separate restore format.

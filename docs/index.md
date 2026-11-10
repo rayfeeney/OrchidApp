@@ -38,7 +38,7 @@ Start each release/installation upgrade with the [Windows and Linux upgrade acti
 | Task | Guide |
 | --- | --- |
 | Install or upgrade a general Raspberry Pi/Linux deployment | [Linux installation](user-guides/linux/installation-upgrade.md) |
-| Full Pi backup before upgrade | [Full backup](user-guides/linux/Full-App-Backup-Pre-Upgrade.md) |
+| Full Pi backup before upgrade | [Full backup](user-guides/linux/installation-upgrade.md#2-back-up-and-verify-recovery) |
 | Routine Linux data backup and isolated restore | [MariaDB runbook](user-guides/linux/OrchidApp-MariaDB-Backup-and-Restore-Runbook.md) |
 | Windows installation or upgrade | [Windows 01](user-guides/windows/01-InstallOrUpgradeOrchidAppOnWindows.docx) |
 | Windows first use | [Windows 02](user-guides/windows/02-PrepareOrchidAppForFirstUse.docx) |

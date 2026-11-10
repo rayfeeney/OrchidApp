@@ -75,3 +75,5 @@ pwsh ./tests/MigrationHistory.Checks/Desktop.Checks.ps1
 These create/drop only an orchids_desktop_<guid> database, copy the app/client into a unique temporary stage and simulate a successful backup command there. They verify actual application startup, once-only upgrades, preflight before backup, failed-DDL markers, blocked restart and the declared protected backup arguments. BackupFixture.ps1 records arguments only in that temporary stage and never writes the supplied backup directory. The synthetic command is never delivered as operational app code and does not validate real backups.
 
 CI runs the C# policy check in the build job and the PowerShell policy/database checks in schema-contract. Local results and platform limits are in [C04 evidence](maintenance/c04-migration-runners.md). Full new-environment CI acceptance remains C05.
+
+The PowerShell runner reads query rows from MariaDB stdout and reports stderr separately. Client warnings remain visible and a nonzero client exit aborts the run. For deployment steps see the [Linux user guide](user-guides/linux/installation-upgrade.md#4-migrate).

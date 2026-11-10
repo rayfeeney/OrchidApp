@@ -286,7 +286,10 @@ jobs:
           MARIADB_PORT: 3306
           MARIADB_USER: root
           MARIADB_PASSWORD: root
-        run: ./tests/MigrationHistory.Checks/Database.Checks.ps1
+        run: |
+          python3 tests/MigrationHistory.Checks/MariaDbStreams.Checks.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ./tests/MigrationHistory.Checks/Database.Checks.ps1
 
       - name: Run schema export
         env:
