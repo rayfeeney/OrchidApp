@@ -290,20 +290,27 @@ Copy the archive and checksum to protected off-device storage, verify the copied
 
 The application runtime and operating system are not included as complete installations. Rollback requires the compatible .NET 8 runtime, native dependencies and MariaDB server to remain available.
 
-### 3. Pull the approved release
+### 3. Pull the latest main branch
 
-Set `release` and `expected_commit` from the approved release record.
-Fetch the exact tag from the trusted origin and check out the verified
-commit. This is the pull step for a pinned deployment.
+Update the local source checkout to the latest committed code on GitHub's `main` branch.
+
+The Linux upgrade process always uses the current `origin/main`, rather than a release tag or pinned version. The checkout remains in detached HEAD mode.
 
 ```bash
 cd ~/OrchidApp
+set -e
 test -z "$(git status --porcelain)"
-git remote get-url origin
-git fetch origin "refs/tags/${release:?Set the approved tag}:refs/tags/$release"
-test "$(git rev-parse --verify "refs/tags/$release^{commit}")" = "${expected_commit:?Set the approved commit}"
-git switch --detach "$expected_commit"
+git fetch origin main
+git switch --detach origin/main
+git log -1 --format='%h %s'
+git status --short --branch
 ```
+
+Confirm that the working tree is clean and HEAD matches the latest `origin/main` commit.
+
+Record the resulting commit SHA for the upgrade record. The pre-upgrade backup retains the previous source revision for rollback.
+
+### 4. Migrate
 
 ### 4. Migrate
 
