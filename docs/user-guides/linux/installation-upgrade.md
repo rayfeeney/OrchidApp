@@ -98,45 +98,197 @@ until the upgraded app passes validation.
 
 ### 2. Back up and verify recovery
 
-In Bash, set `upload_root` to the verified absolute, resolved upload directory.
-Check that it exists and that backup storage has room for both copies and the
-archive. Capture the active service definitions, including custom drop-ins and
-auxiliary units, and retain the grants and MariaDB configuration needed to
-restore routines and run the application.
+Create a complete local recovery archive before applying database migrations or replacing application files. This backup is for **rolling back the current Linux installation to its pre-upgrade state**, not for the separate nightly OneDrive disaster-recovery process.
+
+The following commands use the documented default installation paths. They are intended for Raspberry Pis and other supported Linux hosts following that layout.
+
+Before executing, confirm:
+
+- OrchidApp and all other database/upload writers are stopped, as described in Step 1.
+- The actual uploads directory agrees with `Storage__UploadRoot` in the deployed configuration.
+- The source checkout is `~/OrchidApp`, or change the initial `cd` accordingly.
+- Local MariaDB administration works using `sudo mariadb --user=root`.
+- There is sufficient free disk space for the file copies, database export and compressed archive.
+
+**Run the following complete block in Bash:**
 
 ```bash
-set -o pipefail
+(
+set -euo pipefail
 cd ~/OrchidApp
-backup="/opt/orchidapp-rollbacks/$(date -u +%Y%m%dT%H%M%SZ)"
-sudo test -d "${upload_root:?Set the verified upload directory}"
-sudo mkdir -p /opt/orchidapp-rollbacks
-sudo mkdir -m 700 "$backup"
-sudo mkdir "$backup/publish" "$backup/uploads" "$backup/systemd"
-sudo rsync -aHAX --numeric-ids /opt/orchidapp/publish/ "$backup/publish/"
-sudo rsync -aHAX --numeric-ids "$upload_root/" "$backup/uploads/"
-sudo cp -a /etc/orchidapp "$backup/configuration"
-sudo find /etc/systemd/system -maxdepth 1 -name 'orchidapp*' \
-  -exec cp -a -t "$backup/systemd/" -- {} +
-systemctl cat orchidapp.service | sudo tee "$backup/systemd-effective.txt" >/dev/null
-git rev-parse HEAD | sudo tee "$backup/source-revision.txt" >/dev/null
-printf '%s\n' "$upload_root" | sudo tee "$backup/upload-root.txt" >/dev/null
-sudo bash -c 'umask 077; mariadb-dump --user=root --password --single-transaction --routines --triggers --events --hex-blob --databases orchids > "$1"' _ "$backup/orchids.sql"
-sudo test -s "$backup/orchids.sql"
-sudo tail -n 5 "$backup/orchids.sql"
-sudo rsync -aHAXnc --numeric-ids --itemize-changes /opt/orchidapp/publish/ "$backup/publish/"
-sudo rsync -aHAXnc --numeric-ids --itemize-changes "$upload_root/" "$backup/uploads/"
-sudo bash -c 'umask 077; tar --acls --xattrs -czpf "$1.tar.gz" -C "$(dirname "$1")" "$(basename "$1")"' _ "$backup"
-sudo tar -tzf "$backup.tar.gz" >/dev/null
-sudo sha256sum "$backup.tar.gz"
+
+revision=$(git rev-parse --verify HEAD)
+
+sudo bash -s -- "$revision" <<'BACKUP'
+set -euo pipefail
+umask 077
+
+revision=$1
+publish_root=/opt/orchidapp/publish
+upload_root=/opt/orchidapp/uploads
+backup_root=/opt/orchidapp-rollbacks
+
+echo "=== Validate backup sources ==="
+
+test -f "$publish_root/OrchidApp.Web.dll"
+test -d "$upload_root"
+test -d /etc/orchidapp
+test -f /etc/orchidapp/orchidapp.env
+
+upload_root=$(realpath -e -- "$upload_root")
+publish_root=$(realpath -e -- "$publish_root")
+
+# Check against the deployed uploads configuration.
+if grep -q '^Storage__UploadRoot=' /etc/orchidapp/orchidapp.env; then
+    configured_root=$(sed -n 's/^Storage__UploadRoot=//p' \
+        /etc/orchidapp/orchidapp.env | tail -n 1)
+    configured_root=${configured_root#\"}
+    configured_root=${configured_root%\"}
+else
+    configured_root=$(sed -nE \
+        's/.*"UploadRoot"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p' \
+        "$publish_root/appsettings.json" | head -n 1)
+fi
+
+test -n "$configured_root"
+test "$(realpath -e -- "$configured_root")" = "$upload_root"
+
+# Reject filesystem roots and broad system directories.
+case "$upload_root" in
+    /|/bin|/boot|/dev|/etc|/home|/lib|/lib64|/mnt|/opt|/proc|/root|/run|/sbin|/srv|/sys|/tmp|/usr|/var)
+        echo "ERROR: Unsafe uploads directory: $upload_root"
+        exit 1
+        ;;
+esac
+
+mkdir -p "$backup_root"
+backup_root=$(realpath -e -- "$backup_root")
+
+# Prevent copying a source into itself or its backup.
+case "$backup_root/" in
+    "$upload_root/"*|"$publish_root/"*)
+        echo "ERROR: Backup destination overlaps a source"
+        exit 1 ;;
+esac
+
+case "$upload_root/" in
+    "$backup_root/"*|"$publish_root/"*)
+        echo "ERROR: Upload directory overlaps backup or publish"
+        exit 1 ;;
+esac
+
+case "$publish_root/" in
+    "$upload_root/"*|"$backup_root/"*)
+        echo "ERROR: Publish directory overlaps another source"
+        exit 1 ;;
+esac
+
+test "$(systemctl show orchidapp.service -p ActiveState --value)" = inactive
+mariadb --user=root -e "SELECT 1" >/dev/null
+
+# Conservative free-space allowance for copies and archive.
+needed=$(du -sk "$publish_root" "$upload_root" /etc/orchidapp |
+    awk '{total += $1} END {print total}')
+available=$(df -Pk "$backup_root" | awk 'NR==2 {print $4}')
+
+if (( available <= 3 * needed + 2097152 )); then
+    echo "ERROR: Insufficient estimated backup space"
+    exit 1
+fi
+
+backup="$backup_root/$(date -u +%Y%m%dT%H%M%SZ)"
+
+echo "=== Create backup: $backup ==="
+
+install -d -m 700 "$backup"
+mkdir "$backup/publish" "$backup/uploads" \
+      "$backup/systemd" "$backup/mariadb-config"
+
+rsync -aHAX --numeric-ids \
+    "$publish_root/" "$backup/publish/"
+
+rsync -aHAX --numeric-ids \
+    "$upload_root/" "$backup/uploads/"
+
+cp -a /etc/orchidapp "$backup/configuration"
+
+# Capture OrchidApp units and their drop-in directories.
+find /etc/systemd/system -maxdepth 2 -name 'orchidapp*' \
+    -exec cp -a --parents -t "$backup/systemd/" -- {} +
+
+systemctl cat orchidapp.service > "$backup/systemd-effective.txt"
+
+# Retain relevant MariaDB server configuration.
+for path in /etc/mysql /etc/my.cnf /etc/my.cnf.d; do
+    if test -e "$path"; then
+        cp -a --parents "$path" "$backup/mariadb-config/"
+    fi
+done
+
+printf '%s\n' "$revision" > "$backup/source-revision.txt"
+printf '%s\n' "$upload_root" > "$backup/upload-root.txt"
+
+echo "=== Export MariaDB ==="
+
+mariadb-dump --user=root \
+    --single-transaction \
+    --routines --triggers --events --hex-blob \
+    --databases orchids > "$backup/orchids.sql"
+
+# Retain user/grant definitions for recovery reference.
+mariadb-dump --user=root --system=users mysql \
+    > "$backup/mariadb-grants.sql"
+
+test -s "$backup/orchids.sql"
+test -s "$backup/mariadb-grants.sql"
+tail -n 5 "$backup/orchids.sql" | grep -q "Dump completed"
+
+echo "=== Verify file copies ==="
+
+rsync -aHAXnc --delete --numeric-ids --itemize-changes \
+    "$publish_root/" "$backup/publish/" \
+    > "$backup/publish-check.txt"
+
+rsync -aHAXnc --delete --numeric-ids --itemize-changes \
+    "$upload_root/" "$backup/uploads/" \
+    > "$backup/uploads-check.txt"
+
+test ! -s "$backup/publish-check.txt"
+test ! -s "$backup/uploads-check.txt"
+
+echo "=== Create and verify archive ==="
+
+tar --acls --xattrs -czpf "$backup.tar.gz" \
+    -C "$backup_root" "$(basename "$backup")"
+
+tar -tzf "$backup.tar.gz" >/dev/null
+
+sha256sum "$backup.tar.gz" > "$backup.tar.gz.sha256"
+sha256sum -c "$backup.tar.gz.sha256"
+
+echo "=== BACKUP COMPLETED ==="
+echo "Archive: $backup.tar.gz"
+echo "Checksum: $backup.tar.gz.sha256"
+
+BACKUP
+)
 ```
 
-Require a successful dump ending in `Dump completed` and no differences
-from either rsync comparison. Copy the archive to protected off-device
-storage and compare its SHA-256 there. It contains credentials and photos.
-If copying with SCP, make the archive readable by the transferring operator
-only and keep the destination private.
-Confirm the recovery set works on an isolated host and MariaDB instance
-before relying on it. See [recovery](#recover-a-pre-upgrade-archive).
+**Acceptance requirements**
+
+The backup succeeds only when all commands complete without error, the MariaDB export contains its completion marker, both rsync checksum comparisons contain no differences, and the recovery archive passes integrity and SHA-256 verification.
+
+The `rsync` verification uses dry-run mode (`-n`), so `--delete` reports unexpected destination files without deleting them.
+
+The archive contains application binaries, matching uploads, external application configuration, OrchidApp systemd definitions, MariaDB data, grants and available MariaDB configuration. Custom auxiliary units not named `orchidapp*`, and their external configuration, must be identified in Step 1 and added to the recovery set where necessary.
+
+Keep the backup directory, archive and checksum until the upgrade is accepted. Do not delete the previous working application's recovery set.
+
+Copy the archive and checksum to protected off-device storage, verify the copied archive's SHA-256, and restrict access because the backup contains photographs, database content and credentials.
+
+**Archive integrity does not itself prove successful restoration.** Verify the rollback process on an isolated Linux host and MariaDB instance before relying on it for production recovery. See [Recover a pre-upgrade archive](#recover-a-pre-upgrade-archive).
+
+The application runtime and operating system are not included as complete installations. Rollback requires the compatible .NET 8 runtime, native dependencies and MariaDB server to remain available.
 
 ### 3. Pull the approved release
 
