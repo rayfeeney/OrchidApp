@@ -77,11 +77,157 @@
     "network": "none"
   },
   "remaining": [
-    "source review and hosted CI",
+    "normal CI/source merge status tracked on pull request #383",
     "real systemd/mask and complete Linux CLI acceptance",
     "target recovery archive restore test and off-device verification",
     "installed Pi acceptance",
     "explicit production approval"
   ],
-  "productionContacted": false
+  "productionContacted": false,
+  "hostedHistoricalAcceptance": {
+    "runId": 43084947989,
+    "url": "https://github.com/rayfeeney/OrchidApp/actions/runs/43084947989",
+    "sourceCommit": "fd08fe7220cca19d4323b69cdb532a92cd98c3cf",
+    "status": "passed",
+    "scope": "database-only: original fixture and separate operational core; no installed application/systemd acceptance",
+    "reports": [
+      {
+        "formatVersion": 1,
+        "fixtureId": "linux-arm64-1.3.0-080ba9c-v1",
+        "fixtureSha256": "7ffd16949ae07238f31447ad7d64e1444e898a00248b8e14757533bcbf00f3b5",
+        "startedUtc": "2026-11-11T19:12:32.477407+00:00",
+        "status": "passed",
+        "applicationExecuted": false,
+        "migrationApplicationAttempted": true,
+        "phase": "reviewed fixture adoption and actual database migrations",
+        "fullUpgradeAcceptance": "not performed: application package, app-only update and recovery still required",
+        "specimenPlatform": "linux/arm64",
+        "databasePlatform": "linux/amd64",
+        "fixtureVerification": {
+          "filesVerified": 1073,
+          "syntheticPhotosVerified": 798,
+          "sqlSha256": "18111d9f24e927c0123caed57ccdb722bb11ba06d9b9c988def8cc867ec7722d"
+        },
+        "databaseImageId": "sha256:bc52d24721dab941b9ccd83845ad9b53ba779bc7b55894fdb7b78fdd6fe5e31e",
+        "ledgerReview": {
+          "rows": 245,
+          "missingAppliedFiles": 1,
+          "rawChecksumMismatches": 27,
+          "lfDiagnosticMismatches": 27,
+          "normalizationApplied": false
+        },
+        "originalCanonicalRunnerExitCode": 1,
+        "originalReadOnlyHistoryUnchanged": true,
+        "originalReadOnlyRowCountsUnchanged": true,
+        "unreviewedSchemaRejectedWithHistoryUnchanged": true,
+        "applicationDataSha256Before": "6b8b8350197dc87b0a56cc145942ce162ef9596347cbb9dd4e7d49d4bb94cec6",
+        "adoption": {
+          "status": "adopted",
+          "contractSha256": "df128c98d01f60129251c3d38e04edb6ae6c5a1faa4ebcb460f6baf5c17c3fb6",
+          "schemaSha256": "1db8365341bc8f9e05b2d08b44b5e651259103a13eee1ba2866cb0f5171ca1b0",
+          "marker": "baseline:v1:202606041820",
+          "originalHistorySha256": "9d15929936d9461991608744ab512875045bddf0bd9b882edead8f7f02056b44",
+          "archiveTable": "schemaversion_legacy_pi_130",
+          "originalRowsPreserved": 245,
+          "originalLedgerUnchanged": true,
+          "retiredLocalEntry": {
+            "name": "202606031900_TestViewMigrationRunner.sql",
+            "checksum": "b5d82329b85413c2070e175afc6b3f4a9fd5b4e366c48c37dcc32dfcff408d4d",
+            "provenance": "Owner identifies uncontrolled local Pi work; no recoverable migration file. Preserved in original ledger archive, excluded from active migration planning."
+          },
+          "scope": "owned-disposable-fixture-only"
+        },
+        "adoptedCanonicalRuns": [
+          {
+            "step": "adopted-plan",
+            "exitCode": 0
+          },
+          {
+            "step": "apply",
+            "exitCode": 0
+          },
+          {
+            "step": "second-apply",
+            "exitCode": 0
+          }
+        ],
+        "postUpgradeSchemaSha256": "56675363e3ece25fbdc21c03722d15f0a6eecdc7c0ffa069c86f6a14cbc07800",
+        "archivedHistoryUnchanged": true,
+        "applicationDataSha256After": "6b8b8350197dc87b0a56cc145942ce162ef9596347cbb9dd4e7d49d4bb94cec6",
+        "applicationDataUnchanged": true,
+        "applicationRowCountsUnchanged": true,
+        "activeLedgerExact": true,
+        "databaseMigrationAcceptance": "passed: four actual migrations; second apply does nothing",
+        "cleanup": "owned container and anonymous volume removed",
+        "finishedUtc": "2026-11-11T19:13:26.358281+00:00"
+      },
+      {
+        "formatVersion": 1,
+        "fixtureId": "linux-arm64-1.3.0-080ba9c-v1",
+        "fixtureSha256": "7ffd16949ae07238f31447ad7d64e1444e898a00248b8e14757533bcbf00f3b5",
+        "startedUtc": "2026-11-11T19:13:26.413799+00:00",
+        "status": "passed",
+        "applicationExecuted": false,
+        "migrationApplicationAttempted": true,
+        "phase": "operational adoption core in owned fixture and actual database migrations",
+        "fullUpgradeAcceptance": "not performed: application package, app-only update and recovery still required",
+        "specimenPlatform": "linux/arm64",
+        "databasePlatform": "linux/amd64",
+        "fixtureVerification": {
+          "filesVerified": 1073,
+          "syntheticPhotosVerified": 798,
+          "sqlSha256": "18111d9f24e927c0123caed57ccdb722bb11ba06d9b9c988def8cc867ec7722d"
+        },
+        "databaseImageId": "sha256:bc52d24721dab941b9ccd83845ad9b53ba779bc7b55894fdb7b78fdd6fe5e31e",
+        "ledgerReview": {
+          "rows": 245,
+          "missingAppliedFiles": 1,
+          "rawChecksumMismatches": 27,
+          "lfDiagnosticMismatches": 27,
+          "normalizationApplied": false
+        },
+        "originalCanonicalRunnerExitCode": 1,
+        "originalReadOnlyHistoryUnchanged": true,
+        "originalReadOnlyRowCountsUnchanged": true,
+        "unreviewedSchemaRejectedWithHistoryUnchanged": true,
+        "applicationDataSha256Before": "6b8b8350197dc87b0a56cc145942ce162ef9596347cbb9dd4e7d49d4bb94cec6",
+        "adoption": {
+          "state": "adopted",
+          "originalRowsPreserved": 245,
+          "contractSha256": "0a3d90c027ead03723ad571259fb4d9d5614dd5d8d72140fc35fef842289a9ba",
+          "marker": "baseline:v1:202606041820",
+          "scope": "pi1-live-ledger-adoption",
+          "systemdAcceptance": "not performed: unit adapter only",
+          "realStagingInterruptionRejected": true,
+          "unreviewedSchemaRejected": true,
+          "disconnectedSessionLockReleased": true,
+          "competingSessionLockRejected": true
+        },
+        "adoptedCanonicalRuns": [
+          {
+            "step": "adopted-plan",
+            "exitCode": 0
+          },
+          {
+            "step": "apply",
+            "exitCode": 0
+          },
+          {
+            "step": "second-apply",
+            "exitCode": 0
+          }
+        ],
+        "postUpgradeSchemaSha256": "56675363e3ece25fbdc21c03722d15f0a6eecdc7c0ffa069c86f6a14cbc07800",
+        "archivedHistoryUnchanged": true,
+        "applicationDataSha256After": "6b8b8350197dc87b0a56cc145942ce162ef9596347cbb9dd4e7d49d4bb94cec6",
+        "applicationDataUnchanged": true,
+        "applicationRowCountsUnchanged": true,
+        "activeLedgerExact": true,
+        "databaseMigrationAcceptance": "passed: four actual migrations; second apply does nothing",
+        "cleanup": "owned container and anonymous volume removed",
+        "finishedUtc": "2026-11-11T19:14:11.866401+00:00"
+      }
+    ]
+  },
+  "pullRequest": "https://github.com/rayfeeney/OrchidApp/pull/383"
 }
