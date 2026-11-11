@@ -6,6 +6,8 @@ Use current guides below. For each procedure, check its stated implementation li
 
 ## Develop and maintain
 
+- [Pi 1 operational historical ledger adoption candidate and validation limits](maintenance/pi130-operational-adoption.md), with [Linux operating procedure](user-guides/linux/installation-upgrade.md#historical-pi-1-v130-ledger-adoption)
+
 - [MySqlConnector security update (GHSA-473q-m89c-ghf8)](maintenance/mysqlconnector-security.md)
 
 - [Developer machine and first run](development-setup.md), with [C16 evidence and remaining acceptance](maintenance/c16-developer-setup.md)

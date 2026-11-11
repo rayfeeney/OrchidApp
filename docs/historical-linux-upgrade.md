@@ -2,6 +2,8 @@
 
 For installed deployments, see the [Linux installation and upgrade guide](user-guides/linux/installation-upgrade.md). This page records historical fixture and recovery evidence.
 
+11 November 2026: a separate operational adoption candidate is now implemented for the exact reviewed Pi 1 ledger. Its own isolated Linux/MariaDB database-stage checks passed, including real native-session interruption, complete audit retention, four forward migrations and no-op repeat. See the [Linux procedure](user-guides/linux/installation-upgrade.md#historical-pi-1-v130-ledger-adoption) and [new measured evidence and validation limits](maintenance/pi130-operational-adoption.md). No live adoption is authorised; real service/installed acceptance, target recovery prerequisites, source review and approval remain pending. Fixture-only commands below remain guarded and must never target live data.
+
 Verified 30 October 2026: source baseline `283eb06c9bcb3a9d8fc220b9d21e4c6fe7daecac`; [normal CI 40780100240 passed](https://github.com/rayfeeney/OrchidApp/actions/runs/40780100240). [Full historical Linux acceptance 40777537302 passed](https://github.com/rayfeeney/OrchidApp/actions/runs/40777537302) on PR head `0f5a3b825a52dc104b4d245f36c5e899356d7b34`, whose Git tree is identical to the merged baseline (`7cb0497de9716c141f2472c09ea81d15a5e141af`). This is isolated package/application/recovery evidence, not live Pi/systemd/provider/browser or Windows installed acceptance. See the [current work list](current-state.md). Local phase records remain in [application/recovery evidence](maintenance/historical-linux-application-recovery.md).
 
 ## Input and platforms

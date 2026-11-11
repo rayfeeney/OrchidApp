@@ -384,13 +384,84 @@ The parentheses run the commands in a subshell. Database credentials are availab
 
 The [migration runner contract](../../migration-runners.md) describes ledger and checksum validation.
 
-If the runner rejects a historical ledger, stop and follow the [compatibility review](../../historical-linux-upgrade.md).
+If the runner rejects a historical ledger, stop and follow the [compatibility review](../../historical-linux-upgrade.md). The exact reviewed Pi 1 v1.3.0 ledger has a separate [adoption procedure below](#historical-pi-1-v130-ledger-adoption); do not use a fixture command against the installation.
 
 If a SQL migration fails, keep OrchidApp and other database writers stopped. Preserve the diagnostic output and any `migration:pending` marker. MariaDB DDL can be partially applied, and the migration runner does not guarantee automatic rollback.
 
 **Do not automatically retry a failed migration.** Investigate the database state and use the verified pre-upgrade recovery backup where necessary before proceeding.
 
 Only continue to **Step 5 — Publish and deploy** when migration verification reports zero pending migrations.
+
+#### Historical Pi 1 v1.3.0 ledger adoption
+
+**Candidate capability; live use remains pending implementation verification and approval.** It is limited to the exact reviewed 245-row historical ledger and schema through `202606041820`, including the 27 checksum discrepancies and retained local test entry. Other historical installations are not admitted automatically. See [implementation, interruption states and actual test limits](../../maintenance/pi130-operational-adoption.md).
+
+The command is `database/scripts/adopt_pi130.py` from the complete trusted source checkout, including `tests/HistoricalUpgrade.Checks/schema_contract.py` and `legacy-adoption.json`. Python 3.9+ and the MariaDB 10.11 native client are required. It does not run migrations, publish software, start services or change database settings. Never edit old checksums, delete the local test entry, weaken fixture guards or use the fixture-only `legacy_adoption.py` on a live database.
+
+Before considering apply:
+
+1. Obtain passing candidate Linux/MariaDB checks and source review, then explicit approval of the implementation and this target's maintenance operation. Fetch that reviewed source and record its full revision. Historical CI success is insufficient.
+2. Verify a consistent complete recovery set from this stopped installation, including database/grants, matching binaries, photographs, configuration and auxiliary service/scheduler definitions. Hash the local archive, copy it off-device and verify the copied hash, then restore and exercise the matching recovery set on an isolated Linux/MariaDB target. Record both evidence references. Integrity checks alone do not satisfy restoration acceptance.
+3. Inventory every writer, including OrchidApp, importer service/timer, cron jobs, backup jobs, manual clients and MariaDB events. Stop and mask the declared systemd services/timers for the maintenance window (record each prior enabled/masked state). Disable other schedulers and exclude other administrative access. Check masks explicitly after any reboot; runtime masks do not survive one. The command requires Pi 1's three units below and every additional declared writer to be inactive/dead and masked; it never stops or masks them itself.
+4. Use Linux root and local socket authentication as MariaDB `root@localhost` with global `ALL PRIVILEGES`. Confirm server hostname, server ID, exact MariaDB 10.11 version and socket. TCP, remote hosts, arbitrary accounts and implicit client configuration are unsupported. Do not alter definers or collations to make inspection pass.
+5. With all clients isolated, set server `read_only=ON` and `event_scheduler=OFF` administratively; record their previous values. These settings affect the whole server, so arrange a server maintenance window. Read-only mode does not block privileged accounts. Close administrative client sessions before invoking the command. The tool requires no other sessions and never changes either setting.
+
+Read-only inspection (from the reviewed source root; replace the socket with the actual local path):
+
+```bash
+sudo python3 database/scripts/adopt_pi130.py inspect --socket /run/mysqld/mysqld.sock
+```
+
+Inspection reports `original` only when exact starting history/schema validation passes. It returns the target identity, operational `contractSha256` and four `forwardMigrations` with raw file hashes. Preserve that output privately. Inspection cannot approve maintenance conditions or recovery; a mismatch stops the procedure.
+
+Prepare a root-owned mode-0600 JSON approval file outside the repository. Copy `target`, `contractSha256` and `forwardMigrations` exactly from the successful inspection, then include all fields below. Set each boolean to true only after its requirement is actually verified and the operation is approved. Evidence references identify the actual recovery archive, target, restore test and verified off-device copy; they are operator attestations, not automated proof.
+
+```json
+{
+  "formatVersion": 1,
+  "contractSha256": "copy from inspection",
+  "target": {},
+  "forwardMigrations": {},
+  "implementationApproved": false,
+  "approvedBy": "named reviewer and approval reference",
+  "allWritersIdentified": false,
+  "writerUnits": ["orchidapp.service", "orchidapp-environment-importer.service", "orchidapp-environment-importer.timer"],
+  "schedulersDisabled": false,
+  "administrativeAccessIsolated": false,
+  "recoverySetConsistent": false,
+  "recoveryArchive": "/absolute/path/to/verified-recovery.tar.gz",
+  "recoverySha256": "actual local archive SHA-256",
+  "restoreTestPassed": false,
+  "restoreTestEvidence": "isolated restore and application verification record",
+  "offDeviceCopyVerified": false,
+  "offDeviceEvidence": "protected destination and independently verified copied hash"
+}
+```
+
+These three Pi 1 units are required; add any other installation writers to the inventory. A different unit layout needs a reviewed contract change. No private approval file is supplied by the repository. Pi 1's `/opt/orchidapp-rollbacks/20261111T175203Z.tar.gz` is currently integrity-verified only; its restore-test and off-device gates remain unsatisfied.
+
+Only after the above checks and approval, use a protected real root-owned journal parent and a new, absent run directory. The command hashes the recovery archive, validates approval and maintenance conditions, and refuses existing/partial adoption objects or an existing journal. Example paths:
+
+```bash
+sudo install -d -m 0700 /var/lib/orchidapp-upgrade
+sudo python3 database/scripts/adopt_pi130.py apply \
+  --socket /run/mysqld/mysqld.sock \
+  --approval /root/pi1-adoption-approval.json \
+  --journal /var/lib/orchidapp-upgrade/pi130-approved-run
+```
+
+Require exit zero, `state: adopted`, 245 preserved rows and the journal's `verified.json`. Repeat read-only inspection and reconcile it with the original approval and journal. The original table must remain `schemaversion_legacy_pi_130` with every original ID/name/checksum/timestamp unchanged; the active table must contain only the contract-identified baseline. Keep the archive table and journal as audit evidence. The tool verifies both ledger structures, the historical schema and exact ledger bytes.
+
+If the command is interrupted or returns nonzero, **keep writers stopped and masked**. Preserve all journals, staging/archive tables and diagnostic output. Inspect before taking any other action. Do not rerun apply, remove staging, rename tables back, edit ledger records or create a replacement journal to bypass a failure. Missing final output may mean the atomic swap completed; use the [state table](../../maintenance/pi130-operational-adoption.md#interruption-states) to reconcile it. If state cannot be established, restore the complete verified recovery set using the existing recovery procedure. The command offers no automatic repair.
+
+After verified adoption and approval to proceed with migrations, restore `read_only` to its recorded prior value while services, schedulers and administrative isolation stay in place. Resume Step 4's canonical plan/apply process. Expect exactly:
+
+- `202610261200_AtomicManualPlantClosure.sql`
+- `202610261800_EndedPlantReadOnly.sql`
+- `202610262000_StructuralTransactions.sql`
+- `202610271200_PhotoTaxonTransaction.sql`
+
+Any different plan or checksum fails the maintenance window. Forward migration failures retain `migration:pending` and require the existing recovery process. Do not use adoption inspection to certify a database after forward migrations; it intentionally refuses the changed ledger/schema. Verify the canonical final plan is empty, preserve the 245-row audit digest, then deploy and perform installed acceptance. Restore masks, scheduler and event settings to their recorded prior values only at the approved restart step; otherwise Step 6's service start will fail against the masks.
 
 ### 5. Publish and deploy
 
