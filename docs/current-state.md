@@ -10,6 +10,10 @@ Locally passed: 13 new operational policy/interruption tests and the existing 23
 
 Owner-reported Pi 1 state remains app/importer/timer stopped, MariaDB running, source checkout `bcc4e7d`. The current local archive `/opt/orchidapp-rollbacks/20261111T175203Z.tar.gz` passed integrity verification but is not restore-tested or verified off-device. Evidence for a different earlier backup does not satisfy these gates for this stopped recovery set. Live apply must remain blocked until implementation verification, recovery prerequisites and explicit approval are complete.
 
+## Pi 1 root-password compatibility follow-up
+
+The merged read-only command at `ca17bb7` reached Pi 1 but password-free root authentication was rejected. Inspection made no database changes. A follow-up adds `--ask-root-password` for the existing root account; it does not change authentication, grants or accepted schema/history. Fifteen safety checks pass locally, including hidden-prompt failure behavior and child-only credential transport. Its isolated database and hosted validation are recorded in the [adoption evidence](maintenance/pi130-operational-adoption.md). Live adoption remains unperformed and unapproved.
+
 ## Confirmed baseline
 
 Verified 30 October 2026: source baseline `283eb06c9bcb3a9d8fc220b9d21e4c6fe7daecac`; [normal CI 40780100240 passed](https://github.com/rayfeeney/OrchidApp/actions/runs/40780100240). [Full historical Linux acceptance 40777537302 passed](https://github.com/rayfeeney/OrchidApp/actions/runs/40777537302) on PR head `0f5a3b825a52dc104b4d245f36c5e899356d7b34`, whose Git tree is identical to the merged baseline (`7cb0497de9716c141f2472c09ea81d15a5e141af`). This is isolated package/application/recovery evidence, not live Pi/systemd/provider/browser or Windows installed acceptance.

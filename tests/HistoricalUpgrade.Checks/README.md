@@ -4,7 +4,7 @@ These checks use the exact published frozen sanitised specimen. Database-only mo
 
 ## Commands
 
-New operational candidate checks (11 November 2026):
+Operational candidate checks (11 November 2026):
 
 ```powershell
 python tests/HistoricalUpgrade.Checks/live_adoption_checks.py
@@ -60,3 +60,5 @@ Normal feature CI runs 23 pure checks and three packaging policy checks. The man
 CI retains explicit reports and selected logs, including application/action summaries and the injected failure/retry logs. It excludes staged SQL, app/package binaries, configuration, backup archives, encryption keys, raw metadata snapshots, private command/app logs and source runtime trees. Local diagnostics may include synthetic records; keep them separate from delivery. Only identity/label/network/mount-verified owned containers/volumes are removed. Forced termination can require checking recorded owned resources.
 
 See [scope and results](../../docs/historical-linux-upgrade.md), [package/application/recovery evidence](../../docs/maintenance/historical-linux-application-recovery.md), [fixture review](../../docs/maintenance/historical-linux-fixture-review.md), [historical investigation](../../docs/maintenance/historical-ledger-compatibility.md) and [reviewed database adoption](../../docs/maintenance/historical-linux-adoption.md).
+
+The root-password follow-up adds two pure cases (15 total) and exercises the actual client's explicit password environment in the owned database harness. A wrong password must fail before SQL, and the correct synthetic password then runs the original structural/ledger, interruption/lock and migration acceptance. No production credentials are used.

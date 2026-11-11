@@ -25,10 +25,20 @@ def run(container, token, recovery_input, output):
         p.owned(container, token)
         if command[0] != 'mariadb':
             raise ValueError('Unexpected fixture transport')
-        return native_popen(['docker', 'exec', '-i', '--env', 'MYSQL_PWD='+p.PASSWORD,
+        return native_popen(['docker', 'exec', '-i', '--env', 'MYSQL_PWD',
                              container, *command], **kwargs)
 
-    client = a.Client('/run/mysqld/mysqld.sock', popen=transport)
+    rejected = a.Client('/run/mysqld/mysqld.sock', password='wrong-disposable-password', popen=transport)
+    try:
+        try:
+            rejected.query('SELECT 1;')
+        except ValueError:
+            pass
+        else:
+            raise ValueError('Wrong root password was accepted')
+    finally:
+        rejected.close()
+    client = a.Client('/run/mysqld/mysqld.sock', password=p.PASSWORD, popen=transport)
     def query(sql):
         p.owned(container, token)
         return client.query(sql)
@@ -68,10 +78,10 @@ def run(container, token, recovery_input, output):
                 raise ValueError('Interruption injection did not fail')
             # A new native session must observe the durable staging table; the
             # terminated session's advisory lock must not survive disconnect.
-            client = a.Client('/run/mysqld/mysqld.sock', popen=transport)
+            client = a.Client('/run/mysqld/mysqld.sock', password=p.PASSWORD, popen=transport)
             if query("SELECT GET_LOCK('orchidapp.pi130.adoption',0);").strip() != '1':
                 raise ValueError('Disconnected adoption session retained its lock')
-            competitor = a.Client('/run/mysqld/mysqld.sock', popen=transport)
+            competitor = a.Client('/run/mysqld/mysqld.sock', password=p.PASSWORD, popen=transport)
             try:
                 if competitor.query("SELECT GET_LOCK('orchidapp.pi130.adoption',0);").strip() != '0':
                     raise ValueError('Competing session acquired adoption lock')
@@ -95,7 +105,8 @@ def run(container, token, recovery_input, output):
         result.update(marker=a.MARKER, scope=a.CONTRACT['scope'],
                       systemdAcceptance='not performed: unit adapter only',
                       realStagingInterruptionRejected=True, unreviewedSchemaRejected=True,
-                      disconnectedSessionLockReleased=True, competingSessionLockRejected=True)
+                      disconnectedSessionLockReleased=True, competingSessionLockRejected=True,
+                      explicitRootPasswordVerified=True, wrongRootPasswordRejected=True)
         (output/'operational-adoption.json').write_text(json.dumps(result, indent=2))
         return result
     finally:

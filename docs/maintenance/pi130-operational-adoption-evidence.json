@@ -229,5 +229,81 @@
       }
     ]
   },
-  "pullRequest": "https://github.com/rayfeeney/OrchidApp/pull/383"
+  "pullRequest": "https://github.com/rayfeeney/OrchidApp/pull/383",
+  "rootPasswordFollowup": {
+    "featureBranch": "pi1-adoption-password",
+    "sourceBase": "ca17bb793e31a68b801fb971e10f5462da95e357",
+    "pureChecks": 15,
+    "linuxPureChecks": 15,
+    "localDatabaseReport": {
+      "formatVersion": 1,
+      "fixtureId": "linux-arm64-1.3.0-080ba9c-v1",
+      "fixtureSha256": "7ffd16949ae07238f31447ad7d64e1444e898a00248b8e14757533bcbf00f3b5",
+      "startedUtc": "2026-11-11T20:11:27.117801+00:00",
+      "status": "passed",
+      "applicationExecuted": false,
+      "migrationApplicationAttempted": true,
+      "phase": "operational adoption core in owned fixture and actual database migrations",
+      "fullUpgradeAcceptance": "not performed: application package, app-only update and recovery still required",
+      "specimenPlatform": "linux/arm64",
+      "databasePlatform": "linux/amd64",
+      "fixtureVerification": {
+        "filesVerified": 1073,
+        "syntheticPhotosVerified": 798,
+        "sqlSha256": "18111d9f24e927c0123caed57ccdb722bb11ba06d9b9c988def8cc867ec7722d"
+      },
+      "databaseImageId": "sha256:dbe56e20372fc6d6b8e0e396866ba89c4c7f128c38c4f59aaa54d957db95790c",
+      "ledgerReview": {
+        "rows": 245,
+        "missingAppliedFiles": 1,
+        "rawChecksumMismatches": 27,
+        "lfDiagnosticMismatches": 27,
+        "normalizationApplied": false
+      },
+      "originalCanonicalRunnerExitCode": 1,
+      "originalReadOnlyHistoryUnchanged": true,
+      "originalReadOnlyRowCountsUnchanged": true,
+      "unreviewedSchemaRejectedWithHistoryUnchanged": true,
+      "applicationDataSha256Before": "6b8b8350197dc87b0a56cc145942ce162ef9596347cbb9dd4e7d49d4bb94cec6",
+      "adoption": {
+        "state": "adopted",
+        "originalRowsPreserved": 245,
+        "contractSha256": "0a3d90c027ead03723ad571259fb4d9d5614dd5d8d72140fc35fef842289a9ba",
+        "marker": "baseline:v1:202606041820",
+        "scope": "pi1-live-ledger-adoption",
+        "systemdAcceptance": "not performed: unit adapter only",
+        "realStagingInterruptionRejected": true,
+        "unreviewedSchemaRejected": true,
+        "disconnectedSessionLockReleased": true,
+        "competingSessionLockRejected": true,
+        "explicitRootPasswordVerified": true,
+        "wrongRootPasswordRejected": true
+      },
+      "adoptedCanonicalRuns": [
+        {
+          "step": "adopted-plan",
+          "exitCode": 0
+        },
+        {
+          "step": "apply",
+          "exitCode": 0
+        },
+        {
+          "step": "second-apply",
+          "exitCode": 0
+        }
+      ],
+      "postUpgradeSchemaSha256": "56675363e3ece25fbdc21c03722d15f0a6eecdc7c0ffa069c86f6a14cbc07800",
+      "archivedHistoryUnchanged": true,
+      "applicationDataSha256After": "6b8b8350197dc87b0a56cc145942ce162ef9596347cbb9dd4e7d49d4bb94cec6",
+      "applicationDataUnchanged": true,
+      "applicationRowCountsUnchanged": true,
+      "activeLedgerExact": true,
+      "databaseMigrationAcceptance": "passed: four actual migrations; second apply does nothing",
+      "cleanup": "owned container and anonymous volume removed",
+      "finishedUtc": "2026-11-11T20:13:11.014476+00:00"
+    },
+    "productionAuthenticationChanged": false,
+    "hostedValidation": "See follow-up pull request checks; this local evidence was recorded before commit."
+  }
 }

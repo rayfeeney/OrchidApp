@@ -5,6 +5,7 @@ The fixture-only adoption tool is never imported or invoked.
 """
 import argparse
 from contextlib import contextmanager
+import getpass
 import hashlib
 import importlib.util
 import json
@@ -18,6 +19,7 @@ import subprocess
 import sys
 import threading
 import uuid
+import warnings
 
 ROOT = Path(__file__).resolve().parents[2]
 # Share the exact metadata validator, without importing fixture execution code.
@@ -66,21 +68,36 @@ def forward_inventory(contract):
     return {name: digest(folder/name) for name in names}
 
 
+def root_password(ask):
+    if not ask:
+        return None
+    require(sys.stdin.isatty(), 'Password prompt requires an interactive terminal')
+    # Refuse getpass's echoing fallback when a controlling terminal is unavailable.
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', getpass.GetPassWarning)
+        value = getpass.getpass('MariaDB root password: ')
+    require(bool(value), 'Empty root password refused')
+    return value
+
+
 class Client:
     """One non-reconnecting native session holds the advisory lock across DDL.
 
     No --force: a SQL error terminates the batch before its success sentinel.
     Native diagnostics stay private; they can include account/configuration data.
     """
-    def __init__(self, socket, *, popen=subprocess.Popen):
+    def __init__(self, socket, *, password=None, popen=subprocess.Popen):
+        environment = {k: v for k, v in os.environ.items()
+                       if not k.upper().startswith(('MYSQL_', 'MARIADB_'))}
+        if password is not None:
+            environment['MYSQL_PWD'] = password
         self.process = popen([
             'mariadb', '--no-defaults', '--protocol=SOCKET', '--socket='+socket,
             '--user=root', '--database=orchids', '--skip-reconnect', '--batch',
             '--skip-column-names', '--raw', '--unbuffered',
             '--default-character-set=utf8mb4', '--connect-timeout=5'],
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-            env={k: v for k, v in os.environ.items()
-                 if not k.upper().startswith(('MYSQL_', 'MARIADB_'))})
+            env=environment)
         self.lines = queue.Queue()
         def read():
             for line in self.process.stdout:
@@ -286,6 +303,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('mode', choices=('inspect', 'apply'))
     parser.add_argument('--socket', required=True)
+    parser.add_argument('--ask-root-password', action='store_true',
+                        help='Securely prompt for the existing root password; never change authentication')
     parser.add_argument('--approval', type=Path)
     parser.add_argument('--journal', type=Path)
     args = parser.parse_args()
@@ -298,7 +317,7 @@ def main():
         require(parent.resolve() == parent and parent.stat().st_uid == 0 and parent.stat().st_mode & 0o022 == 0,
                 'Journal parent must be a root-owned protected real directory')
     contract = review()
-    client = Client(args.socket)
+    client = Client(args.socket, password=root_password(args.ask_root_password))
     # Termination unwinds the connection, preserves journal/DDL, never retries.
     def terminate(signum, frame):
         raise KeyboardInterrupt
