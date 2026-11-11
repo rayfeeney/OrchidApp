@@ -4,6 +4,15 @@ These checks use the exact published frozen sanitised specimen. Database-only mo
 
 ## Commands
 
+New operational candidate checks (11 November 2026):
+
+```powershell
+python tests/HistoricalUpgrade.Checks/live_adoption_checks.py
+python tests/HistoricalUpgrade.Checks/preflight.py --specimen "C:/private-fixtures/OrchidApp-Pi-specimen-1.3.0-080ba9c-review.tar.gz" --adopt-and-migrate --operational-adoption-checks
+```
+
+The second command creates a separate owned network-none fixture and tests the operational core through a persistent native socket client, including real staging interruption/refused retry, lock release after disconnection, competing-lock refusal, exact audit preservation, four actual forward migrations, unchanged data and a no-op second apply. It requires the same Docker/.NET 8/PowerShell dependencies as the existing database mode. The fixture's systemd unit check uses an adapter; actual stopped/masked units remain separate Linux acceptance. It does not disable legacy fixture guards, accept a target endpoint or authorise live use. It cannot be combined with application checks. The manual historical workflow runs it as an additional restore, independent of its original fixture/application phases. The local database-stage run passed after Windows restart/manual Docker startup; see [measured evidence and remaining acceptance](../../docs/maintenance/pi130-operational-adoption.md).
+
 Requirements: Python 3.9+, .NET SDK targeting net8.0, PowerShell 7+, and Docker running Linux containers. Run from the repository root:
 
 ```powershell

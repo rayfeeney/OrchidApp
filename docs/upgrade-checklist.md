@@ -6,6 +6,14 @@ This is the single list of deployment actions arising from C01–C20. Use the Wi
 
 ## How to use and maintain this list
 
+### Pi 1 historical ledger adoption candidate (11 November 2026)
+
+- Linux: for the exact reviewed v1.3.0 → v1.4.1 path only, follow [Step 4's adoption procedure](user-guides/linux/installation-upgrade.md#historical-pi-1-v130-ledger-adoption). Obtain candidate Linux/MariaDB validation and approval before using the new operational command. Stop/mask all writer units, disable schedulers, isolate administrative access, and require a read-only server with no other sessions. Record settings and restore their previous values at the documented migration/restart stages.
+- Recovery: verify the matching complete archive locally and off-device and restore-test it on an isolated supported installation. Pi 1's `20261111T175203Z.tar.gz` currently lacks the latter two checks; do not adopt yet. Keep the recovery set, exclusive journal, original approval and unchanged 245-row audit ledger. Interrupted/ambiguous states require inspection and review or full recovery; never remove staging or a pending marker to retry.
+- Migration/recurring verification: the new baseline must plan exactly the four migrations from `202610261200` through `202610271200` listed in the Linux procedure. Apply via the unchanged runner, require final pending zero, preserve the archived history digest, then verify installed readiness, plants, photos, save/reopen and importer. Retain recovery evidence until acceptance. No new app setting or schema migration is introduced by adoption itself.
+- Windows: this operational command is Linux/socket/root-only and does not alter Desktop policy or authorise historical Windows ledger rollover. Existing Windows upgrade actions remain applicable.
+- Coverage/limits: this addresses the historical C04/C10 accounting blocker through a separate approved rollover, without changing old files/checksums or raw-byte forward validation. The new pure checks and owned Linux/MariaDB database-stage adoption/migration checks pass, including real session interruption and 245-row preservation. Hosted CI, real systemd/mask, full CLI/installed and target recovery acceptance remain pending. See [measured evidence](maintenance/pi130-operational-adoption.md) and [current status](current-state.md).
+
 ### Windows restore preflight
 
 - Rebuild the Windows installer to update the restore and backup helpers. No schema or settings change is required.

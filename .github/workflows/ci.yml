@@ -23,6 +23,8 @@ jobs:
         run: python tests/FeatureEvidence.Checks/checks.py
       - name: Check historical fixture validation rules (no specimen restore)
         run: python tests/HistoricalUpgrade.Checks/checks.py
+      - name: Check operational historical adoption safety and interruption policy
+        run: python tests/HistoricalUpgrade.Checks/live_adoption_checks.py
       - name: Check Linux package failure and output protection
         shell: pwsh
         run: ./tests/HistoricalUpgrade.Checks/Packaging.Checks.ps1

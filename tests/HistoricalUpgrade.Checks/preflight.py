@@ -183,10 +183,14 @@ def main():
         help='Verify the exact reviewed historical schema, archive its ledger and test actual forward migrations ONLY in this new disposable restore')
     parser.add_argument('--application-checks', action='store_true',
         help='Also execute real ARM64 packages, plant actions, app-only replacement and paired recovery')
+    parser.add_argument('--operational-adoption-checks', action='store_true',
+        help='Test the separate operational core inside this owned fixture (requires adoption; database-only)')
     parser.add_argument('--package-a', type=Path)
     parser.add_argument('--package-b', type=Path)
     parser.add_argument('--runtime-image')
     args = parser.parse_args()
+    if args.operational_adoption_checks and (not args.adopt_and_migrate or args.application_checks):
+        parser.error('Operational core checks require --adopt-and-migrate without application checks')
     if args.application_checks and not (args.adopt_and_migrate and args.package_a and args.package_b and args.runtime_image):
         parser.error('Application checks require reviewed adoption, two actual Linux packages and the ARM64 runtime image')
     manifest = json.loads((HERE/'fixture.json').read_text())
@@ -312,8 +316,13 @@ def main():
             data_tables = [name for name in manifest['rowCounts'] if name != 'schemaversion']
             data_before = data_checksum(container, data_tables)
             report['applicationDataSha256Before'] = data_before
-            report['adoption'] = adopt(lambda sql: query(container, sql), schema_before, contract,
-                manifest, lambda: owned(container, token))
+            if args.operational_adoption_checks:
+                from live_adoption_fixture import run as operational_fixture
+                report['phase'] = 'operational adoption core in owned fixture and actual database migrations'
+                report['adoption'] = operational_fixture(container, token, args.specimen, output)
+            else:
+                report['adoption'] = adopt(lambda sql: query(container, sql), schema_before, contract,
+                    manifest, lambda: owned(container, token))
             print('Reviewed schema accepted; original ledger archived unchanged. Testing actual forward migrations.', flush=True)
             runner = ['pwsh', '-NoProfile', '-File', str(REPO/'database/scripts/Apply-Migrations.ps1'),
                       '-MariaDbExe', str(proxy)]

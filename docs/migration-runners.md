@@ -1,5 +1,7 @@
 # Migration runners
 
+The exact reviewed Pi 1 v1.3.0 ledger has a separate [Linux adoption candidate procedure](user-guides/linux/installation-upgrade.md#historical-pi-1-v130-ledger-adoption), with [validation still pending](maintenance/pi130-operational-adoption.md). It preserves the historical audit table and establishes a contract-identified baseline before returning to these unchanged runners. It does not relax checksum policy or apply forward SQL. Other ledgers still require their own review; interrupted adoption is not repaired by rerunning migrations.
+
 Use these routes only for an existing database created from schema or with a valid existing migration ledger. Fresh creation remains the [schema-only contract](database-creation.md). Never initialise a database by replaying historic migration SQL.
 
 ## Supported entry points

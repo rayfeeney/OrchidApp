@@ -1,5 +1,7 @@
 # Reviewed historical Pi database adoption
 
+11 November 2026 addendum: the original fixture implementation and evidence below are preserved. A separate [operational command candidate](pi130-operational-adoption.md) now reuses the exact validator/contract without invoking this fixture-only tool. Its own isolated Linux/MariaDB database-stage acceptance passed; real service/installed and target recovery acceptance remain pending. See the [Linux procedure](../user-guides/linux/installation-upgrade.md#historical-pi-1-v130-ledger-adoption). Earlier statements about a future live command describe the original delivery stage.
+
 > Status reconciliation, 30 October 2026: this article preserves the original implementation/test record. Its earlier next-step, merge and CI-pending statements describe that delivery stage. See [current status and scope](../current-state.md) for confirmed later CI, the remaining machine acceptance, and the v1.4.0 Windows baseline decision. Original results and limitations below are retained.
 
 Status, 28 October 2026: the exact sanitised specimen has passed reviewed database adoption and four real forward migrations locally; a second invocation applied nothing. This resolves the historical-ledger blocker for this fixture's database checks. It does not establish live-Pi, installed-package, app-only or recovery acceptance.

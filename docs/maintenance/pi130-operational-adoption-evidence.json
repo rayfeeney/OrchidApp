@@ -1,0 +1,87 @@
+{
+  "formatVersion": 1,
+  "sourceBase": "bcc4e7d",
+  "branch": "pi1-safe-historical-adoption",
+  "sourceState": "uncommitted candidate",
+  "databaseAcceptance": {
+    "formatVersion": 1,
+    "fixtureId": "linux-arm64-1.3.0-080ba9c-v1",
+    "fixtureSha256": "7ffd16949ae07238f31447ad7d64e1444e898a00248b8e14757533bcbf00f3b5",
+    "startedUtc": "2026-11-11T18:57:43.419964+00:00",
+    "status": "passed",
+    "applicationExecuted": false,
+    "migrationApplicationAttempted": true,
+    "phase": "operational adoption core in owned fixture and actual database migrations",
+    "fullUpgradeAcceptance": "not performed: application package, app-only update and recovery still required",
+    "specimenPlatform": "linux/arm64",
+    "databasePlatform": "linux/amd64",
+    "fixtureVerification": {
+      "filesVerified": 1073,
+      "syntheticPhotosVerified": 798,
+      "sqlSha256": "18111d9f24e927c0123caed57ccdb722bb11ba06d9b9c988def8cc867ec7722d"
+    },
+    "databaseImageId": "sha256:dbe56e20372fc6d6b8e0e396866ba89c4c7f128c38c4f59aaa54d957db95790c",
+    "ledgerReview": {
+      "rows": 245,
+      "missingAppliedFiles": 1,
+      "rawChecksumMismatches": 27,
+      "lfDiagnosticMismatches": 27,
+      "normalizationApplied": false
+    },
+    "originalCanonicalRunnerExitCode": 1,
+    "originalReadOnlyHistoryUnchanged": true,
+    "originalReadOnlyRowCountsUnchanged": true,
+    "unreviewedSchemaRejectedWithHistoryUnchanged": true,
+    "applicationDataSha256Before": "6b8b8350197dc87b0a56cc145942ce162ef9596347cbb9dd4e7d49d4bb94cec6",
+    "adoption": {
+      "state": "adopted",
+      "originalRowsPreserved": 245,
+      "contractSha256": "0a3d90c027ead03723ad571259fb4d9d5614dd5d8d72140fc35fef842289a9ba",
+      "marker": "baseline:v1:202606041820",
+      "scope": "pi1-live-ledger-adoption",
+      "systemdAcceptance": "not performed: unit adapter only",
+      "realStagingInterruptionRejected": true,
+      "unreviewedSchemaRejected": true,
+      "disconnectedSessionLockReleased": true,
+      "competingSessionLockRejected": true
+    },
+    "adoptedCanonicalRuns": [
+      {
+        "step": "adopted-plan",
+        "exitCode": 0
+      },
+      {
+        "step": "apply",
+        "exitCode": 0
+      },
+      {
+        "step": "second-apply",
+        "exitCode": 0
+      }
+    ],
+    "postUpgradeSchemaSha256": "56675363e3ece25fbdc21c03722d15f0a6eecdc7c0ffa069c86f6a14cbc07800",
+    "archivedHistoryUnchanged": true,
+    "applicationDataSha256After": "6b8b8350197dc87b0a56cc145942ce162ef9596347cbb9dd4e7d49d4bb94cec6",
+    "applicationDataUnchanged": true,
+    "applicationRowCountsUnchanged": true,
+    "activeLedgerExact": true,
+    "databaseMigrationAcceptance": "passed: four actual migrations; second apply does nothing",
+    "cleanup": "owned container and anonymous volume removed",
+    "finishedUtc": "2026-11-11T18:59:23.378843+00:00"
+  },
+  "linuxPolicyAcceptance": {
+    "status": "passed",
+    "imageId": "sha256:935c3c5b12357a7e10caa9c1e6ca5692344d97cf229832ef584be2cec9fc03df",
+    "exitCode": 0,
+    "platform": "linux/amd64",
+    "network": "none"
+  },
+  "remaining": [
+    "source review and hosted CI",
+    "real systemd/mask and complete Linux CLI acceptance",
+    "target recovery archive restore test and off-device verification",
+    "installed Pi acceptance",
+    "explicit production approval"
+  ],
+  "productionContacted": false
+}
