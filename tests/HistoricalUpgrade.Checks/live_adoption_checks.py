@@ -258,6 +258,41 @@ class LiveAdoptionChecks(unittest.TestCase):
                     finally:
                         client.close()
 
+    def test_explicit_password_is_child_environment_only_and_ambient_values_are_ignored(self):
+        supplied = 'synthetic-root-test-$-quote-"'
+        process = SimpleNamespace(stdin=io.BytesIO(), stdout=io.BytesIO(),
+            poll=lambda: None, terminate=lambda: None, wait=lambda **kwargs: None)
+        captured = []
+        def popen(command, **kwargs):
+            captured.append((list(command), dict(kwargs['env'])))
+            return process
+        with patch.dict(a.os.environ, {'MYSQL_PWD': 'stale', 'MARIADB_PASSWORD': 'other-stale'}):
+            client = a.Client('/test/socket', password=supplied, popen=popen)
+            client.close()
+            command, environment = captured[0]
+            self.assertFalse(any(supplied in arg for arg in command))
+            self.assertEqual(environment['MYSQL_PWD'], supplied)
+            self.assertNotIn('MARIADB_PASSWORD', environment)
+            self.assertEqual(a.os.environ['MYSQL_PWD'], 'stale')
+
+    def test_password_prompt_is_explicit_nonempty_and_never_falls_back_to_echo(self):
+        with patch.object(a.getpass, 'getpass') as prompt:
+            self.assertIsNone(a.root_password(False))
+            prompt.assert_not_called()
+            with patch.object(a.sys.stdin, 'isatty', return_value=False), self.assertRaises(ValueError):
+                a.root_password(True)
+            prompt.assert_not_called()
+        with patch.object(a.sys.stdin, 'isatty', return_value=True):
+            with patch.object(a.getpass, 'getpass', return_value='synthetic'):
+                self.assertEqual(a.root_password(True), 'synthetic')
+            with patch.object(a.getpass, 'getpass', return_value=''), self.assertRaises(ValueError):
+                a.root_password(True)
+            def fallback(*args):
+                a.warnings.warn('No echo-free terminal', a.getpass.GetPassWarning)
+                self.fail('Echoing fallback was allowed')
+            with patch.object(a.getpass, 'getpass', fallback), self.assertRaises(a.getpass.GetPassWarning):
+                a.root_password(True)
+
 
 if __name__ == '__main__':
     unittest.main()
