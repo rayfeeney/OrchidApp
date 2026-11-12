@@ -20,6 +20,14 @@ public sealed class PhotoWriteBatch(string root, PhotoRecoveryRegistry registry,
     private readonly HashSet<string> files = new(StringComparer.Ordinal);
     private readonly HashSet<string> deletions = new(StringComparer.Ordinal);
     public bool HasDeletions => deletions.Count != 0;
+    // Gallery removal changes SQL only; it must never enter the file-deletion journal.
+    public bool HasDeactivations { get; private set; }
+    public bool HasPhotoRemovals => HasDeletions || HasDeactivations;
+    public void TrackDeactivation()
+    {
+        if (!enabled) throw new InvalidOperationException("Photo removal requires a write transaction.");
+        HasDeactivations = true;
+    }
     public bool CleanupRequired { get; private set; }
     public void LogDeletionFailure(Exception error) => logger.LogError(error, "Plant photo deletion transaction failed");
     private readonly string journal = Path.Combine(root, ".photo-recovery", Guid.NewGuid().ToString("N") + ".json");

@@ -116,28 +116,13 @@ public class IndexModel : PageModel
             p => p.PlantId == plantId && p.PlantPhotoId == photoId && p.IsActive, ct);
         if (photo == null) return NotFound();
 
-        try
-        {
-            var names = new[] { photo.FileName, photo.ThumbnailFileName }
-                .Where(name => !string.IsNullOrWhiteSpace(name)).Select(name => name!).Distinct().ToArray();
-            // Do not remove a file shared by other metadata, including inactive rows.
-            if (await _context.PlantPhotos.AnyAsync(p => p.PlantId == plantId && p.PlantPhotoId != photoId &&
-                (names.Contains(p.FileName) || names.Contains(p.ThumbnailFileName!)), ct))
-                throw new InvalidOperationException("Photo files are shared by another record.");
-            _photoWriteBatch.TrackDeletion(plantId, names);
-        }
-        catch (Exception ex) when (ex is InvalidOperationException or IOException or UnauthorizedAccessException)
-        {
-            _logger.LogWarning(ex, "Photo deletion preparation failed for plant {PlantId}, photo {PhotoId}", plantId, photoId);
-            ModelState.AddModelError(string.Empty, "The photo could not be deleted. No photo files were removed. If the problem persists, review the application log.");
-            PlantId = plantId;
-            FocusPhotoId = photoId;
-            await LoadAsync(plantId, photoId, ct);
-            return Page();
-        }
-        _context.PlantPhotos.Remove(photo);
+        // Removing from the gallery preserves metadata and both image files.
+        _photoWriteBatch.TrackDeactivation();
+        var wasHero = photo.IsHero;
+        photo.IsActive = false;
+        photo.IsHero = false;
         await _context.SaveChangesAsync(ct);
-        if (photo.IsHero)
+        if (wasHero)
         {
             var replacement = await _context.PlantPhotos.Where(p => p.PlantId == plantId && p.IsActive)
                 .OrderByDescending(p => p.CreatedDateTime).ThenByDescending(p => p.PlantPhotoId).FirstOrDefaultAsync(ct);

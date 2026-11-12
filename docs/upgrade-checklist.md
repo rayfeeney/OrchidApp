@@ -1,5 +1,10 @@
 # Upgrade action checklist: C01–C20
 
+## Photo row deactivation — 12 November 2026
+
+Windows/Linux photo removal update: deploy the application change only; no migration, new setting or DELETE grant. Verify removal hides the photo, retains its inactive row and files, replaces the hero and preserves its observation. Keep paired backups and review any pre-existing recovery journals. Installed acceptance remains pending.
+
+
 This is the single list of deployment actions arising from C01–C20. Use the Windows or Linux section for the machine being upgraded. Development setup is separate. Detailed procedures remain in the linked platform guides.
 
 **Release and installed acceptance remain open; source CI has passed.** Verified 30 October 2026: source baseline `283eb06c9bcb3a9d8fc220b9d21e4c6fe7daecac`; [normal CI 40780100240 passed](https://github.com/rayfeeney/OrchidApp/actions/runs/40780100240). [Full historical Linux acceptance 40777537302 passed](https://github.com/rayfeeney/OrchidApp/actions/runs/40777537302) on PR head `0f5a3b825a52dc104b4d245f36c5e899356d7b34`, whose Git tree is identical to the merged baseline (`7cb0497de9716c141f2472c09ea81d15a5e141af`). This is isolated package/application/recovery evidence, not live Pi/systemd/provider/browser or Windows installed acceptance. Follow the [fixed work list and scope decisions](current-state.md). C05 is complete for its CI scope; C16 is complete following owner acceptance of the clean Windows developer-PC setup on 1 November 2026. Windows starts at v1.4.0; earlier Windows upgrade paths are outside scope. The platform steps below are a reusable checklist: mark excluded legacy paths inapplicable with that reason, rather than claim they passed. No production upgrade is authorised by a CI result.
