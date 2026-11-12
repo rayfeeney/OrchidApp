@@ -69,12 +69,12 @@ class Photos(unittest.TestCase):
         self.assertEqual(self.ready()[0],200)
 
     def photo_rows(self):
-        return [row.split('\t') for row in sql(f'SELECT plantPhotoId,fileName,thumbnailFileName FROM plantphoto WHERE plantId={self.p} ORDER BY isHero DESC,plantPhotoId;')]
+        return [row.split('\t') for row in sql(f'SELECT plantPhotoId,fileName,thumbnailFileName FROM plantphoto WHERE plantId={self.p} AND isActive=1 ORDER BY isHero DESC,plantPhotoId;')]
 
     def test_delete_confirmation_cancel_and_antiforgery(self):
         self.upload();photo=self.photo_rows()[0];before=self.snapshot()
         page=self.opener.open(self.base+f'/Plants/Photos/{self.p}').read().decode()
-        self.assertIn('Permanently delete this photo',page);self.assertIn('Cancel',page)
+        self.assertIn('Remove this photo from the gallery?',page);self.assertIn('Cancel',page)
         self.assertEqual(self.snapshot(),before) # Opening confirmation is read-only.
         self.assertEqual(self.post(f'/Plants/Photos/{self.p}?handler=Delete',{'photoId':photo[0]})[0],200)
         self.assertEqual(self.snapshot(),before)
@@ -86,18 +86,55 @@ class Photos(unittest.TestCase):
         self.upload(2);rows=self.photo_rows();folder=self.root/'plants'/str(self.p)
         self.assertEqual(self.post(f'/Plants/Photos/{self.p}?handler=Delete',{'photoId':rows[0][0],'confirmDelete':'true'})[0],200)
         self.assertEqual(sql(f'SELECT plantPhotoId FROM plantphoto WHERE plantId={self.p} AND isHero=1;'),[rows[1][0]])
-        for name in rows[0][1:]:self.assertFalse((folder/name).exists())
+        for name in rows[0][1:]:self.assertTrue((folder/name).exists())
+        self.assertEqual(sql(f'SELECT isActive,isHero FROM plantphoto WHERE plantPhotoId={rows[0][0]};'),['0\t0'])
         for name in rows[1][1:]:self.assertTrue((folder/name).exists())
         self.assertEqual(self.post(f'/Plants/Photos/{self.p}?handler=Delete',{'photoId':rows[1][0],'confirmDelete':'true'})[0],200)
         self.assertEqual(self.photo_rows(),[])
+        self.assertEqual(sql(f'SELECT COUNT(*) FROM plantphoto WHERE plantId={self.p} AND isActive=0;'),['2'])
+        for row in rows:
+            for name in row[1:]:self.assertTrue((folder/name).exists())
         self.assertEqual(sql(f'SELECT COUNT(*) FROM plantevent WHERE plantId={self.p};'),['1'])
         self.assertEqual(self.ready()[0],200)
+
+    def test_deactivate_nonhero_and_repeat_keeps_state(self):
+        self.upload(2);rows=self.photo_rows();before_files=self.snapshot()[1]
+        status,text=self.post(f'/Plants/Photos/{self.p}?handler=Delete',{'photoId':rows[1][0],'confirmDelete':'true'})
+        self.assertEqual(status,200);self.assertIn('Photo removed from the gallery.',text)
+        self.assertEqual(sql(f'SELECT plantPhotoId FROM plantphoto WHERE plantId={self.p} AND isActive=1 AND isHero=1;'),[rows[0][0]])
+        self.assertEqual(sql(f'SELECT isActive,isHero FROM plantphoto WHERE plantPhotoId={rows[1][0]};'),['0\t0'])
+        self.assertEqual(self.snapshot()[1],before_files)
+        before=self.snapshot()
+        self.assertEqual(self.post(f'/Plants/Photos/{self.p}?handler=Delete',{'photoId':rows[1][0],'confirmDelete':'true'})[0],404)
+        self.assertEqual(self.snapshot(),before)
+
+    def test_deactivate_with_application_permissions_without_delete(self):
+        self.upload(2);rows=self.photo_rows();before_files=self.snapshot()[1]
+        user='photo_'+uuid.uuid4().hex[:12];password=uuid.uuid4().hex
+        sql(f"CREATE USER '{user}'@'%' IDENTIFIED BY '{password}'; GRANT SELECT,INSERT,UPDATE,EXECUTE ON `{DATABASE}`.* TO '{user}'@'%';")
+        connection=os.environ['ConnectionStrings__OrchidDb']
+        connection=re.sub(r'(?i)(User ID|User Id|UserID|Uid|User)=[^;]*', 'User ID='+user, connection)
+        connection=re.sub(r'(?i)(Password|Pwd)=[^;]*', 'Password='+password, connection)
+        original_base=self.base
+        try:
+            with self.alternate_host({'ConnectionStrings__OrchidDb':connection}) as base:
+                self.base=base
+                page=self.opener.open(base+f'/Plants/Photos/{self.p}').read().decode()
+                self.token=html.unescape(re.search(r'name="__RequestVerificationToken"[^>]*value="([^"]+)"',page).group(1))
+                status,text=self.post(f'/Plants/Photos/{self.p}?handler=Delete',{'photoId':rows[0][0],'confirmDelete':'true'})
+                self.assertEqual(status,200);self.assertIn('Photo removed from the gallery.',text)
+                self.assertEqual(sql(f'SELECT isActive,isHero FROM plantphoto WHERE plantPhotoId={rows[0][0]};'),['0\t0'])
+                self.assertEqual(sql(f'SELECT plantPhotoId FROM plantphoto WHERE plantId={self.p} AND isHero=1 AND isActive=1;'),[rows[1][0]])
+                self.assertEqual(self.snapshot()[1],before_files)
+        finally:
+            self.base=original_base
+            sql(f"DROP USER '{user}'@'%';")
 
     def test_delete_missing_files(self):
         self.upload();row=self.photo_rows()[0]
         for name in row[1:]:(self.root/'plants'/str(self.p)/name).unlink()
         status,text=self.post(f'/Plants/Photos/{self.p}?handler=Delete',{'photoId':row[0],'confirmDelete':'true'})
-        self.assertEqual(status,200);self.assertIn('Photo deleted.',text);self.assertEqual(self.photo_rows(),[])
+        self.assertEqual(status,200);self.assertIn('Photo removed from the gallery.',text);self.assertEqual(self.photo_rows(),[])
 
     def test_delete_wrong_plant_and_route_override(self):
         self.upload();row=self.photo_rows()[0];before=self.snapshot()
@@ -112,24 +149,27 @@ class Photos(unittest.TestCase):
         self.assertEqual(self.post(f'/Plants/Photos/{other}?handler=Delete',{'photoId':row[0],'confirmDelete':'true'})[0],404)
         self.assertEqual(self.snapshot(),before)
 
-    def test_delete_shared_and_unsafe_filenames_rejected(self):
+    def test_deactivate_shared_and_unsafe_filenames_retains_files(self):
         self.upload(2);rows=self.photo_rows()
-        sql(f"UPDATE plantphoto SET thumbnailFileName='{rows[0][1]}' WHERE plantPhotoId={rows[1][0]};")
-        before=self.snapshot()
-        status,text=self.post(f'/Plants/Photos/{self.p}?handler=Delete',{'photoId':rows[0][0],'confirmDelete':'true'})
-        self.assertEqual(status,200);self.assertIn('could not be deleted',text);self.assertEqual(self.snapshot(),before)
-        sql(f"UPDATE plantphoto SET thumbnailFileName='{rows[1][2]}' WHERE plantPhotoId={rows[1][0]};")
-        sql(f"UPDATE plantphoto SET fileName='../outside.jpg' WHERE plantPhotoId={rows[0][0]};")
-        before=self.snapshot()
-        status,text=self.post(f'/Plants/Photos/{self.p}?handler=Delete',{'photoId':rows[0][0],'confirmDelete':'true'})
-        self.assertEqual(status,200);self.assertIn('could not be deleted',text);self.assertEqual(self.snapshot(),before)
-        sql(f"UPDATE plantphoto SET fileName='{rows[0][1]}' WHERE plantPhotoId={rows[0][0]};")
+        sql(f"UPDATE plantphoto SET thumbnailFileName='{rows[0][1]}',fileName='../outside.jpg' WHERE plantPhotoId={rows[1][0]};")
+        before_files=self.snapshot()[1]
+        status,text=self.post(f'/Plants/Photos/{self.p}?handler=Delete',{'photoId':rows[1][0],'confirmDelete':'true'})
+        self.assertEqual(status,200);self.assertIn('Photo removed from the gallery.',text)
+        self.assertEqual(self.snapshot()[1],before_files)
+        self.assertEqual(sql(f'SELECT isActive FROM plantphoto WHERE plantPhotoId={rows[1][0]};'),['0'])
 
     def test_delete_database_failure_retains_metadata_and_files(self):
         self.upload();row=self.photo_rows()[0];before=self.snapshot()
-        sql("CREATE TRIGGER c19_failure BEFORE DELETE ON plantphoto FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='injected deletion failure';")
+        sql("CREATE TRIGGER c19_failure BEFORE UPDATE ON plantphoto FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='injected deletion failure';")
         status,text=self.post(f'/Plants/Photos/{self.p}?handler=Delete',{'photoId':row[0],'confirmDelete':'true'})
         self.assertEqual(status,200);self.assertIn('could not be deleted',text);self.assertEqual(self.snapshot(),before)
+
+    def test_deactivate_hero_replacement_failure_rolls_back_both_rows(self):
+        self.upload(2);rows=self.photo_rows();before=self.snapshot()
+        sql("CREATE TRIGGER c19_failure BEFORE UPDATE ON plantphoto FOR EACH ROW SET NEW.isHero=IF(NEW.isHero=1 AND OLD.isHero=0,2,NEW.isHero);")
+        status,text=self.post(f'/Plants/Photos/{self.p}?handler=Delete',{'photoId':rows[0][0],'confirmDelete':'true'})
+        self.assertEqual(status,200);self.assertIn('could not be deleted',text)
+        self.assertEqual(self.snapshot(),before)
 
     def test_delete_ended_plant_rejected(self):
         self.upload();row=self.photo_rows()[0]

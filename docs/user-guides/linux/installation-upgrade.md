@@ -626,8 +626,10 @@ sudo journalctl -u orchidapp.service --since '5 minutes ago' --no-pager
 
 Allow startup to complete and use the actual listener. Verify a representative
 read and disposable save/reopen. Open existing plant and taxon photos,
-upload a disposable photo, reopen its thumbnail and full image, then delete
-it and confirm existing photos still open. See [photo handling](../../photo-handling.md)
+upload a disposable photo, reopen its thumbnail and full image, then remove
+it from the gallery and confirm existing photos still open. Removal sets
+`IsActive=0` and retains the row and image files; do not add DELETE permission
+for this operation. See [photo handling](../../photo-handling.md)
 for native decoder checks and recovery records. Resume only previously active
 auxiliary services, timers and backup jobs after validation. Record the
 deployed commit, SDK and results and retain the verified recovery set.

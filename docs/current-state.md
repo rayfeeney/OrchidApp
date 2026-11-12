@@ -1,5 +1,10 @@
 # Current state and fixed v1.4.0 work list
 
+## Photo row deactivation — 12 November 2026
+
+Photo removal now deactivates the row and clears its hero flag, retaining both files. No DELETE grant or migration is needed. Local .NET 8 locked restore/build passed (zero build warnings/errors), as did storage retention checks. On a new disposable Linux MariaDB 10.11.14 server, the upgraded fixture passed 28 photo HTTP checks plus all 74 existing lifecycle/date/validation/structural/history checks. The schema-only fixture passed 29 photo checks but initially failed one newly added test's trigger syntax; the corrected hero-replacement rollback test, restricted SELECT/INSERT/UPDATE/EXECUTE-account test (no DELETE), and nonhero/repeat test then passed on both fixtures (six targeted checks). The full runner was not green as one invocation; its setup failure and targeted correction are retained in local ignored logs. Current documentation links and diff whitespace checks passed. Hosted CI, installed Pi/Windows acceptance and shared Word-guide screenshot updates remain pending; deployment has not been performed.
+
+
 Last reconciled: 7 November 2026. This is the owner-agreed bounded work list, not evidence that pending tasks passed.
 
 ## Pi 1 v1.3.0 to v1.4.1 historical ledger adoption candidate — 11 November

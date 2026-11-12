@@ -14,6 +14,17 @@ bool Journals() => Directory.Exists(Path.Combine(root, ".photo-recovery")) && Di
 try
 {
     Seed();
+    foreach (var outcome in new[] { "commit", "rollback", "unknown" })
+    {
+        using var batch = Batch();
+        batch.Begin(); batch.TrackDeactivation(); batch.BeforeCommit();
+        Check(batch.HasPhotoRemovals && !batch.HasDeletions, "deactivation does not schedule file deletion");
+        if (outcome == "commit") batch.Committed();
+        else if (outcome == "rollback") batch.RolledBack();
+        else batch.Retain("CommitOutcomeUnknown");
+        Check(File.ReadAllText(main) == "main" && File.ReadAllText(thumb) == "thumb" && !Journals(),
+            "deactivation " + outcome + " retains files without a file journal");
+    }
     using (var batch = Batch()) { batch.Begin(); batch.TrackDeletion(1, new[] { "photo.jpg", "photo_thumb.jpg" }); batch.BeforeCommit(); batch.RolledBack(); }
     Check(File.ReadAllText(main) == "main" && File.Exists(thumb) && !Journals(), "rollback retains both files and clears journal");
     using (var batch = Batch()) { batch.Begin(); batch.TrackDeletion(1, new[] { "photo.jpg", "photo_thumb.jpg", "photo.jpg" }); batch.BeforeCommit(); batch.Committed(); }

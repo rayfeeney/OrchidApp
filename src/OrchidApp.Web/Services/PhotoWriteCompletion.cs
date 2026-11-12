@@ -36,16 +36,16 @@ public static class PhotoWriteCompletion
                 commitAttempted = true;
                 await transaction.CommitAsync(context.HttpContext.RequestAborted);
                 batch.Committed();
-                if (batch.HasDeletions && context.HandlerInstance is PageModel page)
+                if (batch.HasPhotoRemovals && context.HandlerInstance is PageModel page)
                     page.TempData["PhotoMessage"] = batch.CleanupRequired
                         ? "Photo removed from the gallery, but file cleanup requires recovery review. See the application log."
-                        : "Photo deleted.";
+                        : "Photo removed from the gallery.";
             }
             else
             {
                 await transaction.RollbackAsync(CancellationToken.None);
                 batch.RolledBack();
-                if (batch.HasDeletions && executed.Exception is not null && context.HandlerInstance is Pages.Plants.Photos.IndexModel failedPage)
+                if (batch.HasPhotoRemovals && executed.Exception is not null && context.HandlerInstance is Pages.Plants.Photos.IndexModel failedPage)
                 {
                     batch.LogDeletionFailure(executed.Exception);
                     failedPage.TempData["PhotoMessage"] = "The photo could not be deleted. No photo files were removed. Please try again.";
@@ -56,14 +56,14 @@ public static class PhotoWriteCompletion
         }
         catch (Exception ex)
         {
-            if (batch.HasDeletions) batch.LogDeletionFailure(ex);
+            if (batch.HasPhotoRemovals) batch.LogDeletionFailure(ex);
             if (commitAttempted) batch.Retain("CommitOutcomeUnknown", ex);
             else
             {
                 try { await transaction.RollbackAsync(CancellationToken.None); batch.RolledBack(); }
                 catch (Exception rollback) { rollbackUnknown = true; batch.Retain("RollbackOutcomeUnknown", rollback); }
             }
-            if (batch.HasDeletions && context.HandlerInstance is Pages.Plants.Photos.IndexModel page)
+            if (batch.HasPhotoRemovals && context.HandlerInstance is Pages.Plants.Photos.IndexModel page)
             {
                 page.TempData["PhotoMessage"] = commitAttempted || rollbackUnknown
                     ? "The deletion outcome could not be confirmed. Files have been retained for recovery review. Do not retry until reviewed."
