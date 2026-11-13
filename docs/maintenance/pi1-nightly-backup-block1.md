@@ -68,6 +68,18 @@ Source commit does not enable or change anything on either Pi.
 
 ## Validation boundaries
 
+PR #386 first hosted run `43473836571`: all 21 new policy checks passed on Linux,
+including the POSIX private-mode regression. Three existing database jobs failed:
+Ubuntu's moving latest image resolved to 26.04 and supplied MariaDB 11.8 clients
+against the 10.11 fixture; logs show `SSL is required, but the server does not
+support it`. Schema creation also reported a nonempty target after failed probing.
+The correction pins only those native-client database jobs to Ubuntu 24.04 and
+checks both client/dump version outputs for 10.11 before running tests. Ubuntu's
+[Noble package inventory](https://packages.ubuntu.com/noble-updates/mariadb-client)
+identifies 10.11. This changes CI tooling only, without weakening TLS settings or
+changing production scripts. The rerun must pass before merge; the original failed
+run remains nonpassing. Other jobs and Pi configuration remain unchanged.
+
 - New local synthetic suite: 21 passed. Original suite on Pi 1: 20 passed before
   the permission regression was added. Old-format local regression: 27 passed,
   four skips (native integration not selected, rclone unavailable, POSIX mode and

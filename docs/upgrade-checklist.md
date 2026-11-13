@@ -2,6 +2,10 @@
 
 ## Pi 1 multi-database backup — installed, scheduled acceptance pending
 
+Source CI only: native-client database jobs now pin Ubuntu 24.04 and assert MariaDB
+10.11 client/dump versions after a latest-image TLS mismatch. No installed machine
+action or production TLS change is required. Verify hosted rerun before merge.
+
 - [x] Pi 1, 13 November: follow the [Block 1 procedure](user-guides/linux/nightly-multi-database-backup.md).
   Review named databases/sources/writers, protected credentials, stable UUID,
   software identity, explicit crypt config and space estimate. No migration.

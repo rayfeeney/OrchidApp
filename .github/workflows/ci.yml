@@ -76,7 +76,8 @@ jobs:
 
   lifecycle-closure:
     name: Lifecycle closure, transactions, history and photo recovery
-    runs-on: ubuntu-latest
+    # Noble supplies the supported 10.11 client; ubuntu-latest now selects 26.04/11.8.
+    runs-on: ubuntu-24.04
     services:
       mariadb:
         image: mariadb:10.11
@@ -97,7 +98,10 @@ jobs:
         with:
           dotnet-version: '8.0.x'
       - name: Install MariaDB client and native photo runtime
-        run: sudo apt-get update && sudo apt-get install -y mariadb-client libvips-tools
+        run: |
+          sudo apt-get update && sudo apt-get install -y mariadb-client libvips-tools
+          mariadb --version | grep -E 'Distrib 10[.]11[.]'
+          mariadb-dump --version | grep -E 'Distrib 10[.]11[.]'
       - name: Check upgraded and schema-only lifecycle policy with actual HTTP
         shell: pwsh
         env:
@@ -111,7 +115,7 @@ jobs:
 
   linux-backup:
     name: Linux paired backup and recovery
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     services:
       mariadb:
         image: mariadb:10.11
@@ -128,7 +132,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Install backup test tools
-        run: sudo apt-get update && sudo apt-get install -y mariadb-client rclone
+        run: |
+          sudo apt-get update && sudo apt-get install -y mariadb-client rclone
+          mariadb --version | grep -E 'Distrib 10[.]11[.]'
+          mariadb-dump --version | grep -E 'Distrib 10[.]11[.]'
       - name: Check Linux backup wrapper syntax
         run: |
           bash -n infrastructure/backups/backup_orchids.sh
@@ -224,7 +231,7 @@ jobs:
 
   schema-contract:
     name: Schema contract validation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     services:
       mariadb:
@@ -244,7 +251,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install MariaDB client
-        run: sudo apt-get update && sudo apt-get install -y mariadb-client
+        run: |
+          sudo apt-get update && sudo apt-get install -y mariadb-client
+          mariadb --version | grep -E 'Distrib 10[.]11[.]'
+          mariadb-dump --version | grep -E 'Distrib 10[.]11[.]'
 
       - name: Create canonical database from schema and seeds only
         shell: pwsh
