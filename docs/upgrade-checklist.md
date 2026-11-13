@@ -1,5 +1,25 @@
 # Upgrade action checklist: C01–C20
 
+## Pi 1 multi-database backup — installed, scheduled acceptance pending
+
+Source CI only: native-client database jobs now pin Ubuntu 24.04 and assert MariaDB
+10.11 client/dump versions after a latest-image TLS mismatch. No installed machine
+action or production TLS change is required. Verify hosted rerun before merge.
+
+- [x] Pi 1, 13 November: follow the [Block 1 procedure](user-guides/linux/nightly-multi-database-backup.md).
+  Review named databases/sources/writers, protected credentials, stable UUID,
+  software identity, explicit crypt config and space estimate. No migration.
+- [x] Owner-run two manual captures/read-back, writer restart/readiness, root
+  permissions, Gmail receipt, measured outage/disk use and controlled low-space/
+  overdue reporting passed. Installed timers validated/enabled and first monitor passed.
+- [x] Save old cron, comment only old backup entry and retain recovery inputs;
+  logrotate validated with daily/maxsize. See [evidence](maintenance/pi1-nightly-backup-block1.md).
+- [ ] Check first scheduled backup/received success report on 14 November, reboot
+  acceptance and rollback procedure. Exact live-set restore/application acceptance
+  is deferred to the separately agreed Block 2, not claimed by these backup checks.
+  Windows is unaffected. Existing old restore cannot restore the new format;
+  Pi 2 Block 2 remains pending, not operationally certified by source tests.
+
 ## Photo row deactivation — 12 November 2026
 
 Windows/Linux photo removal update: deploy the application change only; no migration, new setting or DELETE grant. Verify removal hides the photo, retains its inactive row and files, replaces the hero and preserves its observation. Keep paired backups and review any pre-existing recovery journals. Installed acceptance remains pending.

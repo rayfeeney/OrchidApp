@@ -1,0 +1,12 @@
+[Unit]
+Description=Pi 1 backup freshness check and email retries
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+UMask=0077
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/usr/bin/python3 /usr/local/lib/orchidapp-backup/nightly_backup.py monitor --config /etc/orchidapp/nightly.json
+TimeoutStartSec=15min

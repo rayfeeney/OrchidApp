@@ -1,0 +1,10 @@
+[Unit]
+Description=Check backup freshness and retry email every 15 minutes
+
+[Timer]
+OnBootSec=10min
+OnUnitActiveSec=15min
+Unit=orchidapp-nightly-monitor.service
+
+[Install]
+WantedBy=timers.target

@@ -1,5 +1,9 @@
 # Linux paired backup and recovery
 
+For the opt-in Pi 1 multi-database OneDrive/email implementation, see [Block 1](nightly-multi-database-backup.md).
+It uses a separate format that this page's restore command cannot restore.
+Existing single-database behavior below is unchanged.
+
 Routine backups now keep SQL, complete uploads and external configuration in one snapshot. An older snapshot carries its own older photos; it does not depend on the current uploads mirror. Keep `backup_orchids.sh`, `restore_orchids.sh` and their shared `orchid_backup.py` together under `infrastructure/backups/`. Required tools are Python 3.9+, Bash, MariaDB 10.11 client/dump, systemd and rclone. All must be on the scheduling account's PATH.
 
 This is data recovery, not a whole-machine image. Retain compatible app binaries/source, OS/service definitions, MariaDB grants and encryption keys separately. Use the [full pre-upgrade guide](installation-upgrade.md#recover-a-pre-upgrade-archive) for application/service rollback. See [C17 evidence](../../maintenance/c17-linux-paired-backup.md) for local checks and pending Linux/Pi acceptance.
