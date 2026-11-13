@@ -40,6 +40,9 @@ Move superseded/inapplicable docs to docs/history/, preserve their context and u
 ## Validate locally
 
 Multi-database Block 1 backup policy checks run with `python tests/LinuxBackup.Checks/nightly_checks.py`.
+Block 2 phase 1 checks run with `python tests/LinuxBackup.Checks/standby_checks.py`;
+they include an actual local crypt backend when rclone is installed, but never a
+live cloud or database. PREPARED_RESTORE_PENDING is staging, not restore acceptance.
 The optional Windows-native `nightly_native_windows.py` creates its own network-disabled,
 pipe-only MariaDB fixture and retains its files under ignored feature-check artifacts;
 it accepts no live endpoint. Read the [operating contract and evidence](docs/user-guides/linux/nightly-multi-database-backup.md).

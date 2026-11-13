@@ -2,6 +2,13 @@
 
 ## Pi 2 Block 2 preparation — 13 November 2026
 
+Phase 1 source now exists in `infrastructure/backups/standby_restore.py`: bounded
+read-only cloud discovery/download, strict record/hash/archive validation, private
+inert generation staging and durable pending/failure state. Policy tests and a real
+rclone crypt/local-storage test are added to Linux CI. No SQL import, application
+acceptance/promotion, full restore email, cleanup or schedule is implemented by
+this phase. Its PREPARED_RESTORE_PENDING result must not be called restored.
+
 Owner reports a clean Debian 13/ARM64 Pi 2 (`pihole2`, 192.168.7.50), Pi-hole
 operational, Python 3.13.5, PowerShell 7.6.6 retained, 45 GB free and MariaDB
 11.8.6 active/enabled with only system databases. .NET is absent. MariaDB events

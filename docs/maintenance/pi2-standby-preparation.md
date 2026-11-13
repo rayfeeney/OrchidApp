@@ -6,6 +6,13 @@ in this preparation sequence. The repeatable Block 2 coordinator is not yet
 implemented. The owner runs all Pi commands; the agent has not connected to a Pi.
 See the [Block 2 implementation contract](../user-guides/linux/nightly-standby-restore.md).
 
+Subsequent phase 1 development adds `standby_restore.py`, an example config,
+package builder and 23 tests (22 pass locally; actual rclone crypt case requires
+the installed tool and runs in Linux CI). It implements discovery/download/
+validation/inert staging only and has not been deployed to Pi 2. Database restore,
+application acceptance and full reporting remain pending. This development does
+not retroactively convert the owner-run archive check into an automatic restore.
+
 ## Owner-reported clean baseline
 
 - Host `pihole2`, SSH address `192.168.7.50`, account `raymond-23`, ARM64/aarch64.

@@ -1,9 +1,9 @@
 # Pi 2 nightly standby restore — Block 2 implementation contract
 
-Status: planned, not implemented. Existing Block 1 code can validate the downloaded
+Status: phase 1 source implementation exists in `infrastructure/backups/standby_restore.py`;
+full restore/acceptance/reporting remain planned. Existing Block 1 code validates the
 multi-database archive but cannot orchestrate a standby restore. This page specifies
-the repeatable repository-owned process and acceptance gates; it is not a set of
-commands to run against an installed database. See [completed preparation and
+the repeatable process and acceptance gates. See [completed preparation and
 exact archive validation](../../maintenance/pi2-standby-preparation.md) and the
 [Block 1 source/handoff contract](nightly-multi-database-backup.md).
 
@@ -24,7 +24,55 @@ the coordinator. Required helpers may be shared, but importing Block 1 code must
 not give Pi 2 a backup schedule or upload/prune route. Do not use the old
 single-database restore CLI for the multi-database archive.
 
-## Planned phases and durable states
+## Implemented phase 1: discovery and inert staging
+
+`standby_restore.py discover --config /etc/orchidapp-standby/standby.json` lists
+and reads completed records only. `prepare` also downloads, checks and stages the
+latest eligible set. The example JSON has no database credentials, service names
+or email credentials: this phase has no database/service/email capability. Install
+all three modules together root-owned. Config and cloud credentials must be root/
+operator-owned mode 600; new state root is private mode 700 and separate from
+config/credentials. No automatic schedule is supplied for this incomplete phase.
+
+The cloud interface constructs only `lsf` and exact-object `cat` commands. Listing
+and record responses are bounded in memory/time; archive download is bounded to
+the declared length plus one byte, then length/hash checked. Rclone documents the
+[bounded cat option](https://rclone.org/commands/rclone_cat/). It may refresh its
+local credential file but cannot construct upload/delete/sync commands. Bad record
+identity, database list, hash, size, timestamp/order or object name fails discovery.
+Old records may be listed, but the latest recovery point must be within 30 hours
+by default. Future timestamps fail. An invalid newer record never causes silent
+fallback. An existing last-accepted record, written only by a future acceptance
+implementation, prevents rollback/rewrite; this phase never writes that record.
+
+Each attempt creates a new owned generation under `state_root/generations`.
+Before download it checks archive-size plus reserve; before extraction it checks
+actual declared payload-size plus reserve. This is preparation space only, not a
+future MariaDB/app clone allowance. Default reserve 1 GiB, maximum compressed input
+5 GiB, unpack limit 20 GiB, maximum 1,000 ready records and three owned/unknown
+generation entries. Limits must be reviewed for collection growth. No generations
+are deleted automatically; capacity exhaustion refuses more work. Repeating a
+snapshot with existing state refuses reuse rather than guessing whether to retry.
+
+States are DOWNLOADING, VALIDATING, EXTRACTING, PREPARED_RESTORE_PENDING or FAILED.
+A private owner token and exact ready record are durable before download. Extraction
+rejects unexpected/changed entries and creates plain private files without archived
+ownership or modes. Post-extraction inventory and archive rehash must match.
+Captured .env, account SQL and units remain inert under payload. Failure leaves
+input/state for inspection; process interruption may leave an intermediate marker
+and stale operation lock, both requiring review. No accepted pointer, MariaDB,
+system service or OneDrive object is modified.
+
+Exit 0 for discover/prepare means that phase completed, not standby acceptance.
+Prepare prints PREPARED_RESTORE_PENDING. Full restore-success email and scheduling
+are explicitly unavailable. The output must never be relabelled a working standby.
+Run `python tests/LinuxBackup.Checks/standby_checks.py`: synthetic policy tests and
+an optional real rclone crypt round trip against private local disposable storage.
+The Linux CI step installs rclone and runs the real crypt case too. No live cloud
+account, Pi database or source credentials are used by tests. Package sources with
+`python scripts/package-standby-restore.py`; it includes hashes and examples only.
+
+## Complete Block 2 phases and durable states
 
 1. **Discover.** List only the configured crypt directory for the explicit stable
    collection. Read exact `.ready.json` records with bounded size. Validate format,

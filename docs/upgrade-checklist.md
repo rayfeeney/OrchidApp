@@ -2,6 +2,10 @@
 
 ## Pi 2 Block 2 — preparation complete, implementation pending
 
+- [ ] Review phase 1 source/package and CI, then deploy only to a separate private
+  staging root. `prepare` does not import SQL, accept a standby or send restore
+  success. Full database/app/acceptance/reporting implementation remains pending.
+
 - [x] Owner-run clean baseline, single intended MariaDB service, rclone 1.73.0
   package checksum, private crypt config/listing, exact archive hash and full
   payload/photo inventory validation recorded in [Pi 2 evidence](maintenance/pi2-standby-preparation.md).
