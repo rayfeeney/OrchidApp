@@ -112,6 +112,16 @@ The full archive has not been extracted or its captured settings activated here.
 
 ## Pending work and acceptance
 
+Hosted native data-stage evidence: run 43514710945 at `7c090cb` passed synthetic
+10.11.14-to-11.8 candidate import, both database data, routines/views/triggers,
+events off, photo references/bytes, excluded accounts.sql, retained partial-DDL
+state, retry refusal and preservation of a synthetic earlier acceptance marker.
+This is not a real installed application restore. In that run, all 23 staging/
+real local-crypt tests passed. Ten data-policy adapter tests passed locally but
+failed on Linux because the adapter mocked the UID inconsistently with actual
+file ownership. The test correction uses the real Linux UID; production permission
+checks and candidate code are unchanged. Its hosted rerun remains pending.
+
 1. Implement/test repository-owned discovery, bounded download, full validation,
    private staging and durable interruption state, with no cloud write operations.
 2. Provision the matching application/runtime and explicit target-only credentials,

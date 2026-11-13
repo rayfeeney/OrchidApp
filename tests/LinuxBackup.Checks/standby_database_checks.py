@@ -29,6 +29,9 @@ class DatabasePolicy(unittest.TestCase):
         self.process.poll.return_value = None
         self.imports = []
         self.events = []
+        # Windows needs the POSIX API adapter, but on Linux retain the real UID
+        # so real protected-file ownership checks continue to exercise correctly.
+        self.invoking_uid = os.geteuid() if hasattr(os, 'geteuid') else 123
 
     def tearDown(self):
         self.fixture.tearDown()
@@ -62,7 +65,7 @@ class DatabasePolicy(unittest.TestCase):
         with patch.object(d, 'configure', return_value=self.c), patch.object(d, 'initialise'), \
              patch.object(d, 'running_candidate', self.running), patch.object(d, 'query', self.query), \
              patch.object(d, 'inventory', return_value={'base_table_rows': {'orchids': {'witness': 1}, 'EnergyMonitoring': {'witness': 1}}}), \
-             patch.object(d.subprocess, 'run', self.imported), patch.object(d.os, 'geteuid', return_value=123, create=True):
+             patch.object(d.subprocess, 'run', self.imported), patch.object(d.os, 'geteuid', return_value=self.invoking_uid, create=True):
             return d.restore_data(self.c, self.snapshot)
 
     def test_restores_only_selected_sql_and_stops_before_pending_result(self):
@@ -109,7 +112,7 @@ class DatabasePolicy(unittest.TestCase):
             return SimpleNamespace(returncode=1, stderr=b'synthetic secret SQL diagnostic')
         with patch.object(d, 'configure', return_value=self.c), patch.object(d, 'initialise'), \
              patch.object(d, 'running_candidate', self.running), patch.object(d, 'query', self.query), \
-             patch.object(d.subprocess, 'run', failed), patch.object(d.os, 'geteuid', return_value=123, create=True):
+             patch.object(d.subprocess, 'run', failed), patch.object(d.os, 'geteuid', return_value=self.invoking_uid, create=True):
             with self.assertRaises(d.b.BackupError):
                 d.restore_data(self.c, self.snapshot)
         state = json.loads((self.generation / 'state.json').read_text())

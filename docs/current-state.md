@@ -13,8 +13,13 @@ Candidate database-restore source is now being added separately in
 `standby_database.py`: new non-root-user-owned 11.8 instance, exact private socket/
 datadir/server-ID verification before SQL, source account exclusion, durable
 partial-import failure state and stopped-server DATA_RESTORED_APPLICATION_PENDING
-output. Ten local adapter tests pass; the real 10.11.14-to-11.8 Linux fixture and
-CI job are added but not yet observed passing. Nothing in this stage is deployed
+output. Ten local adapter tests pass. Hosted run 43514710945 on `7c090cb` passed
+the real 10.11.14-to-11.8 fixture, including both databases, routines/views/triggers,
+events-off, photos, accounts.sql exclusion, partial-DDL marker/retry refusal and
+prior-state preservation. All 23 staging/crypt tests also passed on Linux. The
+separate adapter-policy job initially failed because its Windows API adapter
+substituted a fake UID on Linux; the correction retains the actual UID and does
+not weaken protected-file checks. Its rerun is pending. Nothing in this stage is deployed
 to Pi 2; application/definer/grant checks, acceptance/promotion and reporting remain
 pending. Pi 1's current DLL was confirmed to match the archive fingerprint, with
 both .NET and ASP.NET runtimes 8.0.23. Target runtime/application installation still

@@ -114,7 +114,12 @@ labelled network-none MariaDB 10.11.14 source, generates synthetic dumps and exe
 actual 11.8 restore, objects/photos/events-off, partial DDL and retry preservation.
 It accepts no live endpoint and removes only its verified owned container. Private
 host data/logs remain for review; no SQL/credentials are uploaded as CI artifacts.
-Native CI results remain pending until observed.
+Native run [43514710945](https://github.com/rayfeeney/OrchidApp/actions/runs/43514710945)
+passed on `7c090cb`, including both databases, views/routines/triggers/events-off,
+photos, accounts.sql exclusion, partial DDL/retry refusal and prior marker
+preservation. Adapter-policy fixture UID correction is separate and still needs
+its hosted rerun. The native result does not certify the full application or
+the actual Pi 1 archive on Pi 2.
 
 ## Complete Block 2 phases and durable states
 
