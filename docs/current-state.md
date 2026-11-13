@@ -1,5 +1,26 @@
 # Current state and fixed v1.4.0 work list
 
+## Pi 2 Block 2 preparation — 13 November 2026
+
+Owner reports a clean Debian 13/ARM64 Pi 2 (`pihole2`, 192.168.7.50), Pi-hole
+operational, Python 3.13.5, PowerShell 7.6.6 retained, 45 GB free and MariaDB
+11.8.6 active/enabled with only system databases. .NET is absent. MariaDB events
+are OFF, lower_case_table_names=0, utf8mb4/utf8mb4_general_ci. A separate old
+temporary MariaDB restore server was identified and stopped; intended service
+remains active. Official rclone 1.73.0 ARM64 package checksum/install passed.
+Root-owned private crypt configuration, cloud listing, exact ready-record download
+hash and full archive inventory/required-photo validation passed on Pi 2 for the
+17:07:58 UTC Block 1 snapshot (both databases; 756 active photo/thumbnail references).
+See [preparation evidence](maintenance/pi2-standby-preparation.md) and the [Block 2
+implementation contract](user-guides/linux/nightly-standby-restore.md).
+
+These are preparation checks, not a completed restore. No application database
+import, captured settings activation, application acceptance, Pi 2 restore/email
+automation or schedule has been performed here. MariaDB 10.11-to-11.8 compatibility,
+matching application binaries/runtime, target credentials/permissions/definers and
+the repeatable coordinator/tests remain pending. Pi 1 and Pi-hole stay outside
+restore scope. Work-list items 9/10 remain open.
+
 ## Pi 1 multi-database nightly backup installed — 13 November 2026
 
 Owner-run first capture passed: both selected databases and photographs, 9.1 seconds

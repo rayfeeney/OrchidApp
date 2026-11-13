@@ -1,0 +1,119 @@
+# Pi 2 Block 2 preparation and archive validation — 13 November 2026
+
+Status: preparation/validation only. No application database import, source settings
+activation, acceptance of a working standby or restore schedule has been performed
+in this preparation sequence. The repeatable Block 2 coordinator is not yet
+implemented. The owner runs all Pi commands; the agent has not connected to a Pi.
+See the [Block 2 implementation contract](../user-guides/linux/nightly-standby-restore.md).
+
+## Owner-reported clean baseline
+
+- Host `pihole2`, SSH address `192.168.7.50`, account `raymond-23`, ARM64/aarch64.
+- Debian 13 retained; rclone reports raspbian 13.7 (64 bit), kernel
+  `6.18.50+rpt-rpi-2712`. Pi-hole remains operational and outside OrchidApp restore.
+- Root filesystem: 58 GB displayed, 11 GB used, 45 GB available, 20% used.
+- Python 3.13.5. PowerShell 7.6.6 retained (owner report). `dotnet` absent.
+- MariaDB 11.8.6 (`11.8.6-MariaDB-0+deb13u1 from Debian`), active/enabled.
+  Data directory `/var/lib/mysql/`, event scheduler OFF, lower_case_table_names=0,
+  server charset utf8mb4, collation utf8mb4_general_ci. Only information_schema,
+  mysql, performance_schema and sys existed at the baseline. No OrchidApp or
+  EnergyMonitoring service/timer units were listed.
+- Previous OrchidApp/development installation and application databases removed;
+  owner explicitly states all previous Pi 2 application data is disposable.
+  This does not authorize changing Pi-hole, Pi 1 or arbitrary unrelated paths.
+- Chosen baseline is MariaDB 11.8.6, not a replacement with 10.11. Pi 1 runs
+  10.11.14. A logical restore and application acceptance across that version
+  boundary must pass; matching configuration is not proof of compatibility.
+
+## Extra MariaDB instance identified and stopped
+
+Package installation reported a stale user-session MariaDB process. Inspection
+found PID 7312, started 7 November, user raymond-23, deleted old executable,
+`--no-defaults`, data `/tmp/orchid-pi2-restore.CJrgy5QB/data`, Unix socket
+`/tmp/orchid-pi2-restore.CJrgy5QB/restore.sock`, `--skip-networking`.
+This was a previous temporary restore-test server, separate from the intended
+systemd MariaDB service (observed PID 51094, mysql user). Owner sent SIGTERM only
+to PID 7312. Subsequent process listing showed only 51094 and service remained
+active. Temporary files were not deleted in this sequence. The system server was
+observed listening on 0.0.0.0:3306; do not treat it as isolated merely because a
+standby configuration uses loopback. Block 2 candidates require their own guarded
+data directories and endpoints and must not reuse that listener accidentally.
+
+## rclone and private cloud configuration
+
+Debian package candidate was 1.60.1; official rclone 1.73.0 ARM64 DEB was downloaded
+from `https://downloads.rclone.org/v1.73.0/` and checked against its SHA256SUMS.
+Owner installed only rclone (no package removals/upgrades in that transaction).
+Version reports 1.73.0, matching Pi 1. No service restarts were requested.
+
+Pi 1's root-owned `/etc/orchidapp/nightly-rclone.conf` was copied into a temporary
+mode-600 user transfer file, transferred via the owner's PC using scp -3, and
+installed root:root mode 600 at `/etc/orchidapp-standby/rclone.conf` under a private
+mode-700 directory. Remote names listed: onedrive, orchidcrypt, orchiduploadscrypt.
+No configuration contents, provider tokens or crypt keys were pasted or committed.
+Private transfer copies remain to be removed deliberately after validation.
+
+The copied credentials retain their provider permissions; no provider-level
+read-only restriction has been demonstrated. The future restore coordinator must
+only list/read cloud objects and never upload, sync or prune OneDrive. Token
+refresh may update Pi 2's private local rclone configuration normally.
+
+## Exact downloaded and validated input
+
+Encrypted directory:
+`orchidcrypt:nightly-sets/55b442ba-1ee1-455b-96ba-dcf978e43683`.
+Listing returned two matching archive/ready pairs for 16:48:23 and 17:07:58 UTC.
+The newer exact ready record was read before downloading:
+
+- Format `orchidapp-mariadb-set-v1`.
+- Collection `55b442ba-1ee1-455b-96ba-dcf978e43683`.
+- Snapshot `orchidset-20261113T170758Z-1801173727854608a1e80fe8fa5497aa`.
+- SHA-256 `5b4903dda296acdc303784fc58242596ef86109c79aa3b1785968484f43c7b12`.
+- Size 474,190,970 bytes. Databases orchids and EnergyMonitoring.
+- Recovery point 2026-11-13T17:07:58.612331+00:00;
+  cloud completion 2026-11-13T17:13:07.242409+00:00.
+
+The archive was downloaded with copyto --immutable into root-owned mode-700
+`/var/backups/orchidapp-standby`, then set mode 600. Explicit sha256sum returned OK.
+Manifest inspection found 756 required active photo/thumbnail references, complete
+OrchidApp uploads/settings sources, EnergyMonitoring .env/source/SQL/dependencies,
+and named OrchidApp/importer/collector service/timer definitions.
+Required publication identity is OrchidApp.Web.dll SHA-256
+`be2812be9e85348de49a784afead57307b24e666e138e8e389baf69f5374f150`.
+The matching application binaries are not themselves present in the backup.
+
+Two existing Block 1 modules were transferred from the PC, checksum-checked and
+installed root-owned mode 644 in `/usr/local/lib/orchidapp-standby`:
+
+- nightly_backup.py:
+  `a7a1418577950ff673ef21a69658b5f54e5b7ff5b36dc4ed93f5c26a0c451ddd`.
+- orchid_backup.py:
+  `49004275b640fe3c098def61d8d3bb5c421092bb2bd46c718bec7db07ee6876c`.
+
+The owner invoked the existing `nightly_backup.validate` function with explicit
+collection ID, database list and 20 GiB unpack limit. It printed:
+`Archive inventory, file hashes and required photographs: PASSED`, and the exact
+snapshot identity above. This checks each archived payload's inventory/hash,
+archive member safety, nonempty database/account payloads and required photo paths.
+It is not an SQL import, application test or proof of version compatibility.
+The full archive has not been extracted or its captured settings activated here.
+
+## Pending work and acceptance
+
+1. Implement/test repository-owned discovery, bounded download, full validation,
+   private staging and durable interruption state, with no cloud write operations.
+2. Provision the matching application/runtime and explicit target-only credentials,
+   settings, permissions and definer/grant strategy; never activate captured Pi 1
+   endpoints, jobs or accounts.sql automatically.
+3. Restore both databases on a newly owned isolated MariaDB 11.8 candidate and
+   prove exact endpoint/data-directory identity before SQL. Preserve any future
+   accepted standby until replacement is accepted; disposable initial state does
+   not justify destructive refresh of a later working standby.
+4. Verify database objects/data, photo bytes, readiness and application workflows;
+   test writes must use a disposable validation clone and not enter accepted data.
+5. Implement atomic acceptance state, recovery after interruption, target-only
+   service activation, retention of the previous accepted generation, and email/
+   overdue reports tied to snapshot identity.
+6. Package/deploy the reviewed source; owner-run full rehearsal including failures,
+   email receipt, peak space, reboot and first scheduled refresh. Takeover remains
+   deliberate and separate. No Block 2 timer is enabled at this stage.

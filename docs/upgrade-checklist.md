@@ -1,5 +1,19 @@
 # Upgrade action checklist: C01–C20
 
+## Pi 2 Block 2 — preparation complete, implementation pending
+
+- [x] Owner-run clean baseline, single intended MariaDB service, rclone 1.73.0
+  package checksum, private crypt config/listing, exact archive hash and full
+  payload/photo inventory validation recorded in [Pi 2 evidence](maintenance/pi2-standby-preparation.md).
+- [ ] Implement/test/package [repeatable Block 2](user-guides/linux/nightly-standby-restore.md)
+  before database import/settings activation. Validate actual 10.11-to-11.8 logical
+  restore, exact app/runtime compatibility, target-only accounts/definers/settings,
+  pristine acceptance and preservation of previous working generations.
+- [ ] Verify reporting, overdue checks, interruption/reboot recovery, permissions,
+  Pi-hole health, disk headroom and first scheduled refresh. No Pi 2 schedule is
+  enabled yet; Windows and Pi 1 are unaffected. Do not replay migrations or apply
+  accounts.sql automatically. Preserve working source and earlier recovery inputs.
+
 ## Pi 1 multi-database backup — installed, scheduled acceptance pending
 
 Source CI only: native-client database jobs now pin Ubuntu 24.04 and assert MariaDB
