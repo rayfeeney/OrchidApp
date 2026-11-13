@@ -2,6 +2,11 @@
 
 ## Pi 2 Block 2 — preparation complete, implementation pending
 
+- [ ] Candidate data-stage source must pass the new isolated 10.11.14-to-11.8 native
+  CI fixture before any production rehearsal. Provision an explicit non-root
+  candidate account/private database root; no system MariaDB endpoint is accepted.
+  DATA_RESTORED_APPLICATION_PENDING is not application or standby acceptance.
+
 - [ ] Review phase 1 source/package and CI, then deploy only to a separate private
   staging root. `prepare` does not import SQL, accept a standby or send restore
   success. Full database/app/acceptance/reporting implementation remains pending.

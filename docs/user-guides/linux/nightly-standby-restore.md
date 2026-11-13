@@ -1,7 +1,8 @@
 # Pi 2 nightly standby restore — Block 2 implementation contract
 
-Status: phase 1 source implementation exists in `infrastructure/backups/standby_restore.py`;
-full restore/acceptance/reporting remain planned. Existing Block 1 code validates the
+Status: discovery/staging and candidate database-restore source exist in
+`standby_restore.py` and `standby_database.py`; application acceptance/promotion/
+reporting remain planned. Existing Block 1 code validates the
 multi-database archive but cannot orchestrate a standby restore. This page specifies
 the repeatable process and acceptance gates. See [completed preparation and
 exact archive validation](../../maintenance/pi2-standby-preparation.md) and the
@@ -71,6 +72,49 @@ an optional real rclone crypt round trip against private local disposable storag
 The Linux CI step installs rclone and runs the real crypt case too. No live cloud
 account, Pi database or source credentials are used by tests. Package sources with
 `python scripts/package-standby-restore.py`; it includes hashes and examples only.
+
+## Candidate database restore source — not yet installed
+
+`restore-data --generation EXACT_SNAPSHOT --config TARGET_JSON` accepts only a
+pristine PREPARED_RESTORE_PENDING generation, rechecks its archive and extracted
+inventory, and requires an explicit non-root system account and separate private
+`database_root` owned by that account. Its basename must start with
+`orchidapp-standby-db`, cannot overlap state storage and must already exist.
+Account/directory provisioning is a separate reviewed installation step.
+
+The code initialises a new candidate directory with MariaDB 11.8 tools, starts its
+own child server as that user with networking/binlogging/replication startup/events
+disabled, and uses only its private socket. It verifies actual datadir, socket,
+networking, events, generated server ID, process liveness and version before SQL
+writes and each import. No host/port/live client-file arguments are accepted.
+Root uses explicit --user; a non-root fixture runs as itself. The initial empty
+root password exists only inside the private socket-only candidate and is replaced
+after identity checks with a random password in a private target client file.
+Captured credentials are not used. See [MariaDB initialisation options](https://mariadb.com/docs/server/clients-and-utilities/deployment-tools/mariadb-install-db).
+
+Only named application dumps are imported, never accounts.sql. Durable pending
+state precedes SQL. Failure retains data, diagnostics and DATABASE_FAILED state;
+retry into partial data is refused. No DROP/repair or automatic deletion is used.
+SIGINT/SIGTERM unwind the owned child; hard termination/power loss need review.
+Shutdown targets only the child created here, never an external PID/default
+endpoint. Forced shutdown fails the data stage. The normal MariaDB service and
+Pi-hole are not queried or stopped.
+
+Post-import checks compare SQL photo references/files and inventory table row
+counts, views/routines/definers/events. Counts are evidence, not source fingerprints
+that this backup format does not contain. Definer/grant compatibility and actual
+application behavior remain pending. The owned server stops before successful exit.
+DATA_RESTORED_APPLICATION_PENDING is not application readiness or an accepted
+standby. No accepted pointer, restore-success email or schedule is created.
+
+Policy tests: `python tests/LinuxBackup.Checks/standby_database_checks.py`.
+Native Linux fixture: `python tests/LinuxBackup.Checks/standby_native_linux.py` on a
+non-root disposable runner with Docker and MariaDB 11.8 tools. It creates its own
+labelled network-none MariaDB 10.11.14 source, generates synthetic dumps and exercises
+actual 11.8 restore, objects/photos/events-off, partial DDL and retry preservation.
+It accepts no live endpoint and removes only its verified owned container. Private
+host data/logs remain for review; no SQL/credentials are uploaded as CI artifacts.
+Native CI results remain pending until observed.
 
 ## Complete Block 2 phases and durable states
 

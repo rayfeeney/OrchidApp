@@ -1,7 +1,8 @@
-"""Block 2 phase 1: discover, validate and privately stage a candidate.
+"""Block 2 preparation and isolated candidate data restore.
 
-PREPARED is not RESTORED or ACCEPTED. This command never imports SQL, activates
-settings, starts services, sends restore-success email or writes to cloud storage.
+prepare stages inert files; restore-data imports into a newly owned socket-only
+server. Neither activates settings/services, accepts a standby, sends restore-
+success email or writes to cloud storage. Application acceptance remains pending.
 """
 import argparse
 import configparser
@@ -11,6 +12,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import tarfile
@@ -284,15 +286,25 @@ def prepare(c):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('operation', choices=('discover', 'prepare'))
+    parser.add_argument('operation', choices=('discover', 'prepare', 'restore-data'))
     parser.add_argument('--config', required=True)
+    parser.add_argument('--generation')
     args = parser.parse_args()
     os.umask(0o077)
+    def interrupted(*_):
+        raise b.BackupError('Standby operation interrupted; inspect candidate/state before retry')
+    signal.signal(signal.SIGTERM, interrupted)
+    signal.signal(signal.SIGINT, interrupted)
     try:
         b.require(sys.platform.startswith('linux'), 'Production entry point requires Linux')
         c = load_config(args.config)
         with b.operation_lock(c['state_root']):
-            result = discover(c) if args.operation == 'discover' else prepare(c)
+            if args.operation == 'restore-data':
+                b.require(args.generation, 'Use an exact --generation identity')
+                import standby_database
+                result = standby_database.restore_data(c, args.generation)
+            else:
+                result = discover(c) if args.operation == 'discover' else prepare(c)
             print(json.dumps(result, indent=2))
         return 0
     except Exception as ex:

@@ -88,6 +88,11 @@ and named OrchidApp/importer/collector service/timer definitions.
 Required publication identity is OrchidApp.Web.dll SHA-256
 `be2812be9e85348de49a784afead57307b24e666e138e8e389baf69f5374f150`.
 The matching application binaries are not themselves present in the backup.
+An owner-run check on Pi 1 subsequently confirmed its deployed DLL still matches
+this exact hash. Pi 1 lists Microsoft.AspNetCore.App 8.0.23 and
+Microsoft.NETCore.App 8.0.23 in `/home/raymond-23/.dotnet/shared`. This establishes
+source availability/runtime identity, not application installation or successful
+startup on Pi 2. Runtime servicing and ARM64 native dependencies still need review.
 
 Two existing Block 1 modules were transferred from the PC, checksum-checked and
 installed root-owned mode 644 in `/usr/local/lib/orchidapp-standby`:

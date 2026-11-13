@@ -9,6 +9,17 @@ rclone crypt/local-storage test are added to Linux CI. No SQL import, applicatio
 acceptance/promotion, full restore email, cleanup or schedule is implemented by
 this phase. Its PREPARED_RESTORE_PENDING result must not be called restored.
 
+Candidate database-restore source is now being added separately in
+`standby_database.py`: new non-root-user-owned 11.8 instance, exact private socket/
+datadir/server-ID verification before SQL, source account exclusion, durable
+partial-import failure state and stopped-server DATA_RESTORED_APPLICATION_PENDING
+output. Ten local adapter tests pass; the real 10.11.14-to-11.8 Linux fixture and
+CI job are added but not yet observed passing. Nothing in this stage is deployed
+to Pi 2; application/definer/grant checks, acceptance/promotion and reporting remain
+pending. Pi 1's current DLL was confirmed to match the archive fingerprint, with
+both .NET and ASP.NET runtimes 8.0.23. Target runtime/application installation still
+needs review and installed testing.
+
 Owner reports a clean Debian 13/ARM64 Pi 2 (`pihole2`, 192.168.7.50), Pi-hole
 operational, Python 3.13.5, PowerShell 7.6.6 retained, 45 GB free and MariaDB
 11.8.6 active/enabled with only system databases. .NET is absent. MariaDB events

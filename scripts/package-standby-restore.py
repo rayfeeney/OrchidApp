@@ -1,4 +1,4 @@
-"""Package reviewed Block 2 phase 1 source/examples/tests only; never live data."""
+"""Package Block 2 candidate source/examples/tests only; never live data."""
 import hashlib
 import io
 import json
@@ -11,19 +11,22 @@ files = [
     'infrastructure/backups/orchid_backup.py',
     'infrastructure/backups/nightly_backup.py',
     'infrastructure/backups/standby_restore.py',
+    'infrastructure/backups/standby_database.py',
     'infrastructure/backups/standby.example.json',
     'tests/LinuxBackup.Checks/standby_checks.py',
+    'tests/LinuxBackup.Checks/standby_database_checks.py',
+    'tests/LinuxBackup.Checks/standby_native_linux.py',
     'docs/user-guides/linux/nightly-standby-restore.md',
     'docs/maintenance/pi2-standby-preparation.md',
 ]
 out = repo.parent / 'standby-delivery'
 out.mkdir(exist_ok=True)
-archive = out / 'orchidapp-block2-prepare.tar.gz'
+archive = out / 'orchidapp-block2-candidate.tar.gz'
 payload = {name: (repo / name).read_bytes().replace(b'\r\n', b'\n') for name in files}
 payload['SHA256SUMS'] = ''.join(hashlib.sha256(data).hexdigest() + '  ' + name + '\n'
                               for name, data in payload.items()).encode()
 payload['SOURCE.json'] = json.dumps({'base_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=repo).decode().strip(),
-                                   'stage': 'Block 2 phase 1 only: preparation is not database restore or application acceptance'}, indent=2).encode()
+                                   'stage': 'Block 2 candidate: prepare/restore-data only; application acceptance/promotion/reporting unavailable'}, indent=2).encode()
 with tarfile.open(archive, 'w:gz') as tar:
     for name, data in payload.items():
         info = tarfile.TarInfo(name)
