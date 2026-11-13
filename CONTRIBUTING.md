@@ -39,6 +39,12 @@ Move superseded/inapplicable docs to docs/history/, preserve their context and u
 
 ## Validate locally
 
+Multi-database Block 1 backup policy checks run with `python tests/LinuxBackup.Checks/nightly_checks.py`.
+The optional Windows-native `nightly_native_windows.py` creates its own network-disabled,
+pipe-only MariaDB fixture and retains its files under ignored feature-check artifacts;
+it accepts no live endpoint. Read the [operating contract and evidence](docs/user-guides/linux/nightly-multi-database-backup.md).
+Neither these checks nor successful backup certify Block 2 or full application recovery.
+
 Operational historical adoption safety/interruption checks run with `python tests/HistoricalUpgrade.Checks/live_adoption_checks.py`. The separate guarded Linux/MariaDB core check uses `python tests/HistoricalUpgrade.Checks/preflight.py --specimen <verified-review-asset> --adopt-and-migrate --operational-adoption-checks` and is wired into the manual historical workflow. It owns a new disposable server, never an installed collection. Real systemd and recovery approval are separate; see [candidate scope](docs/maintenance/pi130-operational-adoption.md). The operational CLI is not a test runner and must not be exercised against Pi 1 during development.
 
 Historical Linux pure checks run with `python tests/HistoricalUpgrade.Checks/checks.py`; package policy checks run with `pwsh ./tests/HistoricalUpgrade.Checks/Packaging.Checks.ps1`. Database commands retain original read-only and exact reviewed adoption modes. Explicit application mode additionally builds/runs real ARM64 packages, exercises plant actions and app-only updates, and invokes actual paired backup/restore after broken-app and failed-DDL injections. These fixture commands are confined to new owned network-none restores and accept no live endpoint. The separate operational adoption candidate above has its own approval and recovery gates. Use the [commands and prerequisites](tests/HistoricalUpgrade.Checks/README.md) and [actual evidence/limits](docs/maintenance/historical-linux-application-recovery.md). The fixture release is already published. Full hosted acceptance 40777537302 passed on the identical merged source tree; normal post-merge CI 40780100240 also passed. See [current status and remaining acceptance](docs/current-state.md). Future code changes still need their own relevant CI results.

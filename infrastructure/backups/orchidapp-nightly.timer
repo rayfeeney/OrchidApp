@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily Pi 1 backup at 02:00 local time
+
+[Timer]
+OnCalendar=*-*-* 02:00:00
+Persistent=true
+Unit=orchidapp-nightly.service
+
+[Install]
+WantedBy=timers.target

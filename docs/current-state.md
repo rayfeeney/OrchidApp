@@ -1,5 +1,42 @@
 # Current state and fixed v1.4.0 work list
 
+## Pi 1 multi-database nightly backup installed — 13 November 2026
+
+Owner-run first capture passed: both selected databases and photographs, 9.1 seconds
+capture/restart, 438.7 seconds total, 474,190,903-byte archive, minimum sampled free
+space 4,396,077,056 bytes, active services/timers and readiness 200. GMX-to-Gmail
+receipt confirmed; recipient changed to bloodandsand44@gmail.com. The subsequent
+run was blocked at private-file validation after the imported atomic JSON helper
+replaced config under a normal umask. Candidate fix explicitly creates temporary
+JSON mode 600; new regression covers creation/replacement under umask 022.
+Pi permissions were repaired and the patched helper deployed after SHA-256 verification.
+The second capture passed with one matching local archive/completion record, about
+5.1 GB free and a received Gmail success report. Controlled low-space failure and
+isolated overdue-state tests both produced the expected failure/overdue emails.
+The root-owned rclone copy is `/etc/orchidapp/nightly-rclone.conf`; the user's old
+configuration is unchanged. Mail to the original Microsoft address was not received;
+GMX self-delivery and delivery to `bloodandsand44@gmail.com` were confirmed.
+
+Both systemd timers are enabled: backup at 02:00 Europe/London (first due
+14 November), freshness/email retry every 15 minutes. The monitor's first installed
+run returned `Result=success`, `ExecMainStatus=0`; timer's next check was listed.
+Systemd validation passed; clock synchronised. Logrotate uses `daily` and `maxsize 1M`.
+The old user cron entry was commented after saving the complete crontab to
+`/home/raymond-23/orchid-crontab-before-nightly-20261113-172127.txt`.
+The original script and historical recovery material remain protected.
+
+The opt-in Block 1 implementation in `infrastructure/backups/nightly_backup.py` captures
+selected databases together, restarts writers before cloud transfer, verifies crypt
+upload/read-back/completion record, retains scoped history and reports through a
+private SMTP outbox and independent freshness monitor. See the [operating contract](user-guides/linux/nightly-multi-database-backup.md).
+Old repository backup/restore commands are unchanged. Block 2 is unimplemented and
+the new format cannot be restored with the old CLI. Owner-run installed observations
+above are distinct from the 21 local synthetic checks, 20 pre-fix synthetic checks
+run on Pi 1, and owned Windows native MariaDB SQL round trip. The first overnight
+scheduled backup/received success report, exact live-set restore/application
+acceptance, reboot acceptance and Pi 2 reporting remain pending. Work-list items
+9/10 stay open. See the [installed evidence record](maintenance/pi1-nightly-backup-block1.md).
+
 ## Photo row deactivation — 12 November 2026
 
 Photo removal now deactivates the row and clears its hero flag, retaining both files. No DELETE grant or migration is needed. Local .NET 8 locked restore/build passed (zero build warnings/errors), as did storage retention checks. On a new disposable Linux MariaDB 10.11.14 server, the upgraded fixture passed 28 photo HTTP checks plus all 74 existing lifecycle/date/validation/structural/history checks. The schema-only fixture passed 29 photo checks but initially failed one newly added test's trigger syntax; the corrected hero-replacement rollback test, restricted SELECT/INSERT/UPDATE/EXECUTE-account test (no DELETE), and nonhero/repeat test then passed on both fixtures (six targeted checks). The full runner was not green as one invocation; its setup failure and targeted correction are retained in local ignored logs. Current documentation links and diff whitespace checks passed. Hosted CI, installed Pi/Windows acceptance and shared Word-guide screenshot updates remain pending; deployment has not been performed.
@@ -54,7 +91,7 @@ The candidate checks the actual loopback endpoint and verifies its database dire
 7. **Rehearse the restored Pi upgrade to v1.4.0.** Build the actual release package from the agreed baseline; record commit/checksum, resolve compatibility, verify functionality and data/photo preservation, and retain the proven procedure/results.
 8. **Upgrade the live Pi.** Take a fresh recovery backup, follow the proven procedure and verify the result.
 9. **Implement daily cloud-backup restoration to the second Pi.** Matching data/photos/configuration and compatible software; readiness/photo/disposable add-save-reopen checks; retain the last working recovery state on failure. Standby test writes must never reach live data or cloud backups. Verify that historical database backups cannot be paired silently with incompatible or missing photographs. Recovery must preserve the last known working state and report incomplete or inconsistent backup pairs.
-10. **Monitor freshness and send failure alerts through GMX.** Confirm new scheduled backup/upload and restoration of that exact backup. Agree recipient and maximum age; report failed/overdue stages and last successful recovery point; test sending. Outgoing GMX configuration remains to be validated. Decide whether independent monitoring is needed when both Pis are offline.
+10. **Monitor freshness and send failure alerts through GMX.** Block 1 installed 13 November: GMX delivery to `bloodandsand44@gmail.com` confirmed for success, failure and overdue tests; maximum backup recovery-point age 30 hours, monitor every 15 minutes. Independent power-cut monitoring is outside agreed scope. First overnight scheduled backup/report and Block 2 restore/freshness/reporting remain pending; confirm restoration of the exact new snapshot before closing this item.
 11. **Complete operational acceptance.** Reboot/autostart, service/file permissions, usual browsers/devices and photo upload; Home Screen/installed web-app behavior where used; monitoring feeds/charts and scheduled backups during takeover. Include representative plant lifecycle and history operations, transaction-failure and concurrency checks where appropriate, and photo metadata, orientation and consistency checks. Use existing automated evidence where sufficient; reserve installed-system testing for behaviour that requires it.
 12. **Document and rehearse takeover.** Isolate the former live Pi, switch access, enable required jobs and ensure only one Pi is live. Repair the former live Pi and establish it as the new warm standby; no automatic switch-back.
 13. **Establish the v1.4.0 Windows baseline.** Complete. Clean installation and independent offline restore passed, including the restart check. The sanitised Windows v1.4.0 specimen was established for future upgrade and recovery testing. Launcher backup/restore defects remain open. WIN-PHOTO-02 has a development candidate with Windows native checks; hosted Linux, installed Windows/Pi, and real phone acceptance remain pending. See [mobile photo evidence](maintenance/win-photo-02.md). Earlier Windows upgrade paths remain outside scope.

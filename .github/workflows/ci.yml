@@ -135,6 +135,8 @@ jobs:
           bash -n infrastructure/backups/restore_orchids.sh
           bash infrastructure/backups/backup_orchids.sh --help
           bash infrastructure/backups/restore_orchids.sh --help
+      - name: Check multi-database backup and email policy
+        run: python3 tests/LinuxBackup.Checks/nightly_checks.py
       - name: Check paired snapshots and isolated recovery
         shell: pwsh
         env:

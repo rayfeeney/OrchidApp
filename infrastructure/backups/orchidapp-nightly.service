@@ -1,0 +1,13 @@
+[Unit]
+Description=Verified multi-database backup to encrypted OneDrive
+Wants=network-online.target
+After=network-online.target mariadb.service
+
+[Service]
+Type=oneshot
+User=root
+UMask=0077
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/usr/bin/python3 /usr/local/lib/orchidapp-backup/nightly_backup.py backup --config /etc/orchidapp/nightly.json
+TimeoutStartSec=2h
+TimeoutStopSec=180
