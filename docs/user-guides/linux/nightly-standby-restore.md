@@ -97,8 +97,12 @@ rule now uses only the owner-reviewed 15-column Enphase contract when this exact
 view has missing columns; it still refuses missing columns on other views. After
 ALTER, all 15 names/order must match and the stored SELECT/attributes must remain
 unchanged. The native regression uses a derived aggregate/join view with timezone
-conversion, rather than six flat witness views, and first proves the missing-column
-condition. No generic column inference or SELECT parsing is introduced.
+conversion, rather than six flat witness views. The Ubuntu 11.8.6 fixture returns
+columns naturally, so the test injects only the first missing Enphase metadata
+response. ALTER, subsequent column reads, stored-query comparison and SELECTs use
+the real MariaDB candidate. This verifies handling of the observed condition, not
+a naturally reproduced vendor bug; actual Pi 2 execution remains pending. No
+generic column inference or SELECT parsing is introduced.
 
 The explicit EnergyMonitoring rehearsal also checks UTC-to-Europe/London conversion
 in winter and summer. If missing/incorrect, it generates the two required zone

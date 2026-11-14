@@ -159,6 +159,14 @@ EnergyMonitoring source/schema remains owned by its separate repository; this
 repository owns the shared backup/restore coordinator and disposable compatibility
 fixtures only. A permanent source view change belongs in EnergyMonitoring's repo.
 
+The closer fixture at 1ea2bfb also returned columns on Ubuntu 11.8.6. The test now
+explicitly fault-injects only the first Enphase column-metadata response as empty;
+all ALTER/remaining metadata/post-query checks and timezone imports remain real
+MariaDB operations. It first verifies the real fixture has the expected 15 columns
+and asserts the injected branch was exercised. This is boundary fault coverage,
+not proof of natural reproduction of Pi 2's missing metadata. Actual target
+acceptance remains pending; no failing CI package has been delivered.
+
 Owner verified all package hashes and passed 23 staging, 10 data, 8 publication
 and 7 application-policy checks on Pi 2. Installed helpers root-owned and created
 the private application root. First invocation refused the user-owned mode-600

@@ -58,7 +58,8 @@ Application policy also tests explicit six-view definer mapping and preservation
 failed-attempt reports on token-authorized fresh-clone retry. The native fixture
 includes missing remote definers, locked local view ownership and SELECT-only grants.
 Its Enphase fixture now includes a derived aggregation/join and named timezone
-conversion, verifies missing columns before mapping, the exact recovered column
+conversion, fault-injects the target's first missing column-metadata response,
+then verifies with real SQL the exact recovered column
 contract, and UTC/London winter/summer behavior after candidate restart. Policy
 tests also exercise the narrow column fallback and candidate-only timezone setup.
 The optional Windows-native `nightly_native_windows.py` creates its own network-disabled,

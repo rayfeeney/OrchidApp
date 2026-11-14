@@ -188,8 +188,19 @@ def main():
                 raise AssertionError('Unapproved remote definer was accepted')
             policy_config = dict(configured, view_definer_policy=f.POLICY)
             report = {}
-            assert f.columns(configured, good['candidate'], 'vw_EnphaseHourly') == []
-            probe_password = a.provision(policy_config, good['candidate'], process, report)
+            real_columns = f.columns
+            assert real_columns(configured, good['candidate'], 'vw_EnphaseHourly') == list(f.ENPHASE_COLUMNS)
+            missing_metadata_reads = []
+            def metadata_gap(config, native, name):
+                # Ubuntu 11.8.6 returns columns for this synthetic view. Inject
+                # only the observed Pi 2 metadata gap, not SQL or post-checks.
+                if name == 'vw_EnphaseHourly' and not missing_metadata_reads:
+                    missing_metadata_reads.append(name)
+                    return []
+                return real_columns(config, native, name)
+            with patch.object(f, 'columns', side_effect=metadata_gap):
+                probe_password = a.provision(policy_config, good['candidate'], process, report)
+            assert missing_metadata_reads == ['vw_EnphaseHourly']
             assert report['timezones']['winter_summer_checks']
             assert report['view_definer_mapping']['definition_and_attributes_preserved']
             assert d.query(configured, good['candidate'], "SELECT JSON_UNQUOTE(JSON_EXTRACT(Priv,'$.account_locked')) FROM mysql.global_priv "
