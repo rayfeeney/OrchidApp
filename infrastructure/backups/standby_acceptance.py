@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 import secrets
+import signal
 import sys
 import uuid
 
@@ -161,6 +162,10 @@ def main():
     parser.add_argument('--application-root', required=True)
     args = parser.parse_args()
     os.umask(0o077)
+    def interrupted(*_):
+        raise b.BackupError('Acceptance interrupted; prior accepted pointer retained unless commit completed')
+    signal.signal(signal.SIGTERM, interrupted)
+    signal.signal(signal.SIGINT, interrupted)
     try:
         b.require(sys.platform.startswith('linux') and os.geteuid() == 0, 'Run acceptance as root on Pi 2')
         c = s.load_config(args.config)
