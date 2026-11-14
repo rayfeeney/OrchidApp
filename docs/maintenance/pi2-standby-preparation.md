@@ -197,6 +197,13 @@ use utf8mb4, with a real negative/positive collation regression. This is not yet
 deployed on Pi 2; the latest failed candidate remains available for read-only
 verification before another fresh-clone application rehearsal.
 
+Hosted 0d3decf failed its new negative-test assumption: the direct SELECT did not
+produce the stored-view collation failure. The negative fixture now creates a
+general_ci stored view and reads it under changed UCA defaults, then requires the
+same stored view and direct expression to work under the corrected defaults.
+This distinguishes saved view literal context from freshly parsed SQL. Runtime
+startup correction is unchanged; no new Pi package has been delivered.
+
 Owner verified all package hashes and passed 23 staging, 10 data, 8 publication
 and 7 application-policy checks on Pi 2. Installed helpers root-owned and created
 the private application root. First invocation refused the user-owned mode-600

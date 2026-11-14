@@ -183,12 +183,19 @@ def main():
             assert d.query(configured, good['candidate'], 'SELECT @@event_scheduler;') == ['OFF']
             # Numeric GROUP_CONCAT + a legacy string literal is the actual
             # source/11.8 default-collation conflict observed on the target.
-            aggregate = "SELECT SUBSTRING_INDEX(GROUP_CONCAT(BatterySocPct ORDER BY IntervalEndUtc DESC SEPARATOR ','),',',1) FROM EnergyMonitoring.EnphaseInterval;"
+            expression = "SUBSTRING_INDEX(GROUP_CONCAT(BatterySocPct ORDER BY IntervalEndUtc DESC SEPARATOR ','),',',1)"
+            aggregate = 'SELECT ' + expression + ' FROM EnergyMonitoring.EnphaseInterval;'
+            # The view stores its general_ci literal context; runtime aggregate
+            # conversion uses the later server defaults. A freshly parsed SELECT
+            # is not equivalent to this stored-view context.
+            d.query(configured, good['candidate'], 'SET NAMES utf8mb4 COLLATE utf8mb4_general_ci; '
+                    'CREATE VIEW EnergyMonitoring.collation_regression AS SELECT ' + expression
+                    + ' AS battery FROM EnergyMonitoring.EnphaseInterval;')
             d.query(configured, good['candidate'], "SET GLOBAL collation_server='utf8mb4_uca1400_ai_ci'; "
                     "SET GLOBAL character_set_collations='utf8mb4=utf8mb4_uca1400_ai_ci';")
             try:
                 mixed = subprocess.run(d.client(configured, good['candidate']),
-                                       input=("SET NAMES utf8mb4 COLLATE utf8mb4_general_ci;" + aggregate).encode(),
+                                       input=b'SELECT battery FROM EnergyMonitoring.collation_regression;',
                                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30)
                 assert mixed.returncode != 0 and b'Illegal mix of collations' in mixed.stderr
             finally:
@@ -196,6 +203,8 @@ def main():
                         "SET GLOBAL character_set_collations='utf8mb4=utf8mb4_general_ci';")
             d.check_character_settings(configured, good['candidate'])
             assert d.query(configured, good['candidate'], aggregate) == ['75.00']
+            assert d.query(configured, good['candidate'], 'SELECT battery FROM EnergyMonitoring.collation_regression;') == ['75.00']
+            d.query(configured, good['candidate'], 'DROP VIEW EnergyMonitoring.collation_regression;')
             # Prove target-only grants on the owned fixture, not a source account.
             try:
                 a.provision(configured, good['candidate'], process)
