@@ -179,6 +179,12 @@ rejects world/group-writable files and ancestors. A policy regression verifies
 mode 777 is refused before compiler/import. This changes no Pi permissions and
 does not claim that Pi 2 has the same image problem.
 
+The recorded ancestor modes on 9e0ceb6 were also 777 for `/usr/share`,
+`/usr/share/zoneinfo`, its Etc directory and its Europe directory; `/usr` and `/`
+were already 755. CI now sets only those four observed directories to 755 before
+the two files are set to 644. It performs no recursive chmod and no Pi change.
+Runtime ancestor validation remains unchanged.
+
 Owner verified all package hashes and passed 23 staging, 10 data, 8 publication
 and 7 application-policy checks on Pi 2. Installed helpers root-owned and created
 the private application root. First invocation refused the user-owned mode-600

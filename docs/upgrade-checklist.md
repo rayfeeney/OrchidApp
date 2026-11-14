@@ -3,7 +3,8 @@
 ## Pi 2 Block 2 — preparation complete, implementation pending
 
 - CI-only: the native hosted runner's two required timezone files are normalised
-  to root-owned mode 644 for the fixture. Runtime ownership/write protections are
+  to root-owned mode 644 and their four observed writable ancestor directories to
+  755 for the fixture. Runtime ownership/write protections are
   unchanged; there is no corresponding automatic Pi filesystem permission change.
 
 - [ ] Validate/deploy Enphase derived-view column correction and candidate-only
