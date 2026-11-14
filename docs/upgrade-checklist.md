@@ -1,5 +1,61 @@
 # Upgrade action checklist: C01–C20
 
+## Pi 2 Block 2 — preparation complete, implementation pending
+
+- [ ] Deploy verified isolated-server utf8mb4/general_ci/default-map startup fix;
+  check the latest retained Enphase view read-only before another fresh clone.
+  System MariaDB, source tables/queries and EnergyMonitoring repository are unchanged.
+  The --no-defaults candidate must verify all three character defaults before SQL.
+
+- CI-only: the native hosted runner's two required timezone files are normalised
+  to root-owned mode 644 and their four observed writable ancestor directories to
+  755 for the fixture. Runtime ownership/write protections are
+  unchanged; there is no corresponding automatic Pi filesystem permission change.
+
+- [ ] Validate/deploy Enphase derived-view column correction and candidate-only
+  named timezone setup. Require the original 15 columns/query attributes and valid
+  UTC/London winter/summer results after candidate restart. Tool `mariadb-tzinfo-to-sql`
+  and root-owned OS zoneinfo are required. System MariaDB, Pi 1 and Windows are
+  unaffected; retain both previous failures and use a new explicit retry token.
+
+- [x] Owner installed rehearsal package and passed 48 target checks; actual attempt
+  stopped before app launch on six absent EnergyMonitoring view definers. Original
+  restore retained. Root-owned private publication path is now required in commands.
+- [ ] Validate/deploy opt-in energy-six-v1 locked SELECT-only definer mapping and
+  exact-token fresh-clone retry. Retain failed reports/workspaces/databases and
+  verify all six view definitions/attributes remain unchanged. No source migration,
+  source account import, Pi 1 change or Windows deployment action is required.
+
+- [x] Native cross-version fixture and all eight hosted jobs passed on `14faccb`.
+  Owner-run packaged 23+10 tests, private non-login account/storage, discovery,
+  preparation and actual data restore passed on Pi 2 (25 orchids/10 EnergyMonitoring
+  base tables on 11.8.6). Source settings/writers stayed inactive; see [evidence](maintenance/pi2-standby-preparation.md).
+  DATA_RESTORED_APPLICATION_PENDING is not application or standby acceptance.
+- [x] Matching publication capture, private transfer and target verification passed.
+  Owner installed private .NET/ASP.NET 8.0.34 and libvips; Pi-hole/MariaDB active.
+  .NET 8 is now out of support; this is compatibility rehearsal, not vendor support.
+- [ ] Review/test/package `standby_application.py`, then run the disposable
+  application clone with a candidate-user-owned separate application root.
+  Validate readiness/home/all photo bytes/restart; preserve private failure evidence.
+  This does not accept a standby. CRUD, promotion, retention and restore reporting
+  remain pending. No Windows or Pi 1 runtime action is required.
+
+- [x] Review phase 1 source/package and CI, then deploy only to a separate private
+  staging root. `prepare` does not import SQL, accept a standby or send restore
+  success. Full application/acceptance/reporting implementation remains pending.
+
+- [x] Owner-run clean baseline, single intended MariaDB service, rclone 1.73.0
+  package checksum, private crypt config/listing, exact archive hash and full
+  payload/photo inventory validation recorded in [Pi 2 evidence](maintenance/pi2-standby-preparation.md).
+- [ ] Complete [repeatable Block 2](user-guides/linux/nightly-standby-restore.md)
+  before settings activation. Actual isolated 10.11-to-11.8 logical import passed;
+  validate exact app/runtime compatibility, target-only accounts/definers/settings,
+  pristine acceptance and preservation of previous working generations.
+- [ ] Verify reporting, overdue checks, interruption/reboot recovery, permissions,
+  Pi-hole health, disk headroom and first scheduled refresh. No Pi 2 schedule is
+  enabled yet; Windows and Pi 1 are unaffected. Do not replay migrations or apply
+  accounts.sql automatically. Preserve working source and earlier recovery inputs.
+
 ## Pi 1 multi-database backup — installed, scheduled acceptance pending
 
 Source CI only: native-client database jobs now pin Ubuntu 24.04 and assert MariaDB

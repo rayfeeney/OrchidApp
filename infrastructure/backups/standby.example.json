@@ -1,0 +1,21 @@
+{
+  "collection_id": "55b442ba-1ee1-455b-96ba-dcf978e43683",
+  "databases": ["orchids", "EnergyMonitoring"],
+  "photo_database": "orchids",
+  "uploads_source": "orchid-uploads",
+  "state_root": "/var/lib/orchidapp-standby",
+  "database_root": "/var/lib/orchidapp-standby-db",
+  "server_user": "orchidstandby",
+  "required_server_series": "11.8",
+  "rclone_config": "/etc/orchidapp-standby/rclone.conf",
+  "remote": "orchidcrypt:nightly-sets",
+  "timeout_seconds": 1800,
+  "reserve_bytes": 1073741824,
+  "max_archive_bytes": 5368709120,
+  "max_unpack_bytes": 21474836480,
+  "max_record_bytes": 65536,
+  "max_listing_bytes": 1048576,
+  "max_ready_records": 1000,
+  "max_age_hours": 30,
+  "max_generations": 3
+}

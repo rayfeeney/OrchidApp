@@ -1,5 +1,7 @@
 # OrchidApp documentation
 
+- [Pi 2 standby restore — Block 2 implementation contract](user-guides/linux/nightly-standby-restore.md), with [preparation and validated-input evidence](maintenance/pi2-standby-preparation.md)
+
 - [Pi 1 multi-database OneDrive backup and email — Block 1](user-guides/linux/nightly-multi-database-backup.md), with [installed evidence and pending acceptance](maintenance/pi1-nightly-backup-block1.md)
 
 Use current guides below. For each procedure, check its stated implementation limits before acting. The C01–C20 code changes are complete. Remaining release and operational acceptance is tracked in the [current work list](current-state.md); implementation evidence is preserved in the [completed backlog](history/code-change-backlog.md).

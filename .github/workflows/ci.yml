@@ -144,6 +144,14 @@ jobs:
           bash infrastructure/backups/restore_orchids.sh --help
       - name: Check multi-database backup and email policy
         run: python3 tests/LinuxBackup.Checks/nightly_checks.py
+      - name: Check standby discovery, crypt download and private staging
+        run: python3 tests/LinuxBackup.Checks/standby_checks.py
+      - name: Check guarded candidate database policy
+        run: python3 tests/LinuxBackup.Checks/standby_database_checks.py
+      - name: Check matching publication capture and validation
+        run: python3 tests/LinuxBackup.Checks/standby_publication_checks.py
+      - name: Check application rehearsal isolation and owned loopback HTTP
+        run: python3 tests/LinuxBackup.Checks/standby_application_checks.py
       - name: Check paired snapshots and isolated recovery
         shell: pwsh
         env:
@@ -152,6 +160,27 @@ jobs:
           MARIADB_USER: root
           MARIADB_PASSWORD: root
         run: ./tests/LinuxBackup.Checks/Database.Checks.ps1
+
+  standby-native:
+    name: Isolated MariaDB 10.11 to 11.8 standby data restore
+    # Resolute supplies the target 11.8 tools; old native-client jobs remain Noble.
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install candidate database tools
+        run: |
+          sudo apt-get update
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y mariadb-server mariadb-client
+          mariadb --version | grep -E '11[.]8[.]'
+          mariadbd --version | grep -E '11[.]8[.]'
+      - name: Protect required timezone files on disposable hosted runner
+        run: |
+          # Hosted image supplied mode 777 for UTC; never relax runtime checks.
+          sudo chmod 0755 /usr/share /usr/share/zoneinfo /usr/share/zoneinfo/Etc /usr/share/zoneinfo/Europe
+          sudo chmod 0644 /usr/share/zoneinfo/Etc/UTC /usr/share/zoneinfo/Europe/London
+          stat -c '%a %u %n' /usr/share/zoneinfo/Etc/UTC /usr/share/zoneinfo/Europe/London /usr/share/zoneinfo/Etc /usr/share/zoneinfo/Europe /usr/share/zoneinfo /usr/share /usr /
+      - name: Check real cross-version candidate restore and partial DDL recovery
+        run: python3 tests/LinuxBackup.Checks/standby_native_linux.py
 
   build:
     name: Build (linux-arm64)

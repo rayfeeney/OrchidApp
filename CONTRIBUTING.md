@@ -40,6 +40,28 @@ Move superseded/inapplicable docs to docs/history/, preserve their context and u
 ## Validate locally
 
 Multi-database Block 1 backup policy checks run with `python tests/LinuxBackup.Checks/nightly_checks.py`.
+Block 2 phase 1 checks run with `python tests/LinuxBackup.Checks/standby_checks.py`;
+they include an actual local crypt backend when rclone is installed, but never a
+live cloud or database. PREPARED_RESTORE_PENDING is staging, not restore acceptance.
+Candidate data-stage policy runs with `python tests/LinuxBackup.Checks/standby_database_checks.py`.
+The separate `standby_native_linux.py` needs a disposable non-root Linux runner,
+Docker and MariaDB 11.8 tools; it creates its own network-none 10.11.14 source and
+accepts no live endpoint. Data-stage success is still application acceptance pending.
+Matching-publication checks run with `python tests/LinuxBackup.Checks/standby_publication_checks.py`;
+all DLL/settings fixtures are synthetic and no application is executed.
+Application rehearsal policy runs with `python tests/LinuxBackup.Checks/standby_application_checks.py`;
+Linux also launches its own synthetic loopback HTTP fixture and checks process
+ownership and response bounds. It never launches the real application or uses a
+live database. The native cross-version fixture checks target-only grants/definers;
+real ARM64 application and CRUD acceptance remain separate Pi 2 checks.
+Application policy also tests explicit six-view definer mapping and preservation of
+failed-attempt reports on token-authorized fresh-clone retry. The native fixture
+includes missing remote definers, locked local view ownership and SELECT-only grants.
+Its Enphase fixture now includes a derived aggregation/join and named timezone
+conversion, fault-injects the target's first missing column-metadata response,
+then verifies with real SQL the exact recovered column
+contract, and UTC/London winter/summer behavior after candidate restart. Policy
+tests also exercise the narrow column fallback and candidate-only timezone setup.
 The optional Windows-native `nightly_native_windows.py` creates its own network-disabled,
 pipe-only MariaDB fixture and retains its files under ignored feature-check artifacts;
 it accepts no live endpoint. Read the [operating contract and evidence](docs/user-guides/linux/nightly-multi-database-backup.md).
