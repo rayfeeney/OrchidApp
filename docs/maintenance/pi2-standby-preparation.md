@@ -167,6 +167,11 @@ and asserts the injected branch was exercised. This is boundary fault coverage,
 not proof of natural reproduction of Pi 2's missing metadata. Actual target
 acceptance remains pending; no failing CI package has been delivered.
 
+Latest native run reaches timezone setup but rejects an unprotected zonefile/path
+on the hosted runner. The protection remains enforced; errors now identify the
+exact public path, numeric owner and mode so the environment mismatch can be
+diagnosed. No source credentials or SQL are included in that diagnostic.
+
 Owner verified all package hashes and passed 23 staging, 10 data, 8 publication
 and 7 application-policy checks on Pi 2. Installed helpers root-owned and created
 the private application root. First invocation refused the user-owned mode-600

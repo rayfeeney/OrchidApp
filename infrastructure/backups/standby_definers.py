@@ -49,7 +49,10 @@ def timezones(c, native, process):
         b.require(path.is_file(), 'Required target timezone data missing: ' + name)
         for part in (path.resolve(), *path.resolve().parents):
             info = part.stat()
-            b.require(info.st_uid == 0 and not info.st_mode & 0o022, 'Timezone data must be root owned and not writable by other users')
+            b.require(info.st_uid == 0 and not info.st_mode & 0o022,
+                      'Unprotected timezone path: ' + str(part) + '; uid=' + str(info.st_uid)
+                      + '; mode=' + format(info.st_mode & 0o777, '03o')
+                      + '; require root ownership and no group/world write')
         before = b.digest(path)
         sql = b.run(c, [tool, str(path), name])
         b.require(sql and len(sql) <= 1024**2 and b.digest(path) == before, 'Invalid/changed target timezone input')
