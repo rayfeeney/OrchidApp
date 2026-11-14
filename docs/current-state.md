@@ -9,6 +9,11 @@ post-ALTER column/query equality, with a derived aggregate/join native regressio
 The shown view also requires named timezone tables: candidate-only UTC/London setup
 and winter/summer checks are now source changes, not yet installed acceptance.
 No application process has yet passed readiness on Pi 2.
+Hosted d733f98 failed its new native precondition because a simplified derived
+fixture did not reproduce missing columns. A closer synthetic date-grouping,
+battery aggregate and tariff-date join fixture is required before delivery; the
+assertion is retained. EnergyMonitoring source changes belong to its separate
+repository; OrchidApp owns this shared restore tooling and disposable tests.
 
 Owner installed rehearsal revision 65d7b52 and passed all 48 target package checks.
 After correcting publication input ownership, the actual rehearsal failed safely

@@ -150,6 +150,15 @@ fallback/post-check, a realistic derived-view regression and candidate-only name
 timezone setup/winter-summer verification. None has been deployed on Pi 2 yet.
 Both failed clones and reports remain retained; application acceptance is pending.
 
+Hosted revision d733f98 rejected its own regression precondition: the simplified
+derived fixture still returned columns, so it did not reproduce the target failure.
+The fixture is being corrected to include synthetic Enphase/Tariff rows, date-hour
+grouping, last-battery aggregation and the named-zone tariff-date join. The
+missing-column assertion remains required. No failed CI package was handed over.
+EnergyMonitoring source/schema remains owned by its separate repository; this
+repository owns the shared backup/restore coordinator and disposable compatibility
+fixtures only. A permanent source view change belongs in EnergyMonitoring's repo.
+
 Owner verified all package hashes and passed 23 staging, 10 data, 8 publication
 and 7 application-policy checks on Pi 2. Installed helpers root-owned and created
 the private application root. First invocation refused the user-owned mode-600

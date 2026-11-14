@@ -82,16 +82,30 @@ def main():
                "INSERT INTO EnergyMonitoring.witness VALUES(1,'original energy');")
         source("CREATE USER 'root'@'192.168.7.153' IDENTIFIED BY 'synthetic-source-only'; "
                "GRANT SELECT ON EnergyMonitoring.* TO 'root'@'192.168.7.153';")
+        source("CREATE TABLE EnergyMonitoring.EnphaseInterval (IntervalEndUtc DATETIME, ProducedWh INT, "
+               "ConsumedWh INT, ImportedWh INT, ExportedWh INT, ChargedWh INT, DischargedWh INT, BatterySocPct DECIMAL(5,2)); "
+               "INSERT INTO EnergyMonitoring.EnphaseInterval VALUES('2026-07-15 12:15:00',100,80,20,40,10,5,75); "
+               "CREATE TABLE EnergyMonitoring.Tariff (TariffId INT, EffectiveFromDate DATE, EffectiveToDate DATE, "
+               "ImportRatePencePerKWh DECIMAL(8,3), ExportEffectiveFromDate DATE, ExportRatePencePerKWh DECIMAL(8,3)); "
+               "INSERT INTO EnergyMonitoring.Tariff VALUES(1,'2026-01-01',NULL,25,'2026-01-01',15);")
         for view in sorted(f.VIEWS):
             if view == 'vw_EnphaseHourly':
-                # Derived/aggregate view + absent definer reproduces the target's
-                # missing I_S column metadata, unlike six flat witness views.
-                expressions = ["CAST('2026-07-15 12:00:00' AS DATETIME)",
-                               "CONVERT_TZ('2026-07-15 12:00:00','UTC','Europe/London')"]
-                expressions += ['h.amount'] * (len(f.ENPHASE_COLUMNS) - 2)
-                select = ','.join(value + ' AS `' + name + '`' for name, value in zip(f.ENPHASE_COLUMNS, expressions))
-                body = 'SELECT ' + select + ' FROM (SELECT SUM(id) AS amount FROM EnergyMonitoring.witness GROUP BY value) h '
-                body += 'LEFT JOIN EnergyMonitoring.witness t ON t.id=h.amount'
+                # Synthetic rows, but the observed query structures matter: date
+                # grouping, battery aggregate and a named-zone tariff-date join.
+                hour = "CAST(DATE_FORMAT(IntervalEndUtc - INTERVAL 1 SECOND,'%Y-%m-%d %H:00:00') AS DATETIME)"
+                local = "CONVERT_TZ(h.IntervalStartUtc,'UTC','Europe/London')"
+                export = 't.ExportEffectiveFromDate IS NOT NULL AND CAST(' + local + ' AS DATE)>=t.ExportEffectiveFromDate'
+                body = 'SELECT h.IntervalStartUtc,' + local + ' AS IntervalStart,'
+                body += ','.join('h.' + name for name in f.ENPHASE_COLUMNS[2:10])
+                body += ',t.TariffId,t.ImportRatePencePerKWh,CAST(h.ImportedWh/1000.0*t.ImportRatePencePerKWh/100.0 AS DECIMAL(10,4)) AS ImportCostGBP,'
+                body += 'CASE WHEN ' + export + ' THEN t.ExportRatePencePerKWh ELSE NULL END AS ExportRatePencePerKWh,'
+                body += 'CASE WHEN ' + export + ' AND t.ExportRatePencePerKWh IS NOT NULL THEN '
+                body += 'CAST(h.ExportedWh/1000.0*t.ExportRatePencePerKWh/100.0 AS DECIMAL(10,4)) ELSE NULL END AS ExportIncomeGBP '
+                body += 'FROM (SELECT ' + hour + ' AS IntervalStartUtc,'
+                body += ','.join('SUM(' + name + ') AS ' + name for name in f.ENPHASE_COLUMNS[2:8])
+                body += ",CAST(SUBSTRING_INDEX(GROUP_CONCAT(BatterySocPct ORDER BY IntervalEndUtc DESC SEPARATOR ','),',',1) AS DECIMAL(5,2)) AS BatterySocPct,"
+                body += 'COUNT(*) AS IntervalCount FROM EnergyMonitoring.EnphaseInterval GROUP BY ' + hour + ') h '
+                body += 'LEFT JOIN EnergyMonitoring.Tariff t ON CAST(' + local + " AS DATE) BETWEEN t.EffectiveFromDate AND COALESCE(t.EffectiveToDate,'9999-12-31')"
             else:
                 body = 'SELECT value FROM EnergyMonitoring.witness'
             source("CREATE DEFINER='root'@'192.168.7.153' SQL SECURITY DEFINER VIEW EnergyMonitoring.`"
