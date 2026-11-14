@@ -1,11 +1,38 @@
 # Pi 2 Block 2 preparation and installed validation
 
-Status reconciled 14 November, 22:15 UTC: full manual and scheduled restore,
-failure preservation/email and live retention passed. The owner runs all Pi
-commands; the agent has not connected to a Pi. The new manual takeover/write
-rehearsal and its deployment remain pending; earlier pending labels below are
-historical and superseded by the installed evidence immediately below.
+Status reconciled 14 November, 23:41 UTC: manual/scheduled restore, failure
+preservation/email, live retention and the writable takeover rehearsal passed.
+Cleanup and resumed timers/services are confirmed. The owner ran all Pi commands;
+the agent did not connect to a Pi. Earlier pending labels below are historical
+and superseded by the final installed evidence immediately below.
 See the [Block 2 implementation contract](../user-guides/linux/nightly-standby-restore.md).
+
+## Final writable rehearsal and cleanup — complete
+
+Installed source ec6ebdb package SHA-256
+`6d7d8a05511190459ff89d1bb1e6bec4a70944942c395034af5ffaae6c8d06f6`
+passed all file checks and 11 takeover cases on Pi 2. First read-only rehearsal
+was correctly reported with both change flags false; owner clarified only
+existing records/media had been viewed. It was cleaned before the writable test.
+
+Owner then saved changed data and uploaded a new photo in a fresh disposable
+copy. Interactive finishing returned a generic error even with one Ctrl+C;
+the exact cause was not established and is not claimed fixed by inference.
+The already stopped clone was finished through the documented explicit command,
+preserving failed evidence and avoiding another import/browser repetition.
+Token `1935e56091b34c3fa34e06bee9cb499d` returned REHEARSAL_STOPPED at
+23:39:17.298749 UTC, both business_data_changed/upload_files_changed true,
+accepted_pointer_unchanged true, two application starts and 758 active media
+files verified after writes. This proves the owner-observed save/reopen/upload
+and target restart path; it is not a live primary cutover.
+
+Owner confirmed the bounded cleanup removed takeover-rehearsal and retained
+takeover-rehearsal-last.json. Refresh resumed at 23:40:06; both services later
+showed Result=success, ExecMainStatus=0 and inactive between runs. Both timers
+were enabled, next monitor 23:53 and next refresh 00:15; Pi-hole/MariaDB were
+active and root had 25 GB free (56%). No takeover marker or real writer was
+activated. Source/tests/runbook are in PR #387. All eight code CI jobs passed
+ec6ebdb in run 43653464759, including actual server session isolation.
 
 ## Full coordinator and scheduled acceptance — owner evidence
 

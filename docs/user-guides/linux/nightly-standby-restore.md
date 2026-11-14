@@ -1,6 +1,6 @@
 # Pi 2 nightly standby restore — Block 2
 
-Installed on pihole2, Debian 13 ARM64, MariaDB 11.8.6, Python 3.13.5, rclone 1.73.0 and private .NET/ASP.NET 8.0.34. Owner-run manual and scheduled restores, actual success/failure email and live two-set retention passed on 14 November 2026. Pi-hole and system MariaDB remained active; root had 25 GB free. The accepted application stays stopped between checks. Installed rehearsal of the new manual takeover helper remains pending; no production cutover is claimed.
+Installed on pihole2, Debian 13 ARM64, MariaDB 11.8.6, Python 3.13.5, rclone 1.73.0 and private .NET/ASP.NET 8.0.34. Owner-run manual and scheduled restores, actual success/failure email and live two-set retention passed on 14 November 2026. Writable manual takeover rehearsal also passed through the documented finish command: both change flags true, 758 media hashes, two app starts and accepted pointer unchanged. Cleanup/resumed timers passed. Pi-hole and system MariaDB stayed active; root had 25 GB free. The accepted app stays stopped between checks; no production cutover or collector migration is claimed.
 
 See [installed evidence](../../maintenance/pi2-standby-preparation.md), [manual takeover/rehearsal](pi2-manual-takeover.md), [Pi 1 backup](nightly-multi-database-backup.md) and [historical implementation details](../../history/pi2-standby-implementation-notes-2026-11-14.md). Earlier pending labels in the historical record are superseded by current evidence.
 

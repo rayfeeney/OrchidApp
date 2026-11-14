@@ -1,5 +1,13 @@
 # Pi 2 manual takeover and isolated rehearsal
 
+Installed writable rehearsal passed on 14 November 2026 via finish-rehearsal:
+saved data/new upload, two app starts, all 758 active media hashes and accepted
+pointer unchanged. Bounded cleanup/evidence retention and resumed timers passed.
+The interactive finishing stage encountered a generic error whose exact cause
+was not established; use the documented stopped-clone finishing procedure below
+if this occurs. This is verified recovery, not a claim that every interactive
+stop/restart completes in one command. No live primary cutover was performed.
+
 The nightly process accepts a stopped copy of both databases and OrchidApp media.
 It does not automatically take over Pi 1's role. This runbook provides private
 OrchidApp access using that restored database server; it does not install source

@@ -1,6 +1,6 @@
 # Upgrade action checklist: C01–C20
 
-## Pi 2 Block 2 — scheduled restore/retention passed; takeover rehearsal pending
+## Pi 2 Block 2 — installed acceptance complete
 
 - [x] Full coordinator and first scheduled new-set restore passed, with actual
   source/restore success emails. Latest accepted 19:53 snapshot and 19:31 previous
@@ -8,19 +8,27 @@
 - [x] Both timers enabled after unit/logrotate validation; NTP/Europe-London
   confirmed. Initial and later monitor/current/no-new checks passed; 25 GB free.
 - [x] All eight CI jobs passed installed revision 729babe, run 43631970740.
-- [ ] Install new standby_takeover.py and compatible application/job helpers;
+- [x] Install new standby_takeover.py and compatible application/job helpers;
   test private writable rehearsal with save/reopen, photo/thumbnail and restart.
   Confirm accepted pointer unchanged and remove only the completed rehearsal.
   Never invoke real activation while Pi 1 is still a writer.
-- [ ] Verify takeover guard and durable last-restore-success summary through new
-  tests/CI, record installed rehearsal evidence, then merge PR #387. No migration,
+- [x] Verify takeover guard and durable last-restore-success summary through new
+  tests/CI and record installed rehearsal evidence in PR #387. All eight jobs
+  passed deployed ec6ebdb, run 43653464759. No migration,
   Windows deployment or new timer is introduced. Active-takeover marker blocks
   restore until guarded unchanged release or reviewed preservation/reconciliation.
 - [x] Browser checks passed on the disposable clone; double Ctrl+C interrupted
   finishing. Owner confirmed owned processes stopped and both system services active.
-- [ ] Deploy separate child sessions/repeated-interrupt handling. Finish the
+- [x] Deploy separate child sessions/repeated-interrupt handling. Finish the
   stopped clone with exact interrupted token, verify restart/media/pointer, then
   clean only that completed rehearsal and resume refresh. No new import needed.
+- [x] Final writable clone, token 1935e56091b34c3fa34e06bee9cb499d, completed
+  through exact-token finish at 23:39:17: both change flags true, 758 media files,
+  two app starts and accepted pointer unchanged. Owner confirmed cleanup/evidence
+  retention; resumed refresh/monitor both success/status 0, both timers enabled,
+  Pi-hole/MariaDB active, 25 GB free. The generic interactive finishing error's
+  root cause remains unestablished; its documented recovery path is verified.
+  Real primary cutover/collector migration/failback are not claimed.
 
 ### Earlier implementation checklist — historical; current status above supersedes pending labels
 

@@ -1,6 +1,6 @@
 # Current state and fixed v1.4.0 work list
 
-## Pi 2 Block 2 — installed automation and retention passed
+## Pi 2 Block 2 — installed acceptance complete
 
 Owner-run evidence on 14 November 2026 confirms both selected databases, six
 EnergyMonitoring views, UTC/London handling, all five readiness checks and 756
@@ -21,19 +21,27 @@ Live retention now contains exactly that set and its 19:31 predecessor; the olde
 both services succeeded, Pi-hole/system MariaDB remained active, and root had
 25 GB available. The app/collectors remain stopped between validations.
 
-All eight GitHub jobs passed on installed commit 729babe (run 43631970740).
-Current source adds a guarded manual takeover helper/runbook and a retained
-last-restore-success.json so quiet polls do not erase the last full run's summary.
-The separate writable browser rehearsal is in progress: owner installed the
-additions and confirmed browser save/reopen/photo checks passed. Double Ctrl+C
-interrupted finishing, leaving REHEARSAL_FAILED; diagnostics confirmed owned
-app/database stopped and system Pi-hole/MariaDB active. New source isolates
-takeover children from terminal Ctrl+C and permits exact-token finishing on that
-stopped clone without reimport or browser repetition. Finish/cleanup is pending.
-Source/CI does not prove production cutover or collector migration.
-Once that rehearsal and updated CI pass, record the evidence and merge draft
-PR #387. No live failover or destructive switch-back is required for backup
-acceptance. See the [current operator guide](user-guides/linux/nightly-standby-restore.md),
+All eight GitHub jobs passed deployed code ec6ebdb (run 43653464759), including
+actual native server session isolation. Operator helpers and the retained
+last-restore-success.json are installed. The writable rehearsal completed via
+the documented exact-token finish command at 23:39:17 UTC: business data and
+uploads both changed, two starts passed, all 758 active media hashes passed and
+the accepted pointer remained unchanged. Browser save/reopen/photo checks were
+owner-confirmed. The earlier read-only rehearsal and interrupted finishing reports
+were retained as evidence, not relabelled as successful writes.
+
+Bounded cleanup removed the disposable rehearsal and retained its report.
+Refresh resumed at 23:40:06; both restore/monitor completed with success/status 0,
+both timers remained enabled with future triggers, Pi-hole/MariaDB stayed active,
+and root returned to 25 GB free. The interactive stop path had a generic finishing
+error; its exact cause was not established, but the documented stopped-clone
+finish path was installed and successfully tested without reimport or accepted
+data modification. This does not affect the validated background restore cycle.
+
+Block 2's installed backup/restore, retention, reporting, scheduling and manual
+rehearsal acceptance are complete. PR #387 holds source/tests/operator evidence;
+merge is gated on final-head CI. No real production cutover, collector migration
+or destructive switch-back was performed or required. See the [current operator guide](user-guides/linux/nightly-standby-restore.md),
 [takeover runbook](user-guides/linux/pi2-manual-takeover.md) and
 [installed evidence](maintenance/pi2-standby-preparation.md).
 
