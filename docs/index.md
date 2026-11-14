@@ -1,6 +1,7 @@
 # OrchidApp documentation
 
 - [Pi 2 standby restore — Block 2 implementation contract](user-guides/linux/nightly-standby-restore.md), with [preparation and validated-input evidence](maintenance/pi2-standby-preparation.md)
+- [Pi 2 manual takeover and isolated write rehearsal](user-guides/linux/pi2-manual-takeover.md)
 
 - [Pi 1 multi-database OneDrive backup and email — Block 1](user-guides/linux/nightly-multi-database-backup.md), with [installed evidence and pending acceptance](maintenance/pi1-nightly-backup-block1.md)
 

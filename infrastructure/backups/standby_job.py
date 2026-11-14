@@ -133,6 +133,8 @@ def notify(mail, operation, phase=None):
 
 
 def refresh(c, mail, fail_test=False):
+    b.require(not (c['state_root'] / 'active-takeover.json').exists(),
+              'Pi 2 takeover is active; automated restore is blocked to preserve new writes')
     run_path = c['state_root'] / 'restore-run.json'
     run = {'result': 'RUNNING', 'started_at': n.now(), 'phase': 'discover'}
     n.atomic_json(run_path, run)
@@ -180,6 +182,7 @@ def refresh(c, mail, fail_test=False):
         delivered = notify(mail, 'success')
         run.update(phase='complete', finished_at=n.now(), email_pending=not delivered)
         n.atomic_json(run_path, run)
+        n.atomic_json(c['state_root'] / 'last-restore-success.json', run)
         return run, 0 if delivered else 2
     except Exception as ex:
         # A crash after pointer commit must not falsely describe the restore as failed.

@@ -1,11 +1,38 @@
 # Pi 2 Block 2 preparation and installed validation
 
-Status reconciled 14 November: preparation, isolated data restore, all six view
-checks and two owner-run application checks passed. Full coordinated acceptance,
-restore reporting and scheduling remain pending.
-The full coordinator is incomplete. The owner runs all Pi commands; the agent has
-not connected to a Pi.
+Status reconciled 14 November, 22:15 UTC: full manual and scheduled restore,
+failure preservation/email and live retention passed. The owner runs all Pi
+commands; the agent has not connected to a Pi. The new manual takeover/write
+rehearsal and its deployment remain pending; earlier pending labels below are
+historical and superseded by the installed evidence immediately below.
 See the [Block 2 implementation contract](../user-guides/linux/nightly-standby-restore.md).
+
+## Full coordinator and scheduled acceptance — owner evidence
+
+- No-new refresh on 14 November 19:28 returned 0 with email_pending false.
+- Coordinator test-failure at 19:30 returned 1 and delivered actual FAILED mail;
+  before/after SHA-256 of last-accepted.json matched exactly.
+- New Pi 1 backup returned 0. Pi 2 accepted
+  `orchidset-20261114T193153Z-d9c5309370c84e21a5b0a3bb9f3bbc60`
+  during 19:39:41–19:45:20, SUCCESS/exit 0, no pending mail. Gmail receipt confirmed.
+- Pi 2 time was Europe/London and NTP synchronized. Four unit templates validated
+  with exit 0, logrotate debug validated, and both timers were enabled. Initial
+  monitor returned Result=success, status 0, inactive between runs.
+- Another Pi 1 backup returned 0 and its email arrived. The installed timer
+  accepted `orchidset-20261114T195324Z-a20cf0bd9709436c8e7ee85aeb804be1`
+  at 20:21:06.275142 UTC, recovery point 19:53:24.433265, with restore email received.
+- Owner's directory summary showed exactly the two 19:31 and 19:53 accepted sets
+  and confirmed the older `orchidset-20261114T020011Z-cc45392701914166848dab27a853d65a`
+  directory removed. This is actual live retention, not just fixture evidence.
+- At 22:15 the installed unit correctly returned NO_NEW_BACKUP/no pending mail.
+  Both restore/monitor services showed success/status 0; Pi-hole and normal
+  MariaDB were active. Root: 58 GB total, 31 GB used, 25 GB free, 56%.
+
+All eight GitHub jobs passed installed source 729babe, run 43631970740. New takeover
+source and durable last-success summary have separate pending deployment/CI.
+The [takeover runbook](../user-guides/linux/pi2-manual-takeover.md) describes a
+separate writable clone and explicitly fences real primary use; no production
+cutover or EnergyMonitoring collector activation was performed for this evidence.
 
 ## Installed manual reporting — owner confirmed
 

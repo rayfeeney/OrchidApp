@@ -18,6 +18,7 @@ files = [
     'infrastructure/backups/standby_acceptance.py',
     'infrastructure/backups/standby_reporting.py',
     'infrastructure/backups/standby_job.py',
+    'infrastructure/backups/standby_takeover.py',
     'infrastructure/backups/orchidapp-standby.service',
     'infrastructure/backups/orchidapp-standby.timer',
     'infrastructure/backups/orchidapp-standby-monitor.service',
@@ -32,6 +33,8 @@ files = [
     'tests/LinuxBackup.Checks/standby_acceptance_checks.py',
     'tests/LinuxBackup.Checks/standby_reporting_checks.py',
     'tests/LinuxBackup.Checks/standby_job_checks.py',
+    'tests/LinuxBackup.Checks/standby_takeover_checks.py',
+    'docs/user-guides/linux/pi2-manual-takeover.md',
     'tests/LinuxBackup.Checks/standby_native_linux.py',
     'docs/user-guides/linux/nightly-standby-restore.md',
     'docs/maintenance/pi2-standby-preparation.md',
@@ -43,7 +46,7 @@ payload = {name: (repo / name).read_bytes().replace(b'\r\n', b'\n') for name in 
 payload['SHA256SUMS'] = ''.join(hashlib.sha256(data).hexdigest() + '  ' + name + '\n'
                               for name, data in payload.items()).encode()
 payload['SOURCE.json'] = json.dumps({'base_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=repo).decode().strip(),
-                                   'stage': 'Block 2 candidate: coordinated restore/acceptance/retention/email and inactive timer templates; installed full-cycle acceptance pending'}, indent=2).encode()
+                                   'stage': 'Block 2 installed restore/retention/email; guarded manual takeover and writable rehearsal additions'}, indent=2).encode()
 with tarfile.open(archive, 'w:gz') as tar:
     for name, data in payload.items():
         info = tarfile.TarInfo(name)

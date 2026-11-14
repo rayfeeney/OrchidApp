@@ -1,43 +1,36 @@
 # Current state and fixed v1.4.0 work list
 
-## Pi 2 Block 2 progress — reconciled 14 November 2026
+## Pi 2 Block 2 — installed automation and retention passed
 
-Owner confirmed actual Gmail receipt of Pi 2 TEST EMAIL, accepted SUCCESS and
-TEST FAILED messages; freshness returned CURRENT. These prove manual reporting
-delivery, not a coordinator restore-failure test.
+Owner-run evidence on 14 November 2026 confirms both selected databases, six
+EnergyMonitoring views, UTC/London handling, all five readiness checks and 756
+photo/thumbnail hashes across two application starts. The first stopped acceptance
+passed, then the complete coordinator accepted
+`orchidset-20261114T193153Z-d9c5309370c84e21a5b0a3bb9f3bbc60`
+in 5m38s with actual Gmail SUCCESS receipt. Coordinator test-failure returned 1,
+delivered FAILED and left last-accepted.json byte-identical; a no-new refresh
+returned 0 without reimport or duplicate success.
 
-`standby_job.py` now coordinates discovery, preparation, isolated data/application
-checks, acceptance, retention and reporting. Hourly refresh and independent
-15-minute monitor unit templates exist but are not installed/enabled. Retention
-keeps the current/previous accepted generations and only removes earlier accepted
-owned stopped candidates/workspaces; failed/unknown evidence is retained. Actual
-coordinator new-backup success/failure, retention and scheduled-cycle acceptance
-remain pending. Installed standby and Pi-hole/system MariaDB remain unchanged.
+Four units and logrotate were validated and installed. Both restore/monitor
+timers are enabled: hourly :15 and every 15 minutes. Monitor completed with
+Result=success, status 0. The first scheduled new-set restore accepted
+`orchidset-20261114T195324Z-a20cf0bd9709436c8e7ee85aeb804be1`
+at 20:21:06 UTC (recovery point 19:53:24); backup and restore emails arrived.
+Live retention now contains exactly that set and its 19:31 predecessor; the older
+02:00 accepted directory was removed. The 22:15 poll correctly reported no-new,
+both services succeeded, Pi-hole/system MariaDB remained active, and root had
+25 GB available. The app/collectors remain stopped between validations.
 
-Owner installed the acceptance helper and received STANDBY_ACCEPTED_STOPPED,
-exit 0, for `orchidset-20261114T020011Z-cc45392701914166848dab27a853d65a`.
-All 756 photo/thumbnail files were checked; services_started was false. Pi 2 now
-has an accepted stopped standby. This supersedes the pending acceptance below.
-
-`standby_reporting.py` adds manual accepted-success reporting, a clearly labelled
-test/failure-test message, durable email retry and recovery-point freshness
-monitoring. The email settings are separate private JSON; SMTP password is entered
-locally in the Pi terminal. Installed mail delivery, coordinator integration,
-retention and scheduling remain pending. No automatic restore schedule exists.
-
-Latest owner-run cycle: the 14 November 02:00 backup completed prepare,
-restore-data and probe-application without manual SQL corrections. Report token
-`89f93ecb1e2b4f52b2f6e7a6a714058c` passed at 18:31 UTC: both databases,
-timezone checks, six-view definer mapping, all five readiness checks and 756
-photo/thumbnail hashes across two application starts. Acceptance followed as
-recorded above; no Pi 2 schedule exists yet.
-
-`standby_acceptance.py` now adds stopped-candidate acceptance source. It reuses
-that successful rehearsal, verifies its business-table counts/checksums against
-the untouched import, verifies all uploads and the filtered publication, saves a
-new private application password and atomically records the accepted pointer.
-It neither starts a permanent service nor sends email. Installed acceptance
-passed; retention, reporting/monitoring and scheduled-cycle acceptance remain pending.
+All eight GitHub jobs passed on installed commit 729babe (run 43631970740).
+Current source adds a guarded manual takeover helper/runbook and a retained
+last-restore-success.json so quiet polls do not erase the last full run's summary.
+The separate writable browser rehearsal and installation of these additions are
+pending. Source/CI does not prove production cutover or collector migration.
+Once that rehearsal and updated CI pass, record the evidence and merge draft
+PR #387. No live failover or destructive switch-back is required for backup
+acceptance. See the [current operator guide](user-guides/linux/nightly-standby-restore.md),
+[takeover runbook](user-guides/linux/pi2-manual-takeover.md) and
+[installed evidence](maintenance/pi2-standby-preparation.md).
 
 ### Earlier retained-candidate application evidence
 

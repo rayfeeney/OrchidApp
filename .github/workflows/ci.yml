@@ -158,6 +158,8 @@ jobs:
         run: python3 tests/LinuxBackup.Checks/standby_reporting_checks.py
       - name: Standby coordinator and owned retention
         run: python3 tests/LinuxBackup.Checks/standby_job_checks.py
+      - name: Manual takeover fencing and refresh protection
+        run: python3 tests/LinuxBackup.Checks/standby_takeover_checks.py
       - name: Check paired snapshots and isolated recovery
         shell: pwsh
         env:

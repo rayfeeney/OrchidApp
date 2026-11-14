@@ -139,9 +139,10 @@ def readiness(raw):
 
 
 @contextmanager
-def running_app(c, runtime, workspace, native, password, evidence):
+def running_app(c, runtime, workspace, native, password, evidence, port=None):
     with socket.socket() as reservation:
-        reservation.bind(('127.0.0.1', 0))
+        b.require(port is None or type(port) is int and 1024 <= port <= 65535, 'Invalid application port')
+        reservation.bind(('127.0.0.1', port or 0))
         port = reservation.getsockname()[1]
     env = environment(runtime, workspace, native, c['photo_database'], password, port)
     with evidence.open('ab') as log:

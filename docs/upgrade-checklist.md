@@ -1,6 +1,23 @@
 # Upgrade action checklist: C01–C20
 
-## Pi 2 Block 2 — application checks passed, acceptance/reporting pending
+## Pi 2 Block 2 — scheduled restore/retention passed; takeover rehearsal pending
+
+- [x] Full coordinator and first scheduled new-set restore passed, with actual
+  source/restore success emails. Latest accepted 19:53 snapshot and 19:31 previous
+  remain; old 02:00 set removed. Both units succeeded and Pi-hole/MariaDB stayed active.
+- [x] Both timers enabled after unit/logrotate validation; NTP/Europe-London
+  confirmed. Initial and later monitor/current/no-new checks passed; 25 GB free.
+- [x] All eight CI jobs passed installed revision 729babe, run 43631970740.
+- [ ] Install new standby_takeover.py and compatible application/job helpers;
+  test private writable rehearsal with save/reopen, photo/thumbnail and restart.
+  Confirm accepted pointer unchanged and remove only the completed rehearsal.
+  Never invoke real activation while Pi 1 is still a writer.
+- [ ] Verify takeover guard and durable last-restore-success summary through new
+  tests/CI, record installed rehearsal evidence, then merge PR #387. No migration,
+  Windows deployment or new timer is introduced. Active-takeover marker blocks
+  restore until guarded unchanged release or reviewed preservation/reconciliation.
+
+### Earlier implementation checklist — historical; current status above supersedes pending labels
 
 - [x] Owner received manual Pi 2 TEST EMAIL, accepted SUCCESS and TEST FAILED
   messages at Gmail; monitor returned CURRENT. A labelled failure-email test is

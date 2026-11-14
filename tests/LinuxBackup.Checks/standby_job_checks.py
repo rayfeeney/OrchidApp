@@ -50,6 +50,7 @@ class Job(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertEqual(result['result'], 'SUCCESS')
         self.assertEqual(order, ['prepare', 'restore_data', 'probe', 'accept', 'retain', 'notify'])
+        self.assertEqual(j.read(self.c['state_root'] / 'last-restore-success.json')['result'], 'SUCCESS')
 
     def test_probe_failure_never_accepts_or_cleans_and_reports_failure(self):
         mocks = self.refresh_mocks({'snapshot': 'new'})
@@ -62,10 +63,13 @@ class Job(unittest.TestCase):
 
     def test_no_new_backup_never_reimports(self):
         mocks = self.refresh_mocks(None)
+        success_path = self.c['state_root'] / 'last-restore-success.json'
+        success_path.write_text('retained successful run evidence')
         result, code = j.refresh(self.c, self.mail)
         self.assertEqual((result['result'], code), ('NO_NEW_BACKUP', 0))
         for name in ('prepare', 'restore_data', 'probe', 'accept', 'retain'):
             mocks[name].assert_not_called()
+        self.assertEqual(success_path.read_text(), 'retained successful run evidence')
 
     def test_pending_email_does_not_invalidate_success(self):
         mocks = self.refresh_mocks({'snapshot': 'new'})

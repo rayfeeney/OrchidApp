@@ -4,7 +4,8 @@ Use one current owner for each subject. Other documents link to that owner rathe
 
 | Subject | Current owner | Related material |
 | --- | --- | --- |
-| Pi 2 nightly standby restore (Block 2, incomplete) | [Implementation contract](user-guides/linux/nightly-standby-restore.md) | [Preparation evidence](maintenance/pi2-standby-preparation.md); stopped standby/manual emails passed; coordinator/retention/timer source available; installed full-cycle/scheduled acceptance pending |
+| Pi 2 nightly standby restore | [Operator guide](user-guides/linux/nightly-standby-restore.md) | [Installed evidence](maintenance/pi2-standby-preparation.md); scheduled restore/emails/live retention passed; final takeover rehearsal/merge pending |
+| Pi 2 manual takeover and writable rehearsal | [Takeover runbook](user-guides/linux/pi2-manual-takeover.md) | Accepted-data protection, fencing, private access and guarded unchanged release; installed new-helper rehearsal pending |
 | Opt-in Pi 1 multi-database backup, OneDrive handoff and email | [Block 1](user-guides/linux/nightly-multi-database-backup.md) | [Installed evidence](maintenance/pi1-nightly-backup-block1.md); separate format; old backup/restore unchanged; Block 2 pending |
 | Cross-platform upgrade actions and per-release completion | [C01–C20 upgrade checklist](upgrade-checklist.md) | Platform contracts/runbooks below; current state owns remaining acceptance |
 | Current baseline, fixed acceptance work list and scope decisions | [Current state](current-state.md) | Archived backlog preserves completed C-item implementation detail; upgrade checklist owns platform actions |
