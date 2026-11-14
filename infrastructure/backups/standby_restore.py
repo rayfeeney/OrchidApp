@@ -286,9 +286,12 @@ def prepare(c):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('operation', choices=('discover', 'prepare', 'restore-data'))
+    parser.add_argument('operation', choices=('discover', 'prepare', 'restore-data', 'probe-application'))
     parser.add_argument('--config', required=True)
     parser.add_argument('--generation')
+    parser.add_argument('--publication')
+    parser.add_argument('--dotnet')
+    parser.add_argument('--application-root')
     args = parser.parse_args()
     os.umask(0o077)
     def interrupted(*_):
@@ -299,7 +302,12 @@ def main():
         b.require(sys.platform.startswith('linux'), 'Production entry point requires Linux')
         c = load_config(args.config)
         with b.operation_lock(c['state_root']):
-            if args.operation == 'restore-data':
+            if args.operation == 'probe-application':
+                b.require(args.generation and args.publication and args.dotnet and args.application_root,
+                          'Use exact --generation, --publication, --dotnet and --application-root')
+                import standby_application
+                result = standby_application.probe(c, args.generation, args.publication, args.dotnet, args.application_root)
+            elif args.operation == 'restore-data':
                 b.require(args.generation, 'Use an exact --generation identity')
                 import standby_database
                 result = standby_database.restore_data(c, args.generation)

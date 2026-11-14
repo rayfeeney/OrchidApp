@@ -150,6 +150,8 @@ jobs:
         run: python3 tests/LinuxBackup.Checks/standby_database_checks.py
       - name: Check matching publication capture and validation
         run: python3 tests/LinuxBackup.Checks/standby_publication_checks.py
+      - name: Check application rehearsal isolation and owned loopback HTTP
+        run: python3 tests/LinuxBackup.Checks/standby_application_checks.py
       - name: Check paired snapshots and isolated recovery
         shell: pwsh
         env:

@@ -136,6 +136,27 @@ been supplied; no command targeted the normal service or Pi-hole. No source
 settings/writers or matching publication/runtime have been activated. Do not retry
 the data import into this populated generation; its state machine refuses reuse.
 
+## Runtime and publication installed evidence — 14 November
+
+The owner captured the matching Pi 1 publication without source changes, transferred
+it privately and verified it on Pi 2. Archive size 246377067 bytes; SHA-256
+`3622b8dd41e8c99f8a0c6ae60b44999434e55398d5321b520954e9aef1aaf274`.
+PUBLICATION_VERIFIED reported the expected backup DLL fingerprint, aarch64 and
+net8.0. No source settings were activated.
+
+Owner installed libvips42t64 8.16.1-1+deb13u2 after a simulation showed nine new
+packages and no removals/upgrades. Official ARM64 ASP.NET runtime archive 8.0.34
+passed its Microsoft release-metadata SHA-512 check and was extracted privately
+to `/opt/orchidapp-standby/dotnet-8.0.34`. Both Microsoft.AspNetCore.App and
+Microsoft.NETCore.App report 8.0.34. Pi-hole and the system MariaDB remained active.
+.NET 8 is now out of support; target application compatibility is still unproven.
+
+New `standby_application.py` is a source-only disposable readiness/page/photo/restart
+rehearsal. Its own application/SQL/uploads clone does not alter the pristine data
+candidate. Local policy results and hosted checks must be reviewed before packaging
+for Pi 2. No application probe, CRUD acceptance, promotion, restore email or timer
+has been run or accepted on Pi 2 yet.
+
 ## Matching publication helper — source prepared 14 November
 
 Pi 1's deployed DLL matches the backup; both runtime families are 8.0.23 as recorded

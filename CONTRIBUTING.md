@@ -49,6 +49,11 @@ Docker and MariaDB 11.8 tools; it creates its own network-none 10.11.14 source a
 accepts no live endpoint. Data-stage success is still application acceptance pending.
 Matching-publication checks run with `python tests/LinuxBackup.Checks/standby_publication_checks.py`;
 all DLL/settings fixtures are synthetic and no application is executed.
+Application rehearsal policy runs with `python tests/LinuxBackup.Checks/standby_application_checks.py`;
+Linux also launches its own synthetic loopback HTTP fixture and checks process
+ownership and response bounds. It never launches the real application or uses a
+live database. The native cross-version fixture checks target-only grants/definers;
+real ARM64 application and CRUD acceptance remain separate Pi 2 checks.
 The optional Windows-native `nightly_native_windows.py` creates its own network-disabled,
 pipe-only MariaDB fixture and retains its files under ignored feature-check artifacts;
 it accepts no live endpoint. Read the [operating contract and evidence](docs/user-guides/linux/nightly-multi-database-backup.md).

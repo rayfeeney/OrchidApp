@@ -7,9 +7,14 @@
   preparation and actual data restore passed on Pi 2 (25 orchids/10 EnergyMonitoring
   base tables on 11.8.6). Source settings/writers stayed inactive; see [evidence](maintenance/pi2-standby-preparation.md).
   DATA_RESTORED_APPLICATION_PENDING is not application or standby acceptance.
-- [ ] Validate/deploy the matching-publication capture helper, transfer its private
-  verified output, provision target runtime/native dependencies and perform actual
-  application checks. Runtime identity alone is not installed acceptance.
+- [x] Matching publication capture, private transfer and target verification passed.
+  Owner installed private .NET/ASP.NET 8.0.34 and libvips; Pi-hole/MariaDB active.
+  .NET 8 is now out of support; this is compatibility rehearsal, not vendor support.
+- [ ] Review/test/package `standby_application.py`, then run the disposable
+  application clone with a candidate-user-owned separate application root.
+  Validate readiness/home/all photo bytes/restart; preserve private failure evidence.
+  This does not accept a standby. CRUD, promotion, retention and restore reporting
+  remain pending. No Windows or Pi 1 runtime action is required.
 
 - [x] Review phase 1 source/package and CI, then deploy only to a separate private
   staging root. `prepare` does not import SQL, accept a standby or send restore

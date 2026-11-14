@@ -2,6 +2,21 @@
 
 ## Pi 2 Block 2 progress — reconciled 14 November 2026
 
+New source `standby_application.py` adds a separate SQL/uploads-clone application
+rehearsal: target-only limited SQL account/clean Production settings, missing-definer
+refusal, owned loopback listener, readiness/home/every photo hash and restart.
+Its success explicitly leaves acceptance pending. Seven policy/HTTP tests are wired
+into Linux CI (Windows skips the real /proc HTTP fixture); the native cross-version
+fixture now checks target grants and no global CREATE DATABASE privilege. Source
+and target execution are separate acceptance gates. CRUD, pristine promotion,
+retention, restore email/overdue scheduling remain unfinished.
+
+Owner-run publication capture/transfer/verification succeeded. Pi 2 now has private
+.NET and ASP.NET 8.0.34 and libvips42t64 8.16.1-1+deb13u2; Pi-hole/system MariaDB
+remain active. .NET 8 is out of support; keep the mandated application framework
+for this rehearsal and track supported-major upgrade separately. The application
+probe has not run on Pi 2; see [current evidence](maintenance/pi2-standby-preparation.md).
+
 Phase 1 source now exists in `infrastructure/backups/standby_restore.py`: bounded
 read-only cloud discovery/download, strict record/hash/archive validation, private
 inert generation staging and durable pending/failure state. Policy tests and a real
@@ -29,12 +44,13 @@ EnergyMonitoring base tables, accepted state unchanged. Source accounts/settings
 and scheduled writers were not activated. Application/definer/grant checks,
 acceptance/promotion and reporting remain
 pending. Pi 1's current DLL was confirmed to match the archive fingerprint, with
-both .NET and ASP.NET runtimes 8.0.23. Target runtime/application installation still
-needs review and installed testing.
+both .NET and ASP.NET runtimes 8.0.23. Target runtime installation is recorded above;
+application execution still needs installed testing.
 
 Owner reports a clean Debian 13/ARM64 Pi 2 (`pihole2`, 192.168.7.50), Pi-hole
 operational, Python 3.13.5, PowerShell 7.6.6 retained, 45 GB free and MariaDB
-11.8.6 active/enabled with only system databases. .NET is absent. MariaDB events
+11.8.6 active/enabled with only system databases at baseline. .NET was absent then;
+the subsequent private runtime installation is recorded above. MariaDB events
 are OFF, lower_case_table_names=0, utf8mb4/utf8mb4_general_ci. A separate old
 temporary MariaDB restore server was identified and stopped; intended service
 remains active. Official rclone 1.73.0 ARM64 package checksum/install passed.

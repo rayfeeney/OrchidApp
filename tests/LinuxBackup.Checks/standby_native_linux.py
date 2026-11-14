@@ -20,6 +20,7 @@ import uuid
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'infrastructure/backups'))
 import standby_restore as s
 import standby_database as d
+import standby_application as a
 
 
 def main():
@@ -147,6 +148,18 @@ def main():
             assert 'MUST_NOT_BE_IMPORTED' not in d.query(configured, good['candidate'], 'SHOW DATABASES;')
             assert d.query(configured, good['candidate'], "SELECT COUNT(*) FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA='orchids';") == ['1']
             assert d.query(configured, good['candidate'], 'SELECT @@event_scheduler;') == ['OFF']
+            # Prove target-only grants on the owned fixture, not a source account.
+            probe_password = a.provision(configured, good['candidate'], process)
+            probe_defaults = generation / 'fixture-probe.cnf'
+            d.private_text(probe_defaults, '[client]\nprotocol=socket\nsocket='
+                           + d.option(good['candidate']['socket'])
+                           + '\nuser=standby_probe\npassword=' + d.option(probe_password) + '\n')
+            probe_args = [configured['tools']['mariadb'], '--defaults-file=' + str(probe_defaults),
+                          '--protocol=socket', '--batch', '--skip-column-names']
+            assert s.b.run(configured, probe_args, stdin=b'CALL orchids.fixture_get();').decode().strip() == 'original orchid'
+            refused = subprocess.run(probe_args, input=b'CREATE DATABASE forbidden_probe;', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            assert refused.returncode != 0
+            assert 'forbidden_probe' not in d.query(configured, good['candidate'], 'SHOW DATABASES;')
         assert (generation / 'payload/sources/uploads/plants/1/photo.jpg').read_bytes() == b'synthetic-photo-bytes'
         # Synthetic prior acceptance marker proves preservation, not app acceptance.
         s.n.atomic_json(state_root / 'last-accepted.json', {'record': record, 'synthetic_fixture': True})

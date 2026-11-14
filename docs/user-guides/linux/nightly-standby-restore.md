@@ -1,12 +1,75 @@
 # Pi 2 nightly standby restore — Block 2 implementation contract
 
 Status: discovery/staging and candidate database-restore source exist in
-`standby_restore.py` and `standby_database.py`; application acceptance/promotion/
+`standby_restore.py` and `standby_database.py`; `standby_application.py` adds a
+disposable application rehearsal. Full application acceptance/promotion/
 reporting remain planned. Existing Block 1 code validates the
 multi-database archive but cannot orchestrate a standby restore. This page specifies
 the repeatable process and acceptance gates. See [completed preparation and
 exact archive validation](../../maintenance/pi2-standby-preparation.md) and the
 [Block 1 source/handoff contract](nightly-multi-database-backup.md).
+
+## Application rehearsal source — installed acceptance pending
+
+The new `probe-application` operation requires an exact DATA_RESTORED_APPLICATION_PENDING
+generation, a private verified publication archive, an explicit root-owned .NET
+executable and a separately prepared application directory. It checks the archive
+against the backup's DLL fingerprint. It never starts the pristine data candidate:
+it copies and verifies the archive again, extracts fresh private payload and imports
+both databases into another new socket-only MariaDB candidate. The original state,
+data candidate, accepted pointer and cloud remain unchanged.
+
+The publication workspace excludes appsettings files, environment files,
+web.config and captured uploads. Fresh settings and a clean child environment use
+Production, monitoring disabled, only the cloned uploads and a fresh target-only
+`standby_probe@localhost` password over the exact private Unix socket. The account
+gets SELECT/INSERT/UPDATE/DELETE/EXECUTE only on the photo database; no global or
+system-database grants. Existing definers must resolve to accounts already present
+on the new candidate; missing definers fail for review, never auto-rewrite. This
+check does not prove every routine/view works or provision EnergyMonitoring jobs.
+
+The application runs as the non-login candidate user with no supplementary groups.
+Only the launched process is stopped. The controller verifies `/proc` socket
+ownership and the sole IPv4 loopback listener before each HTTP request. It uses no
+proxy settings or redirects. Checks are readiness (all five known checks and no
+false additional checks), home page and SHA-256 of every required photo/thumbnail
+served over HTTP, hashing photo responses in bounded chunks rather than loading
+large photographs into memory. All are repeated after an application restart. This is listener
+isolation and fresh configuration, not an OS-enforced outbound network sandbox.
+
+The source has policy checks and a Linux-owned synthetic HTTP fixture; actual
+ARM64 OrchidApp execution is still pending. Run
+`python tests/LinuxBackup.Checks/standby_application_checks.py`; Linux CI also
+verifies real MariaDB definer resolution and limited target grants on its owned
+cross-version fixture. The application root must already be candidate-user-owned
+mode 700, separate from state/database roots and named `orchidapp-standby-app*`.
+For this installation the reviewed path is `/var/lib/orchidapp-standby-apps`.
+Do not run the following operation until the packaged revision and CI are verified:
+
+```bash
+sudo python3 /usr/local/lib/orchidapp-standby/standby_restore.py \
+  probe-application --config /etc/orchidapp-standby/standby.json \
+  --generation EXACT_SNAPSHOT \
+  --publication /home/raymond-23/orchidapp-publication.tar.gz \
+  --dotnet /opt/orchidapp-standby/dotnet-8.0.34/dotnet \
+  --application-root /var/lib/orchidapp-standby-apps
+```
+
+The usual 30-hour freshness limit still applies. Obtain a newer matching backup
+if it has expired; do not weaken the limit to accept stale data. One probe attempt
+per prepared generation creates private `application-probe.json` and owned scratch
+evidence. Failure retains all files/databases; no automatic retry or deletion.
+Review evidence and disk capacity before another generation. Space preflight uses
+four times combined declared payload/publication bytes plus the configured reserve;
+this is an estimate, not a proven peak bound. Successful output is only
+APPLICATION_PROBE_PASSED_ACCEPTANCE_PENDING. Create/save/upload/reopen workflows,
+pristine acceptance, promotion, retention and restore emails remain unfinished.
+
+Pi 2 now has private .NET/ASP.NET 8.0.34 and libvips installed (owner-run evidence
+below). [.NET 8 reached end of support on 10 November 2026](https://dotnet.microsoft.com/en-us/download/dotnet/8.0).
+The project remains on .NET 8 for this recovery rehearsal; Debian 13 operation
+must be demonstrated on the target and is not a claim of current vendor support.
+A supported-major application upgrade is separate work.
 
 ## Boundaries
 
@@ -73,7 +136,7 @@ The Linux CI step installs rclone and runs the real crypt case too. No live clou
 account, Pi database or source credentials are used by tests. Package sources with
 `python scripts/package-standby-restore.py`; it includes hashes and examples only.
 
-## Candidate database restore source — not yet installed
+## Candidate database restore — first installed data stage passed
 
 `restore-data --generation EXACT_SNAPSHOT --config TARGET_JSON` accepts only a
 pristine PREPARED_RESTORE_PENDING generation, rechecks its archive and extracted
@@ -188,7 +251,7 @@ the older data-stage CI is not relabelled as publication validation.
    marker precedes SQL; partial DDL/import preserves evidence and blocks reuse.
    The default system MariaDB listener is not automatically an isolated candidate.
 5. **Provision applications.** Require exact compatible ARM64 application bytes
-   matching the archived DLL fingerprint, plus supported .NET 8/native dependencies.
+   matching the archived DLL fingerprint, plus compatible .NET 8/native dependencies.
    Absence of compatible software fails the candidate; do not rebuild whatever
    happens to be latest and claim identity. Configure explicit target-only runtime
    accounts, SQL definer handling, settings, upload paths and file permissions.
