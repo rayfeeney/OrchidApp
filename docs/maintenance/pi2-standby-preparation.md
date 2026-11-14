@@ -172,6 +172,13 @@ on the hosted runner. The protection remains enforced; errors now identify the
 exact public path, numeric owner and mode so the environment mismatch can be
 diagnosed. No source credentials or SQL are included in that diagnostic.
 
+Hosted f00e340 identified root-owned `/usr/share/zoneinfo/Etc/UTC` mode 777.
+CI preparation now sets only the two required public zonefiles to 644 on its
+disposable runner and records their ancestor permissions. Runtime validation still
+rejects world/group-writable files and ancestors. A policy regression verifies
+mode 777 is refused before compiler/import. This changes no Pi permissions and
+does not claim that Pi 2 has the same image problem.
+
 Owner verified all package hashes and passed 23 staging, 10 data, 8 publication
 and 7 application-policy checks on Pi 2. Installed helpers root-owned and created
 the private application root. First invocation refused the user-owned mode-600

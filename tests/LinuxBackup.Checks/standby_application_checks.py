@@ -75,6 +75,16 @@ class Application(unittest.TestCase):
             with self.assertRaises(a.b.BackupError):
                 f.timezones({}, {}, object())
 
+    def test_world_writable_timezone_input_is_refused_before_compiler_or_import(self):
+        with patch.object(f.d, 'identity'), patch.object(f, 'timezone_values', return_value=['NULL\tNULL']), \
+             patch.object(f.shutil, 'which', return_value='/usr/bin/mariadb-tzinfo-to-sql'), \
+             patch.object(f.Path, 'is_file', return_value=True), patch.object(f.Path, 'resolve', lambda path: path), \
+             patch.object(f.Path, 'stat', return_value=SimpleNamespace(st_uid=0, st_mode=0o777)), \
+             patch.object(f.b, 'run') as run:
+            with self.assertRaisesRegex(a.b.BackupError, 'uid=0; mode=777'):
+                f.timezones({}, {}, object())
+            run.assert_not_called()
+
     def view(self, name='vw_Tariff'):
         return dict(name=name, definition="select `EnergyMonitoring`.`witness`.`value` AS `value`",
                     definer=f.SOURCE, security='DEFINER', check='NONE', algorithm='UNDEFINED',

@@ -2,6 +2,10 @@
 
 ## Pi 2 Block 2 — preparation complete, implementation pending
 
+- CI-only: the native hosted runner's two required timezone files are normalised
+  to root-owned mode 644 for the fixture. Runtime ownership/write protections are
+  unchanged; there is no corresponding automatic Pi filesystem permission change.
+
 - [ ] Validate/deploy Enphase derived-view column correction and candidate-only
   named timezone setup. Require the original 15 columns/query attributes and valid
   UTC/London winter/summer results after candidate restart. Tool `mariadb-tzinfo-to-sql`

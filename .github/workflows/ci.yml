@@ -173,6 +173,11 @@ jobs:
           sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y mariadb-server mariadb-client
           mariadb --version | grep -E '11[.]8[.]'
           mariadbd --version | grep -E '11[.]8[.]'
+      - name: Protect required timezone files on disposable hosted runner
+        run: |
+          # Hosted image supplied mode 777 for UTC; never relax runtime checks.
+          sudo chmod 0644 /usr/share/zoneinfo/Etc/UTC /usr/share/zoneinfo/Europe/London
+          stat -c '%a %u %n' /usr/share/zoneinfo/Etc/UTC /usr/share/zoneinfo/Europe/London /usr/share/zoneinfo/Etc /usr/share/zoneinfo/Europe /usr/share/zoneinfo /usr/share /usr /
       - name: Check real cross-version candidate restore and partial DDL recovery
         run: python3 tests/LinuxBackup.Checks/standby_native_linux.py
 
