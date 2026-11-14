@@ -2,6 +2,25 @@
 
 ## Pi 2 Block 2 progress — reconciled 14 November 2026
 
+Current installed result: the retained disposable candidate now passes CHECK TABLE
+and actual SELECT for all six EnergyMonitoring views. Owner then started the
+matching ARM64 OrchidApp twice on that same candidate. Both runs passed all five
+readiness checks (database, uploadRoot, nativePhotos, photoFiles, photoRecovery),
+home-page HTTP and hash verification of all 756 required photographs/thumbnails.
+The second run was after an application restart. Both owned processes stopped
+normally after the checks. The original restored generation remains separate.
+
+This is owner-run application evidence, not an accepted standby: the earlier
+failed-attempt report is retained, no acceptance pointer was written and no
+restore-success email or Pi 2 schedule exists. Remaining work is a fresh complete
+restore cycle, write-workflow/pristine acceptance, previous-generation retention,
+restore reporting/freshness monitoring and first scheduled-cycle acceptance.
+
+### Earlier source and diagnostic records — historical
+
+The records below preserve earlier states; their pending labels are superseded
+where the installed result above now supplies evidence.
+
 Cross-project review now establishes the 1356 Govee failure is covered by a missing
 restore read scope: the locked view account was limited to EnergyMonitoring, while
 the intended EnergyMonitoring reporting views read orchids. Creation-chat evidence

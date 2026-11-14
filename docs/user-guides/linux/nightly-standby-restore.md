@@ -2,7 +2,9 @@
 
 Status: discovery/staging and candidate database-restore source exist in
 `standby_restore.py` and `standby_database.py`; `standby_application.py` adds a
-disposable application rehearsal. Full application acceptance/promotion/
+disposable application rehearsal. Owner-run actual Pi 2 readiness/home/all 756
+photo hashes/restart checks now pass on the retained disposable candidate. Full
+coordinated application acceptance/promotion/
 reporting remain planned. Existing Block 1 code validates the
 multi-database archive but cannot orchestrate a standby restore. This page specifies
 the repeatable process and acceptance gates. See [completed preparation and
@@ -38,8 +40,9 @@ served over HTTP, hashing photo responses in bounded chunks rather than loading
 large photographs into memory. All are repeated after an application restart. This is listener
 isolation and fresh configuration, not an OS-enforced outbound network sandbox.
 
-The source has policy checks and a Linux-owned synthetic HTTP fixture; actual
-ARM64 OrchidApp execution is still pending. Run
+The source has policy checks and a Linux-owned synthetic HTTP fixture. Owner-run
+ARM64 readiness/home/all photo hashes/restart passed twice using the retained
+candidate; a fresh coordinated accepted cycle and write workflows remain pending. Run
 `python tests/LinuxBackup.Checks/standby_application_checks.py`; Linux CI also
 verifies real MariaDB definer resolution and limited target grants on its owned
 cross-version fixture. The application root must already be candidate-user-owned

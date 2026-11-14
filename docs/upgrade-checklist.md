@@ -1,14 +1,19 @@
 # Upgrade action checklist: C01–C20
 
-## Pi 2 Block 2 — preparation complete, implementation pending
+## Pi 2 Block 2 — application checks passed, acceptance/reporting pending
 
-- [ ] Deploy verified cross-database view read scope: the locked view account needs
+- [x] Owner-run retained candidate: all six views CHECK TABLE/SELECT passed.
+  OrchidApp readiness, home page and all 756 photo/thumbnail hashes passed twice,
+  including after application restart. Owned processes stopped afterwards.
+  Earlier failed report remains evidence, not an acceptance record.
+
+- [x] Deploy verified cross-database view read scope: the locked view account needs
   SELECT on both selected EnergyMonitoring and orchids schemas. Verify Govee,
   Tapo and location views together, retaining all six-view checks. No write/global
   grants, source schema conversion, EnergyMonitoring repo changes or writer/timer
   activation are needed. Preserve the current failed candidate and its evidence.
 
-- [ ] Deploy verified isolated-server utf8mb4/general_ci/default-map startup fix;
+- [x] Deploy verified isolated-server utf8mb4/general_ci/default-map startup fix;
   check the latest retained Enphase view read-only before another fresh clone.
   System MariaDB, source tables/queries and EnergyMonitoring repository are unchanged.
   The --no-defaults candidate must verify all three character defaults before SQL.
@@ -27,7 +32,7 @@
 - [x] Owner installed rehearsal package and passed 48 target checks; actual attempt
   stopped before app launch on six absent EnergyMonitoring view definers. Original
   restore retained. Root-owned private publication path is now required in commands.
-- [ ] Validate/deploy opt-in energy-six-v1 locked SELECT-only definer mapping and
+- [x] Validate/deploy opt-in energy-six-v1 locked SELECT-only definer mapping and
   exact-token fresh-clone retry. Retain failed reports/workspaces/databases and
   verify all six view definitions/attributes remain unchanged. No source migration,
   source account import, Pi 1 change or Windows deployment action is required.
@@ -40,7 +45,7 @@
 - [x] Matching publication capture, private transfer and target verification passed.
   Owner installed private .NET/ASP.NET 8.0.34 and libvips; Pi-hole/MariaDB active.
   .NET 8 is now out of support; this is compatibility rehearsal, not vendor support.
-- [ ] Review/test/package `standby_application.py`, then run the disposable
+- [x] Review/test/package `standby_application.py`, then run the disposable
   application clone with a candidate-user-owned separate application root.
   Validate readiness/home/all photo bytes/restart; preserve private failure evidence.
   This does not accept a standby. CRUD, promotion, retention and restore reporting

@@ -1,16 +1,42 @@
-# Pi 2 Block 2 preparation and archive validation — 13 November 2026
+# Pi 2 Block 2 preparation and installed validation
 
-Status reconciled 14 November: preparation and isolated data restore passed; source
-settings activation, working application acceptance and scheduling remain pending.
+Status reconciled 14 November: preparation, isolated data restore, all six view
+checks and two owner-run application checks passed. Full coordinated acceptance,
+restore reporting and scheduling remain pending.
 The full coordinator is incomplete. The owner runs all Pi commands; the agent has
 not connected to a Pi.
 See the [Block 2 implementation contract](../user-guides/linux/nightly-standby-restore.md).
 
-Subsequent phase 1 development adds `standby_restore.py`, an example config,
+## Owner-run application checks — 14 November
+
+Snapshot: `orchidset-20261113T170758Z-1801173727854608a1e80fe8fa5497aa`.
+After the isolated-server collation correction and companion Orchid SELECT grant,
+all six EnergyMonitoring views returned CHECK TABLE status OK and READ OK.
+The owner then reused that retained disposable candidate/application workspace;
+no additional cloud download or SQL restore was performed for these checks.
+
+Both application starts produced ready=true, with database, uploadRoot,
+nativePhotos, photoFiles and photoRecovery all true. Both returned the home page
+successfully and served all 756 required photograph/thumbnail files with the
+manifest's exact sizes/hashes. The second run followed an application restart.
+The script exited only after stopping its owned app and database processes.
+Publication DLL identity remained the previously verified backup fingerprint;
+runtime was private .NET/ASP.NET 8.0.34 on the actual ARM64 Debian 13 target.
+
+These are manual checks using reviewed helper functions. They do not overwrite the
+earlier APPLICATION_PROBE_FAILED report, mark a generation accepted, exercise UI
+create/save/upload/reopen, activate collectors, send restore-success email or
+enable a Pi 2 schedule. The pristine original data candidate remains separate.
+Next use a fresh completed OneDrive set for coordinated acceptance; preserve old
+diagnostic evidence until owned retention is reviewed.
+
+## Initial source-only phase 1 note — historical
+
+At the initial development stage, phase 1 added `standby_restore.py`, an example config,
 package builder and 23 tests (22 pass locally; actual rclone crypt case requires
 the installed tool and runs in Linux CI). It implements discovery/download/
-validation/inert staging only and has not been deployed to Pi 2. Database restore,
-application acceptance and full reporting remain pending. This development does
+validation/inert staging only and had not yet been deployed to Pi 2. Database restore,
+application acceptance and full reporting were then pending. This development does
 not retroactively convert the owner-run archive check into an automatic restore.
 
 ## Owner-reported clean baseline
