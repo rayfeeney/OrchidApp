@@ -7,6 +7,21 @@ The full coordinator is incomplete. The owner runs all Pi commands; the agent ha
 not connected to a Pi.
 See the [Block 2 implementation contract](../user-guides/linux/nightly-standby-restore.md).
 
+## Fresh complete component cycle — 14 November, 18:31 UTC
+
+Snapshot `orchidset-20261114T020011Z-cc45392701914166848dab27a853d65a`
+passed prepare, restore-data and probe-application with no manual SQL corrections.
+Archive SHA-256: `c9d7b0fc46e963b85d7531c737cc1f31722194d63ec76b0981b5e9b6d95521b2`.
+Report token: `89f93ecb1e2b4f52b2f6e7a6a714058c`.
+MariaDB 11.8.6 restored 25 orchids and 10 EnergyMonitoring base tables.
+Timezone winter/summer verification, the explicit six-view mapping, all five
+readiness checks and 756 photo/thumbnail HTTP hashes passed over two starts.
+The final result was APPLICATION_PROBE_PASSED_ACCEPTANCE_PENDING, not accepted.
+
+Acceptance source now reuses this candidate after comparing it with the untouched
+import and verifying the publication/uploads. Its installed result is pending;
+there is no restore email, automatic retention or Pi 2 schedule yet.
+
 ## Owner-run application checks — 14 November
 
 Snapshot: `orchidset-20261113T170758Z-1801173727854608a1e80fe8fa5497aa`.

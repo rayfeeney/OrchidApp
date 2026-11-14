@@ -15,11 +15,13 @@ files = [
     'infrastructure/backups/standby_publication.py',
     'infrastructure/backups/standby_application.py',
     'infrastructure/backups/standby_definers.py',
+    'infrastructure/backups/standby_acceptance.py',
     'infrastructure/backups/standby.example.json',
     'tests/LinuxBackup.Checks/standby_checks.py',
     'tests/LinuxBackup.Checks/standby_database_checks.py',
     'tests/LinuxBackup.Checks/standby_publication_checks.py',
     'tests/LinuxBackup.Checks/standby_application_checks.py',
+    'tests/LinuxBackup.Checks/standby_acceptance_checks.py',
     'tests/LinuxBackup.Checks/standby_native_linux.py',
     'docs/user-guides/linux/nightly-standby-restore.md',
     'docs/maintenance/pi2-standby-preparation.md',
@@ -31,7 +33,7 @@ payload = {name: (repo / name).read_bytes().replace(b'\r\n', b'\n') for name in 
 payload['SHA256SUMS'] = ''.join(hashlib.sha256(data).hexdigest() + '  ' + name + '\n'
                               for name, data in payload.items()).encode()
 payload['SOURCE.json'] = json.dumps({'base_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=repo).decode().strip(),
-                                   'stage': 'Block 2 candidate: prepare/data/private application probe; acceptance/promotion/reporting unavailable'}, indent=2).encode()
+                                   'stage': 'Block 2 candidate: prepare/data/application probe/stopped acceptance; reporting and scheduling pending'}, indent=2).encode()
 with tarfile.open(archive, 'w:gz') as tar:
     for name, data in payload.items():
         info = tarfile.TarInfo(name)

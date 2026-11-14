@@ -3,13 +3,48 @@
 Status: discovery/staging and candidate database-restore source exist in
 `standby_restore.py` and `standby_database.py`; `standby_application.py` adds a
 disposable application rehearsal. Owner-run actual Pi 2 readiness/home/all 756
-photo hashes/restart checks now pass on the retained disposable candidate. Full
-coordinated application acceptance/promotion/
-reporting remain planned. Existing Block 1 code validates the
+photo hashes/restart checks now pass, including the fresh 14 November backup.
+Stopped-candidate acceptance source exists but installed acceptance is pending.
+Full coordinated retention/reporting and scheduling remain planned. Existing Block 1 code validates the
 multi-database archive but cannot orchestrate a standby restore. This page specifies
 the repeatable process and acceptance gates. See [completed preparation and
 exact archive validation](../../maintenance/pi2-standby-preparation.md) and the
 [Block 1 source/handoff contract](nightly-multi-database-backup.md).
+
+## Accept an already successful rehearsal — source available, Pi validation pending
+
+`standby_acceptance.py` requires an exact generation with a successful two-start
+application report. It validates archive identity, uploads and the filtered
+publication again, then starts each owned socket-only database in turn to compare
+all selected base-table row counts and extended checksums. Both imports use the
+same MariaDB 11.8 version and character defaults; these checksums are not compared
+across 10.11/11.8. [MariaDB documents checksum limitations](https://mariadb.com/docs/server/reference/sql-statements/table-statements/checksum-table),
+including row-format differences; this is a change-detection check alongside
+archive/file SHA-256 and application checks, not a cryptographic proof of SQL data.
+
+Only the validated rehearsal's generated app password is rotated, stored privately
+in the generation, and retained for later activation. The original import stays
+separate. After both databases stop, `acceptance.json` is written and then the
+single `last-accepted.json` pointer is atomically replaced. Older recovery points
+are refused; an identical already accepted generation is a no-op. Failure before
+the pointer replacement preserves the prior accepted standby. No source settings,
+collector, permanent app service, system MariaDB endpoint or cloud storage is changed.
+Both databases remain stopped. This step does not prove write workflows, send
+email or prune old generations.
+
+After deploying the reviewed package and passing its tests, the owner runs:
+
+```bash
+sudo python3 /usr/local/lib/orchidapp-standby/standby_acceptance.py \
+  --config /etc/orchidapp-standby/standby.json \
+  --generation orchidset-20261114T020011Z-cc45392701914166848dab27a853d65a \
+  --publication /var/backups/orchidapp-standby/publication.tar.gz \
+  --application-root /var/lib/orchidapp-standby-apps
+```
+
+Expected result: STANDBY_ACCEPTED_STOPPED. Do not rewrite failed rehearsal reports
+to make them eligible. If the input is overdue, prepare and test a fresh backup
+rather than weakening freshness checks. Keep earlier failed attempts for review.
 
 ## Application rehearsal source — installed acceptance pending
 

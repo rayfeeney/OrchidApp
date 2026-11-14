@@ -2,6 +2,22 @@
 
 ## Pi 2 Block 2 progress — reconciled 14 November 2026
 
+Latest owner-run cycle: the 14 November 02:00 backup completed prepare,
+restore-data and probe-application without manual SQL corrections. Report token
+`89f93ecb1e2b4f52b2f6e7a6a714058c` passed at 18:31 UTC: both databases,
+timezone checks, six-view definer mapping, all five readiness checks and 756
+photo/thumbnail hashes across two application starts. No acceptance pointer or
+Pi 2 schedule exists yet.
+
+`standby_acceptance.py` now adds stopped-candidate acceptance source. It reuses
+that successful rehearsal, verifies its business-table counts/checksums against
+the untouched import, verifies all uploads and the filtered publication, saves a
+new private application password and atomically records the accepted pointer.
+It neither starts a permanent service nor sends email. Installed acceptance,
+retention, reporting/monitoring and scheduled-cycle acceptance remain pending.
+
+### Earlier retained-candidate application evidence
+
 Current installed result: the retained disposable candidate now passes CHECK TABLE
 and actual SELECT for all six EnergyMonitoring views. Owner then started the
 matching ARM64 OrchidApp twice on that same candidate. Both runs passed all five
@@ -12,8 +28,8 @@ normally after the checks. The original restored generation remains separate.
 
 This is owner-run application evidence, not an accepted standby: the earlier
 failed-attempt report is retained, no acceptance pointer was written and no
-restore-success email or Pi 2 schedule exists. Remaining work is a fresh complete
-restore cycle, write-workflow/pristine acceptance, previous-generation retention,
+restore-success email or Pi 2 schedule exists. The later complete cycle above
+supersedes the fresh-cycle requirement. Remaining work is write-workflow/pristine acceptance, previous-generation retention,
 restore reporting/freshness monitoring and first scheduled-cycle acceptance.
 
 ### Earlier source and diagnostic records — historical

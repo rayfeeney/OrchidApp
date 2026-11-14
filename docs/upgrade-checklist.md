@@ -2,6 +2,17 @@
 
 ## Pi 2 Block 2 — application checks passed, acceptance/reporting pending
 
+- [x] Fresh 14 November backup passed prepare, database restore and application
+  rehearsal without manual corrections: token `89f93ecb1e2b4f52b2f6e7a6a714058c`,
+  756 photographs/thumbnails, two starts, readiness and timezone/view checks.
+- [ ] Deploy/test `standby_acceptance.py` on this successful candidate. It checks
+  business-table counts/checksums against the separate original import, upload
+  hashes and filtered publication before committing `last-accepted.json`.
+  Both isolated databases must be stopped; only the rehearsal app account's
+  generated password changes. No system database, timer or cloud write occurs.
+  On failure retain evidence and prior acceptance. Windows has no operator action.
+  Email, retention, automation and write-workflow checks remain separate/pending.
+
 - [x] Owner-run retained candidate: all six views CHECK TABLE/SELECT passed.
   OrchidApp readiness, home page and all 756 photo/thumbnail hashes passed twice,
   including after application restart. Owned processes stopped afterwards.

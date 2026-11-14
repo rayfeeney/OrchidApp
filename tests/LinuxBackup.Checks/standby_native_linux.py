@@ -22,6 +22,7 @@ import standby_restore as s
 import standby_database as d
 import standby_application as a
 import standby_definers as f
+import standby_acceptance as acceptance
 
 
 def main():
@@ -185,6 +186,7 @@ def main():
         configured = d.configure(c)
         with d.running_candidate(configured, good['candidate']) as process:
             d.identity(configured, good['candidate'], process)
+            baseline_checksums = acceptance.table_checksums(configured, good['candidate'])
             assert d.query(configured, good['candidate'], 'SELECT value FROM orchids.witness;') == ['original orchid']
             assert d.query(configured, good['candidate'], 'SELECT value FROM EnergyMonitoring.witness;') == ['original energy']
             assert d.query(configured, good['candidate'], 'SELECT orchids.fixture_value();') == ['7']
@@ -278,6 +280,11 @@ def main():
         with d.running_candidate(configured, good['candidate']) as restarted:
             d.identity(configured, good['candidate'], restarted)
             assert f.timezone_values(configured, good['candidate']) == ['2026-01-15 12:00:00\t2026-07-15 13:00:00']
+            assert acceptance.table_checksums(configured, good['candidate']) == baseline_checksums
+            d.query(configured, good['candidate'], "UPDATE orchids.witness SET value='changed fixture' WHERE id=1;")
+            assert acceptance.table_checksums(configured, good['candidate']) != baseline_checksums
+            d.query(configured, good['candidate'], "UPDATE orchids.witness SET value='original orchid' WHERE id=1;")
+            assert acceptance.table_checksums(configured, good['candidate']) == baseline_checksums
         assert (generation / 'payload/sources/uploads/plants/1/photo.jpg').read_bytes() == b'synthetic-photo-bytes'
         # Synthetic prior acceptance marker proves preservation, not app acceptance.
         s.n.atomic_json(state_root / 'last-accepted.json', {'record': record, 'synthetic_fixture': True})
