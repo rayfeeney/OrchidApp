@@ -74,6 +74,28 @@ A supported-major application upgrade is separate work.
 
 ### Explicit EnergyMonitoring definer rule and reviewed retry
 
+Cross-project dependency review: the EnergyMonitoring project deliberately reads
+Orchid data in place, rather than duplicating sensor data. Review of its creation
+handoffs and current SQL establishes these reads:
+
+| EnergyMonitoring view | Reads from orchids |
+| --- | --- |
+| vw_GoveeHourly | environmentreading, environmentsensor, environmenttargetrule, location |
+| vw_TapoHourly | location |
+| vw_MonitoringDeviceLocation | location |
+| vw_EnphaseHourly, vw_Tariff, vw_WeatherHourly | None |
+
+Sources: EnergyMonitoring [Govee view](https://github.com/rayfeeney/EnergyMonitoring/blob/main/sql/028_alter_vw_GoveeHourly.sql),
+[Tapo view](https://github.com/rayfeeney/EnergyMonitoring/blob/main/sql/024_alter_vw_TapoHourly.sql)
+and [location mapping](https://github.com/rayfeeney/EnergyMonitoring/blob/main/sql/014_create_vw_MonitoringDeviceLocation.sql).
+The initial EnergyMonitoring-only definer grant was incomplete and caused restored
+cross-database views to fail with error 1356. The correction is one additional
+SELECT grant on orchids.* to the same locked account; the existing read grant on
+EnergyMonitoring remains. No data is copied between schemas, no source view is
+changed and no EnergyMonitoring repository change is needed for this restore fix.
+Schema-level read grants on the two selected restored databases avoid a growing
+table-by-table permissions list. App/collector writer accounts remain separate.
+
 Candidate character defaults: the owned 11.8 server uses `--no-defaults`, so it
 does not inherit the system MariaDB's matched Pi 1 settings. It now explicitly
 starts with `character-set-server=utf8mb4`, `collation-server=utf8mb4_general_ci`
@@ -99,7 +121,9 @@ exactly these six names with that exact source definer: `vw_Tariff`,
 naming that source definer fail before writes. Other missing definers still fail.
 
 The rule creates fresh `standby_energy_views@localhost` with a random password,
-ACCOUNT LOCK and SELECT on EnergyMonitoring.* only; an existing account is refused.
+ACCOUNT LOCK and SELECT on EnergyMonitoring.* and orchids.*; an existing account
+is refused. Both databases must be explicitly selected in the restore configuration
+before these grants can be made. No writes, global or other database grants are added.
 ALTER VIEW retains the server's stored SELECT, ordered columns, algorithm, security,
 check option and character settings. Post-change metadata must differ only in
 definer, and every mapped view must execute a representative SELECT. The private

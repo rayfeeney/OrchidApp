@@ -138,6 +138,23 @@ the data import into this populated generation; its state machine refuses reuse.
 
 ## First application rehearsal — blocked by view definers
 
+Later target run, after successful collation correction, reached Govee validation
+and failed with MariaDB 1356 on vw_GoveeHourly. The restore's locked view account
+had only SELECT on EnergyMonitoring.*. Review was expanded to both projects:
+EnergyMonitoring chats "20260924 · Create MariaDB Database" and "Restart Govee UTC
+Analysis" explicitly retain Orchid readings in orchids and query them directly;
+the latter creates a mapping view joining orchids.location. Current EnergyMonitoring
+SQL 028/024/014 confirms Govee reads four Orchid tables and Tapo/location mapping
+also read orchids.location. OrchidApp source/monitoring contracts keep those
+underlying data in orchids and retain separate application/job activation.
+
+The correction adds SELECT on orchids.* to the same locked local view account,
+requires both databases to be selected, and introduces real cross-database fixture
+views. Native checks remove that grant to reproduce three failures, restore it,
+and verify all six views execute. No source schema/view, source account or collector
+schedule changes are involved. This is not yet installed acceptance; the failed
+candidate remains available for a scoped permission correction/verification.
+
 Second owner-run policy package passed all 54 target checks. Token-authorized
 fresh clone `206193c9b1a842faaa1e6dae7b469355` failed before view ALTER with
 "Missing view definition/columns". Metadata diagnosis found the Enphase SELECT

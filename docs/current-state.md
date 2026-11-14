@@ -2,6 +2,15 @@
 
 ## Pi 2 Block 2 progress — reconciled 14 November 2026
 
+Cross-project review now establishes the 1356 Govee failure is covered by a missing
+restore read scope: the locked view account was limited to EnergyMonitoring, while
+the intended EnergyMonitoring reporting views read orchids. Creation-chat evidence
+and current EnergyMonitoring SQL 028/024/014 confirm the cross-schema dependencies.
+Source correction is one additional SELECT grant on orchids.*, guarded by explicit
+selection of both databases, with native cross-database deny/allow regression.
+No EnergyMonitoring source/schema or collection service changes are required.
+Actual target verification/application acceptance remains pending.
+
 Latest installed probe failed after mapping: CHECK TABLE now establishes a real
 UCA1400/general_ci collation conflict in the Enphase aggregate, explaining missing
 column metadata. Source correction is limited to explicit utf8mb4/general_ci

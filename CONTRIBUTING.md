@@ -57,6 +57,9 @@ real ARM64 application and CRUD acceptance remain separate Pi 2 checks.
 Application policy also tests explicit six-view definer mapping and preservation of
 failed-attempt reports on token-authorized fresh-clone retry. The native fixture
 includes missing remote definers, locked local view ownership and SELECT-only grants.
+It also includes Govee/Tapo/location views reading Orchid tables, verifies all three
+fail after the companion Orchid SELECT grant is revoked, then succeed when it is
+restored. Both schemas must be selected before restore policy can grant reads.
 Its Enphase fixture now includes a derived aggregation/join and named timezone
 conversion, fault-injects the target's first missing column-metadata response,
 then verifies with real SQL the exact recovered column

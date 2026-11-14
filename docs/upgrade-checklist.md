@@ -2,6 +2,12 @@
 
 ## Pi 2 Block 2 — preparation complete, implementation pending
 
+- [ ] Deploy verified cross-database view read scope: the locked view account needs
+  SELECT on both selected EnergyMonitoring and orchids schemas. Verify Govee,
+  Tapo and location views together, retaining all six-view checks. No write/global
+  grants, source schema conversion, EnergyMonitoring repo changes or writer/timer
+  activation are needed. Preserve the current failed candidate and its evidence.
+
 - [ ] Deploy verified isolated-server utf8mb4/general_ci/default-map startup fix;
   check the latest retained Enphase view read-only before another fresh clone.
   System MariaDB, source tables/queries and EnergyMonitoring repository are unchanged.

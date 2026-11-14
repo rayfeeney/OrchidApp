@@ -35,7 +35,7 @@ class Application(unittest.TestCase):
             return ['value']
         with patch.object(f.d, 'identity'), patch.object(f, 'metadata', side_effect=[before, after]), \
              patch.object(f, 'columns', side_effect=columns), patch.object(f.d, 'query') as query:
-            f.apply({'databases': ['EnergyMonitoring']}, {}, object(), f.POLICY)
+            f.apply({'databases': ['EnergyMonitoring', 'orchids']}, {}, object(), f.POLICY)
         sql = '\n'.join(call.args[2] for call in query.call_args_list)
         for column in f.ENPHASE_COLUMNS:
             self.assertIn('`' + column + '`', sql)
@@ -46,7 +46,7 @@ class Application(unittest.TestCase):
         with patch.object(f.d, 'identity'), patch.object(f, 'metadata', return_value=before), \
              patch.object(f, 'columns', return_value=[]), patch.object(f.d, 'query') as query:
             with self.assertRaises(a.b.BackupError):
-                f.apply({'databases': ['EnergyMonitoring']}, {}, object(), f.POLICY)
+                f.apply({'databases': ['EnergyMonitoring', 'orchids']}, {}, object(), f.POLICY)
             query.assert_not_called()
 
     def test_timezone_setup_uses_only_owned_socket_and_two_reviewed_zone_files(self):
@@ -95,14 +95,23 @@ class Application(unittest.TestCase):
         after = [dict(view, definer=f.TARGET) for view in before]
         with patch.object(f.d, 'identity'), patch.object(f, 'metadata', side_effect=[before, after]), \
              patch.object(f.d, 'query', return_value=['76616c7565']) as query:
-            result = f.apply({'databases': ['EnergyMonitoring']}, {}, object(), f.POLICY)
+            result = f.apply({'databases': ['EnergyMonitoring', 'orchids']}, {}, object(), f.POLICY)
         sql = '\n'.join(call.args[2] for call in query.call_args_list)
         self.assertIn('ACCOUNT LOCK', sql)
         self.assertIn('GRANT SELECT ON `EnergyMonitoring`.*', sql)
+        self.assertIn('GRANT SELECT ON `orchids`.*', sql)
         self.assertNotIn('GRANT ALL', sql)
         self.assertNotIn('IF NOT EXISTS', sql)
         self.assertEqual(sql.count('ALTER ALGORITHM='), 6)
         self.assertEqual(result['views'], sorted(f.VIEWS))
+
+    def test_cross_database_grant_requires_both_databases_in_selected_restore(self):
+        for selected in (['EnergyMonitoring'], ['orchids']):
+            with patch.object(f.d, 'identity') as identity, patch.object(f.d, 'query') as query:
+                with self.assertRaises(a.b.BackupError):
+                    f.apply({'databases': selected}, {}, object(), f.POLICY)
+                identity.assert_not_called()
+                query.assert_not_called()
 
     def test_policy_rejects_unreviewed_objects_and_source_definers_before_writes(self):
         good = [self.view(name) for name in sorted(f.VIEWS)]
@@ -111,12 +120,12 @@ class Application(unittest.TestCase):
             with patch.object(f.d, 'identity'), patch.object(f, 'metadata', return_value=values), \
                  patch.object(f.d, 'query') as query:
                 with self.assertRaises(a.b.BackupError):
-                    f.apply({'databases': ['EnergyMonitoring']}, {}, object(), f.POLICY)
+                    f.apply({'databases': ['EnergyMonitoring', 'orchids']}, {}, object(), f.POLICY)
                 query.assert_not_called()
 
     def test_policy_rejects_unknown_name_and_unsupported_view_attributes(self):
         with self.assertRaises(a.b.BackupError):
-            f.apply({'databases': ['EnergyMonitoring']}, {}, object(), 'guess')
+            f.apply({'databases': ['EnergyMonitoring', 'orchids']}, {}, object(), 'guess')
         for value in (dict(self.view(), algorithm='unexpected'), dict(self.view(), charset='unsafe;SQL'),
                       dict(self.view(), security='unexpected'), dict(self.view(), check='unexpected')):
             with self.assertRaises(a.b.BackupError):
@@ -134,7 +143,7 @@ class Application(unittest.TestCase):
         with patch.object(f.d, 'identity'), patch.object(f, 'metadata', side_effect=[before, after]), \
              patch.object(f.d, 'query', return_value=['76616c7565']):
             with self.assertRaises(a.b.BackupError):
-                f.apply({'databases': ['EnergyMonitoring']}, {}, object(), f.POLICY)
+                f.apply({'databases': ['EnergyMonitoring', 'orchids']}, {}, object(), f.POLICY)
 
     def test_retry_preserves_failed_report_and_refuses_wrong_or_successful_attempt(self):
         with tempfile.TemporaryDirectory() as temp:

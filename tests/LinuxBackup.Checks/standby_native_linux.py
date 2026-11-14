@@ -83,7 +83,11 @@ def main():
                "CREATE TABLE EnergyMonitoring.witness(id INT PRIMARY KEY,value VARCHAR(40)) ENGINE=InnoDB; "
                "INSERT INTO EnergyMonitoring.witness VALUES(1,'original energy');")
         source("CREATE USER 'root'@'192.168.7.153' IDENTIFIED BY 'synthetic-source-only'; "
-               "GRANT SELECT ON EnergyMonitoring.* TO 'root'@'192.168.7.153';")
+               "GRANT SELECT ON EnergyMonitoring.* TO 'root'@'192.168.7.153'; "
+               "GRANT SELECT ON orchids.* TO 'root'@'192.168.7.153';")
+        for table in ('environmentreading', 'environmentsensor', 'environmenttargetrule', 'location'):
+            source('CREATE TABLE orchids.`' + table + '`(id INT PRIMARY KEY) ENGINE=InnoDB; '
+                   'INSERT INTO orchids.`' + table + '` VALUES(1);')
         source("CREATE TABLE EnergyMonitoring.EnphaseInterval (IntervalEndUtc DATETIME, ProducedWh INT, "
                "ConsumedWh INT, ImportedWh INT, ExportedWh INT, ChargedWh INT, DischargedWh INT, BatterySocPct DECIMAL(5,2)); "
                "INSERT INTO EnergyMonitoring.EnphaseInterval VALUES('2026-07-15 12:15:00',100,80,20,40,10,5,75); "
@@ -108,6 +112,14 @@ def main():
                 body += ",CAST(SUBSTRING_INDEX(GROUP_CONCAT(BatterySocPct ORDER BY IntervalEndUtc DESC SEPARATOR ','),',',1) AS DECIMAL(5,2)) AS BatterySocPct,"
                 body += 'COUNT(*) AS IntervalCount FROM EnergyMonitoring.EnphaseInterval GROUP BY ' + hour + ') h '
                 body += 'LEFT JOIN EnergyMonitoring.Tariff t ON CAST(' + local + " AS DATE) BETWEEN t.EffectiveFromDate AND COALESCE(t.EffectiveToDate,'9999-12-31')"
+            elif view == 'vw_GoveeHourly':
+                body = ('SELECT e.value FROM EnergyMonitoring.witness e '
+                        'JOIN orchids.environmentreading er ON er.id=e.id '
+                        'JOIN orchids.environmentsensor es ON es.id=er.id '
+                        'JOIN orchids.location l ON l.id=es.id '
+                        'JOIN orchids.environmenttargetrule tr ON tr.id=l.id')
+            elif view in ('vw_TapoHourly', 'vw_MonitoringDeviceLocation'):
+                body = 'SELECT e.value FROM EnergyMonitoring.witness e JOIN orchids.location l ON l.id=e.id'
             else:
                 body = 'SELECT value FROM EnergyMonitoring.witness'
             source("CREATE DEFINER='root'@'192.168.7.153' SQL SECURITY DEFINER VIEW EnergyMonitoring.`"
@@ -232,8 +244,20 @@ def main():
             assert d.query(configured, good['candidate'], "SELECT JSON_UNQUOTE(JSON_EXTRACT(Priv,'$.account_locked')) FROM mysql.global_priv "
                            "WHERE User='standby_energy_views' AND Host='localhost';") == ['true']
             grants = d.query(configured, good['candidate'], "SHOW GRANTS FOR 'standby_energy_views'@'localhost';")
-            assert len(grants) == 2 and any('GRANT SELECT ON `EnergyMonitoring`.*' in row for row in grants)
+            assert len(grants) == 3 and any('GRANT SELECT ON `EnergyMonitoring`.*' in row for row in grants)
+            assert any('GRANT SELECT ON `orchids`.*' in row for row in grants)
             assert all('GRANT ALL' not in row for row in grants)
+            # Reproduce all three cross-schema failures under the former grant.
+            cross_views = ('vw_GoveeHourly', 'vw_TapoHourly', 'vw_MonitoringDeviceLocation')
+            d.query(configured, good['candidate'], "REVOKE SELECT ON orchids.* FROM 'standby_energy_views'@'localhost';")
+            try:
+                for cross_view in cross_views:
+                    denied = subprocess.run(d.client(configured, good['candidate']),
+                                            input=('SELECT * FROM EnergyMonitoring.`' + cross_view + '`;').encode(),
+                                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30)
+                    assert denied.returncode != 0 and (b'1356' in denied.stderr or b'1142' in denied.stderr)
+            finally:
+                d.query(configured, good['candidate'], "GRANT SELECT ON orchids.* TO 'standby_energy_views'@'localhost';")
             for view in sorted(f.VIEWS):
                 values = d.query(configured, good['candidate'], 'SELECT * FROM EnergyMonitoring.`' + view + '`;')
                 if view == 'vw_EnphaseHourly':

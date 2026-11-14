@@ -91,7 +91,8 @@ def alter_statement(view, columns):
 
 
 def apply(c, native, process, policy):
-    b.require(policy == POLICY and 'EnergyMonitoring' in c['databases'], 'Unknown/inapplicable definer policy')
+    b.require(policy == POLICY and {'EnergyMonitoring', 'orchids'} <= set(c['databases']),
+              'Definer policy requires both selected EnergyMonitoring and orchids databases')
     d.identity(c, native, process)
     before = metadata(c, native)
     selected = [view for view in before if view['name'] in VIEWS]
@@ -112,6 +113,7 @@ def apply(c, native, process, policy):
     d.identity(c, native, process)
     d.query(c, native, "CREATE USER 'standby_energy_views'@'localhost' IDENTIFIED BY '"
             + secrets.token_hex(32) + "' ACCOUNT LOCK; GRANT SELECT ON `EnergyMonitoring`.* "
+            "TO 'standby_energy_views'@'localhost'; GRANT SELECT ON `orchids`.* "
             "TO 'standby_energy_views'@'localhost';")
     for statement in statements:
         d.identity(c, native, process)
@@ -125,5 +127,5 @@ def apply(c, native, process, policy):
                   'View column contract differs after definer mapping; candidate retained')
         d.query(c, native, 'SELECT * FROM `EnergyMonitoring`.' + identifier(view['name']) + ' LIMIT 1;')
     return {'policy': POLICY, 'source_definer': SOURCE, 'target_definer': TARGET,
-            'views': sorted(VIEWS), 'privileges': 'SELECT on EnergyMonitoring.*; account locked',
+            'views': sorted(VIEWS), 'privileges': 'SELECT on EnergyMonitoring.* and orchids.*; account locked',
             'definition_and_attributes_preserved': True}
