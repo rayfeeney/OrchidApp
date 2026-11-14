@@ -57,6 +57,10 @@ real ARM64 application and CRUD acceptance remain separate Pi 2 checks.
 Application policy also tests explicit six-view definer mapping and preservation of
 failed-attempt reports on token-authorized fresh-clone retry. The native fixture
 includes missing remote definers, locked local view ownership and SELECT-only grants.
+Its Enphase fixture now includes a derived aggregation/join and named timezone
+conversion, verifies missing columns before mapping, the exact recovered column
+contract, and UTC/London winter/summer behavior after candidate restart. Policy
+tests also exercise the narrow column fallback and candidate-only timezone setup.
 The optional Windows-native `nightly_native_windows.py` creates its own network-disabled,
 pipe-only MariaDB fixture and retains its files under ignored feature-check artifacts;
 it accepts no live endpoint. Read the [operating contract and evidence](docs/user-guides/linux/nightly-multi-database-backup.md).

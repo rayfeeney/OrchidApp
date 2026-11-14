@@ -15,6 +15,7 @@ import tempfile
 import time
 import uuid
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'infrastructure/backups'))
@@ -23,6 +24,57 @@ import standby_definers as f
 
 
 class Application(unittest.TestCase):
+    def test_derived_enphase_missing_columns_use_only_reviewed_contract_and_verify_after(self):
+        before = [self.view(name) for name in sorted(f.VIEWS)]
+        after = [dict(view, definer=f.TARGET) for view in before]
+        calls = {}
+        def columns(c, native, name):
+            calls[name] = calls.get(name, 0) + 1
+            if name == 'vw_EnphaseHourly':
+                return [] if calls[name] == 1 else list(f.ENPHASE_COLUMNS)
+            return ['value']
+        with patch.object(f.d, 'identity'), patch.object(f, 'metadata', side_effect=[before, after]), \
+             patch.object(f, 'columns', side_effect=columns), patch.object(f.d, 'query') as query:
+            f.apply({'databases': ['EnergyMonitoring']}, {}, object(), f.POLICY)
+        sql = '\n'.join(call.args[2] for call in query.call_args_list)
+        for column in f.ENPHASE_COLUMNS:
+            self.assertIn('`' + column + '`', sql)
+        self.assertEqual(calls['vw_EnphaseHourly'], 2)
+
+    def test_missing_columns_of_other_view_still_fail_before_writes(self):
+        before = [self.view(name) for name in sorted(f.VIEWS)]
+        with patch.object(f.d, 'identity'), patch.object(f, 'metadata', return_value=before), \
+             patch.object(f, 'columns', return_value=[]), patch.object(f.d, 'query') as query:
+            with self.assertRaises(a.b.BackupError):
+                f.apply({'databases': ['EnergyMonitoring']}, {}, object(), f.POLICY)
+            query.assert_not_called()
+
+    def test_timezone_setup_uses_only_owned_socket_and_two_reviewed_zone_files(self):
+        expected = ['2026-01-15 12:00:00\t2026-07-15 13:00:00']
+        with patch.object(f.d, 'identity'), patch.object(f, 'timezone_values', side_effect=[['NULL\tNULL'], expected]), \
+             patch.object(f.shutil, 'which', return_value='/usr/bin/mariadb-tzinfo-to-sql'), \
+             patch.object(f.Path, 'is_file', return_value=True), patch.object(f.Path, 'resolve', lambda path: path), \
+             patch.object(f.Path, 'stat', return_value=SimpleNamespace(st_uid=0, st_mode=0o644)), \
+             patch.object(f.b, 'digest', return_value='a' * 64), \
+             patch.object(f.d, 'client', return_value=['owned-socket-client']), patch.object(f.b, 'run', return_value=b'SQL;') as run:
+            result = f.timezones({}, {}, object())
+        self.assertEqual(set(result['sha256']), {'UTC', 'Europe/London'})
+        self.assertEqual(run.call_count, 4)
+        self.assertEqual(run.call_args_list[1].args[1], ['owned-socket-client', '--database=mysql'])
+        self.assertEqual(run.call_args_list[3].kwargs['stdin'], b'SQL;')
+
+    def test_existing_valid_timezones_do_not_import_system_tables(self):
+        with patch.object(f.d, 'identity'), patch.object(f, 'timezone_values',
+              return_value=['2026-01-15 12:00:00\t2026-07-15 13:00:00']), patch.object(f.b, 'run') as run:
+            self.assertTrue(f.timezones({}, {}, object())['winter_summer_checks'])
+            run.assert_not_called()
+
+    def test_missing_timezone_tool_is_a_failure(self):
+        with patch.object(f.d, 'identity'), patch.object(f, 'timezone_values', return_value=['NULL\tNULL']), \
+             patch.object(f.shutil, 'which', return_value=None):
+            with self.assertRaises(a.b.BackupError):
+                f.timezones({}, {}, object())
+
     def view(self, name='vw_Tariff'):
         return dict(name=name, definition="select `EnergyMonitoring`.`witness`.`value` AS `value`",
                     definer=f.SOURCE, security='DEFINER', check='NONE', algorithm='UNDEFINED',

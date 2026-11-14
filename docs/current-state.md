@@ -2,6 +2,14 @@
 
 ## Pi 2 Block 2 progress — reconciled 14 November 2026
 
+Owner's explicit-policy retry failed before ALTER: Enphase stored definition exists
+but missing source definer hides its column metadata. Both failed attempts remain
+retained. New correction uses only the reviewed 15-column Enphase contract plus
+post-ALTER column/query equality, with a derived aggregate/join native regression.
+The shown view also requires named timezone tables: candidate-only UTC/London setup
+and winter/summer checks are now source changes, not yet installed acceptance.
+No application process has yet passed readiness on Pi 2.
+
 Owner installed rehearsal revision 65d7b52 and passed all 48 target package checks.
 After correcting publication input ownership, the actual rehearsal failed safely
 before app launch: six EnergyMonitoring views name absent root@192.168.7.153;

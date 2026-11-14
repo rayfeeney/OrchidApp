@@ -2,6 +2,12 @@
 
 ## Pi 2 Block 2 — preparation complete, implementation pending
 
+- [ ] Validate/deploy Enphase derived-view column correction and candidate-only
+  named timezone setup. Require the original 15 columns/query attributes and valid
+  UTC/London winter/summer results after candidate restart. Tool `mariadb-tzinfo-to-sql`
+  and root-owned OS zoneinfo are required. System MariaDB, Pi 1 and Windows are
+  unaffected; retain both previous failures and use a new explicit retry token.
+
 - [x] Owner installed rehearsal package and passed 48 target checks; actual attempt
   stopped before app launch on six absent EnergyMonitoring view definers. Original
   restore retained. Root-owned private publication path is now required in commands.

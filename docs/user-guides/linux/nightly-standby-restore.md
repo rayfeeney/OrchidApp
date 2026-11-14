@@ -91,6 +91,29 @@ report records the mapping. No dump bytes, source accounts, Pi 1 database, origi
 restored candidate or accepted standby are modified. This is target compatibility
 provisioning on a fresh clone, not a source migration.
 
+Derived-view correction: the first policy attempt found a stored Enphase SELECT
+but no information_schema.COLUMNS rows while its source definer was absent. The
+rule now uses only the owner-reviewed 15-column Enphase contract when this exact
+view has missing columns; it still refuses missing columns on other views. After
+ALTER, all 15 names/order must match and the stored SELECT/attributes must remain
+unchanged. The native regression uses a derived aggregate/join view with timezone
+conversion, rather than six flat witness views, and first proves the missing-column
+condition. No generic column inference or SELECT parsing is introduced.
+
+The explicit EnergyMonitoring rehearsal also checks UTC-to-Europe/London conversion
+in winter and summer. If missing/incorrect, it generates the two required zone
+tables from root-owned target `/usr/share/zoneinfo/Etc/UTC` and `Europe/London` with
+`mariadb-tzinfo-to-sql`, and imports that SQL only through the verified candidate's
+private socket into its mysql timezone tables. Source system tables/accounts are
+not imported, and the system MariaDB is not contacted. Both conversions must then
+match (12:00 winter, 13:00 summer for 12:00 UTC); the report records zonefile hashes.
+Already valid candidate zones are retained. Missing tool/data or failed conversion
+stops rehearsal. This uses target OS IANA rules, not a claim of identical source
+tzdata versions. See [MariaDB timezone loader](https://mariadb.com/docs/server/clients-and-utilities/administrative-tools/mariadb-tzinfo-to-sql)
+and [CONVERT_TZ requirements](https://mariadb.com/docs/server/reference/sql-functions/date-time-functions/convert_tz).
+This is necessary because a successful SELECT returning NULL conversion results
+would not prove useful recovery of tariff/time-based views.
+
 MariaDB documents [ALTER VIEW](https://mariadb.com/docs/server/server-usage/views/alter-view),
 [view metadata](https://mariadb.com/docs/server/server-usage/views/information-schema-views-table)
 and [account locking](https://mariadb.com/docs/server/security/user-account-management/account-locking).

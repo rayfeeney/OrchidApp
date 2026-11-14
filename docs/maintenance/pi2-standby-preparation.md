@@ -138,6 +138,18 @@ the data import into this populated generation; its state machine refuses reuse.
 
 ## First application rehearsal — blocked by view definers
 
+Second owner-run policy package passed all 54 target checks. Token-authorized
+fresh clone `206193c9b1a842faaa1e6dae7b469355` failed before view ALTER with
+"Missing view definition/columns". Metadata diagnosis found the Enphase SELECT
+present (2370 characters) but zero columns; the other five views returned columns.
+CHECK TABLE reported absent root@192.168.7.153 and labelled the view "Corrupt";
+this is an invalid-definer result, not evidence of damaged underlying data.
+The displayed stored SELECT uses derived aggregation, a tariff join and named
+UTC/Europe/London conversion. Source now adds the reviewed 15-column Enphase
+fallback/post-check, a realistic derived-view regression and candidate-only named
+timezone setup/winter-summer verification. None has been deployed on Pi 2 yet.
+Both failed clones and reports remain retained; application acceptance is pending.
+
 Owner verified all package hashes and passed 23 staging, 10 data, 8 publication
 and 7 application-policy checks on Pi 2. Installed helpers root-owned and created
 the private application root. First invocation refused the user-owned mode-600

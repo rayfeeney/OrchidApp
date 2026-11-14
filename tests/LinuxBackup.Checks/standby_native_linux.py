@@ -83,8 +83,19 @@ def main():
         source("CREATE USER 'root'@'192.168.7.153' IDENTIFIED BY 'synthetic-source-only'; "
                "GRANT SELECT ON EnergyMonitoring.* TO 'root'@'192.168.7.153';")
         for view in sorted(f.VIEWS):
+            if view == 'vw_EnphaseHourly':
+                # Derived/aggregate view + absent definer reproduces the target's
+                # missing I_S column metadata, unlike six flat witness views.
+                expressions = ["CAST('2026-07-15 12:00:00' AS DATETIME)",
+                               "CONVERT_TZ('2026-07-15 12:00:00','UTC','Europe/London')"]
+                expressions += ['h.amount'] * (len(f.ENPHASE_COLUMNS) - 2)
+                select = ','.join(value + ' AS `' + name + '`' for name, value in zip(f.ENPHASE_COLUMNS, expressions))
+                body = 'SELECT ' + select + ' FROM (SELECT SUM(id) AS amount FROM EnergyMonitoring.witness GROUP BY value) h '
+                body += 'LEFT JOIN EnergyMonitoring.witness t ON t.id=h.amount'
+            else:
+                body = 'SELECT value FROM EnergyMonitoring.witness'
             source("CREATE DEFINER='root'@'192.168.7.153' SQL SECURITY DEFINER VIEW EnergyMonitoring.`"
-                   + view + '` AS SELECT value FROM EnergyMonitoring.witness;')
+                   + view + '` AS ' + body + ';')
         dumps = {}
         for database in ('orchids', 'EnergyMonitoring'):
             owned()
@@ -163,7 +174,9 @@ def main():
                 raise AssertionError('Unapproved remote definer was accepted')
             policy_config = dict(configured, view_definer_policy=f.POLICY)
             report = {}
+            assert f.columns(configured, good['candidate'], 'vw_EnphaseHourly') == []
             probe_password = a.provision(policy_config, good['candidate'], process, report)
+            assert report['timezones']['winter_summer_checks']
             assert report['view_definer_mapping']['definition_and_attributes_preserved']
             assert d.query(configured, good['candidate'], "SELECT JSON_UNQUOTE(JSON_EXTRACT(Priv,'$.account_locked')) FROM mysql.global_priv "
                            "WHERE User='standby_energy_views' AND Host='localhost';") == ['true']
@@ -171,7 +184,12 @@ def main():
             assert len(grants) == 2 and any('GRANT SELECT ON `EnergyMonitoring`.*' in row for row in grants)
             assert all('GRANT ALL' not in row for row in grants)
             for view in sorted(f.VIEWS):
-                assert d.query(configured, good['candidate'], 'SELECT * FROM EnergyMonitoring.`' + view + '`;') == ['original energy']
+                values = d.query(configured, good['candidate'], 'SELECT * FROM EnergyMonitoring.`' + view + '`;')
+                if view == 'vw_EnphaseHourly':
+                    assert values[0].split('\t')[:2] == ['2026-07-15 12:00:00', '2026-07-15 13:00:00']
+                    assert f.columns(configured, good['candidate'], view) == list(f.ENPHASE_COLUMNS)
+                else:
+                    assert values == ['original energy']
             probe_defaults = generation / 'fixture-probe.cnf'
             d.private_text(probe_defaults, '[client]\nprotocol=socket\nsocket='
                            + d.option(good['candidate']['socket'])
@@ -182,6 +200,9 @@ def main():
             refused = subprocess.run(probe_args, input=b'CREATE DATABASE forbidden_probe;', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             assert refused.returncode != 0
             assert 'forbidden_probe' not in d.query(configured, good['candidate'], 'SHOW DATABASES;')
+        with d.running_candidate(configured, good['candidate']) as restarted:
+            d.identity(configured, good['candidate'], restarted)
+            assert f.timezone_values(configured, good['candidate']) == ['2026-01-15 12:00:00\t2026-07-15 13:00:00']
         assert (generation / 'payload/sources/uploads/plants/1/photo.jpg').read_bytes() == b'synthetic-photo-bytes'
         # Synthetic prior acceptance marker proves preservation, not app acceptance.
         s.n.atomic_json(state_root / 'last-accepted.json', {'record': record, 'synthetic_fixture': True})

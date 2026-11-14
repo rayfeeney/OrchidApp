@@ -173,8 +173,11 @@ def provision(c, native, process, report=None):
     database = c['photo_database']
     if c.get('view_definer_policy'):
         import standby_definers
+        b.require(c['view_definer_policy'] == standby_definers.POLICY, 'Unknown view definer policy')
+        zones = standby_definers.timezones(c, native, process)
         mapping = standby_definers.apply(c, native, process, c['view_definer_policy'])
         if report is not None:
+            report['timezones'] = zones
             report['view_definer_mapping'] = mapping
     # Fail on missing definers rather than silently rewriting restored objects.
     selected = ','.join("'" + name + "'" for name in c['databases'])
