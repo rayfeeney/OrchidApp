@@ -9,6 +9,13 @@ See the [Block 2 implementation contract](../user-guides/linux/nightly-standby-r
 
 ## Full coordinator and scheduled acceptance — owner evidence
 
+Takeover source 6356918 checksums and both nine-case target suites passed. Owner
+reached REHEARSAL_READY and confirmed browser checks passed. Double Ctrl+C left
+REHEARSAL_FAILED, token `c0f64802dcbf4a78b24e2d126d9e5fb3`. Owner diagnostics
+showed only normal mariadbd PID 51094, no dotnet/5010 listener, and both system
+services active. New signal handling/exact-token finish avoid recreating the
+clone or repeating browser work. Final restart/cleanup remains pending.
+
 - No-new refresh on 14 November 19:28 returned 0 with email_pending false.
 - Coordinator test-failure at 19:30 returned 1 and delivered actual FAILED mail;
   before/after SHA-256 of last-accepted.json matched exactly.

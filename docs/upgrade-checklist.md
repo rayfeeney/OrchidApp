@@ -16,6 +16,11 @@
   tests/CI, record installed rehearsal evidence, then merge PR #387. No migration,
   Windows deployment or new timer is introduced. Active-takeover marker blocks
   restore until guarded unchanged release or reviewed preservation/reconciliation.
+- [x] Browser checks passed on the disposable clone; double Ctrl+C interrupted
+  finishing. Owner confirmed owned processes stopped and both system services active.
+- [ ] Deploy separate child sessions/repeated-interrupt handling. Finish the
+  stopped clone with exact interrupted token, verify restart/media/pointer, then
+  clean only that completed rehearsal and resume refresh. No new import needed.
 
 ### Earlier implementation checklist — historical; current status above supersedes pending labels
 

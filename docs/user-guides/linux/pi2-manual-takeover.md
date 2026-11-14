@@ -59,7 +59,10 @@ package and keep Pi 1's normal backup running during the isolated rehearsal.
    present. Existing production-looking records here are copies, not Pi 1 data.
    Do not enter new real collection work into a rehearsal.
 
-5. Press Ctrl+C in the Pi 2 rehearsal window. The helper stops the app, restarts
+5. Press Ctrl+C once in the Pi 2 rehearsal window. The helper prints that it is
+   finishing and ignores further Ctrl+C while checking/stopping owned children.
+   The child app/database use separate sessions so terminal Ctrl+C goes to the
+   controller, not directly to them. The helper stops the app, restarts
    it, verifies readiness/home and all active photo/thumbnail bytes after the
    writes, and stops both owned processes. It records REHEARSAL_STOPPED with
    `business_data_changed=true`, `upload_files_changed=true`, two application
@@ -87,6 +90,29 @@ package and keep Pi 1's normal backup running during the isolated rehearsal.
    sudo systemctl start orchidapp-standby.timer
    systemctl list-timers --all --no-pager --full | grep orchidapp-standby
    ```
+
+### Finish an interrupted browser rehearsal
+
+If the browser checks passed but restart/shutdown was interrupted, preserve the
+report and check for remaining processes first. Do not erase the clone or mark a
+failed report successful. After confirming its app and database are stopped, use
+the exact snapshot/token in `/var/lib/orchidapp-standby/takeover-rehearsal/report.json`:
+
+```bash
+sudo python3 /usr/local/lib/orchidapp-standby/standby_takeover.py finish-rehearsal \
+  --config /etc/orchidapp-standby/standby.json \
+  --email-config /etc/orchidapp-standby/email.json \
+  --snapshot SNAPSHOT --interrupted-token TOKEN
+```
+
+This checks the exact failed report, clone ownership/stopped state and source
+identity, preserves the interrupted report, rotates only the disposable app
+password, then runs readiness/home/all active media checks across two app starts.
+It compares business data and media with accepted baseline evidence and confirms
+the accepted pointer did not change. It neither reimports nor repeats browser
+work. Ctrl+C is ignored during this bounded finishing command. A failed finish
+retains evidence and requires review rather than repeated blind retries.
+Only a resulting REHEARSAL_STOPPED can use the normal cleanup command above.
 
 ## Activate during an actual Pi 1 outage
 

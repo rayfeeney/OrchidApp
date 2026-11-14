@@ -142,6 +142,7 @@ def main():
              'max_unpack_bytes': 20 * 1024**2, 'max_record_bytes': 65536, 'max_listing_bytes': 1024**2,
              'max_ready_records': 100, 'max_age_hours': 30, 'max_generations': 3,
              'server_user': pwd.getpwuid(os.geteuid()).pw_name, 'database_root': database_root,
+             'isolate_terminal_signals': True,
              'required_server_series': '11.8'}
         recovery = datetime.now(timezone.utc) - timedelta(hours=1)
         def prepared(failing=False):
@@ -186,6 +187,7 @@ def main():
         configured = d.configure(c)
         with d.running_candidate(configured, good['candidate']) as process:
             d.identity(configured, good['candidate'], process)
+            assert os.getsid(process.pid) == process.pid, 'Owned rehearsal server must have an independent terminal session'
             baseline_checksums = acceptance.table_checksums(configured, good['candidate'])
             assert d.query(configured, good['candidate'], 'SELECT value FROM orchids.witness;') == ['original orchid']
             assert d.query(configured, good['candidate'], 'SELECT value FROM EnergyMonitoring.witness;') == ['original energy']

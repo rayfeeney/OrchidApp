@@ -24,8 +24,13 @@ both services succeeded, Pi-hole/system MariaDB remained active, and root had
 All eight GitHub jobs passed on installed commit 729babe (run 43631970740).
 Current source adds a guarded manual takeover helper/runbook and a retained
 last-restore-success.json so quiet polls do not erase the last full run's summary.
-The separate writable browser rehearsal and installation of these additions are
-pending. Source/CI does not prove production cutover or collector migration.
+The separate writable browser rehearsal is in progress: owner installed the
+additions and confirmed browser save/reopen/photo checks passed. Double Ctrl+C
+interrupted finishing, leaving REHEARSAL_FAILED; diagnostics confirmed owned
+app/database stopped and system Pi-hole/MariaDB active. New source isolates
+takeover children from terminal Ctrl+C and permits exact-token finishing on that
+stopped clone without reimport or browser repetition. Finish/cleanup is pending.
+Source/CI does not prove production cutover or collector migration.
 Once that rehearsal and updated CI pass, record the evidence and merge draft
 PR #387. No live failover or destructive switch-back is required for backup
 acceptance. See the [current operator guide](user-guides/linux/nightly-standby-restore.md),

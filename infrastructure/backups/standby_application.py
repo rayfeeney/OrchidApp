@@ -149,7 +149,8 @@ def running_app(c, runtime, workspace, native, password, evidence, port=None):
         process = subprocess.Popen([str(runtime), str(workspace / 'publication/OrchidApp.Web.dll')],
                                    cwd=workspace / 'publication', env=env, stdin=subprocess.DEVNULL,
                                    stdout=log, stderr=log, user=c['server_uid'], group=c['server_gid'],
-                                   extra_groups=[], umask=0o077)
+                                   extra_groups=[], umask=0o077,
+                                   start_new_session=c.get('isolate_terminal_signals', False))
         try:
             for _ in range(120):
                 if owns_listener(process, port):

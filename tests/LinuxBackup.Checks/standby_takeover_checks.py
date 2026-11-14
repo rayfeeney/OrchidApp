@@ -38,10 +38,27 @@ class Takeover(unittest.TestCase):
                  patch.object(t.j.acceptance, 'table_checksums', return_value={'table': 'original'}), \
                  patch.object(t, 'checks', side_effect=app), \
                  patch.object(t.a, 'get', return_value=b'fixture'), patch.object(t.a, 'readiness'), \
+                 patch.object(t.signal, 'signal'), \
                  patch.object(t.time, 'sleep', side_effect=KeyboardInterrupt):
                 result = t.activate(c, 'fixture', True)
             self.assertEqual(result['result'], 'TAKEOVER_STOPPED_RESTORE_BLOCKED')
             self.assertTrue((root / 'active-takeover.json').exists())
+
+    def test_first_stop_ignores_further_ctrl_c_during_restart_cleanup(self):
+        with patch.object(t.time, 'sleep', side_effect=KeyboardInterrupt), \
+             patch.object(t.signal, 'signal') as handler:
+            t.wait_for_stop(MagicMock(poll=lambda: None))
+        handler.assert_called_once_with(t.signal.SIGINT, t.signal.SIG_IGN)
+
+    def test_finish_requires_exact_failed_token_before_any_server_start(self):
+        report = {'result': 'REHEARSAL_FAILED', 'snapshot': 'fixture', 'token': 'a' * 32}
+        with tempfile.TemporaryDirectory() as tmp, \
+             patch.object(t, 'selected', return_value=({}, Path(tmp), b'pointer')), \
+             patch.object(t.j, 'read', return_value=report), \
+             patch.object(t.d, 'running_candidate') as start:
+            with self.assertRaises(t.b.BackupError):
+                t.finish_rehearsal({'state_root': Path(tmp)}, 'fixture', 'b' * 32)
+            start.assert_not_called()
 
     def test_live_activation_requires_explicit_fencing_before_read_or_start(self):
         with patch.object(t, 'selected') as selected:

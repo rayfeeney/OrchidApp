@@ -2,6 +2,7 @@
 import argparse
 import json
 import os
+import secrets
 from pathlib import Path
 import shutil
 import signal
@@ -43,6 +44,79 @@ def selected(c, snapshot):
 def checks(c, native, workspace, password, evidence, runtime):
     """Return a running owned application only after readiness/home checks."""
     return a.running_app(c, runtime, workspace, native, password, evidence, port=5010)
+
+
+def wait_for_stop(process):
+    while process.poll() is None:
+        try:
+            time.sleep(1)
+        except KeyboardInterrupt:
+            signal.signal(signal.SIGINT, signal.SIG_IGN)
+            print('Finishing shutdown/restart checks; please wait.', flush=True)
+            return
+    raise b.BackupError('Owned application exited unexpectedly')
+
+
+def finish_rehearsal(c, snapshot, token):
+    """Explicitly finish a stopped interrupted browser clone, without reimport."""
+    value, source, pointer_before = selected(c, snapshot)
+    scratch = b.absolute(str(c['state_root'] / 'takeover-rehearsal'))
+    report_path = scratch / 'report.json'
+    report = j.read(report_path)
+    b.require(report.get('result') == 'REHEARSAL_FAILED' and report.get('snapshot') == snapshot
+              and report.get('token') == token and uuid.UUID(token).hex == token,
+              'Name the exact failed rehearsal token for this accepted snapshot')
+    generation = scratch / 'generations' / snapshot
+    state = j.read(generation / 'state.json')
+    native = report['candidate']
+    d.owned_target(c, native)
+    b.require(state.get('phase') == 'DATA_RESTORED_APPLICATION_PENDING'
+              and state['record'] == value['record'] and state['candidate'] == native
+              and native['owner_token'] == state['owner_token']
+              and Path(native['admin_defaults']) == generation / 'candidate-admin.cnf'
+              and native['target'] != value['candidate']['target'], 'Rehearsal database identity differs')
+    b.require(not Path(native['socket']).exists() and not Path(native['pid_file']).exists(), 'Rehearsal must be stopped before finish')
+    workspace = b.absolute(report['workspace'])
+    b.require(workspace == c['application_root'] / ('rehearsal-' + token), 'Rehearsal workspace differs')
+    archive = source / value['record']['archive']
+    b.require(b.digest(archive) == value['record']['sha256'], 'Accepted archive changed')
+    manifest = s.check_manifest(c, archive, value['record'])
+    prefix = 'sources/' + c['uploads_source'] + '/'
+    before_photos = {key[len(prefix):]: entry for key, entry in manifest['inventory'].items() if key.startswith(prefix)}
+    photos = b.inventory(workspace / 'uploads')
+    # User-written media may differ; the code/settings must still match exactly.
+    written_manifest = dict(manifest, inventory={prefix + key: entry for key, entry in photos.items()})
+    publication = a.p.verify(c['publication_archive'], value['web_dll_sha256'])
+    j.acceptance.verify_workspace(c, workspace, written_manifest, publication)
+    history = scratch / ('report-interrupted-' + token + '.json')
+    b.require(not history.exists(), 'Finish already attempted; review preserved evidence')
+    os.link(report_path, history)
+    try:
+        with d.running_candidate(c, native):
+            password = secrets.token_hex(32)
+            d.private_text(scratch / 'rehearsal-app-password', password + '\n')
+            d.query(c, native, "ALTER USER 'standby_probe'@'localhost' IDENTIFIED BY '" + password + "';")
+            for restart in range(2):
+                with checks(c, native, workspace, password, scratch / 'application.log', c['dotnet']) as (process, port):
+                    a.readiness(a.get(process, port, '/health/ready', 65536))
+                    a.get(process, port, '/', 4 * 1024**2)
+                    references = d.photo_paths(c, native)
+                    for relative in references:
+                        b.safe_path(relative)
+                        entry = photos[relative]
+                        a.get(process, port, '/uploads/' + quote(relative, safe='/'), entry['size'], entry['sha256'])
+            after = j.acceptance.table_checksums(c, native)
+        b.require((c['state_root'] / 'last-accepted.json').read_bytes() == pointer_before,
+                  'Accepted pointer changed while finishing rehearsal')
+        report.update(result='REHEARSAL_STOPPED', finished_at=n.now(), resumed_interrupted_token=token,
+                      business_data_changed=after != value['business_tables'], upload_files_changed=photos != before_photos,
+                      accepted_pointer_unchanged=True, application_starts=2, post_write_photo_files_checked=len(references))
+        n.atomic_json(report_path, report)
+        return report
+    except BaseException:
+        report.update(result='REHEARSAL_FAILED', finished_at=n.now())
+        n.atomic_json(report_path, report)
+        raise
 
 
 def release_unchanged(c, snapshot, primary):
@@ -139,12 +213,7 @@ def rehearse(c, snapshot):
                 a.readiness(a.get(process, port, '/health/ready', 65536))
                 a.get(process, port, '/', 4 * 1024**2)
                 print('REHEARSAL_READY: http://127.0.0.1:5010 — disposable copy; Ctrl+C after browser checks.', flush=True)
-                try:
-                    while process.poll() is None:
-                        time.sleep(1)
-                except KeyboardInterrupt:
-                    pass
-                b.require(process.poll() is None, 'Rehearsal application exited unexpectedly')
+                wait_for_stop(process)
             after = j.acceptance.table_checksums(c, native)
             photos_after = b.inventory(workspace / 'uploads')
             # Restart after the owner's writes and verify every active media byte.
@@ -195,23 +264,19 @@ def activate(c, snapshot, fenced):
                     generation / 'takeover.log', c['dotnet']) as (process, port):
             a.readiness(a.get(process, port, '/health/ready', 65536))
             print('TAKEOVER_READY: http://127.0.0.1:5010 — keep this session running. Ctrl+C stops it; restore stays blocked.', flush=True)
-            try:
-                while process.poll() is None:
-                    time.sleep(1)
-            except KeyboardInterrupt:
-                pass
-            b.require(process.poll() is None, 'Activated application exited unexpectedly')
+            wait_for_stop(process)
     return {'result': 'TAKEOVER_STOPPED_RESTORE_BLOCKED', 'snapshot': snapshot}
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('operation', choices=('rehearse', 'activate', 'release-unchanged', 'cleanup-rehearsal'))
+    parser.add_argument('operation', choices=('rehearse', 'finish-rehearsal', 'activate', 'release-unchanged', 'cleanup-rehearsal'))
     parser.add_argument('--config', required=True)
     parser.add_argument('--email-config', required=True)
     parser.add_argument('--snapshot', required=True)
     parser.add_argument('--pi1-fenced', action='store_true')
     parser.add_argument('--pi1-primary', action='store_true')
+    parser.add_argument('--interrupted-token')
     args = parser.parse_args()
     os.umask(0o077)
     def interrupted(*_):
@@ -223,12 +288,17 @@ def main():
         b.require(sys.platform.startswith('linux') and os.geteuid() == 0, 'Run takeover commands as root on Pi 2')
         c, _ = j.configure(args.config, args.email_config)
         c = d.configure(c)
+        c['isolate_terminal_signals'] = True
         for path in (c['dotnet'], *c['dotnet'].parents):
             info = path.stat()
             b.require(info.st_uid == 0 and not info.st_mode & 0o022, 'Runtime paths must remain root owned and protected')
         with b.operation_lock(c['state_root']):
             if args.operation == 'rehearse':
                 result = rehearse(c, args.snapshot)
+            elif args.operation == 'finish-rehearsal':
+                b.require(args.interrupted_token, 'Exact --interrupted-token required')
+                signal.signal(signal.SIGINT, signal.SIG_IGN)
+                result = finish_rehearsal(c, args.snapshot, args.interrupted_token)
             elif args.operation == 'activate':
                 result = activate(c, args.snapshot, args.pi1_fenced)
             elif args.operation == 'release-unchanged':

@@ -167,7 +167,8 @@ def running_candidate(c, native):
     log_fd = os.open(Path(native['admin_defaults']).parent / 'candidate-start.log',
                      os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
     log = os.fdopen(log_fd, 'ab')
-    process = subprocess.Popen(args, stdin=subprocess.DEVNULL, stdout=log, stderr=log)
+    process = subprocess.Popen(args, stdin=subprocess.DEVNULL, stdout=log, stderr=log,
+                               start_new_session=c.get('isolate_terminal_signals', False))
     try:
         # No SQL writes before the exact owned server identifies itself.
         for _ in range(60):
