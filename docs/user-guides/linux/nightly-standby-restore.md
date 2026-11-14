@@ -5,14 +5,71 @@ Status: discovery/staging and candidate database-restore source exist in
 disposable application rehearsal. Owner-run actual Pi 2 readiness/home/all 756
 photo hashes/restart checks now pass, including the fresh 14 November backup.
 Owner has now accepted that stopped standby, with exit 0 and 756 files checked.
-Manual reporting source is available; installed mail delivery, coordinated
-retention/reporting and scheduling remain pending. Existing Block 1 code validates the
+Manual test/success/labelled failure email receipt at Gmail is confirmed and
+freshness returned CURRENT. Coordinated restore/retention and inactive unit
+templates now exist; installed full-cycle/scheduled acceptance remain pending.
+Existing Block 1 code validates the
 multi-database archive but cannot orchestrate a standby restore. This page specifies
 the repeatable process and acceptance gates. See [completed preparation and
 exact archive validation](../../maintenance/pi2-standby-preparation.md) and the
 [Block 1 source/handoff contract](nightly-multi-database-backup.md).
 
-## Pi 2 email reporting — source available, installed delivery pending
+## Coordinated refresh and retention — source available, installed cycle pending
+
+`standby_job.py refresh --config /etc/orchidapp-standby/standby.json
+--email-config /etc/orchidapp-standby/email.json` runs under the existing restore
+lock. It discovers the newest valid completed backup, prepares and restores a new
+generation, checks the matching application twice, accepts it stopped, applies
+retention, then reports success. No-new refresh does no SQL import, but can recover
+a missed accepted-success email. A failed/partial existing generation is not
+silently resumed; inspect its private state before an explicit recovery decision.
+
+The private restore JSON additionally needs `publication_archive`, `dotnet`,
+`application_root` and `view_definer_policy`, as shown in `standby.example.json`.
+Keep the current collection, databases and private rclone paths. Set
+`max_generations` to 5 (also the coordinator minimum): this allows two accepted
+sets, retained diagnostic evidence and a new attempt. It is a capacity stop, not
+permission to erase failed attempts. Write settings atomically with mode 600.
+If a later backup's DLL fingerprint changes, provision a separately verified
+matching publication before refresh can succeed. There is no automatic software
+download/update or source migration during restore.
+
+After acceptance, retention keeps the current and previous accepted generations.
+Only older accepted sets with matching private ownership records, exactly one
+successful rehearsal, owned stopped database paths and the exact app workspace
+can be deleted. All paths are checked before deletion, and no protected current
+or previous path may overlap them. Unknown/unaccepted/failed/manual-retry evidence
+is retained. A cleanup warning keeps acceptance and queues RETENTION WARNING;
+inspect retained state rather than relaxing the ownership checks. `retention`
+performs this same check without restoring or touching OneDrive. Interrupted
+partial cleanup requires operator review; it never rolls back the accepted pointer.
+
+Failures before acceptance preserve the previous accepted standby and report
+FAILED with a short phase. An error after the atomic acceptance commit reports
+accepted/report-pending rather than falsely reporting a failed restore. SMTP
+failure leaves a durable outbox and exit 2. Exit 1 is a restore/setup failure;
+exit 0 is successful restore or no-new. Private `restore-run.json` records the
+latest phase/result; prior generation evidence and acceptance are separate.
+`test-failure` on this coordinator exercises its actual failure handler before
+cloud/SQL work and must return 1 with an actual FAILED email, preserving the
+accepted pointer. Unlike the labelled email test, it tests coordinator handling;
+an actual mid-import failure remains separately covered by the native fixture.
+
+Unit templates `orchidapp-standby.service/.timer` check hourly at :15 using the
+host timezone (Europe/London here), with Persistent=true and a two-hour timeout.
+`orchidapp-standby-monitor.service/.timer` independently checks freshness/retries
+mail every 15 minutes, starting five minutes after boot. Both are root oneshots
+with private umask; they do not activate the standby app, collectors or events.
+An unchanged cloud snapshot is quiet and does not resend success. Timer
+installation/enabling follows actual manual new-backup success/failure acceptance,
+systemd validation and private logrotate installation. Keep the first scheduled
+full restore result/email as evidence before calling Block 2 complete.
+
+There is no automatic takeover. The accepted database and app remain stopped,
+ready for a separately reviewed activation. The independently restored normal
+system MariaDB and Pi-hole are not replaced by these candidate processes.
+
+## Pi 2 email reporting — installed manual delivery passed
 
 `standby_reporting.py` reuses Block 1's SMTP TLS/outbox retry code without changing
 Pi 1. Settings are a separate `/etc/orchidapp-standby/email.json` mode 600 root
@@ -53,9 +110,9 @@ CLI exit 0 means normal SMTP acceptance/current status; exit 1 means overdue or
 an operation error; exit 2 means mail remains pending. The test-failure message
 returns 0 when sent because this is a delivery test, not a failed restore run.
 
-These commands do not enable timers. Actual successful and failed restore
-notifications, retention and automatic freshness/restore scheduling still require
-coordinator integration and owner-run acceptance before Block 2 is complete.
+These commands do not enable timers. The coordinator now uses this reporting API;
+actual coordinated new-backup success/failure, retention and scheduled-cycle
+acceptance are still required before Block 2 is complete.
 
 ## Accept an already successful rehearsal — owner validation passed
 

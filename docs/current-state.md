@@ -2,6 +2,18 @@
 
 ## Pi 2 Block 2 progress — reconciled 14 November 2026
 
+Owner confirmed actual Gmail receipt of Pi 2 TEST EMAIL, accepted SUCCESS and
+TEST FAILED messages; freshness returned CURRENT. These prove manual reporting
+delivery, not a coordinator restore-failure test.
+
+`standby_job.py` now coordinates discovery, preparation, isolated data/application
+checks, acceptance, retention and reporting. Hourly refresh and independent
+15-minute monitor unit templates exist but are not installed/enabled. Retention
+keeps the current/previous accepted generations and only removes earlier accepted
+owned stopped candidates/workspaces; failed/unknown evidence is retained. Actual
+coordinator new-backup success/failure, retention and scheduled-cycle acceptance
+remain pending. Installed standby and Pi-hole/system MariaDB remain unchanged.
+
 Owner installed the acceptance helper and received STANDBY_ACCEPTED_STOPPED,
 exit 0, for `orchidset-20261114T020011Z-cc45392701914166848dab27a853d65a`.
 All 756 photo/thumbnail files were checked; services_started was false. Pi 2 now

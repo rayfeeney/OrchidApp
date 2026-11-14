@@ -94,7 +94,7 @@ def report_success(c):
                  + '\nDatabases: ' + ', '.join(record['databases'])
                  + '\nPhotographs/thumbnails checked: ' + str(value['photo_files_checked'])
                  + '\nApplication starts checked: ' + str(value['application_starts'])
-                 + '\nNo collectors, application services or schedules enabled.\n')
+                 + '\nStandby application and collectors remain stopped; restore/monitor timers may run.\n')
     return {'result': 'SUCCESS_REPORT_QUEUED_OR_PREVIOUSLY_REPORTED', 'snapshot': record['snapshot']}
 
 

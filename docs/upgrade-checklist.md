@@ -2,6 +2,26 @@
 
 ## Pi 2 Block 2 — application checks passed, acceptance/reporting pending
 
+- [x] Owner received manual Pi 2 TEST EMAIL, accepted SUCCESS and TEST FAILED
+  messages at Gmail; monitor returned CURRENT. A labelled failure-email test is
+  not yet the coordinator failure-path acceptance.
+- [ ] Deploy `standby_job.py` with all compatible packaged helpers. Add
+  publication_archive/dotnet/application_root/view_definer_policy and raise
+  max_generations to 5 in the private restore JSON using atomic mode-600 writes.
+  Existing rclone/collection/database settings and email credentials stay intact.
+- [ ] Run coordinator no-new check, explicit test-failure (expect exit 1 and
+  actual FAILED email), then a new-source-backup full restore (expect new accepted
+  point and SUCCESS email). Confirm previous pointer survives failure and Pi-hole
+  and system MariaDB stay active. Verify repeat refresh never reimports.
+- [ ] Retention keeps two accepted points. Review its reported removals on a
+  disposable fixture and later actual third accepted point; failed/unknown manual
+  rehearsal evidence is never automatic cleanup. Do not delete it blindly.
+- [ ] Validate four systemd units and logrotate; install/enable timers only after
+  manual full-cycle acceptance. Refresh hourly at :15 local time; monitor every
+  15 minutes, 30-hour source-point age. Verify first scheduled full cycle and
+  monitor exit/status before completion/merge. No Windows, source-schema, Pi 1
+  schedule, Pi-hole or system MariaDB configuration change is required.
+
 - [x] Owner received STANDBY_ACCEPTED_STOPPED, exit 0, for the 14 November
   generation; 756 files checked and services_started false. Accepted standby
   remains stopped. No restore or collector timers are enabled.

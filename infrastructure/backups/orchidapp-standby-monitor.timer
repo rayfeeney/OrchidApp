@@ -1,0 +1,10 @@
+[Unit]
+Description=Check Pi 2 recovery freshness every fifteen minutes
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=15min
+Unit=orchidapp-standby-monitor.service
+
+[Install]
+WantedBy=timers.target

@@ -7,6 +7,14 @@ The full coordinator is incomplete. The owner runs all Pi commands; the agent ha
 not connected to a Pi.
 See the [Block 2 implementation contract](../user-guides/linux/nightly-standby-restore.md).
 
+## Installed manual reporting — owner confirmed
+
+GMX-to-Gmail TEST EMAIL, the accepted restore SUCCESS and TEST FAILED messages
+arrived. Monitor returned CURRENT. SMTP credentials were entered locally and are
+not in the repository. The accepted generation remains stopped.
+The coordinator, retention and timer templates are now available as source;
+their actual new-backup/failure/scheduled acceptance is still pending.
+
 ## First accepted stopped standby — owner confirmed
 
 The acceptance helper returned STANDBY_ACCEPTED_STOPPED and exit 0 for

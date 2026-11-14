@@ -1,0 +1,10 @@
+[Unit]
+Description=Check OneDrive hourly for a completed Pi 1 backup
+
+[Timer]
+OnCalendar=*-*-* *:15:00
+Persistent=true
+Unit=orchidapp-standby.service
+
+[Install]
+WantedBy=timers.target

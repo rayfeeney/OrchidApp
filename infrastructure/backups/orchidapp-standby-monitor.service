@@ -1,0 +1,13 @@
+[Unit]
+Description=Check Pi 2 accepted recovery freshness and retry emails
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+UMask=0077
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/usr/bin/python3 /usr/local/lib/orchidapp-standby/standby_reporting.py monitor --config /etc/orchidapp-standby/email.json
+TimeoutStartSec=10min
+TimeoutStopSec=30
