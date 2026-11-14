@@ -2,10 +2,21 @@
 
 ## Pi 2 Block 2 — application checks passed, acceptance/reporting pending
 
+- [x] Owner received STANDBY_ACCEPTED_STOPPED, exit 0, for the 14 November
+  generation; 756 files checked and services_started false. Accepted standby
+  remains stopped. No restore or collector timers are enabled.
+- [ ] Install/test `standby_reporting.py` and private `email.json`/`smtp-password`
+  on Pi 2. Confirm labelled test email and accepted-success email at Gmail,
+  inspect retry behavior and verify overdue reports against the source recovery
+  point. Password setup is local and hidden; do not paste the password in chat.
+  This manual reporting stage adds no migration, Windows action or active schedule.
+  Automatic coordinator/failure integration, retention and first scheduled cycle
+  remain pending; reporting code alone does not complete Block 2.
+
 - [x] Fresh 14 November backup passed prepare, database restore and application
   rehearsal without manual corrections: token `89f93ecb1e2b4f52b2f6e7a6a714058c`,
   756 photographs/thumbnails, two starts, readiness and timezone/view checks.
-- [ ] Deploy/test `standby_acceptance.py` on this successful candidate. It checks
+- [x] Deploy/test `standby_acceptance.py` on this successful candidate. It checks
   business-table counts/checksums against the separate original import, upload
   hashes and filtered publication before committing `last-accepted.json`.
   Both isolated databases must be stopped; only the rehearsal app account's

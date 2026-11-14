@@ -7,6 +7,17 @@ The full coordinator is incomplete. The owner runs all Pi commands; the agent ha
 not connected to a Pi.
 See the [Block 2 implementation contract](../user-guides/linux/nightly-standby-restore.md).
 
+## First accepted stopped standby — owner confirmed
+
+The acceptance helper returned STANDBY_ACCEPTED_STOPPED and exit 0 for
+`orchidset-20261114T020011Z-cc45392701914166848dab27a853d65a`.
+It checked 756 photographs/thumbnails and reported services_started false.
+This is the first actual accepted restore; it supersedes the earlier pending
+labels below. There is no Pi 2 automatic restore schedule yet.
+
+The next source package adds email reporting using the same GMX sender and Gmail
+recipient as Pi 1. Actual Pi 2 test/success email receipt is not yet confirmed.
+
 ## Fresh complete component cycle — 14 November, 18:31 UTC
 
 Snapshot `orchidset-20261114T020011Z-cc45392701914166848dab27a853d65a`
@@ -18,9 +29,9 @@ Timezone winter/summer verification, the explicit six-view mapping, all five
 readiness checks and 756 photo/thumbnail HTTP hashes passed over two starts.
 The final result was APPLICATION_PROBE_PASSED_ACCEPTANCE_PENDING, not accepted.
 
-Acceptance source now reuses this candidate after comparing it with the untouched
-import and verifying the publication/uploads. Its installed result is pending;
-there is no restore email, automatic retention or Pi 2 schedule yet.
+Acceptance reused this candidate after comparing it with the untouched import
+and verifying the publication/uploads; the owner-confirmed result is recorded
+above. There is no restore email, automatic retention or Pi 2 schedule yet.
 
 ## Owner-run application checks — 14 November
 

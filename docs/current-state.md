@@ -2,19 +2,30 @@
 
 ## Pi 2 Block 2 progress — reconciled 14 November 2026
 
+Owner installed the acceptance helper and received STANDBY_ACCEPTED_STOPPED,
+exit 0, for `orchidset-20261114T020011Z-cc45392701914166848dab27a853d65a`.
+All 756 photo/thumbnail files were checked; services_started was false. Pi 2 now
+has an accepted stopped standby. This supersedes the pending acceptance below.
+
+`standby_reporting.py` adds manual accepted-success reporting, a clearly labelled
+test/failure-test message, durable email retry and recovery-point freshness
+monitoring. The email settings are separate private JSON; SMTP password is entered
+locally in the Pi terminal. Installed mail delivery, coordinator integration,
+retention and scheduling remain pending. No automatic restore schedule exists.
+
 Latest owner-run cycle: the 14 November 02:00 backup completed prepare,
 restore-data and probe-application without manual SQL corrections. Report token
 `89f93ecb1e2b4f52b2f6e7a6a714058c` passed at 18:31 UTC: both databases,
 timezone checks, six-view definer mapping, all five readiness checks and 756
-photo/thumbnail hashes across two application starts. No acceptance pointer or
-Pi 2 schedule exists yet.
+photo/thumbnail hashes across two application starts. Acceptance followed as
+recorded above; no Pi 2 schedule exists yet.
 
 `standby_acceptance.py` now adds stopped-candidate acceptance source. It reuses
 that successful rehearsal, verifies its business-table counts/checksums against
 the untouched import, verifies all uploads and the filtered publication, saves a
 new private application password and atomically records the accepted pointer.
-It neither starts a permanent service nor sends email. Installed acceptance,
-retention, reporting/monitoring and scheduled-cycle acceptance remain pending.
+It neither starts a permanent service nor sends email. Installed acceptance
+passed; retention, reporting/monitoring and scheduled-cycle acceptance remain pending.
 
 ### Earlier retained-candidate application evidence
 

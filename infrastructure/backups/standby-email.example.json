@@ -1,0 +1,13 @@
+{
+  "collection_id": "55b442ba-1ee1-455b-96ba-dcf978e43683",
+  "databases": ["orchids", "EnergyMonitoring"],
+  "state_root": "/var/lib/orchidapp-standby",
+  "smtp_password_file": "/etc/orchidapp-standby/smtp-password",
+  "max_age_hours": 30,
+  "email": {
+    "host": "mail.gmx.com",
+    "port": 465,
+    "sender": "orchidappdata@gmx.co.uk",
+    "recipient": "bloodandsand44@gmail.com"
+  }
+}

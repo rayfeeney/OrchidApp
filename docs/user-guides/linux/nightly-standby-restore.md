@@ -4,14 +4,60 @@ Status: discovery/staging and candidate database-restore source exist in
 `standby_restore.py` and `standby_database.py`; `standby_application.py` adds a
 disposable application rehearsal. Owner-run actual Pi 2 readiness/home/all 756
 photo hashes/restart checks now pass, including the fresh 14 November backup.
-Stopped-candidate acceptance source exists but installed acceptance is pending.
-Full coordinated retention/reporting and scheduling remain planned. Existing Block 1 code validates the
+Owner has now accepted that stopped standby, with exit 0 and 756 files checked.
+Manual reporting source is available; installed mail delivery, coordinated
+retention/reporting and scheduling remain pending. Existing Block 1 code validates the
 multi-database archive but cannot orchestrate a standby restore. This page specifies
 the repeatable process and acceptance gates. See [completed preparation and
 exact archive validation](../../maintenance/pi2-standby-preparation.md) and the
 [Block 1 source/handoff contract](nightly-multi-database-backup.md).
 
-## Accept an already successful rehearsal — source available, Pi validation pending
+## Pi 2 email reporting — source available, installed delivery pending
+
+`standby_reporting.py` reuses Block 1's SMTP TLS/outbox retry code without changing
+Pi 1. Settings are a separate `/etc/orchidapp-standby/email.json` mode 600 root
+file based on `standby-email.example.json`; this avoids editing the working
+restore configuration. Sender is `orchidappdata@gmx.co.uk`, recipient
+`bloodandsand44@gmail.com`, GMX TLS port 465. Configure the password locally:
+
+```bash
+sudo python3 /usr/local/lib/orchidapp-standby/standby_reporting.py \
+  configure-secret --config /etc/orchidapp-standby/email.json
+```
+
+The hidden prompt writes `/etc/orchidapp-standby/smtp-password` mode 600 root,
+refuses an existing file and changes no services, grants or schedules. Never put
+the password in chat, command history or the repository. Then run `test-email`
+using the same `--config` option and confirm actual receipt. SMTP_ACCEPTED means
+the server accepted the message; it does not prove inbox delivery.
+
+The `success` operation reads the actual `last-accepted.json` and refuses to send
+success without a recognised accepted record for this collection. It includes
+snapshot, recovery/acceptance times, database names and checked photo/start counts.
+Success is queued once per snapshot; repeating `success` retries pending delivery
+without duplicating the report. A crash between queue and dedup marker may cause
+a duplicate, but never marks an unqueued message as reported.
+
+`test-failure` sends a clearly labelled TEST FAILED message and does not simulate
+a restore failure or alter acceptance. The `failure(c, phase)` API queues a real
+FAILED report with a short phase name and no raw SQL/exception/secrets. Wiring it
+into the automatic restore coordinator remains pending.
+
+`monitor` checks the accepted source recovery point, not when mail was sent or
+acceptance performed. Missing acceptance or age greater than 30 hours queues
+OVERDUE at most once per UTC day; current acceptance queues no alert. Its own lock
+is separate from the restore lock. `retry-email` only retries the durable outbox;
+it never imports SQL or changes the accepted pointer. Delivery failures retain
+private messages for up to 12 attempts. Inspect exhausted messages explicitly.
+CLI exit 0 means normal SMTP acceptance/current status; exit 1 means overdue or
+an operation error; exit 2 means mail remains pending. The test-failure message
+returns 0 when sent because this is a delivery test, not a failed restore run.
+
+These commands do not enable timers. Actual successful and failed restore
+notifications, retention and automatic freshness/restore scheduling still require
+coordinator integration and owner-run acceptance before Block 2 is complete.
+
+## Accept an already successful rehearsal — owner validation passed
 
 `standby_acceptance.py` requires an exact generation with a successful two-start
 application report. It validates archive identity, uploads and the filtered
