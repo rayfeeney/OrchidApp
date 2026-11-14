@@ -74,6 +74,22 @@ A supported-major application upgrade is separate work.
 
 ### Explicit EnergyMonitoring definer rule and reviewed retry
 
+Candidate character defaults: the owned 11.8 server uses `--no-defaults`, so it
+does not inherit the system MariaDB's matched Pi 1 settings. It now explicitly
+starts with `character-set-server=utf8mb4`, `collation-server=utf8mb4_general_ci`
+and `character-set-collations=utf8mb4=utf8mb4_general_ci`. All three are queried
+and checked before allowing SQL. This preserves the reviewed source defaults for
+numeric-to-string expressions as well as new connections/databases; setting only
+collation_server does not set the character-set default mapping. It converts no
+tables/data and changes no system service configuration. See MariaDB's
+[character-set default mapping](https://mariadb.com/docs/server/reference/data-types/string-data-types/character-sets/setting-character-sets-and-collations).
+The target's later CHECK TABLE identified an actual UCA1400/general_ci conflict in
+SUBSTRING_INDEX/GROUP_CONCAT. Missing column metadata was a symptom of that invalid
+view, not proof that its original column names were wrong. The native fixture now
+creates source views explicitly through an utf8mb4 client and reproduces the mixed
+collation error under UCA defaults, then requires the same expression/view to work
+with source-compatible defaults. Existing query/column/definer safeguards remain.
+
 Owner-run rehearsal stopped before app launch because six EnergyMonitoring views
 name absent `root@192.168.7.153`. The opt-in `--view-definer-policy energy-six-v1`
 uses `standby_definers.py` only on a new disposable rehearsal clone. It requires

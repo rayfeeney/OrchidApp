@@ -2,6 +2,11 @@
 
 ## Pi 2 Block 2 — preparation complete, implementation pending
 
+- [ ] Deploy verified isolated-server utf8mb4/general_ci/default-map startup fix;
+  check the latest retained Enphase view read-only before another fresh clone.
+  System MariaDB, source tables/queries and EnergyMonitoring repository are unchanged.
+  The --no-defaults candidate must verify all three character defaults before SQL.
+
 - CI-only: the native hosted runner's two required timezone files are normalised
   to root-owned mode 644 and their four observed writable ancestor directories to
   755 for the fixture. Runtime ownership/write protections are

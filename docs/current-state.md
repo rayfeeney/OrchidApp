@@ -2,6 +2,15 @@
 
 ## Pi 2 Block 2 progress — reconciled 14 November 2026
 
+Latest installed probe failed after mapping: CHECK TABLE now establishes a real
+UCA1400/general_ci collation conflict in the Enphase aggregate, explaining missing
+column metadata. Source correction is limited to explicit utf8mb4/general_ci
+defaults (including character_set_collations) on the isolated --no-defaults server,
+with startup verification. Source fixture clients now explicitly use utf8mb4;
+native negative/positive SQL must reproduce the conflict and verify the fix before
+delivery. No table conversion, system configuration or EnergyMonitoring source
+change is planned. Actual Pi 2 verification/application acceptance remains pending.
+
 Owner's explicit-policy retry failed before ALTER: Enphase stored definition exists
 but missing source definer hides its column metadata. Both failed attempts remain
 retained. New correction uses only the reviewed 15-column Enphase contract plus

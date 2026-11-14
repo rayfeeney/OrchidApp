@@ -185,6 +185,18 @@ were already 755. CI now sets only those four observed directories to 755 before
 the two files are set to 644. It performs no recursive chmod and no Pi change.
 Runtime ancestor validation remains unchanged.
 
+After the corrected package passed 60 target tests and timezone prerequisites,
+the next target retry failed the post-mapping column check. Read-only diagnosis
+showed Enphase still had zero columns; CHECK TABLE identified an illegal mix of
+utf8mb4_uca1400_ai_ci and utf8mb4_general_ci in substring_index. The other five views
+returned expected columns. The owned server had --no-defaults and was not receiving
+the matched system-server settings. Source now adds only explicit source-compatible
+utf8mb4/general_ci server/default-map startup settings, checked before SQL. No table
+conversion or source view rewrite is added. Native source fixtures now explicitly
+use utf8mb4, with a real negative/positive collation regression. This is not yet
+deployed on Pi 2; the latest failed candidate remains available for read-only
+verification before another fresh-clone application rehearsal.
+
 Owner verified all package hashes and passed 23 staging, 10 data, 8 publication
 and 7 application-policy checks on Pi 2. Installed helpers root-owned and created
 the private application root. First invocation refused the user-owned mode-600

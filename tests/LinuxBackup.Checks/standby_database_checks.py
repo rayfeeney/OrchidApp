@@ -14,6 +14,16 @@ import standby_checks as fixtures
 
 
 class DatabasePolicy(unittest.TestCase):
+    def test_character_profile_requires_source_defaults_not_new_uca_defaults(self):
+        valid = 'utf8mb4\tutf8mb4_general_ci\tutf8mb4=utf8mb4_general_ci'
+        with patch.object(d, 'query', return_value=[valid]):
+            d.check_character_settings({}, {})
+        for response in ([], [valid, valid], ['utf8mb4\tutf8mb4_uca1400_ai_ci\tutf8mb4=utf8mb4_general_ci'],
+                         ['utf8mb4\tutf8mb4_general_ci\tutf8mb4=utf8mb4_uca1400_ai_ci']):
+            with patch.object(d, 'query', return_value=response):
+                with self.assertRaises(d.b.BackupError):
+                    d.check_character_settings({}, {})
+
     def setUp(self):
         self.fixture = fixtures.Standby('test_prepare_checks_and_stages_without_accepting_or_importing')
         self.fixture.setUp()

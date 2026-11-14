@@ -17,6 +17,17 @@ import uuid
 import standby_restore as s
 
 b, n = s.b, s.n
+CHARACTER_OPTIONS = ('--character-set-server=utf8mb4', '--collation-server=utf8mb4_general_ci',
+                     '--character-set-collations=utf8mb4=utf8mb4_general_ci')
+
+
+def check_character_settings(c, native):
+    rows = query(c, native, 'SELECT @@character_set_server,@@collation_server,@@character_set_collations;')
+    b.require(len(rows) == 1, 'Unexpected candidate character settings response')
+    values = rows[0].split('\t')
+    b.require(len(values) == 3 and values[:2] == ['utf8mb4', 'utf8mb4_general_ci']
+              and 'utf8mb4=utf8mb4_general_ci' in values[2].split(','),
+              'Candidate must use the reviewed utf8mb4/general_ci source defaults')
 
 
 def private_text(path, content):
@@ -150,6 +161,7 @@ def running_candidate(c, native):
             '--log-error=' + native['server_log'], '--skip-networking', '--skip-log-bin',
             '--skip-slave-start', '--event-scheduler=OFF', '--server-id=' + str(native['server_id']),
             '--innodb-buffer-pool-size=128M', '--max-connections=20']
+    args.extend(CHARACTER_OPTIONS)
     if os.geteuid() == 0:
         args.append('--user=' + c['server_user'])
     log_fd = os.open(Path(native['admin_defaults']).parent / 'candidate-start.log',
@@ -172,6 +184,7 @@ def running_candidate(c, native):
             time.sleep(0.5)
         else:
             raise b.BackupError('Timed out waiting for owned candidate socket')
+        check_character_settings(c, native)
         yield process
     finally:
         try:

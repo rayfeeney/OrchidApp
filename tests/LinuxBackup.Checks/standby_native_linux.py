@@ -50,6 +50,7 @@ def main():
     def source(sql):
         owned()
         return docker('exec', name, 'mariadb', '--no-defaults', '--user=root', '--password=' + password,
+                      '--default-character-set=utf8mb4',
                       '--batch', '--skip-column-names', '--execute=' + sql).decode().strip()
     created = False
     try:
@@ -67,7 +68,8 @@ def main():
             raise RuntimeError('Owned source server did not become ready')
         if not source('SELECT @@version;').startswith('10.11.14'):
             raise RuntimeError('Wrong source server series')
-        source("CREATE DATABASE orchids; CREATE DATABASE EnergyMonitoring; "
+        source("CREATE DATABASE orchids CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci; "
+               "CREATE DATABASE EnergyMonitoring CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci; "
                "CREATE TABLE orchids.witness(id INT PRIMARY KEY,value VARCHAR(40)) ENGINE=InnoDB; "
                "INSERT INTO orchids.witness VALUES(1,'original orchid'); "
                "CREATE TABLE orchids.plantphoto(plantId INT,fileName VARCHAR(100),thumbnailFileName VARCHAR(100),isActive INT) ENGINE=InnoDB; "
@@ -179,6 +181,21 @@ def main():
             assert 'MUST_NOT_BE_IMPORTED' not in d.query(configured, good['candidate'], 'SHOW DATABASES;')
             assert d.query(configured, good['candidate'], "SELECT COUNT(*) FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA='orchids';") == ['1']
             assert d.query(configured, good['candidate'], 'SELECT @@event_scheduler;') == ['OFF']
+            # Numeric GROUP_CONCAT + a legacy string literal is the actual
+            # source/11.8 default-collation conflict observed on the target.
+            aggregate = "SELECT SUBSTRING_INDEX(GROUP_CONCAT(BatterySocPct ORDER BY IntervalEndUtc DESC SEPARATOR ','),',',1) FROM EnergyMonitoring.EnphaseInterval;"
+            d.query(configured, good['candidate'], "SET GLOBAL collation_server='utf8mb4_uca1400_ai_ci'; "
+                    "SET GLOBAL character_set_collations='utf8mb4=utf8mb4_uca1400_ai_ci';")
+            try:
+                mixed = subprocess.run(d.client(configured, good['candidate']),
+                                       input=("SET NAMES utf8mb4 COLLATE utf8mb4_general_ci;" + aggregate).encode(),
+                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30)
+                assert mixed.returncode != 0 and b'Illegal mix of collations' in mixed.stderr
+            finally:
+                d.query(configured, good['candidate'], "SET GLOBAL collation_server='utf8mb4_general_ci'; "
+                        "SET GLOBAL character_set_collations='utf8mb4=utf8mb4_general_ci';")
+            d.check_character_settings(configured, good['candidate'])
+            assert d.query(configured, good['candidate'], aggregate) == ['75.00']
             # Prove target-only grants on the owned fixture, not a source account.
             try:
                 a.provision(configured, good['candidate'], process)
