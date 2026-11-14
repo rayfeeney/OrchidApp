@@ -2,21 +2,25 @@
 
 ## Pi 2 Block 2 — preparation complete, implementation pending
 
-- [ ] Candidate data-stage source must pass the new isolated 10.11.14-to-11.8 native
-  CI fixture before any production rehearsal. Provision an explicit non-root
-  candidate account/private database root; no system MariaDB endpoint is accepted.
+- [x] Native cross-version fixture and all eight hosted jobs passed on `14faccb`.
+  Owner-run packaged 23+10 tests, private non-login account/storage, discovery,
+  preparation and actual data restore passed on Pi 2 (25 orchids/10 EnergyMonitoring
+  base tables on 11.8.6). Source settings/writers stayed inactive; see [evidence](maintenance/pi2-standby-preparation.md).
   DATA_RESTORED_APPLICATION_PENDING is not application or standby acceptance.
+- [ ] Validate/deploy the matching-publication capture helper, transfer its private
+  verified output, provision target runtime/native dependencies and perform actual
+  application checks. Runtime identity alone is not installed acceptance.
 
-- [ ] Review phase 1 source/package and CI, then deploy only to a separate private
+- [x] Review phase 1 source/package and CI, then deploy only to a separate private
   staging root. `prepare` does not import SQL, accept a standby or send restore
-  success. Full database/app/acceptance/reporting implementation remains pending.
+  success. Full application/acceptance/reporting implementation remains pending.
 
 - [x] Owner-run clean baseline, single intended MariaDB service, rclone 1.73.0
   package checksum, private crypt config/listing, exact archive hash and full
   payload/photo inventory validation recorded in [Pi 2 evidence](maintenance/pi2-standby-preparation.md).
-- [ ] Implement/test/package [repeatable Block 2](user-guides/linux/nightly-standby-restore.md)
-  before database import/settings activation. Validate actual 10.11-to-11.8 logical
-  restore, exact app/runtime compatibility, target-only accounts/definers/settings,
+- [ ] Complete [repeatable Block 2](user-guides/linux/nightly-standby-restore.md)
+  before settings activation. Actual isolated 10.11-to-11.8 logical import passed;
+  validate exact app/runtime compatibility, target-only accounts/definers/settings,
   pristine acceptance and preservation of previous working generations.
 - [ ] Verify reporting, overdue checks, interruption/reboot recovery, permissions,
   Pi-hole health, disk headroom and first scheduled refresh. No Pi 2 schedule is

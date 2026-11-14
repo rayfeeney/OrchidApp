@@ -1,9 +1,9 @@
 # Pi 2 Block 2 preparation and archive validation — 13 November 2026
 
-Status: preparation/validation only. No application database import, source settings
-activation, acceptance of a working standby or restore schedule has been performed
-in this preparation sequence. The repeatable Block 2 coordinator is not yet
-implemented. The owner runs all Pi commands; the agent has not connected to a Pi.
+Status reconciled 14 November: preparation and isolated data restore passed; source
+settings activation, working application acceptance and scheduling remain pending.
+The full coordinator is incomplete. The owner runs all Pi commands; the agent has
+not connected to a Pi.
 See the [Block 2 implementation contract](../user-guides/linux/nightly-standby-restore.md).
 
 Subsequent phase 1 development adds `standby_restore.py`, an example config,
@@ -108,7 +108,44 @@ collection ID, database list and 20 GiB unpack limit. It printed:
 snapshot identity above. This checks each archived payload's inventory/hash,
 archive member safety, nonempty database/account payloads and required photo paths.
 It is not an SQL import, application test or proof of version compatibility.
-The full archive has not been extracted or its captured settings activated here.
+At this initial check, the archive had not been extracted or its settings activated.
+The subsequent packaged rehearsal is recorded below.
+
+## Installed packaged preparation and data restore
+
+Transferred package SHA-256:
+`57be8456f002798f0f245080b89a94cb9a6b004153d6707fd2467b7daa81bd61`.
+All internal file hashes passed, as did 23 staging/local-crypt checks and 10
+candidate policy checks on Pi 2. Four modules were installed root-owned under
+`/usr/local/lib/orchidapp-standby`. The new `orchidstandby` system account has no
+login shell. `/var/lib/orchidapp-standby` is root:root mode 700;
+`/var/lib/orchidapp-standby-db` is orchidstandby:orchidstandby mode 700. The private
+target JSON is `/etc/orchidapp-standby/standby.json`.
+
+Discovery selected the exact 17:07:58 snapshot above. `prepare` returned zero and
+PREPARED_RESTORE_PENDING, downloading, checking and privately extracting it under
+the state root's `generations/<snapshot>` directory. Source settings stayed inert.
+`restore-data` returned zero and DATA_RESTORED_APPLICATION_PENDING on
+`11.8.6-MariaDB-0+deb13u1 from Debian`. Base-table counts: orchids=25,
+EnergyMonitoring=10. Accepted state was unchanged.
+
+The command checked its own socket/datadir/server identity before SQL, excluded
+accounts.sql, compared restored photo references/files and stopped its own child
+before successful return. Independent post-run process/Pi-hole inspection has not
+been supplied; no command targeted the normal service or Pi-hole. No source
+settings/writers or matching publication/runtime have been activated. Do not retry
+the data import into this populated generation; its state machine refuses reuse.
+
+## Matching publication helper — source prepared 14 November
+
+Pi 1's deployed DLL matches the backup; both runtime families are 8.0.23 as recorded
+above. New `standby_publication.py` source checks source ARM64/.NET 8 metadata,
+expected DLL hash, source/copy inventories, space and complete archive integrity,
+then publishes a private matching software archive without overwriting an input
+or modifying source files/services. Eight local synthetic tests passed after this
+PC granted temporary-hard-link access; the restricted attempt was not passing.
+Actual capture/transfer and new Linux hosted checks remain pending. No live
+publication, configuration, photographs, SQL or credentials are committed.
 
 ## Pending work and acceptance
 
@@ -120,15 +157,17 @@ This is not a real installed application restore. In that run, all 23 staging/
 real local-crypt tests passed. Ten data-policy adapter tests passed locally but
 failed on Linux because the adapter mocked the UID inconsistently with actual
 file ownership. The test correction uses the real Linux UID; production permission
-checks and candidate code are unchanged. Its hosted rerun remains pending.
+checks and candidate code are unchanged. Corrected head `14faccb` passed all eight
+jobs in run 43515352028. Publication tests are a new change needing their own result.
 
-1. Implement/test repository-owned discovery, bounded download, full validation,
-   private staging and durable interruption state, with no cloud write operations.
+1. Discovery, bounded download, validation, staging and guarded candidate data
+   import have source/CI and installed evidence above. Reboot/interruption
+   acceptance on Pi 2 remains pending.
 2. Provision the matching application/runtime and explicit target-only credentials,
    settings, permissions and definer/grant strategy; never activate captured Pi 1
    endpoints, jobs or accounts.sql automatically.
-3. Restore both databases on a newly owned isolated MariaDB 11.8 candidate and
-   prove exact endpoint/data-directory identity before SQL. Preserve any future
+3. Initial restore of both databases on the owned isolated 11.8 candidate passed.
+   Preserve any future
    accepted standby until replacement is accepted; disposable initial state does
    not justify destructive refresh of a later working standby.
 4. Verify database objects/data, photo bytes, readiness and application workflows;

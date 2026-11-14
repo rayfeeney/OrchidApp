@@ -47,6 +47,8 @@ Candidate data-stage policy runs with `python tests/LinuxBackup.Checks/standby_d
 The separate `standby_native_linux.py` needs a disposable non-root Linux runner,
 Docker and MariaDB 11.8 tools; it creates its own network-none 10.11.14 source and
 accepts no live endpoint. Data-stage success is still application acceptance pending.
+Matching-publication checks run with `python tests/LinuxBackup.Checks/standby_publication_checks.py`;
+all DLL/settings fixtures are synthetic and no application is executed.
 The optional Windows-native `nightly_native_windows.py` creates its own network-disabled,
 pipe-only MariaDB fixture and retains its files under ignored feature-check artifacts;
 it accepts no live endpoint. Read the [operating contract and evidence](docs/user-guides/linux/nightly-multi-database-backup.md).

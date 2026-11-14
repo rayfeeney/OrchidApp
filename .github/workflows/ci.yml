@@ -148,6 +148,8 @@ jobs:
         run: python3 tests/LinuxBackup.Checks/standby_checks.py
       - name: Check guarded candidate database policy
         run: python3 tests/LinuxBackup.Checks/standby_database_checks.py
+      - name: Check matching publication capture and validation
+        run: python3 tests/LinuxBackup.Checks/standby_publication_checks.py
       - name: Check paired snapshots and isolated recovery
         shell: pwsh
         env:

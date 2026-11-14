@@ -117,9 +117,47 @@ host data/logs remain for review; no SQL/credentials are uploaded as CI artifact
 Native run [43514710945](https://github.com/rayfeeney/OrchidApp/actions/runs/43514710945)
 passed on `7c090cb`, including both databases, views/routines/triggers/events-off,
 photos, accounts.sql exclusion, partial DDL/retry refusal and prior marker
-preservation. Adapter-policy fixture UID correction is separate and still needs
-its hosted rerun. The native result does not certify the full application or
-the actual Pi 1 archive on Pi 2.
+preservation. Corrected policy head `14faccb` passed all eight hosted jobs in run
+43515352028. The owner then ran the packaged data stage on Pi 2's actual archive
+successfully (25 orchids/10 EnergyMonitoring base tables). These results do not
+certify full application behavior; see the updated installed evidence.
+
+## Capture the matching application publication
+
+The data backup intentionally excludes application binaries. The repository helper
+`standby_publication.py` captures the complete source publication only when its
+OrchidApp.Web.dll matches the backup's expected hash. It requires source ARM64 and
+.NET 8 metadata, checks copied/source inventories, verifies the finished archive
+and publishes it atomically without overwriting an existing file. Symlinks and
+special files are rejected. Destination parent must be a private root/operator-owned
+directory separate from source. Required free space is three times source bytes
+plus 1 GiB; concurrent disk users can still cause failure. Source files and running
+services are never changed. Ordinary failure removes only its temporary staging.
+
+Install this single helper beside existing `orchid_backup.py` and `nightly_backup.py`
+on Pi 1; standby database code is not required there. Run as the operator if all
+source files are readable. Example after reviewed deployment:
+
+```
+python3 /usr/local/lib/orchidapp-backup/standby_publication.py capture \
+  --source /opt/orchidapp/publish \
+  --destination /home/raymond-23/orchidapp-publication-transfer/publication.tar.gz \
+  --expected-web-sha256 EXPECTED_DLL_SHA256_FROM_BACKUP
+```
+
+The output reports archive size/SHA-256 and DLL identity. Keep its private mode-600
+output, transfer over SSH, verify whole-file hash and run the helper's
+`verify --archive EXACT_FILE --expected-web-sha256 EXACT_HASH` on Pi 2. This does
+not extract/activate captured settings, install a runtime or start the application.
+The archive may contain secret app settings: never commit it, attach it to a PR
+or upload it as CI diagnostics. Preserve software with its matching recovery point;
+do not infer source Git identity from a DLL fingerprint.
+
+Eight synthetic cases in `tests/LinuxBackup.Checks/standby_publication_checks.py`
+cover capture/verify, hidden/empty files, source mutation, no-overwrite, wrong DLL/
+architecture, low space and unsafe members. No real publication is used. Actual
+capture and this helper's new Linux CI acceptance remain pending until observed;
+the older data-stage CI is not relabelled as publication validation.
 
 ## Complete Block 2 phases and durable states
 

@@ -1,6 +1,6 @@
 # Current state and fixed v1.4.0 work list
 
-## Pi 2 Block 2 preparation — 13 November 2026
+## Pi 2 Block 2 progress — reconciled 14 November 2026
 
 Phase 1 source now exists in `infrastructure/backups/standby_restore.py`: bounded
 read-only cloud discovery/download, strict record/hash/archive validation, private
@@ -19,8 +19,15 @@ events-off, photos, accounts.sql exclusion, partial-DDL marker/retry refusal and
 prior-state preservation. All 23 staging/crypt tests also passed on Linux. The
 separate adapter-policy job initially failed because its Windows API adapter
 substituted a fake UID on Linux; the correction retains the actual UID and does
-not weaken protected-file checks. Its rerun is pending. Nothing in this stage is deployed
-to Pi 2; application/definer/grant checks, acceptance/promotion and reporting remain
+not weaken protected-file checks. All eight hosted jobs passed on `14faccb`
+(run 43515352028), including corrected policy and real cross-version checks.
+The owner then installed the candidate package, ran 23 staging/crypt and 10 policy
+tests on Pi 2 (all passed), provisioned private non-login account/storage, and
+completed discovery, preparation and the first actual archive data restore.
+Result: DATA_RESTORED_APPLICATION_PENDING on 11.8.6, 25 orchids and 10
+EnergyMonitoring base tables, accepted state unchanged. Source accounts/settings
+and scheduled writers were not activated. Application/definer/grant checks,
+acceptance/promotion and reporting remain
 pending. Pi 1's current DLL was confirmed to match the archive fingerprint, with
 both .NET and ASP.NET runtimes 8.0.23. Target runtime/application installation still
 needs review and installed testing.
@@ -37,11 +44,14 @@ hash and full archive inventory/required-photo validation passed on Pi 2 for the
 See [preparation evidence](maintenance/pi2-standby-preparation.md) and the [Block 2
 implementation contract](user-guides/linux/nightly-standby-restore.md).
 
-These are preparation checks, not a completed restore. No application database
-import, captured settings activation, application acceptance, Pi 2 restore/email
-automation or schedule has been performed here. MariaDB 10.11-to-11.8 compatibility,
-matching application binaries/runtime, target credentials/permissions/definers and
-the repeatable coordinator/tests remain pending. Pi 1 and Pi-hole stay outside
+Preparation and isolated data import passed, not complete application recovery.
+Captured settings activation, application acceptance, Pi 2 restore/email automation
+and scheduling remain pending. The actual archive imported on 11.8.6; application/
+runtime compatibility and target runtime grants/definers still need validation.
+New `standby_publication.py` source captures matching ARM64 .NET 8 publication
+bytes with private verified output and no source changes. Eight local synthetic
+checks passed; its new hosted tests and actual capture remain pending.
+Pi 1 and Pi-hole stay outside
 restore scope. Work-list items 9/10 remain open.
 
 ## Pi 1 multi-database nightly backup installed — 13 November 2026
