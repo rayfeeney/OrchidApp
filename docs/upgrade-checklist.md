@@ -2,6 +2,14 @@
 
 ## Pi 2 Block 2 — preparation complete, implementation pending
 
+- [x] Owner installed rehearsal package and passed 48 target checks; actual attempt
+  stopped before app launch on six absent EnergyMonitoring view definers. Original
+  restore retained. Root-owned private publication path is now required in commands.
+- [ ] Validate/deploy opt-in energy-six-v1 locked SELECT-only definer mapping and
+  exact-token fresh-clone retry. Retain failed reports/workspaces/databases and
+  verify all six view definitions/attributes remain unchanged. No source migration,
+  source account import, Pi 1 change or Windows deployment action is required.
+
 - [x] Native cross-version fixture and all eight hosted jobs passed on `14faccb`.
   Owner-run packaged 23+10 tests, private non-login account/storage, discovery,
   preparation and actual data restore passed on Pi 2 (25 orchids/10 EnergyMonitoring

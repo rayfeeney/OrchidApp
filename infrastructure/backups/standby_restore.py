@@ -292,6 +292,8 @@ def main():
     parser.add_argument('--publication')
     parser.add_argument('--dotnet')
     parser.add_argument('--application-root')
+    parser.add_argument('--view-definer-policy', choices=('energy-six-v1',))
+    parser.add_argument('--retry-failed-probe')
     args = parser.parse_args()
     os.umask(0o077)
     def interrupted(*_):
@@ -306,7 +308,8 @@ def main():
                 b.require(args.generation and args.publication and args.dotnet and args.application_root,
                           'Use exact --generation, --publication, --dotnet and --application-root')
                 import standby_application
-                result = standby_application.probe(c, args.generation, args.publication, args.dotnet, args.application_root)
+                result = standby_application.probe(c, args.generation, args.publication, args.dotnet, args.application_root,
+                                                   args.view_definer_policy, args.retry_failed_probe)
             elif args.operation == 'restore-data':
                 b.require(args.generation, 'Use an exact --generation identity')
                 import standby_database

@@ -168,9 +168,14 @@ def running_app(c, runtime, workspace, native, password, evidence):
                     raise b.BackupError('Owned application required forced shutdown')
 
 
-def provision(c, native, process):
+def provision(c, native, process, report=None):
     d.identity(c, native, process)
     database = c['photo_database']
+    if c.get('view_definer_policy'):
+        import standby_definers
+        mapping = standby_definers.apply(c, native, process, c['view_definer_policy'])
+        if report is not None:
+            report['view_definer_mapping'] = mapping
     # Fail on missing definers rather than silently rewriting restored objects.
     selected = ','.join("'" + name + "'" for name in c['databases'])
     rows = d.query(c, native, 'SELECT DISTINCT DEFINER FROM (SELECT DEFINER FROM information_schema.VIEWS '
@@ -185,8 +190,35 @@ def provision(c, native, process):
     return password
 
 
-def probe(config, snapshot, publication, runtime, app_root):
+def preserve_failed_report(path, retry_token, snapshot, archive_hash):
+    if not path.exists():
+        b.require(retry_token is None, 'No failed rehearsal matches the requested retry')
+        return None
+    b.require(retry_token is not None, 'Application rehearsal already attempted; inspect its evidence before retry')
+    b.protected_file(path)
+    previous = json.loads(path.read_text())
+    b.require(previous.get('result') == 'APPLICATION_PROBE_FAILED' and previous.get('token') == retry_token
+              and previous.get('snapshot') == snapshot and previous.get('archive_sha256') == archive_hash,
+              'Retry must name the exact failed attempt for this archive')
+    b.require(uuid.UUID(retry_token).hex == retry_token, 'Invalid retry token')
+    history = path.with_name('application-probe-failed-' + retry_token + '.json')
+    if history.exists():
+        b.protected_file(history)
+        b.require(history.read_bytes() == path.read_bytes(), 'Retry history differs; inspect retained evidence')
+    else:
+        # No-overwrite link retains the old report when atomic_json replaces path.
+        os.link(path, history)
+    b.require(len(list(path.parent.glob('application-probe-failed-*.json'))) <= 3,
+              'Rehearsal retry capacity reached; review retained candidates and space')
+    return previous
+
+
+def probe(config, snapshot, publication, runtime, app_root, view_definer_policy=None, retry_token=None):
     c = d.configure(config)
+    if view_definer_policy is not None:
+        import standby_definers
+        b.require(view_definer_policy == standby_definers.POLICY, 'Unknown view definer policy')
+        c['view_definer_policy'] = view_definer_policy
     b.require(os.geteuid() == 0 and platform.machine().lower() in ('aarch64', 'arm64'),
               'Installed application rehearsal requires root on the ARM64 target')
     b.require(n.NAME.fullmatch(snapshot), 'Use an exact restored snapshot identity')
@@ -222,13 +254,15 @@ def probe(config, snapshot, publication, runtime, app_root):
     size = sum(v.get('size', 0) for v in manifest['inventory'].values())
     size += sum(v.get('size', 0) for v in publication_manifest['inventory'].values())
     b.require(shutil.disk_usage(app_root).free >= 4 * size + c['reserve_bytes'], 'Insufficient application rehearsal space')
-    # One attempt per prepared input; retries require explicit evidence review.
+    # Retain failed evidence; an explicit token authorizes a NEW clone only.
     report_path = generation / 'application-probe.json'
-    b.require(not report_path.exists(), 'Application rehearsal already attempted; inspect its evidence before retry')
+    previous = preserve_failed_report(report_path, retry_token, snapshot, state['record']['sha256'])
     token = uuid.uuid4().hex
     report = {'result': 'APPLICATION_PROBE_PENDING', 'snapshot': snapshot, 'started_at': n.now(),
               'token': token, 'archive_sha256': state['record']['sha256'],
               'web_dll_sha256': expected, 'runtimes': versions.splitlines(), 'accepted_state_unchanged': True}
+    if previous is not None:
+        report['retry_of'] = previous['token']
     n.atomic_json(report_path, report)
     try:
         scratch = s.private_directory(generation / ('application-probe-' + token))
@@ -251,7 +285,7 @@ def probe(config, snapshot, publication, runtime, app_root):
             os.chown(path, c['server_uid'], c['server_gid'])
             path.chmod(0o700 if path.is_dir() else 0o600)
         with d.running_candidate(c, native) as server:
-            password = provision(c, native, server)
+            password = provision(c, native, server, report)
             for restart in range(2):
                 with running_app(c, runtime, workspace, native, password, scratch / 'application.log') as (process, port):
                     report['readiness'] = readiness(get(process, port, '/health/ready', 65536))

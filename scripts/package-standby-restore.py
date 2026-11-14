@@ -14,6 +14,7 @@ files = [
     'infrastructure/backups/standby_database.py',
     'infrastructure/backups/standby_publication.py',
     'infrastructure/backups/standby_application.py',
+    'infrastructure/backups/standby_definers.py',
     'infrastructure/backups/standby.example.json',
     'tests/LinuxBackup.Checks/standby_checks.py',
     'tests/LinuxBackup.Checks/standby_database_checks.py',

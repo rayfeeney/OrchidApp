@@ -2,6 +2,15 @@
 
 ## Pi 2 Block 2 progress — reconciled 14 November 2026
 
+Owner installed rehearsal revision 65d7b52 and passed all 48 target package checks.
+After correcting publication input ownership, the actual rehearsal failed safely
+before app launch: six EnergyMonitoring views name absent root@192.168.7.153;
+all orchids definers resolve. New `standby_definers.py` implements an explicitly
+selected six-view mapping to a locked SELECT-only local account, retaining queries
+and attributes. Exact failed-token retry preserves the old attempt and creates a
+new clone. Policy/retry tests and native view/grant checks precede redeployment;
+actual app/CRUD/standby acceptance remains pending.
+
 New source `standby_application.py` adds a separate SQL/uploads-clone application
 rehearsal: target-only limited SQL account/clean Production settings, missing-definer
 refusal, owned loopback listener, readiness/home/every photo hash and restart.
@@ -15,7 +24,7 @@ Owner-run publication capture/transfer/verification succeeded. Pi 2 now has priv
 .NET and ASP.NET 8.0.34 and libvips42t64 8.16.1-1+deb13u2; Pi-hole/system MariaDB
 remain active. .NET 8 is out of support; keep the mandated application framework
 for this rehearsal and track supported-major upgrade separately. The application
-probe has not run on Pi 2; see [current evidence](maintenance/pi2-standby-preparation.md).
+process has not launched successfully on Pi 2; see [current evidence](maintenance/pi2-standby-preparation.md).
 
 Phase 1 source now exists in `infrastructure/backups/standby_restore.py`: bounded
 read-only cloud discovery/download, strict record/hash/archive validation, private

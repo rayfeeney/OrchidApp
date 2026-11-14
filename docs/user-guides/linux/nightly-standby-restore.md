@@ -25,7 +25,8 @@ Production, monitoring disabled, only the cloned uploads and a fresh target-only
 `standby_probe@localhost` password over the exact private Unix socket. The account
 gets SELECT/INSERT/UPDATE/DELETE/EXECUTE only on the photo database; no global or
 system-database grants. Existing definers must resolve to accounts already present
-on the new candidate; missing definers fail for review, never auto-rewrite. This
+on the new candidate, except the exact opt-in mapping below. Missing definers
+otherwise fail; there is no general SQL rewriting. This
 check does not prove every routine/view works or provision EnergyMonitoring jobs.
 
 The application runs as the non-login candidate user with no supplementary groups.
@@ -50,7 +51,7 @@ Do not run the following operation until the packaged revision and CI are verifi
 sudo python3 /usr/local/lib/orchidapp-standby/standby_restore.py \
   probe-application --config /etc/orchidapp-standby/standby.json \
   --generation EXACT_SNAPSHOT \
-  --publication /home/raymond-23/orchidapp-publication.tar.gz \
+  --publication /var/backups/orchidapp-standby/publication.tar.gz \
   --dotnet /opt/orchidapp-standby/dotnet-8.0.34/dotnet \
   --application-root /var/lib/orchidapp-standby-apps
 ```
@@ -70,6 +71,43 @@ below). [.NET 8 reached end of support on 10 November 2026](https://dotnet.micro
 The project remains on .NET 8 for this recovery rehearsal; Debian 13 operation
 must be demonstrated on the target and is not a claim of current vendor support.
 A supported-major application upgrade is separate work.
+
+### Explicit EnergyMonitoring definer rule and reviewed retry
+
+Owner-run rehearsal stopped before app launch because six EnergyMonitoring views
+name absent `root@192.168.7.153`. The opt-in `--view-definer-policy energy-six-v1`
+uses `standby_definers.py` only on a new disposable rehearsal clone. It requires
+exactly these six names with that exact source definer: `vw_Tariff`,
+`vw_MonitoringDeviceLocation`, `vw_GoveeHourly`, `vw_EnphaseHourly`, `vw_TapoHourly`,
+`vw_WeatherHourly`. Missing names, changed source definers or additional views
+naming that source definer fail before writes. Other missing definers still fail.
+
+The rule creates fresh `standby_energy_views@localhost` with a random password,
+ACCOUNT LOCK and SELECT on EnergyMonitoring.* only; an existing account is refused.
+ALTER VIEW retains the server's stored SELECT, ordered columns, algorithm, security,
+check option and character settings. Post-change metadata must differ only in
+definer, and every mapped view must execute a representative SELECT. The private
+report records the mapping. No dump bytes, source accounts, Pi 1 database, original
+restored candidate or accepted standby are modified. This is target compatibility
+provisioning on a fresh clone, not a source migration.
+
+MariaDB documents [ALTER VIEW](https://mariadb.com/docs/server/server-usage/views/alter-view),
+[view metadata](https://mariadb.com/docs/server/server-usage/views/information-schema-views-table)
+and [account locking](https://mariadb.com/docs/server/security/user-account-management/account-locking).
+Native CI checks actual locked-owner view execution, metadata preservation,
+SELECT-only grants and default refusal without the explicit policy. Actual Pi 2
+mapping and application execution remain pending.
+
+An explicitly reviewed failed attempt can be retried with its exact report token
+as `--retry-failed-probe TOKEN`. The old report is preserved as
+`application-probe-failed-TOKEN.json`, and a NEW SQL/uploads clone is restored.
+No failed database/workspace is resumed or removed. Pending/successful attempts,
+wrong tokens, changed archive identities and more than three retained retries are
+refused. The normal backup freshness and free-space checks still apply.
+
+For root-run rehearsal, copy the transferred user-owned publication with
+`install -o root -g root -m 600` into the private root-owned backup directory and
+use the path above. Mode 600 alone does not satisfy root ownership validation.
 
 ## Boundaries
 

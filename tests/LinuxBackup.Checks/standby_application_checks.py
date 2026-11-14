@@ -13,14 +13,92 @@ import sys
 import tarfile
 import tempfile
 import time
+import uuid
 import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'infrastructure/backups'))
 import standby_application as a
+import standby_definers as f
 
 
 class Application(unittest.TestCase):
+    def view(self, name='vw_Tariff'):
+        return dict(name=name, definition="select `EnergyMonitoring`.`witness`.`value` AS `value`",
+                    definer=f.SOURCE, security='DEFINER', check='NONE', algorithm='UNDEFINED',
+                    charset='utf8mb4', collation='utf8mb4_general_ci')
+
+    def test_exact_definer_policy_preserves_query_and_locks_select_only_account(self):
+        before = [self.view(name) for name in sorted(f.VIEWS)]
+        after = [dict(view, definer=f.TARGET) for view in before]
+        with patch.object(f.d, 'identity'), patch.object(f, 'metadata', side_effect=[before, after]), \
+             patch.object(f.d, 'query', return_value=['76616c7565']) as query:
+            result = f.apply({'databases': ['EnergyMonitoring']}, {}, object(), f.POLICY)
+        sql = '\n'.join(call.args[2] for call in query.call_args_list)
+        self.assertIn('ACCOUNT LOCK', sql)
+        self.assertIn('GRANT SELECT ON `EnergyMonitoring`.*', sql)
+        self.assertNotIn('GRANT ALL', sql)
+        self.assertNotIn('IF NOT EXISTS', sql)
+        self.assertEqual(sql.count('ALTER ALGORITHM='), 6)
+        self.assertEqual(result['views'], sorted(f.VIEWS))
+
+    def test_policy_rejects_unreviewed_objects_and_source_definers_before_writes(self):
+        good = [self.view(name) for name in sorted(f.VIEWS)]
+        for values in (good[:-1], good + [self.view('unreviewed')],
+                       [dict(view, definer='other@localhost') for view in good]):
+            with patch.object(f.d, 'identity'), patch.object(f, 'metadata', return_value=values), \
+                 patch.object(f.d, 'query') as query:
+                with self.assertRaises(a.b.BackupError):
+                    f.apply({'databases': ['EnergyMonitoring']}, {}, object(), f.POLICY)
+                query.assert_not_called()
+
+    def test_policy_rejects_unknown_name_and_unsupported_view_attributes(self):
+        with self.assertRaises(a.b.BackupError):
+            f.apply({'databases': ['EnergyMonitoring']}, {}, object(), 'guess')
+        for value in (dict(self.view(), algorithm='unexpected'), dict(self.view(), charset='unsafe;SQL'),
+                      dict(self.view(), security='unexpected'), dict(self.view(), check='unexpected')):
+            with self.assertRaises(a.b.BackupError):
+                f.alter_statement(value, ['value'])
+        view = dict(self.view(), check='CASCADED', security='INVOKER')
+        sql = f.alter_statement(view, ['column`name'])
+        self.assertIn(view['definition'], sql)
+        self.assertIn('`column``name`', sql)
+        self.assertIn('SQL SECURITY INVOKER', sql)
+        self.assertTrue(sql.endswith('WITH CASCADED CHECK OPTION;'))
+
+    def test_policy_detects_unapproved_post_alter_changes(self):
+        before = [self.view(name) for name in sorted(f.VIEWS)]
+        after = [dict(view, definer=f.TARGET, definition='select 0') for view in before]
+        with patch.object(f.d, 'identity'), patch.object(f, 'metadata', side_effect=[before, after]), \
+             patch.object(f.d, 'query', return_value=['76616c7565']):
+            with self.assertRaises(a.b.BackupError):
+                f.apply({'databases': ['EnergyMonitoring']}, {}, object(), f.POLICY)
+
+    def test_retry_preserves_failed_report_and_refuses_wrong_or_successful_attempt(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / 'application-probe.json'
+            token = uuid.uuid4().hex
+            report = dict(result='APPLICATION_PROBE_FAILED', token=token, snapshot='fixture', archive_sha256='a' * 64)
+            a.n.atomic_json(path, report)
+            original = path.read_bytes()
+            for supplied in (None, uuid.uuid4().hex):
+                with self.assertRaises(a.b.BackupError):
+                    a.preserve_failed_report(path, supplied, 'fixture', 'a' * 64)
+            self.assertEqual(a.preserve_failed_report(path, token, 'fixture', 'a' * 64), report)
+            history = path.with_name('application-probe-failed-' + token + '.json')
+            self.assertEqual(history.read_bytes(), original)
+            a.n.atomic_json(path, dict(report, result='APPLICATION_PROBE_PASSED_ACCEPTANCE_PENDING'))
+            self.assertEqual(history.read_bytes(), original)
+            with self.assertRaises(a.b.BackupError):
+                a.preserve_failed_report(path, token, 'fixture', 'a' * 64)
+
+    def test_retry_without_failed_attempt_is_refused(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / 'absent'
+            self.assertIsNone(a.preserve_failed_report(path, None, 'fixture', 'a' * 64))
+            with self.assertRaises(a.b.BackupError):
+                a.preserve_failed_report(path, uuid.uuid4().hex, 'fixture', 'a' * 64)
+
     def test_software_identity_requires_unambiguous_backup_hash(self):
         expected = 'a' * 64
         self.assertEqual(a.expected_dll('OrchidApp.Web.dll SHA256=' + expected + '; energy captured'), expected)

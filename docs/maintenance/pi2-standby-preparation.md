@@ -136,6 +136,26 @@ been supplied; no command targeted the normal service or Pi-hole. No source
 settings/writers or matching publication/runtime have been activated. Do not retry
 the data import into this populated generation; its state machine refuses reuse.
 
+## First application rehearsal — blocked by view definers
+
+Owner verified all package hashes and passed 23 staging, 10 data, 8 publication
+and 7 application-policy checks on Pi 2. Installed helpers root-owned and created
+the private application root. First invocation refused the user-owned mode-600
+publication. Root-owned mode-600 copy
+`/var/backups/orchidapp-standby/publication.tar.gz` resolved that preflight check.
+
+The next rehearsal restored a new disposable database, then failed before app
+launch because six EnergyMonitoring views name absent root@192.168.7.153:
+vw_Tariff, vw_MonitoringDeviceLocation, vw_GoveeHourly, vw_EnphaseHourly,
+vw_TapoHourly, vw_WeatherHourly. Owner-run diagnosis on that exact candidate
+confirmed all orchids views/routines/triggers use the present root@localhost.
+Only fresh local bootstrap accounts exist. No source accounts were imported.
+
+Source now adds explicit energy-six-v1 mapping to a locked SELECT-only local
+definer and exact failed-token retry on another new clone, retaining the failed
+attempt. This has not been deployed/proved on Pi 2. No app/standby acceptance or
+Pi 2 schedule exists. See the operating guide for policy, retry and CI boundaries.
+
 ## Runtime and publication installed evidence — 14 November
 
 The owner captured the matching Pi 1 publication without source changes, transferred

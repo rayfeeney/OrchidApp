@@ -21,6 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'infrastructure/bac
 import standby_restore as s
 import standby_database as d
 import standby_application as a
+import standby_definers as f
 
 
 def main():
@@ -79,6 +80,11 @@ def main():
                "CREATE EVENT orchids.fixture_event ON SCHEDULE AT CURRENT_TIMESTAMP + INTERVAL 1 DAY DISABLE DO SELECT 1; "
                "CREATE TABLE EnergyMonitoring.witness(id INT PRIMARY KEY,value VARCHAR(40)) ENGINE=InnoDB; "
                "INSERT INTO EnergyMonitoring.witness VALUES(1,'original energy');")
+        source("CREATE USER 'root'@'192.168.7.153' IDENTIFIED BY 'synthetic-source-only'; "
+               "GRANT SELECT ON EnergyMonitoring.* TO 'root'@'192.168.7.153';")
+        for view in sorted(f.VIEWS):
+            source("CREATE DEFINER='root'@'192.168.7.153' SQL SECURITY DEFINER VIEW EnergyMonitoring.`"
+                   + view + '` AS SELECT value FROM EnergyMonitoring.witness;')
         dumps = {}
         for database in ('orchids', 'EnergyMonitoring'):
             owned()
@@ -149,7 +155,23 @@ def main():
             assert d.query(configured, good['candidate'], "SELECT COUNT(*) FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA='orchids';") == ['1']
             assert d.query(configured, good['candidate'], 'SELECT @@event_scheduler;') == ['OFF']
             # Prove target-only grants on the owned fixture, not a source account.
-            probe_password = a.provision(configured, good['candidate'], process)
+            try:
+                a.provision(configured, good['candidate'], process)
+            except s.b.BackupError as ex:
+                assert 'unresolved SQL definers' in str(ex)
+            else:
+                raise AssertionError('Unapproved remote definer was accepted')
+            policy_config = dict(configured, view_definer_policy=f.POLICY)
+            report = {}
+            probe_password = a.provision(policy_config, good['candidate'], process, report)
+            assert report['view_definer_mapping']['definition_and_attributes_preserved']
+            assert d.query(configured, good['candidate'], "SELECT JSON_UNQUOTE(JSON_EXTRACT(Priv,'$.account_locked')) FROM mysql.global_priv "
+                           "WHERE User='standby_energy_views' AND Host='localhost';") == ['true']
+            grants = d.query(configured, good['candidate'], "SHOW GRANTS FOR 'standby_energy_views'@'localhost';")
+            assert len(grants) == 2 and any('GRANT SELECT ON `EnergyMonitoring`.*' in row for row in grants)
+            assert all('GRANT ALL' not in row for row in grants)
+            for view in sorted(f.VIEWS):
+                assert d.query(configured, good['candidate'], 'SELECT * FROM EnergyMonitoring.`' + view + '`;') == ['original energy']
             probe_defaults = generation / 'fixture-probe.cnf'
             d.private_text(probe_defaults, '[client]\nprotocol=socket\nsocket='
                            + d.option(good['candidate']['socket'])
