@@ -1,5 +1,183 @@
 # Current state and fixed v1.4.0 work list
 
+## Pi 2 Block 2 — installed acceptance complete
+
+Owner-run evidence on 14 November 2026 confirms both selected databases, six
+EnergyMonitoring views, UTC/London handling, all five readiness checks and 756
+photo/thumbnail hashes across two application starts. The first stopped acceptance
+passed, then the complete coordinator accepted
+`orchidset-20261114T193153Z-d9c5309370c84e21a5b0a3bb9f3bbc60`
+in 5m38s with actual Gmail SUCCESS receipt. Coordinator test-failure returned 1,
+delivered FAILED and left last-accepted.json byte-identical; a no-new refresh
+returned 0 without reimport or duplicate success.
+
+Four units and logrotate were validated and installed. Both restore/monitor
+timers are enabled: hourly :15 and every 15 minutes. Monitor completed with
+Result=success, status 0. The first scheduled new-set restore accepted
+`orchidset-20261114T195324Z-a20cf0bd9709436c8e7ee85aeb804be1`
+at 20:21:06 UTC (recovery point 19:53:24); backup and restore emails arrived.
+Live retention now contains exactly that set and its 19:31 predecessor; the older
+02:00 accepted directory was removed. The 22:15 poll correctly reported no-new,
+both services succeeded, Pi-hole/system MariaDB remained active, and root had
+25 GB available. The app/collectors remain stopped between validations.
+
+All eight GitHub jobs passed deployed code ec6ebdb (run 43653464759), including
+actual native server session isolation. Operator helpers and the retained
+last-restore-success.json are installed. The writable rehearsal completed via
+the documented exact-token finish command at 23:39:17 UTC: business data and
+uploads both changed, two starts passed, all 758 active media hashes passed and
+the accepted pointer remained unchanged. Browser save/reopen/photo checks were
+owner-confirmed. The earlier read-only rehearsal and interrupted finishing reports
+were retained as evidence, not relabelled as successful writes.
+
+Bounded cleanup removed the disposable rehearsal and retained its report.
+Refresh resumed at 23:40:06; both restore/monitor completed with success/status 0,
+both timers remained enabled with future triggers, Pi-hole/MariaDB stayed active,
+and root returned to 25 GB free. The interactive stop path had a generic finishing
+error; its exact cause was not established, but the documented stopped-clone
+finish path was installed and successfully tested without reimport or accepted
+data modification. This does not affect the validated background restore cycle.
+
+Block 2's installed backup/restore, retention, reporting, scheduling and manual
+rehearsal acceptance are complete. PR #387 holds source/tests/operator evidence;
+merge is gated on final-head CI. No real production cutover, collector migration
+or destructive switch-back was performed or required. See the [current operator guide](user-guides/linux/nightly-standby-restore.md),
+[takeover runbook](user-guides/linux/pi2-manual-takeover.md) and
+[installed evidence](maintenance/pi2-standby-preparation.md).
+
+### Earlier retained-candidate application evidence
+
+Current installed result: the retained disposable candidate now passes CHECK TABLE
+and actual SELECT for all six EnergyMonitoring views. Owner then started the
+matching ARM64 OrchidApp twice on that same candidate. Both runs passed all five
+readiness checks (database, uploadRoot, nativePhotos, photoFiles, photoRecovery),
+home-page HTTP and hash verification of all 756 required photographs/thumbnails.
+The second run was after an application restart. Both owned processes stopped
+normally after the checks. The original restored generation remains separate.
+
+This is owner-run application evidence, not an accepted standby: the earlier
+failed-attempt report is retained, no acceptance pointer was written and no
+restore-success email or Pi 2 schedule exists. The later complete cycle above
+supersedes the fresh-cycle requirement. Remaining work is write-workflow/pristine acceptance, previous-generation retention,
+restore reporting/freshness monitoring and first scheduled-cycle acceptance.
+
+### Earlier source and diagnostic records — historical
+
+The records below preserve earlier states; their pending labels are superseded
+where the installed result above now supplies evidence.
+
+Cross-project review now establishes the 1356 Govee failure is covered by a missing
+restore read scope: the locked view account was limited to EnergyMonitoring, while
+the intended EnergyMonitoring reporting views read orchids. Creation-chat evidence
+and current EnergyMonitoring SQL 028/024/014 confirm the cross-schema dependencies.
+Source correction is one additional SELECT grant on orchids.*, guarded by explicit
+selection of both databases, with native cross-database deny/allow regression.
+No EnergyMonitoring source/schema or collection service changes are required.
+Actual target verification/application acceptance remains pending.
+
+Latest installed probe failed after mapping: CHECK TABLE now establishes a real
+UCA1400/general_ci collation conflict in the Enphase aggregate, explaining missing
+column metadata. Source correction is limited to explicit utf8mb4/general_ci
+defaults (including character_set_collations) on the isolated --no-defaults server,
+with startup verification. Source fixture clients now explicitly use utf8mb4;
+native negative/positive SQL must reproduce the conflict and verify the fix before
+delivery. No table conversion, system configuration or EnergyMonitoring source
+change is planned. Actual Pi 2 verification/application acceptance remains pending.
+
+Owner's explicit-policy retry failed before ALTER: Enphase stored definition exists
+but missing source definer hides its column metadata. Both failed attempts remain
+retained. New correction uses only the reviewed 15-column Enphase contract plus
+post-ALTER column/query equality, with a derived aggregate/join native regression.
+The shown view also requires named timezone tables: candidate-only UTC/London setup
+and winter/summer checks are now source changes, not yet installed acceptance.
+No application process has yet passed readiness on Pi 2.
+Hosted d733f98 failed its new native precondition because a simplified derived
+fixture did not reproduce missing columns. A closer synthetic date-grouping,
+battery aggregate and tariff-date join fixture is required before delivery; the
+assertion is retained. EnergyMonitoring source changes belong to its separate
+repository; OrchidApp owns this shared restore tooling and disposable tests.
+The closer 1ea2bfb fixture also returned columns. Native coverage now explicitly
+injects the single observed missing-metadata response, retaining real DDL and all
+post-checks; it does not claim a naturally reproduced MariaDB defect. Installed
+Pi 2 execution is still required.
+
+Owner installed rehearsal revision 65d7b52 and passed all 48 target package checks.
+After correcting publication input ownership, the actual rehearsal failed safely
+before app launch: six EnergyMonitoring views name absent root@192.168.7.153;
+all orchids definers resolve. New `standby_definers.py` implements an explicitly
+selected six-view mapping to a locked SELECT-only local account, retaining queries
+and attributes. Exact failed-token retry preserves the old attempt and creates a
+new clone. Policy/retry tests and native view/grant checks precede redeployment;
+actual app/CRUD/standby acceptance remains pending.
+
+New source `standby_application.py` adds a separate SQL/uploads-clone application
+rehearsal: target-only limited SQL account/clean Production settings, missing-definer
+refusal, owned loopback listener, readiness/home/every photo hash and restart.
+Its success explicitly leaves acceptance pending. Seven policy/HTTP tests are wired
+into Linux CI (Windows skips the real /proc HTTP fixture); the native cross-version
+fixture now checks target grants and no global CREATE DATABASE privilege. Source
+and target execution are separate acceptance gates. CRUD, pristine promotion,
+retention, restore email/overdue scheduling remain unfinished.
+
+Owner-run publication capture/transfer/verification succeeded. Pi 2 now has private
+.NET and ASP.NET 8.0.34 and libvips42t64 8.16.1-1+deb13u2; Pi-hole/system MariaDB
+remain active. .NET 8 is out of support; keep the mandated application framework
+for this rehearsal and track supported-major upgrade separately. The application
+process has not launched successfully on Pi 2; see [current evidence](maintenance/pi2-standby-preparation.md).
+
+Phase 1 source now exists in `infrastructure/backups/standby_restore.py`: bounded
+read-only cloud discovery/download, strict record/hash/archive validation, private
+inert generation staging and durable pending/failure state. Policy tests and a real
+rclone crypt/local-storage test are added to Linux CI. No SQL import, application
+acceptance/promotion, full restore email, cleanup or schedule is implemented by
+this phase. Its PREPARED_RESTORE_PENDING result must not be called restored.
+
+Candidate database-restore source is now being added separately in
+`standby_database.py`: new non-root-user-owned 11.8 instance, exact private socket/
+datadir/server-ID verification before SQL, source account exclusion, durable
+partial-import failure state and stopped-server DATA_RESTORED_APPLICATION_PENDING
+output. Ten local adapter tests pass. Hosted run 43514710945 on `7c090cb` passed
+the real 10.11.14-to-11.8 fixture, including both databases, routines/views/triggers,
+events-off, photos, accounts.sql exclusion, partial-DDL marker/retry refusal and
+prior-state preservation. All 23 staging/crypt tests also passed on Linux. The
+separate adapter-policy job initially failed because its Windows API adapter
+substituted a fake UID on Linux; the correction retains the actual UID and does
+not weaken protected-file checks. All eight hosted jobs passed on `14faccb`
+(run 43515352028), including corrected policy and real cross-version checks.
+The owner then installed the candidate package, ran 23 staging/crypt and 10 policy
+tests on Pi 2 (all passed), provisioned private non-login account/storage, and
+completed discovery, preparation and the first actual archive data restore.
+Result: DATA_RESTORED_APPLICATION_PENDING on 11.8.6, 25 orchids and 10
+EnergyMonitoring base tables, accepted state unchanged. Source accounts/settings
+and scheduled writers were not activated. Application/definer/grant checks,
+acceptance/promotion and reporting remain
+pending. Pi 1's current DLL was confirmed to match the archive fingerprint, with
+both .NET and ASP.NET runtimes 8.0.23. Target runtime installation is recorded above;
+application execution still needs installed testing.
+
+Owner reports a clean Debian 13/ARM64 Pi 2 (`pihole2`, 192.168.7.50), Pi-hole
+operational, Python 3.13.5, PowerShell 7.6.6 retained, 45 GB free and MariaDB
+11.8.6 active/enabled with only system databases at baseline. .NET was absent then;
+the subsequent private runtime installation is recorded above. MariaDB events
+are OFF, lower_case_table_names=0, utf8mb4/utf8mb4_general_ci. A separate old
+temporary MariaDB restore server was identified and stopped; intended service
+remains active. Official rclone 1.73.0 ARM64 package checksum/install passed.
+Root-owned private crypt configuration, cloud listing, exact ready-record download
+hash and full archive inventory/required-photo validation passed on Pi 2 for the
+17:07:58 UTC Block 1 snapshot (both databases; 756 active photo/thumbnail references).
+See [preparation evidence](maintenance/pi2-standby-preparation.md) and the [Block 2
+implementation contract](user-guides/linux/nightly-standby-restore.md).
+
+Preparation and isolated data import passed, not complete application recovery.
+Captured settings activation, application acceptance, Pi 2 restore/email automation
+and scheduling remain pending. The actual archive imported on 11.8.6; application/
+runtime compatibility and target runtime grants/definers still need validation.
+New `standby_publication.py` source captures matching ARM64 .NET 8 publication
+bytes with private verified output and no source changes. Eight local synthetic
+checks passed; its new hosted tests and actual capture remain pending.
+Pi 1 and Pi-hole stay outside
+restore scope. Work-list items 9/10 remain open.
+
 ## Pi 1 multi-database nightly backup installed — 13 November 2026
 
 Owner-run first capture passed: both selected databases and photographs, 9.1 seconds

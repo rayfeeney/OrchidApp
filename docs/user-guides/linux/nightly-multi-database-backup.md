@@ -3,7 +3,8 @@
 This opt-in command leaves the old single-database repository commands unchanged.
 On the owner's Pi 1, the old cron entry is now disabled and new systemd timers
 are enabled. See [installed evidence](../../maintenance/pi1-nightly-backup-block1.md).
-Pi 2 restore (Block 2) is not implemented. The new
+Pi 2 restore (Block 2) is not implemented; see its [implementation contract](nightly-standby-restore.md)
+and recorded preparation. The new
 `orchidapp-mariadb-set-v1` format is **incompatible with the old restore CLI**.
 The owner agreed separate backup and restore blocks: Block 1 is scheduled after
 manual backup/email acceptance; exact live-set restore/application acceptance is

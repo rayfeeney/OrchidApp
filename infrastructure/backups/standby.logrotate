@@ -1,0 +1,9 @@
+/var/lib/orchidapp-standby/standby-reporting.log {
+    daily
+    maxsize 1M
+    rotate 14
+    compress
+    missingok
+    notifempty
+    create 0600 root root
+}

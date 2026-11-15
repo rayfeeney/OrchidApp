@@ -1,5 +1,19 @@
 # Reproducible checks and release evidence
 
+Pi 2 standby acceptance includes policy suites under `tests/LinuxBackup.Checks`,
+the native isolated 10.11-to-11.8 fixture and actual owner-run Pi evidence. All
+eight jobs passed 729babe (run 43631970740); the scheduled new-set restore, Gmail
+reports and live two-set retention also passed. New `standby_takeover_checks.py`
+covers fencing before activation, refresh blocking, fixed-loopback policy,
+new-write release refusal, cleanup refusal, repeated Ctrl+C handling and exact
+interrupted token checks. All eight jobs passed deployed ec6ebdb, run 43653464759;
+native fixture also asserts actual server session isolation. Installed writable
+rehearsal passed through explicit finish with 758 media hashes, two starts and
+accepted pointer unchanged; bounded cleanup/resumed timers passed. The generic
+interactive finishing failure is retained as a limitation with verified recovery.
+See [machine evidence](maintenance/pi2-standby-preparation.md)
+and the [takeover procedure](user-guides/linux/pi2-manual-takeover.md).
+
 The Pi 1 operational adoption candidate adds `python tests/HistoricalUpgrade.Checks/live_adoption_checks.py` (normal CI) and a separate owned restore using `preflight.py --adopt-and-migrate --operational-adoption-checks --specimen <verified-review-asset>` (manual historical workflow). The latter checks the new core, native transport, preserved ledger and canonical forward migrations; systemd is adapted inside the container. See [candidate evidence and remaining Linux/recovery acceptance](maintenance/pi130-operational-adoption.md). Prior fixture or package results do not count as this candidate's integration acceptance.
 
 Run from the source repository root with .NET 8 and Python 3 available. The selected checks are executable programs, not a conventional test-discovery suite. Their current assertions determine success; a historical number of checks is not a pass criterion.

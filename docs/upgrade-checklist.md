@@ -1,5 +1,144 @@
 # Upgrade action checklist: C01–C20
 
+## Pi 2 Block 2 — installed acceptance complete
+
+- [x] Full coordinator and first scheduled new-set restore passed, with actual
+  source/restore success emails. Latest accepted 19:53 snapshot and 19:31 previous
+  remain; old 02:00 set removed. Both units succeeded and Pi-hole/MariaDB stayed active.
+- [x] Both timers enabled after unit/logrotate validation; NTP/Europe-London
+  confirmed. Initial and later monitor/current/no-new checks passed; 25 GB free.
+- [x] All eight CI jobs passed installed revision 729babe, run 43631970740.
+- [x] Install new standby_takeover.py and compatible application/job helpers;
+  test private writable rehearsal with save/reopen, photo/thumbnail and restart.
+  Confirm accepted pointer unchanged and remove only the completed rehearsal.
+  Never invoke real activation while Pi 1 is still a writer.
+- [x] Verify takeover guard and durable last-restore-success summary through new
+  tests/CI and record installed rehearsal evidence in PR #387. All eight jobs
+  passed deployed ec6ebdb, run 43653464759. No migration,
+  Windows deployment or new timer is introduced. Active-takeover marker blocks
+  restore until guarded unchanged release or reviewed preservation/reconciliation.
+- [x] Browser checks passed on the disposable clone; double Ctrl+C interrupted
+  finishing. Owner confirmed owned processes stopped and both system services active.
+- [x] Deploy separate child sessions/repeated-interrupt handling. Finish the
+  stopped clone with exact interrupted token, verify restart/media/pointer, then
+  clean only that completed rehearsal and resume refresh. No new import needed.
+- [x] Final writable clone, token 1935e56091b34c3fa34e06bee9cb499d, completed
+  through exact-token finish at 23:39:17: both change flags true, 758 media files,
+  two app starts and accepted pointer unchanged. Owner confirmed cleanup/evidence
+  retention; resumed refresh/monitor both success/status 0, both timers enabled,
+  Pi-hole/MariaDB active, 25 GB free. The generic interactive finishing error's
+  root cause remains unestablished; its documented recovery path is verified.
+  Real primary cutover/collector migration/failback are not claimed.
+
+### Earlier implementation checklist — historical; current status above supersedes pending labels
+
+- [x] Owner received manual Pi 2 TEST EMAIL, accepted SUCCESS and TEST FAILED
+  messages at Gmail; monitor returned CURRENT. A labelled failure-email test is
+  not yet the coordinator failure-path acceptance.
+- [ ] Deploy `standby_job.py` with all compatible packaged helpers. Add
+  publication_archive/dotnet/application_root/view_definer_policy and raise
+  max_generations to 5 in the private restore JSON using atomic mode-600 writes.
+  Existing rclone/collection/database settings and email credentials stay intact.
+- [ ] Run coordinator no-new check, explicit test-failure (expect exit 1 and
+  actual FAILED email), then a new-source-backup full restore (expect new accepted
+  point and SUCCESS email). Confirm previous pointer survives failure and Pi-hole
+  and system MariaDB stay active. Verify repeat refresh never reimports.
+- [ ] Retention keeps two accepted points. Review its reported removals on a
+  disposable fixture and later actual third accepted point; failed/unknown manual
+  rehearsal evidence is never automatic cleanup. Do not delete it blindly.
+- [ ] Validate four systemd units and logrotate; install/enable timers only after
+  manual full-cycle acceptance. Refresh hourly at :15 local time; monitor every
+  15 minutes, 30-hour source-point age. Verify first scheduled full cycle and
+  monitor exit/status before completion/merge. No Windows, source-schema, Pi 1
+  schedule, Pi-hole or system MariaDB configuration change is required.
+
+- [x] Owner received STANDBY_ACCEPTED_STOPPED, exit 0, for the 14 November
+  generation; 756 files checked and services_started false. Accepted standby
+  remains stopped. No restore or collector timers are enabled.
+- [ ] Install/test `standby_reporting.py` and private `email.json`/`smtp-password`
+  on Pi 2. Confirm labelled test email and accepted-success email at Gmail,
+  inspect retry behavior and verify overdue reports against the source recovery
+  point. Password setup is local and hidden; do not paste the password in chat.
+  This manual reporting stage adds no migration, Windows action or active schedule.
+  Automatic coordinator/failure integration, retention and first scheduled cycle
+  remain pending; reporting code alone does not complete Block 2.
+
+- [x] Fresh 14 November backup passed prepare, database restore and application
+  rehearsal without manual corrections: token `89f93ecb1e2b4f52b2f6e7a6a714058c`,
+  756 photographs/thumbnails, two starts, readiness and timezone/view checks.
+- [x] Deploy/test `standby_acceptance.py` on this successful candidate. It checks
+  business-table counts/checksums against the separate original import, upload
+  hashes and filtered publication before committing `last-accepted.json`.
+  Both isolated databases must be stopped; only the rehearsal app account's
+  generated password changes. No system database, timer or cloud write occurs.
+  On failure retain evidence and prior acceptance. Windows has no operator action.
+  Email, retention, automation and write-workflow checks remain separate/pending.
+
+- [x] Owner-run retained candidate: all six views CHECK TABLE/SELECT passed.
+  OrchidApp readiness, home page and all 756 photo/thumbnail hashes passed twice,
+  including after application restart. Owned processes stopped afterwards.
+  Earlier failed report remains evidence, not an acceptance record.
+
+- [x] Deploy verified cross-database view read scope: the locked view account needs
+  SELECT on both selected EnergyMonitoring and orchids schemas. Verify Govee,
+  Tapo and location views together, retaining all six-view checks. No write/global
+  grants, source schema conversion, EnergyMonitoring repo changes or writer/timer
+  activation are needed. Preserve the current failed candidate and its evidence.
+
+- [x] Deploy verified isolated-server utf8mb4/general_ci/default-map startup fix;
+  check the latest retained Enphase view read-only before another fresh clone.
+  System MariaDB, source tables/queries and EnergyMonitoring repository are unchanged.
+  The --no-defaults candidate must verify all three character defaults before SQL.
+
+- CI-only: the native hosted runner's two required timezone files are normalised
+  to root-owned mode 644 and their four observed writable ancestor directories to
+  755 for the fixture. Runtime ownership/write protections are
+  unchanged; there is no corresponding automatic Pi filesystem permission change.
+
+- [ ] Validate/deploy Enphase derived-view column correction and candidate-only
+  named timezone setup. Require the original 15 columns/query attributes and valid
+  UTC/London winter/summer results after candidate restart. Tool `mariadb-tzinfo-to-sql`
+  and root-owned OS zoneinfo are required. System MariaDB, Pi 1 and Windows are
+  unaffected; retain both previous failures and use a new explicit retry token.
+
+- [x] Owner installed rehearsal package and passed 48 target checks; actual attempt
+  stopped before app launch on six absent EnergyMonitoring view definers. Original
+  restore retained. Root-owned private publication path is now required in commands.
+- [x] Validate/deploy opt-in energy-six-v1 locked SELECT-only definer mapping and
+  exact-token fresh-clone retry. Retain failed reports/workspaces/databases and
+  verify all six view definitions/attributes remain unchanged. No source migration,
+  source account import, Pi 1 change or Windows deployment action is required.
+
+- [x] Native cross-version fixture and all eight hosted jobs passed on `14faccb`.
+  Owner-run packaged 23+10 tests, private non-login account/storage, discovery,
+  preparation and actual data restore passed on Pi 2 (25 orchids/10 EnergyMonitoring
+  base tables on 11.8.6). Source settings/writers stayed inactive; see [evidence](maintenance/pi2-standby-preparation.md).
+  DATA_RESTORED_APPLICATION_PENDING is not application or standby acceptance.
+- [x] Matching publication capture, private transfer and target verification passed.
+  Owner installed private .NET/ASP.NET 8.0.34 and libvips; Pi-hole/MariaDB active.
+  .NET 8 is now out of support; this is compatibility rehearsal, not vendor support.
+- [x] Review/test/package `standby_application.py`, then run the disposable
+  application clone with a candidate-user-owned separate application root.
+  Validate readiness/home/all photo bytes/restart; preserve private failure evidence.
+  This does not accept a standby. CRUD, promotion, retention and restore reporting
+  remain pending. No Windows or Pi 1 runtime action is required.
+
+- [x] Review phase 1 source/package and CI, then deploy only to a separate private
+  staging root. `prepare` does not import SQL, accept a standby or send restore
+  success. Full application/acceptance/reporting implementation remains pending.
+
+- [x] Owner-run clean baseline, single intended MariaDB service, rclone 1.73.0
+  package checksum, private crypt config/listing, exact archive hash and full
+  payload/photo inventory validation recorded in [Pi 2 evidence](maintenance/pi2-standby-preparation.md).
+- [ ] Complete [repeatable Block 2](user-guides/linux/nightly-standby-restore.md)
+  before settings activation. Actual isolated 10.11-to-11.8 logical import passed;
+  validate exact app/runtime compatibility, target-only accounts/definers/settings,
+  pristine acceptance and preservation of previous working generations.
+- [ ] Verify reporting, overdue checks, interruption/reboot recovery, permissions,
+  Pi-hole health, disk headroom and first scheduled refresh. No Pi 2 schedule is
+  enabled yet; Windows and Pi 1 are unaffected. Do not replay migrations or apply
+  accounts.sql automatically. Preserve working source and earlier recovery inputs.
+
 ## Pi 1 multi-database backup — installed, scheduled acceptance pending
 
 Source CI only: native-client database jobs now pin Ubuntu 24.04 and assert MariaDB
