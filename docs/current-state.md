@@ -1,5 +1,19 @@
 # Current state and fixed v1.4.0 work list
 
+## Pi 1 scheduled backup repair — 15 November 2026
+
+The 02:00 run failed on a dead legacy lock from the 14 November 20:01 manual
+attempt. PID 308213, its children and dump/upload processes were absent; no
+selected kernel OOM record was found. Writers were active, last verified backup
+stayed 19:53, and 559 MB staging plus a 474 MB unverified archive consumed space.
+Owner guarded cleanup preserved verified backup/evidence and restored 4.9 GB free.
+The previous completion claim does not close this newly observed failure.
+
+Repair source adds kernel-held main/monitor/outbox locks, SIGHUP unwind and
+specific safe startup errors. Real process-death/hangup regression tests are
+included. Linux CI, target deployment, supervised backup/email and merge remain
+pending. See [incident and acceptance](maintenance/pi1-nightly-lock-recovery.md).
+
 ## Pi 2 Block 2 — installed acceptance complete
 
 Owner-run evidence on 14 November 2026 confirms both selected databases, six

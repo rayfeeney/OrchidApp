@@ -1,5 +1,19 @@
 # Upgrade action checklist: C01–C20
 
+## Pi 1 nightly lock repair — 15 November
+
+- [x] Confirm owner PID 308213 and upload/dump children absent; preserve verified
+  19:53 backup and private incident evidence. Guarded cleanup removed only the
+  abandoned failed attempt/legacy lock; free space returned to 4.9 GB.
+- [ ] Deploy corrected nightly_backup.py after Linux CI/26 target checks; stop
+  monitor service/timer during replacement, then resume. No schema, credentials,
+  timer schedule, archive format or Windows operator change is required.
+- [ ] Confirm preflight space/readiness; run systemctl start orchidapp-nightly.service,
+  verify new cloud-success record/email, active application/database and timers.
+- [ ] Retain final source/target evidence and merge the repair. Kernel .operation.flock
+  files must remain even when idle. Legacy directory locks still need review;
+  hard-kill temporary data/writer recovery is not automatically certified.
+
 ## Pi 2 Block 2 — installed acceptance complete
 
 - [x] Full coordinator and first scheduled new-set restore passed, with actual
