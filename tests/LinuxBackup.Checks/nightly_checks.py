@@ -5,6 +5,8 @@ import importlib.util
 import io
 import json
 import os
+import signal
+import subprocess
 from pathlib import Path
 import sys
 import tarfile
@@ -18,6 +20,104 @@ import nightly_backup as n
 
 
 class Nightly(unittest.TestCase):
+    @unittest.skipUnless(os.name == 'posix', 'Linux kernel-lock integration')
+    def test_kernel_lock_excludes_overlap_and_reuses_same_inode_after_exit(self):
+        lock_file = self.backups / '.operation.flock'
+        with n.operation_lock(self.backups):
+            inode = lock_file.stat().st_ino
+            self.assertEqual(lock_file.stat().st_mode & 0o777, 0o600)
+            with self.assertRaises(n.b.BackupError):
+                with n.operation_lock(self.backups):
+                    pass
+        with n.operation_lock(self.backups):
+            self.assertEqual(lock_file.stat().st_ino, inode)
+
+    def test_legacy_directory_is_preserved_for_review(self):
+        legacy = self.backups / '.paired-operation.lock'
+        legacy.mkdir()
+        (legacy / 'owner.json').write_text('{"pid":123}')
+        with self.assertRaisesRegex(n.b.BackupError, 'Legacy'):
+            with n.operation_lock(self.backups):
+                pass
+        self.assertTrue((legacy / 'owner.json').exists())
+
+    def test_startup_report_includes_safe_actual_lock_failure(self):
+        (self.backups / '.paired-operation.lock').mkdir()
+        with patch.object(n.sys, 'argv', ['nightly_backup.py', 'backup', '--config', 'fixture']), \
+             patch.object(n.sys, 'platform', 'linux'), patch.object(n.signal, 'signal'), \
+             patch.object(n, 'load_config', return_value=self.c), patch.object(n, 'run_backup') as backup, \
+             patch.object(n, 'report') as report, patch.object(n, 'flush_email', return_value=True), \
+             patch('builtins.print'):
+            self.assertEqual(n.main(), 1)
+        backup.assert_not_called()
+        self.assertIn('Legacy operation or stale directory lock', report.call_args.args[1]['error'])
+
+    @unittest.skipUnless(os.name == 'posix', 'Linux real process-death integration')
+    def test_sigkill_does_not_leave_an_operation_blocked(self):
+        script = '''import sys,time
+from pathlib import Path
+sys.path.insert(0,sys.argv[1])
+import nightly_backup as n
+with n.operation_lock(Path(sys.argv[2])):
+    print('LOCKED',flush=True)
+    time.sleep(60)
+'''
+        process = subprocess.Popen([sys.executable, '-c', script, str(Path(n.__file__).parent), str(self.backups)],
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        try:
+            self.assertEqual(process.stdout.readline().strip(), 'LOCKED')
+            with self.assertRaises(n.b.BackupError):
+                with n.operation_lock(self.backups):
+                    pass
+            inode = (self.backups / '.operation.flock').stat().st_ino
+            process.kill()
+            process.wait(timeout=10)
+            with n.operation_lock(self.backups):
+                self.assertEqual((self.backups / '.operation.flock').stat().st_ino, inode)
+        finally:
+            if process.poll() is None:
+                process.kill()
+                process.wait(timeout=10)
+            process.stdout.close()
+            process.stderr.close()
+
+    @unittest.skipUnless(os.name == 'posix', 'Linux SIGHUP unwind integration')
+    def test_main_hangup_runs_cleanup_and_releases_lock(self):
+        script = '''import sys,time
+from pathlib import Path
+sys.path.insert(0,sys.argv[1])
+import nightly_backup as n
+root=Path(sys.argv[2])
+n.load_config=lambda filename:{'backup_root':root}
+n.report=lambda *args:None
+n.flush_email=lambda *args:True
+def backup(c):
+    try:
+        print('RUNNING',flush=True)
+        time.sleep(60)
+    finally:
+        (root/'unwound').write_text('yes')
+n.run_backup=backup
+sys.argv=['nightly_backup.py','backup','--config','unused']
+raise SystemExit(n.main())
+'''
+        process = subprocess.Popen([sys.executable, '-c', script, str(Path(n.__file__).parent), str(self.backups)],
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        try:
+            self.assertEqual(process.stdout.readline().strip(), 'RUNNING')
+            process.send_signal(signal.SIGHUP)
+            process.communicate(timeout=10)
+            self.assertEqual(process.returncode, 1)
+            self.assertTrue((self.backups / 'unwound').exists())
+            with n.operation_lock(self.backups):
+                pass
+        finally:
+            if process.poll() is None:
+                process.kill()
+                process.wait(timeout=10)
+            process.stdout.close()
+            process.stderr.close()
+
     def test_atomic_json_explicit_private_mode_without_private_umask(self):
         path = self.backups / 'configuration.json'
         prior = os.umask(0o022)

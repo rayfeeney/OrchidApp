@@ -3,12 +3,15 @@
 This opt-in command leaves the old single-database repository commands unchanged.
 On the owner's Pi 1, the old cron entry is now disabled and new systemd timers
 are enabled. See [installed evidence](../../maintenance/pi1-nightly-backup-block1.md).
-Pi 2 restore (Block 2) is not implemented; see its [implementation contract](nightly-standby-restore.md)
-and recorded preparation. The new
+Pi 2 restore (Block 2) is installed and validated; see its [operator guide](nightly-standby-restore.md)
+and installed evidence. A 15 November Pi 1 scheduled failure exposed an abandoned
+directory lock; see [incident and repair](../../maintenance/pi1-nightly-lock-recovery.md).
+The corrected kernel-lock version is deployed: all 26 target checks and a complete
+supervised cloud backup/email/health/timer check passed on 15 November. The
 `orchidapp-mariadb-set-v1` format is **incompatible with the old restore CLI**.
 The owner agreed separate backup and restore blocks: Block 1 is scheduled after
-manual backup/email acceptance; exact live-set restore/application acceptance is
-pending Block 2. Do not describe recoverability as proven meanwhile; preserve the
+manual backup/email acceptance; exact live-set restore/application, scheduled
+refresh, retention and writable isolated rehearsal passed on Pi 2. Preserve the
 earlier recovery archives. No migrations/authentication/grant changes are included.
 
 ## Owner-run inventory, 13 November 2026
@@ -45,8 +48,9 @@ running. Previously active services restart before timers on capture exit,
 including ordinary failure. Previously inactive units stay inactive. Local
 `/health/ready` must return 200 before and after capture; this checks OrchidApp,
 not collector/provider connections. Compression and cloud transfer happen after
-restart. SIGINT/SIGTERM unwind; SIGKILL/power loss/repeated interruption can leave
-stopped services, temporary files and stale locks. Inspect before clearing them.
+restart. SIGINT/SIGTERM/SIGHUP unwind in the corrected version. SIGKILL/power loss
+can still leave stopped services or temporary files requiring review; a kernel
+operation lock cannot outlive its process. Inspect state/space before recovery.
 
 Each unique archive contains `manifest.json`, `databases/<name>.sql`, `accounts.sql`
 and `sources/<configured-name>`. SQL includes CREATE/USE, views, routines, triggers
@@ -84,7 +88,31 @@ the new cloud-verified point in `last-success.json`.
 `run.json` records phase, snapshot, times, service outcome, duration and approximate
 minimum free space; `last-success.json` identifies the last cloud-verified point.
 Private `.tool-error-*` files may contain secrets/SQL: never share them unredacted.
-The backup operation lock is conservative; stale locks are never auto-cleared.
+The corrected Linux backup, monitor and email-delivery locks use private permanent
+`.operation.flock` files with nonblocking kernel flock. A live holder blocks a
+competing process; normal exit, SIGKILL or power loss releases the kernel lock.
+The file remains intentionally. Its JSON identifies the last holder, not whether
+it is still active. **Never unlink/replace that file to release a lock**: changing
+its inode can create two independent locks. Check the service and kernel lock
+holder if a live operation is reported. No PID-age guessing or automatic removal
+of unknown artifacts is used. Existing legacy `.paired-operation.lock` directories
+are refused and must be reviewed/cleared with their owner stopped before upgrade.
+Do not mix older script copies against the same managed root during deployment.
+The old single-database CLI's separate directory-lock contract is unchanged.
+
+Run backups through the installed supervisor, including extra manual runs:
+
+```bash
+sudo systemctl start orchidapp-nightly.service
+systemctl show orchidapp-nightly.service -p ActiveState -p Result -p ExecMainStatus
+sudo cat /var/backups/orchidapp-nightly/run.json
+```
+
+This uses the same oneshot/timeout as the nightly timer and is independent of the
+SSH client waiting for it. Do not launch competing foreground backup copies.
+After updating, retain an actual managed-run success/email and confirm timers.
+Startup/reporting emails now include the safe BackupError cause, rather than
+masking an operation-lock failure behind a generic message.
 
 ## Email and monitoring
 

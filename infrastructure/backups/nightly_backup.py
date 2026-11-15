@@ -4,6 +4,7 @@ Separate archive format from orchid_backup.py; never feed it to the old restore 
 """
 import argparse
 import configparser
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from email.message import EmailMessage
 from email.utils import formatdate, make_msgid
@@ -16,6 +17,7 @@ import shutil
 import signal
 import smtplib
 import ssl
+import stat
 import sys
 import tarfile
 import tempfile
@@ -53,6 +55,48 @@ def atomic_json(path, value):
                 os.close(fd)
     finally:
         temp.unlink(missing_ok=True)
+
+
+@contextmanager
+def operation_lock(root):
+    """Linux kernel lock releases on process death; the inode stays permanent.
+
+    Old directory locks still require reviewed migration. Never unlink a flock
+    file: replacing its inode would let two processes hold different locks.
+    """
+    legacy = root / '.paired-operation.lock'
+    b.require(not legacy.exists() and not legacy.is_symlink(), 'Legacy operation or stale directory lock exists; inspect .paired-operation.lock')
+    if os.name != 'posix':
+        # Production is Linux; preserve portable synthetic policy checks.
+        with b.operation_lock(root):
+            yield
+        return
+    import fcntl
+    path = root / '.operation.flock'
+    flags = os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW | os.O_CLOEXEC
+    try:
+        descriptor = os.open(path, flags, 0o600)
+    except OSError as ex:
+        raise b.BackupError('Cannot open private kernel lock .operation.flock') from ex
+    with os.fdopen(descriptor, 'r+', encoding='utf-8') as stream:
+        info = os.fstat(stream.fileno())
+        b.require(stat.S_ISREG(info.st_mode) and info.st_nlink == 1
+                  and info.st_uid in (0, os.geteuid()) and not info.st_mode & 0o077,
+                  'Kernel lock must be a private root/operator-owned regular file')
+        try:
+            fcntl.flock(stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as ex:
+            raise b.BackupError('Another operation holds the kernel lock; do not delete .operation.flock') from ex
+        try:
+            b.require(not legacy.exists() and not legacy.is_symlink(), 'Legacy lock appeared; mixed script versions require review')
+            stream.seek(0)
+            stream.truncate()
+            json.dump({'last_holder_pid': os.getpid(), 'acquired_at': now()}, stream)
+            stream.flush()
+            os.fsync(stream.fileno())
+            yield
+        finally:
+            fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
 
 
 def load_config(filename):
@@ -326,10 +370,10 @@ def flush_email(c):
     outbox = c['backup_root'] / 'outbox'
     outbox.mkdir(mode=0o700, exist_ok=True)
     try:
-        with b.operation_lock(outbox):
+        with operation_lock(outbox):
             return _flush_email(c)
     except b.BackupError:
-        b.log(c, 'Email outbox busy or stale lock; delivery deferred')
+        b.log(c, 'Email outbox busy or legacy lock requires review; delivery deferred')
         return False
 
 
@@ -457,6 +501,8 @@ def main():
         raise b.BackupError('Operation interrupted; inspect writer states')
     signal.signal(signal.SIGTERM, interrupted)
     signal.signal(signal.SIGINT, interrupted)
+    if hasattr(signal, 'SIGHUP'):
+        signal.signal(signal.SIGHUP, interrupted)
     c = None
     try:
         b.require(sys.platform.startswith('linux'), 'Production command requires Linux')
@@ -466,7 +512,7 @@ def main():
             # Monitoring must still run if a backup is stuck or its lock is stale.
             lock_root = c['backup_root'] / 'monitor'
             lock_root.mkdir(mode=0o700, exist_ok=True)
-        with b.operation_lock(lock_root):
+        with operation_lock(lock_root):
             if args.operation == 'backup':
                 return run_backup(c)
             if args.operation == 'check':
@@ -488,7 +534,8 @@ def main():
         if c and args.operation == 'backup':
             try:
                 report(c, {'result': 'FAILED', 'phase': 'startup/reporting', 'checked_at': now(),
-                           'error': 'Operation could not start or finish reporting; inspect local logs and locks'})
+                           'error': str(ex) if isinstance(ex, b.BackupError) else
+                                    'Operation could not start or finish reporting; inspect local logs and locks'})
                 flush_email(c)
             except Exception:
                 print('ERROR: Email could not be queued or delivered; inspect local state', file=sys.stderr)
