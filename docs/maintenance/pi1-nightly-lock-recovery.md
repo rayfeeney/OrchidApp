@@ -56,10 +56,31 @@ three integration cases. The SMTP retry suite also covers the shared outbox API.
 Source-only delivery contains the nightly module, unchanged generic helper,
 synthetic tests and these notes; no live configuration/archives/credentials.
 
-Deployment/full managed backup/email verification is pending. Briefly stop the
-monitor timer/service while replacing the installed nightly module to avoid
-mixed versions, then resume it. Keep the working private configuration unchanged.
-Run check/preflight, start the installed backup service, confirm exit/result,
-fresh last-success and received SUCCESS, then verify source application/database
-and both timers. Pi 2 needs no change to restore the repaired source's unchanged
-archive format. Record actual results before closing this repair.
+## Installed repair acceptance — owner confirmed
+
+All eight CI jobs passed code 2e60940 in run 43698805573, including all Linux
+process-death/hangup cases and the shared SMTP/standby consumers. Owner transferred
+source-only package SHA-256
+`2d17bc1908a18c9644c7cc4f46bd49c723a2397e342cb6e7e22b2709749c3de1`,
+verified every file and ran all 26 cases on Pi 1 with no skips. The monitor
+timer/service was stopped during replacement of only nightly_backup.py and then
+resumed. Credentials/configuration/schedules stayed unchanged. Preflight passed:
+5,243,285,504 bytes available versus 4,670,752,580 estimated required.
+
+Owner started the installed orchidapp-nightly.service through systemd. It returned
+exit 0, Result=success, ExecMainStatus=0 and inactive after normal oneshot completion.
+Snapshot `orchidset-20261115T095115Z-969f203a1da843b0b077c8465d3ca52b`
+ran 09:51:15.467481–09:58:20.230769 UTC, phase complete/result SUCCESS. Writers
+restarted/readiness passed after 8.9 seconds; full duration 424.8 seconds.
+Minimum sampled free space was 3,708,551,168 bytes. This code only returns success
+after cloud read-back/ready verification, local/cloud retention and SMTP acceptance.
+Owner separately confirmed actual SUCCESS receipt.
+
+OrchidApp and MariaDB were active, both source timers enabled, monitor last fired
+09:55 with next 10:10, and the next unchanged nightly schedule was 16 November
+02:00 GMT. Check/preflight followed by a separate managed backup reused the
+permanent kernel-lock file without manual removal. Managed execution and target
+process-death tests resolve the diagnosed stale-lock failure; they do not establish
+the original termination cause or automatically clean arbitrary hard-kill debris.
+Pi 2 needs no format/credential change. PR #388 records the repair/evidence; merge
+requires final-head CI. Subsequent nightly operation remains monitored normally.

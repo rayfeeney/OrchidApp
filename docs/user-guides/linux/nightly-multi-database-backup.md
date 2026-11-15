@@ -6,8 +6,8 @@ are enabled. See [installed evidence](../../maintenance/pi1-nightly-backup-block
 Pi 2 restore (Block 2) is installed and validated; see its [operator guide](nightly-standby-restore.md)
 and installed evidence. A 15 November Pi 1 scheduled failure exposed an abandoned
 directory lock; see [incident and repair](../../maintenance/pi1-nightly-lock-recovery.md).
-The corrected kernel-lock version requires reviewed deployment before declaring
-this source incident resolved. The
+The corrected kernel-lock version is deployed: all 26 target checks and a complete
+supervised cloud backup/email/health/timer check passed on 15 November. The
 `orchidapp-mariadb-set-v1` format is **incompatible with the old restore CLI**.
 The owner agreed separate backup and restore blocks: Block 1 is scheduled after
 manual backup/email acceptance; exact live-set restore/application, scheduled

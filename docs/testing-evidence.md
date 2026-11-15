@@ -4,8 +4,10 @@ Pi 1's 15 November abandoned-lock incident adds real POSIX contention,
 SIGKILL-release and main-process SIGHUP-unwind cases to nightly_checks.py
 (26 cases; three POSIX cases skipped on Windows). These synthetic children never
 touch live databases/cloud/credentials. Legacy locks remain refused/preserved;
-startup reporting retains the safe lock cause. Source/target deployment evidence
-is tracked in [the lock incident](maintenance/pi1-nightly-lock-recovery.md).
+startup reporting retains the safe lock cause. All eight code CI jobs passed
+2e60940 (run 43698805573), all 26 cases passed on Pi 1, and a supervised full
+cloud backup/SUCCESS receipt/healthy enabled timers passed. Exact source/target
+evidence is tracked in [the lock incident](maintenance/pi1-nightly-lock-recovery.md).
 
 Pi 2 standby acceptance includes policy suites under `tests/LinuxBackup.Checks`,
 the native isolated 10.11-to-11.8 fixture and actual owner-run Pi evidence. All
