@@ -230,7 +230,8 @@ def capture(c, payload, status):
                 b.require((payload / 'databases' / (name + '.sql')).stat().st_size > 0, 'Empty database dump')
             with (payload / 'accounts.sql').open('xb') as out:
                 b.run(c, ['mariadb-dump', '--defaults-extra-file=' + str(c['client_defaults_file']),
-                          '--skip-lock-tables', '--system=users', 'mysql'], stdout=out)
+                        '--skip-lock-tables', '--default-character-set=utf8mb3',
+                        '--system=users', 'mysql'], stdout=out)
             b.require((payload / 'accounts.sql').stat().st_size > 0, 'Empty account recovery dump')
             b.require(all(source_inventory(c['sources'][n]) == inv for n, inv in before.items()), 'Source changed during capture')
             b.require(b.photo_paths(c) == photos, 'Photo references changed')
