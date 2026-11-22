@@ -90,6 +90,9 @@ class Application(unittest.TestCase):
                     definer=f.SOURCE, security='DEFINER', check='NONE', algorithm='UNDEFINED',
                     charset='utf8mb4', collation='utf8mb4_general_ci')
 
+    def test_approved_source_definer(self):
+        self.assertEqual(f.SOURCE, 'root@localhost')
+
     def test_exact_definer_policy_preserves_query_and_locks_select_only_account(self):
         before = [self.view(name) for name in sorted(f.VIEWS)]
         after = [dict(view, definer=f.TARGET) for view in before]

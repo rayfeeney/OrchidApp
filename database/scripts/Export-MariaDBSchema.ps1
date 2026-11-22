@@ -38,42 +38,63 @@ New-Item -ItemType Directory -Force -Path `
 "database/checksums" | Out-Null
 
 # --- HELPERS ----------------------------------------------------------------
+
 function Invoke-MariaDbQuery {
     param (
         [Parameter(Mandatory)]
         [string]$Query
     )
 
-  $compoundQuery = @"
+    $compoundQuery = @"
 SET SESSION lock_wait_timeout = 5;
 $Query
 "@
 
-  Write-Host "Connecting to MariaDB (timeout 5s)�"
+    Write-Host "Connecting to MariaDB (timeout 5s)..."
 
-  $output = & $MariaDbExe `
-    --no-defaults `
-    --default-character-set=utf8mb4 `
-    --protocol=TCP `
-    --host=$MariaDbHost `
-    --port=$MariaDbPort `
-    --user=$User `
-    --connect-timeout=5 `
-    --batch `
-    --skip-column-names `
-    --database=$Database `
-    --execute="$compoundQuery" `
-    2>&1
+    $diagnosticFile = [System.IO.Path]::GetTempFileName()
 
-  if ($LASTEXITCODE -ne 0) {
-      Write-Host "---- MariaDB ERROR OUTPUT ----" -ForegroundColor Red
-      $output | ForEach-Object { Write-Host $_ -ForegroundColor Red }
-      Write-Host "--------------------------------" -ForegroundColor Red
+    try {
+        $output = & $MariaDbExe `
+            --no-defaults `
+            --default-character-set=utf8mb4 `
+            --protocol=TCP `
+            --host=$MariaDbHost `
+            --port=$MariaDbPort `
+            --user=$User `
+            --connect-timeout=5 `
+            --batch `
+            --skip-column-names `
+            --database=$Database `
+            --execute="$compoundQuery" `
+            2> $diagnosticFile
 
-      throw "MariaDB command failed (exit code $LASTEXITCODE)"
-  }
+        $exitCode = $LASTEXITCODE
+        $diagnostics = @(Get-Content -LiteralPath $diagnosticFile)
 
-  return $output
+        if ($exitCode -ne 0) {
+            Write-Host "---- MariaDB ERROR OUTPUT ----" -ForegroundColor Red
+            $diagnostics | ForEach-Object {
+                Write-Host $_ -ForegroundColor Red
+            }
+            $output | ForEach-Object {
+                Write-Host $_ -ForegroundColor Red
+            }
+            Write-Host "--------------------------------" -ForegroundColor Red
+
+            throw "MariaDB command failed (exit code $exitCode)"
+        }
+
+        foreach ($line in $diagnostics) {
+            Write-Warning "MariaDB: $line"
+        }
+
+        return $output
+    }
+    finally {
+        Remove-Item -LiteralPath $diagnosticFile `
+            -Force -ErrorAction SilentlyContinue
+    }
 }
 
 function Get-Checksum($Content) {
@@ -229,11 +250,30 @@ function Export-Object {
     $Name
   )
 
-  $sql = & $dumpExe @nativeDumpArguments 2>&1
 
-  if ($LASTEXITCODE -ne 0) {
-      throw "mariadb-dump failed for $Type $Name"
+  $diagnosticFile = [System.IO.Path]::GetTempFileName()
+
+  try {
+    $sql = & $dumpExe @nativeDumpArguments 2> $diagnosticFile
+    $exitCode = $LASTEXITCODE
+    $diagnostics = @(Get-Content -LiteralPath $diagnosticFile)
+
+    if ($exitCode -ne 0) {
+      $diagnostics | ForEach-Object {
+        Write-Host $_ -ForegroundColor Red
+      }
+      throw "mariadb-dump failed for $Type $Name (exit code $exitCode)"
+    }
+
+    foreach ($line in $diagnostics) {
+      Write-Warning "MariaDB dump: $line"
+    }
   }
+  finally {
+    Remove-Item -LiteralPath $diagnosticFile `
+      -Force -ErrorAction SilentlyContinue
+  }
+
 
   if (-not $sql) {
       throw "mariadb-dump returned empty output for $Type $Name"
