@@ -220,13 +220,28 @@ def main():
             assert d.query(configured, good['candidate'], aggregate) == ['75.00']
             assert d.query(configured, good['candidate'], 'SELECT battery FROM EnergyMonitoring.collation_regression;') == ['75.00']
             d.query(configured, good['candidate'], 'DROP VIEW EnergyMonitoring.collation_regression;')
-            # Prove target-only grants on the owned fixture, not a source account.
+
+            # Verify that an unresolved SQL definer is rejected.
+            # This additional view exists only in the isolated candidate.
+            d.query(
+                configured, good['candidate'],
+                "CREATE DEFINER='standby_unresolved_fixture'@'invalid.example' "
+                "SQL SECURITY DEFINER VIEW orchids.fixture_unapproved_definer "
+                "AS SELECT 1 AS witness;"
+            )
             try:
-                a.provision(configured, good['candidate'], process)
-            except s.b.BackupError as ex:
-                assert 'unresolved SQL definers' in str(ex)
-            else:
-                raise AssertionError('Unapproved remote definer was accepted')
+                try:
+                    a.provision(configured, good['candidate'], process)
+                except s.b.BackupError as ex:
+                    assert 'unresolved SQL definers' in str(ex)
+                else:
+                    raise AssertionError('Unresolved SQL definer was accepted')
+            finally:
+                d.query(
+                    configured, good['candidate'],
+                    'DROP VIEW orchids.fixture_unapproved_definer;'
+                )
+
             policy_config = dict(configured, view_definer_policy=f.POLICY)
             report = {}
             real_columns = f.columns
