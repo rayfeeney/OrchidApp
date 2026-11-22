@@ -83,8 +83,7 @@ def main():
                "CREATE EVENT orchids.fixture_event ON SCHEDULE AT CURRENT_TIMESTAMP + INTERVAL 1 DAY DISABLE DO SELECT 1; "
                "CREATE TABLE EnergyMonitoring.witness(id INT PRIMARY KEY,value VARCHAR(40)) ENGINE=InnoDB; "
                "INSERT INTO EnergyMonitoring.witness VALUES(1,'original energy');")
-        source("CREATE USER 'root'@'localhost' IDENTIFIED BY 'synthetic-source-only'; "
-               "GRANT SELECT ON EnergyMonitoring.* TO 'root'@'localhost'; "
+        source("GRANT SELECT ON EnergyMonitoring.* TO 'root'@'localhost'; "
                "GRANT SELECT ON orchids.* TO 'root'@'localhost';")
         for table in ('environmentreading', 'environmentsensor', 'environmenttargetrule', 'location'):
             source('CREATE TABLE orchids.`' + table + '`(id INT PRIMARY KEY) ENGINE=InnoDB; '
