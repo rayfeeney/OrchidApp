@@ -306,3 +306,18 @@ The candidate checks the actual loopback endpoint and verifies its database dire
 ## Evidence and closure
 
 Keep original maintenance reports and historical snapshots. Their counts, failures and delivery-stage pending statements remain historical; this dated reconciliation records later results without changing them. A new release must retain its exact package identities/signing status and completed per-machine [upgrade record](upgrade-checklist.md#per-upgrade-completion-record). Mark excluded cases inapplicable with a reason, not passed. When completing a task, record actual outcome and remaining limits; this list does not certify future upgrades or ongoing daily operations.
+
+### EnergyMonitoring view-definer correction — 22 November 2026
+
+Following the Debian 13 and MariaDB 11 upgrades, Pi 1's six
+EnergyMonitoring views were standardised on root@localhost using
+EnergyMonitoring SQL script 030. All six retain SQL SECURITY DEFINER,
+and the Enphase hourly view was verified against live data.
+
+Pi 2 successfully discovered the new verified backup but rejected its
+application probe because the standby policy still expected the original
+root@192.168.7.153 definer.
+
+The standby source-definer policy has been updated in Windows DEV to
+expect root@localhost. Deployment and successful Pi 2 restore verification
+remain pending.

@@ -13,7 +13,7 @@ import standby_database as d
 
 b = d.b
 POLICY = 'energy-six-v1'
-SOURCE = 'root@192.168.7.153'
+SOURCE = 'root@localhost'
 TARGET = 'standby_energy_views@localhost'
 VIEWS = frozenset(('vw_Tariff', 'vw_MonitoringDeviceLocation', 'vw_GoveeHourly',
                    'vw_EnphaseHourly', 'vw_TapoHourly', 'vw_WeatherHourly'))

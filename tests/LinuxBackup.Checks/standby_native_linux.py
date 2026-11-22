@@ -83,9 +83,8 @@ def main():
                "CREATE EVENT orchids.fixture_event ON SCHEDULE AT CURRENT_TIMESTAMP + INTERVAL 1 DAY DISABLE DO SELECT 1; "
                "CREATE TABLE EnergyMonitoring.witness(id INT PRIMARY KEY,value VARCHAR(40)) ENGINE=InnoDB; "
                "INSERT INTO EnergyMonitoring.witness VALUES(1,'original energy');")
-        source("CREATE USER 'root'@'192.168.7.153' IDENTIFIED BY 'synthetic-source-only'; "
-               "GRANT SELECT ON EnergyMonitoring.* TO 'root'@'192.168.7.153'; "
-               "GRANT SELECT ON orchids.* TO 'root'@'192.168.7.153';")
+        source("GRANT SELECT ON EnergyMonitoring.* TO 'root'@'localhost'; "
+               "GRANT SELECT ON orchids.* TO 'root'@'localhost';")
         for table in ('environmentreading', 'environmentsensor', 'environmenttargetrule', 'location'):
             source('CREATE TABLE orchids.`' + table + '`(id INT PRIMARY KEY) ENGINE=InnoDB; '
                    'INSERT INTO orchids.`' + table + '` VALUES(1);')
@@ -123,7 +122,7 @@ def main():
                 body = 'SELECT e.value FROM EnergyMonitoring.witness e JOIN orchids.location l ON l.id=e.id'
             else:
                 body = 'SELECT value FROM EnergyMonitoring.witness'
-            source("CREATE DEFINER='root'@'192.168.7.153' SQL SECURITY DEFINER VIEW EnergyMonitoring.`"
+            source("CREATE DEFINER='root'@'localhost' SQL SECURITY DEFINER VIEW EnergyMonitoring.`"
                    + view + '` AS ' + body + ';')
         dumps = {}
         for database in ('orchids', 'EnergyMonitoring'):
@@ -221,13 +220,28 @@ def main():
             assert d.query(configured, good['candidate'], aggregate) == ['75.00']
             assert d.query(configured, good['candidate'], 'SELECT battery FROM EnergyMonitoring.collation_regression;') == ['75.00']
             d.query(configured, good['candidate'], 'DROP VIEW EnergyMonitoring.collation_regression;')
-            # Prove target-only grants on the owned fixture, not a source account.
+
+            # Verify that an unresolved SQL definer is rejected.
+            # This additional view exists only in the isolated candidate.
+            d.query(
+                configured, good['candidate'],
+                "CREATE DEFINER='standby_unresolved_fixture'@'invalid.example' "
+                "SQL SECURITY DEFINER VIEW orchids.fixture_unapproved_definer "
+                "AS SELECT 1 AS witness;"
+            )
             try:
-                a.provision(configured, good['candidate'], process)
-            except s.b.BackupError as ex:
-                assert 'unresolved SQL definers' in str(ex)
-            else:
-                raise AssertionError('Unapproved remote definer was accepted')
+                try:
+                    a.provision(configured, good['candidate'], process)
+                except s.b.BackupError as ex:
+                    assert 'unresolved SQL definers' in str(ex)
+                else:
+                    raise AssertionError('Unresolved SQL definer was accepted')
+            finally:
+                d.query(
+                    configured, good['candidate'],
+                    'DROP VIEW orchids.fixture_unapproved_definer;'
+                )
+
             policy_config = dict(configured, view_definer_policy=f.POLICY)
             report = {}
             real_columns = f.columns
