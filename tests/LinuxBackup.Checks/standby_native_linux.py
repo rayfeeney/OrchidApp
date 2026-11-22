@@ -83,9 +83,9 @@ def main():
                "CREATE EVENT orchids.fixture_event ON SCHEDULE AT CURRENT_TIMESTAMP + INTERVAL 1 DAY DISABLE DO SELECT 1; "
                "CREATE TABLE EnergyMonitoring.witness(id INT PRIMARY KEY,value VARCHAR(40)) ENGINE=InnoDB; "
                "INSERT INTO EnergyMonitoring.witness VALUES(1,'original energy');")
-        source("CREATE USER 'root'@'192.168.7.153' IDENTIFIED BY 'synthetic-source-only'; "
-               "GRANT SELECT ON EnergyMonitoring.* TO 'root'@'192.168.7.153'; "
-               "GRANT SELECT ON orchids.* TO 'root'@'192.168.7.153';")
+        source("CREATE USER 'root'@'localhost' IDENTIFIED BY 'synthetic-source-only'; "
+               "GRANT SELECT ON EnergyMonitoring.* TO 'root'@'localhost'; "
+               "GRANT SELECT ON orchids.* TO 'root'@'localhost';")
         for table in ('environmentreading', 'environmentsensor', 'environmenttargetrule', 'location'):
             source('CREATE TABLE orchids.`' + table + '`(id INT PRIMARY KEY) ENGINE=InnoDB; '
                    'INSERT INTO orchids.`' + table + '` VALUES(1);')
@@ -123,7 +123,7 @@ def main():
                 body = 'SELECT e.value FROM EnergyMonitoring.witness e JOIN orchids.location l ON l.id=e.id'
             else:
                 body = 'SELECT value FROM EnergyMonitoring.witness'
-            source("CREATE DEFINER='root'@'192.168.7.153' SQL SECURITY DEFINER VIEW EnergyMonitoring.`"
+            source("CREATE DEFINER='root'@'localhost' SQL SECURITY DEFINER VIEW EnergyMonitoring.`"
                    + view + '` AS ' + body + ';')
         dumps = {}
         for database in ('orchids', 'EnergyMonitoring'):
