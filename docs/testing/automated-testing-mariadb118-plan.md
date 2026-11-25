@@ -37,7 +37,7 @@ Windows and Linux remain mandatory release acceptance platforms.
 | 01 | Install MariaDB 11.8 on Windows DEV PC | Complete |
 | 02 | Upgrade Pi 1 to Debian 13 and MariaDB 11.8 | Complete |
 | 03 | Enable and verify Windows Sandbox | Complete |
-| 04 | Establish isolated Linux testing environments | Pending |
+| 04 | Establish isolated Linux testing environments | Complete |
 | 05 | Review existing automated tests and specimen backups | Pending |
 | 06 | Implement shared application functional testing | Pending |
 | 07 | Implement Windows-specific automated testing | Pending |
@@ -65,8 +65,8 @@ a link to an existing authoritative evidence record.
 | --- | --- |
 | Windows acceptance environment | Windows Sandbox |
 | Paid Windows virtual machine | Not required |
-| Linux acceptance environment | Isolated Linux testing environment |
-| Linux virtualisation | Hyper-V proposed; configuration requires owner agreement |
+| Linux acceptance environment | Two isolated Debian x64 Hyper-V virtual machines on the existing Windows 11 Pro DEV PC |
+| Linux virtualisation | Microsoft Hyper-V; two independent Generation 2 VMs with Secure Boot using MicrosoftUEFICertificateAuthority |
 | Current database baseline | MariaDB 10.11 |
 | Target database | MariaDB 11.8 |
 | Application framework | .NET 8 |
@@ -87,17 +87,147 @@ are identical.
 
 Retain the exact baseline release artifacts and identify their checksums.
 
-The proposed Linux baseline is Debian 12 with MariaDB 10.11.
-The proposed Linux target is Debian 13 with MariaDB 11.8.
-
-The Linux environment configuration is not final until agreed by
-the owner under activity 04.
+The established Linux baseline is Debian 12.15 with MariaDB 10.11.19.
+The established Linux target is Debian 13.8 with MariaDB 11.8.9.
+The environment details and verification evidence are recorded under
+Activity 04 below.
 
 An x64 Linux virtual machine does not replace ARM64 Raspberry Pi
 acceptance. Record architecture-specific validation limits explicitly.
 
 Use existing GitHub CI facilities where appropriate. Review existing
 automation before introducing additional CI workflows or dependencies.
+
+### Activity 04 - Establish isolated Linux testing environments
+
+**Status: Complete.** The two environments were established and verified
+on 25 November 2026. This completes environment establishment only; it
+does not establish an OrchidApp application or automated testing baseline.
+
+#### Approved Hyper-V configuration
+
+The environments use the existing Windows 11 Pro DEV PC with Microsoft
+Hyper-V enabled and verified. Each is an independent Generation 2 x64
+Linux virtual machine with four virtual processors, fixed 4 GiB RAM and
+a dynamically expanding 80 GiB virtual hard disk. Secure Boot is enabled
+using `MicrosoftUEFICertificateAuthority`. Both use the existing Hyper-V
+Default Switch for NAT networking and the standard Hyper-V VM and virtual
+disk storage locations. Additional financial expenditure was GBP 0.
+
+The Debian netinst media was obtained from the official Debian source and
+its SHA256 checksum was compared. Independent ISO signature verification
+was not performed. Both machines received a minimal server installation
+with SSH server and standard system utilities; no graphical desktop is
+installed.
+
+#### Verified environment configuration
+
+| Component | Baseline environment | Target environment |
+| --- | --- | --- |
+| VM name | `OrchidApp-Debian12` | `OrchidApp-Debian13` |
+| Hostname | `orchidapp-debian12` | `orchidapp-debian13` |
+| Operating system | Debian 12.15 | Debian 13.8 |
+| Architecture | x86_64 | x86_64 |
+| Kernel | 6.1.0-56-amd64 | 6.12.118+deb13-amd64 |
+| MariaDB Server | 10.11.19 | 11.8.9 |
+| MariaDB Client | 10.11.19 | 11.8.9 |
+| .NET SDK | 8.0.428 | 8.0.428 |
+| .NET Runtime | 8.0.34 | 8.0.34 |
+| ASP.NET Core Runtime | 8.0.34 | 8.0.34 |
+| PowerShell | 7.6.10 | 7.7.0 |
+| Git | 2.39.5 | 2.47.3 |
+| libvips | 8.14.1 | 8.16.1 |
+| Python | 3.11.2 | 3.13.5 |
+| rclone | 1.60.1-DEV | 1.60.1-DEV |
+| rsync | 3.5.0 | 3.5.0 |
+| tar | 1.34 | 1.35 |
+| gzip | 1.12 | 1.13 |
+| curl | 7.88.1 | 8.14.1 |
+
+MariaDB and native Linux dependencies were installed from the official
+Debian repositories. .NET 8 and PowerShell were installed from the
+Microsoft repository appropriate to each Debian version. The recorded
+native dependency installation commands were:
+
+Debian 12:
+
+```sh
+sudo apt install -y git curl libvips42 libvips-tools libheif1 rclone
+```
+
+Debian 13:
+
+```sh
+sudo apt install -y git curl libvips42t64 libvips-tools libheif1 rclone
+```
+
+Both environments:
+
+```sh
+sudo apt install -y mariadb-server mariadb-client
+sudo apt install -y dotnet-sdk-8.0 powershell
+```
+
+Both MariaDB installations have this persistent configuration in
+`/etc/mysql/mariadb.conf.d/99-orchidapp.cnf`:
+
+```ini
+[mysqld]
+character-set-server = utf8mb4
+collation-server = utf8mb4_unicode_ci
+```
+
+The MariaDB services were restarted and the effective settings verified.
+Both servers listen on `127.0.0.1:3306` and contain only their system
+databases. The Microsoft `dotnet-host` package is version 11.0.0 on both
+machines; it is the shared launcher, not an additional application
+runtime or SDK. The installed application SDK and shared runtimes remain
+exclusively .NET 8.
+
+#### Verification evidence
+
+Completed on 25 November 2026:
+
+- Operating system installation and SSH connectivity succeeded.
+- VM architecture, processor count and memory allocation were verified.
+- Package repository access and dependency installation succeeded.
+- MariaDB client connectivity and server versions were checked; both
+  services are active and enabled.
+- The required MariaDB character set and collation were verified.
+- .NET 8 SDK and application runtimes were verified.
+- PowerShell and supporting command-line utilities were verified.
+- JPEG and HEIF/HEIC libvips loaders are available.
+- Systemd is running and SSH is active.
+- Both virtual machines were gracefully shut down and both clean
+  checkpoints were verified as present.
+
+#### Recovery checkpoints
+
+| VM | Checkpoint | Created | Type |
+| --- | --- | --- | --- |
+| `OrchidApp-Debian12` | `Clean-Debian12-MariaDB10.11` | 25 November 2026 20:27:28 | Standard |
+| `OrchidApp-Debian13` | `Clean-Debian13-MariaDB11.8` | 25 November 2026 21:12:07 | Standard |
+
+Both VMs are currently off. Existing automatic checkpoints have been
+retained. Checkpoint existence was verified; restoration was not
+exercised. These checkpoints are not independent off-host backups.
+
+#### Limitations and scope boundaries
+
+- These x64 environments do not replace ARM64 Raspberry Pi acceptance.
+- Hyper-V Default Switch NAT does not provide complete outbound network
+  isolation from production systems.
+- No production credentials or production database connections are
+  configured. SSH addresses are dynamically allocated.
+- No OrchidApp application installation or OrchidApp database creation
+  has been undertaken.
+- No specimen backup has been restored or modified.
+- No application functional tests, actual photograph processing tests,
+  or backup/restore tests have been undertaken.
+- No production Raspberry Pi systems or operational backup arrangements
+  have been changed.
+- No application code, database migrations, tests, packaging or
+  deployment scripts have been changed.
 
 ## 4. Fixed testing scope
 
@@ -278,12 +408,14 @@ The programme is complete only after Gate 3 approval.
 | Gate 2 - MariaDB 11.8 acceptance | Pending | Not yet approved |
 | Gate 3 - Final release acceptance | Pending | Not yet approved |
 
-Activities 01 to 03 are recorded as owner-confirmed complete.
+Activities 01 to 04 are recorded as complete. Activity 04 establishes
+and verifies the isolated Linux environments described above.
 
-Current activity: 04 - Establish isolated Linux testing environments.
+Next activity: 05 - Review existing automated tests and specimen
+backups. Status: Pending; not commenced.
 
 No automated testing baseline or MariaDB 11.8 release acceptance
-is claimed by this initial planning document.
+is claimed at this stage.
 
 Keep this document updated as each activity is completed. Link to
 existing test inventories, CI results and release-specific acceptance
