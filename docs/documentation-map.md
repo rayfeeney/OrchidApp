@@ -4,6 +4,7 @@ Use one current owner for each subject. Other documents link to that owner rathe
 
 | Subject | Current owner | Related material |
 | --- | --- | --- |
+| Automated testing and MariaDB 11.8 programme | [Controlled programme](testing/automated-testing-mariadb118-plan.md) | Fixed scope, programme status, testing baselines and owner approval gates; existing technical contracts and testing evidence remain applicable |
 | Pi 1 dead nightly-lock repair | [Incident/acceptance](maintenance/pi1-nightly-lock-recovery.md) | Kernel-lock/process-death tests, target deployment, supervised cloud backup/email and source timer/health acceptance passed |
 | Pi 2 nightly standby restore | [Operator guide](user-guides/linux/nightly-standby-restore.md) | [Installed acceptance](maintenance/pi2-standby-preparation.md); scheduled restore/emails/live retention and writable rehearsal passed; timers resumed |
 | Pi 2 manual takeover and writable rehearsal | [Takeover runbook](user-guides/linux/pi2-manual-takeover.md) | Accepted-data protection, fencing, private access and guarded unchanged release; writable rehearsal/explicit finish/cleanup passed; no live cutover claimed |

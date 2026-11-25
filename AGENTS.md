@@ -4,6 +4,117 @@
 
 Read [docs/index.md](docs/index.md) and [CONTRIBUTING.md](CONTRIBUTING.md) before changing behaviour. Use [docs/documentation-map.md](docs/documentation-map.md) to identify the authoritative document for each area. Put new explanations, change summaries and reports under docs/, not at repository root. Keep required root files such as this file, README.md, CONTRIBUTING.md, RELEASE_NOTES.md and licence notices in their established locations.
 
+## Development governance
+
+- Carry out all application, database, script, configuration and documentation development on the designated Windows DEV PC.
+- Treat Raspberry Pis as operational and deployment environments, not development environments.
+- GitHub is the authoritative source for application code, database definitions, scripts, configuration templates, tests, documentation and development decisions.
+- Do not make untracked or ad hoc changes to deployed application code or repository-controlled configuration.
+- Distinguish read-only operational inspection from actions that modify an operational environment. Obtain owner approval before modifying live environments.
+- Check the current branch, working tree and relevant repository status before starting work.
+- Start new work from the latest appropriate origin/main using a dedicated scoped branch.
+- Preserve unrelated uncommitted changes and existing branches. Do not discard, stash, overwrite or delete unrelated owner changes without approval.
+- Submit changes through pull requests rather than committing directly to main.
+- Review applicable local validation and CI results before merging. Verify applicable post-merge CI results.
+- Review the finished commit and return the development checkout to an appropriate state after completing work.
+- Do not introduce paid services, licences, subscriptions or infrastructure without explicit owner approval.
+
+## Architectural consistency and implementation reuse
+
+Maintain OrchidApp as a coherent application. Every change must be implemented in the context of the whole application, not merely the immediate requirement.
+
+Before designing or implementing a change:
+
+- Inspect existing implementations of the same or similar functionality across the repository.
+- Identify applicable architectural contracts, shared components, services, utilities, scripts and tests.
+- Establish the authoritative implementation pattern before introducing changes.
+- Follow established naming conventions, coding patterns and architectural boundaries.
+- Determine whether the requirement applies to Windows, Linux or both platforms.
+- Identify affected documentation and existing acceptance criteria.
+
+When implementing changes:
+
+- Maintain a single authoritative implementation of shared functionality wherever practical.
+- Prefer extending an appropriate existing component over creating a parallel implementation.
+- Avoid unnecessary duplication of business logic, validation, database access, configuration, operational mechanisms and tests.
+- Keep platform-specific implementations limited to genuine platform requirements.
+- Apply consistent approaches to error handling, logging, resource management, configuration, validation and testing.
+- Use existing application services, shared Razor components, database access mechanisms, utilities and test infrastructure wherever appropriate.
+- Do not introduce alternative implementations merely because they are easier to develop in isolation.
+- Do not introduce new frameworks, dependencies, architectural patterns or abstractions without a demonstrated requirement and explicit owner approval.
+- Do not introduce speculative abstractions solely in anticipation of possible future requirements.
+
+Where multiple implementations of similar functionality already exist:
+
+- Determine whether the differences are intentional, necessary or historical.
+- Review the applicable architectural contracts before selecting an implementation as authoritative.
+- Record material inconsistencies and their implications.
+- Obtain owner approval before undertaking consolidation or unrelated refactoring.
+- Do not introduce a further implementation without explicit justification and owner approval.
+
+Where an established implementation pattern is unsuitable, explain its limitations, identify the affected components and obtain owner approval before departing from it.
+
+Update the authoritative architecture or technical documentation whenever an approved change establishes or modifies a shared implementation pattern.
+
+## Scope and change control
+
+- Work within the explicitly agreed requirements and completion criteria.
+- Do not expand the scope of an activity without owner approval.
+- Do not introduce unrelated functionality, improvements or refactoring simply because an opportunity is identified.
+- Review and reuse existing functionality, scripts, tests and documentation before creating replacements.
+- Record unrelated defects, inconsistencies and improvement opportunities as GitHub issues rather than diverting the current activity.
+- Investigate blockers only sufficiently to determine their impact on the agreed work.
+- Do not reopen completed work without new evidence.
+- Maintain agreed work lists and programme references without silently adding, removing, renumbering or redefining activities.
+- Escalate material architectural decisions, scope changes and unresolved blockers to the owner.
+
+## Pre-implementation review
+
+Before implementing new functionality or a significant change, establish:
+
+- Which existing implementations of similar functionality have been reviewed.
+- Which authoritative architectural pattern applies.
+- Which existing components, services, scripts and tests can be reused.
+- Whether unnecessary Windows and Linux differences have been avoided.
+- Whether the proposed change remains within the agreed scope.
+- Whether departures from established patterns require owner approval.
+- Which authoritative documents and acceptance checks are affected.
+
+Do not proceed with an unresolved material architectural or scope decision.
+
+## Testing integrity and regression control
+
+- Establish an appropriate verified baseline before significant architectural, dependency, database or packaging changes.
+- Repeat applicable baseline tests following implementation.
+- Preserve original specimen backups, recorded checksums and expected contents.
+- Perform destructive testing only against designated disposable environments and working copies of specimen data.
+- Never perform destructive testing against live operational databases or collections.
+- Reuse existing test fixtures, assertions and automation wherever appropriate.
+- Distinguish development checks, CI results, packaged-release acceptance and operational acceptance.
+- Do not report a test as passed unless it has actually been executed successfully.
+- Do not weaken acceptance criteria or remove meaningful assertions merely to obtain a passing result.
+- Record actual results, failures, limitations and outstanding acceptance requirements.
+
+## Release and deployment governance
+
+- Obtain owner approval for the release version and release creation.
+- Validate the actual release artifacts, not merely the source or development build.
+- Preserve relevant artifact identities, checksums, version information and acceptance evidence.
+- Verify affected installation, upgrade, backup, restoration and recovery procedures.
+- Do not publish a release or deploy it to an operational environment without explicit owner approval.
+- Follow the documented platform-specific deployment and recovery procedures.
+
+## Working with the project owner
+
+- Provide implementation and troubleshooting instructions one step at a time.
+- Wait for the result before issuing dependent instructions.
+- Prefer single-line PowerShell commands where practical.
+- Clearly distinguish read-only, modifying and destructive commands.
+- Use existing configuration and credentials without unnecessarily requesting them again.
+- Do not assume that a command, build, test, commit, pull request or deployment has completed successfully.
+- Explain material decisions, assumptions, deviations, blockers and validation limitations.
+- Maintain sufficient repository documentation for another developer to continue the work without relying on conversation history.
+
 ## Build and dependency policy
 
 - Use the .NET 8 SDK and runtimes. Keep the web app, Windows launcher and executable checks on .NET 8, including the EF Core and Pomelo stack. Review resolved dependencies when changing packages, regenerate the web NuGet lockfile and verify it with `dotnet restore src/OrchidApp.Web --locked-mode`. Check third-party notices for dependency and distribution changes.
@@ -48,3 +159,20 @@ if ($LASTEXITCODE -ne 0) { throw 'Archive creation failed.' }
 Only the root dist is excluded; nested vendored web-library dist folders are required. The broad .env.* exclusion also omits .env.example from the ZIP. This is not a full backup or a guarantee that other files contain no secrets. See the [database creation contract](docs/database-creation.md) and [current work list](docs/current-state.md) for remaining release and operational work.
 
 Keep the installed Raspberry Pi/Linux process in the [Linux user guide](docs/user-guides/linux/installation-upgrade.md). Link other operator documents to it. The sequence is stop writers, verify backups, fetch the approved release, apply pending migrations, publish and deploy, then start and verify.
+
+## Automated testing and MariaDB 11.8 programme
+
+Follow the [controlled programme of work](docs/testing/automated-testing-mariadb118-plan.md) when undertaking automated testing, MariaDB 11.8 re-engineering and associated release acceptance.
+
+- Read the programme before commencing any related work.
+- Identify the current numbered activity and its completion criteria.
+- Complete one activity at a time and respect the owner approval gates.
+- Do not expand, renumber or redefine the agreed scope without explicit owner approval.
+- Review and reuse existing tests, specimen backups and validation evidence before creating replacements.
+- Record unrelated findings as GitHub issues rather than diverting the current activity.
+- Investigate blockers only sufficiently to determine their impact on the current activity.
+- Update programme status using actual validation evidence.
+- Do not commence MariaDB 11.8 re-engineering before both current-version testing baselines have been approved.
+- Do not reopen completed activities without new evidence.
+
+The programme supplements, and does not replace, the existing repository development, architecture, database, documentation and release requirements.

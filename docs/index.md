@@ -76,3 +76,7 @@ Start each release/installation upgrade with the [Windows and Linux upgrade acti
 - [C15/C19 implementation and validation](maintenance/c15-c19-photo-handling.md).
 
 - [Windows installer backup and recovery](windows-installer-recovery.md), with [C18 validation and limits](maintenance/c18-installer-upgrades.md).
+
+## Automated testing and MariaDB 11.8 programme
+
+- [Controlled programme of work, scope, progress and acceptance gates](testing/automated-testing-mariadb118-plan.md)
