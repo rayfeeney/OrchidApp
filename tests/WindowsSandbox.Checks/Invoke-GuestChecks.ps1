@@ -22,6 +22,7 @@ $report = [ordered]@{
     windows = [Environment]::OSVersion.VersionString
     architecture = $env:PROCESSOR_ARCHITECTURE
     sourceRevision = $case.sourceRevision
+    candidateRevision = $case.candidateRevision
     inputs = $case.inputs
     stages = [ordered]@{}
     status = 'running'
@@ -67,17 +68,25 @@ function Test-Port([int]$Port) {
 
 function Get-Window([string]$Title, [int]$Seconds = 120) {
     Wait-For $Title {
+        $launcher.Refresh()
+        $handle = $launcher.MainWindowHandle
+        if ($handle -ne [IntPtr]::Zero) {
+            $mainWindow = [Windows.Automation.AutomationElement]::FromHandle($handle)
+            if ($mainWindow -and ($Title -eq 'OrchidApp Launcher -*' -or $mainWindow.Current.Name -like $Title)) {
+                return ,$mainWindow
+            }
+        }
         $root = [Windows.Automation.AutomationElement]::RootElement
         $pidMatch = [Windows.Automation.PropertyCondition]::new(
             [Windows.Automation.AutomationElement]::ProcessIdProperty, $launcher.Id)
         $windows = $root.FindAll([Windows.Automation.TreeScope]::Children, $pidMatch)
         foreach ($window in $windows) {
-            if ($window.Current.Name -like $Title) { return $window }
+            if ($window.Current.Name -like $Title) { return ,$window }
             $condition = [Windows.Automation.PropertyCondition]::new(
                 [Windows.Automation.AutomationElement]::NameProperty, $Title)
             $dialog = $window.FindFirst([Windows.Automation.TreeScope]::Descendants, $condition)
             if ($dialog -and $dialog.Current.ControlType -eq [Windows.Automation.ControlType]::Window) {
-                return $dialog
+                return ,$dialog
             }
         }
     } $Seconds
@@ -202,6 +211,12 @@ try {
     }
     $specimen = Join-Path $work 'specimen.zip'
     if ($Upgrade) {
+        $originalModulePath = $env:PSModulePath
+        $legacyModules = Join-Path $inputRoot 'legacy-archive-module'
+        if (Test-Path -LiteralPath $legacyModules) {
+            $env:PSModulePath = $legacyModules + ';' + $originalModulePath
+            $report.legacyArchiveModule = $legacyModules
+        }
         Install-Orchid 'previous.exe' 'install-v1.4.0'
         Start-Orchid
         Stop-Orchid
@@ -209,6 +224,7 @@ try {
             ('"' + (Join-Path $install 'tools\restore-orchidapp.ps1') + '"'), '-BackupZip', $specimen)
         $beforeUpgrade = Get-MediaInventory
         if ($beforeUpgrade.Count -ne 20) { throw 'Historical restore did not produce 20 media files.' }
+        $env:PSModulePath = $originalModulePath
         Complete-Stage 'historical-offline-restore'
     }
 
@@ -254,8 +270,8 @@ try {
     $roundTrip = Join-Path $work 'round-trip.zip'
     Copy-Item -LiteralPath $archives[0].FullName -Destination $roundTrip
     $payload = Join-Path $work 'backup-payload'
-    Expand-Archive -LiteralPath $roundTrip -DestinationPath $payload
     . (Join-Path $install 'tools\Backup-Contract.ps1')
+    Expand-CheckedBackup $roundTrip $payload
     $null = Read-BackupPayload $payload
     $beforeRestore = Get-MediaInventory
     $report.backupSha256 = (Get-FileHash -LiteralPath $roundTrip -Algorithm SHA256).Hash

@@ -6,14 +6,20 @@ param(
     [Parameter(Mandatory)][string]$PythonRoot,
     [Parameter(Mandatory)][string]$BrowserRoot,
     [string]$PreviousInstaller,
+    [ValidatePattern('^[0-9a-fA-F]{64}$')][string]$CandidateSha256,
+    [ValidatePattern('^[0-9a-fA-F]{40}$')][string]$CandidateRevision,
+    [string]$PreviousArchiveModuleRoot,
     [string]$OutputRoot = 'artifacts/windows-sandbox',
     [switch]$Launch
 )
 $ErrorActionPreference = 'Stop'
 if ([Environment]::OSVersion.Platform -ne 'Win32NT') { throw 'Windows Sandbox requires a Windows host.' }
 $repo = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../..')).Path
+if ([bool]$CandidateSha256 -ne [bool]$CandidateRevision) { throw 'Specify candidate SHA-256 and source revision together.' }
+if ($PreviousArchiveModuleRoot -and !$PreviousInstaller) { throw 'The legacy module is allowed only for the historical installer.' }
+$currentHash = if ($CandidateSha256) { $CandidateSha256 } else { '4b116a69c37ef214215efd3fe5655cfece02f5e6d026346f9ab45ddd1ebdba4e' }
 $assetInputs = @(
-    @{ name = 'current.exe'; path = $Installer; sha256 = '4b116a69c37ef214215efd3fe5655cfece02f5e6d026346f9ab45ddd1ebdba4e' }
+    @{ name = 'current.exe'; path = $Installer; sha256 = $currentHash }
     @{ name = 'specimen.zip'; path = $Specimen; sha256 = '18a10fb72501cf412c3bc8a599dbc693069497665b59c00945f3740a11375786' }
     @{ name = 'large.jpg'; path = $Jpeg }
     @{ name = 'large.heic'; path = $Heic }
@@ -48,7 +54,10 @@ Copy-Item -LiteralPath $PythonRoot -Destination (Join-Path $inputs 'python') -Re
 Copy-Item -LiteralPath $BrowserRoot -Destination (Join-Path $inputs 'browsers') -Recurse
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Invoke-GuestChecks.ps1') -Destination $inputs
 Copy-Item -LiteralPath (Join-Path $repo 'tests/SharedBrowser.Checks/checks.py') -Destination $inputs
-[ordered]@{ sourceRevision = $version; inputs = @($assetInputs | ForEach-Object {
+if ($PreviousArchiveModuleRoot) {
+    Copy-Item -LiteralPath $PreviousArchiveModuleRoot -Destination (Join-Path $inputs 'legacy-archive-module') -Recurse
+}
+[ordered]@{ sourceRevision = $version; candidateRevision = $CandidateRevision; inputs = @($assetInputs | ForEach-Object {
     [ordered]@{ name = $_.name; sha256 = $_.sha256 }
 }) } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $inputs 'case.json') -Encoding UTF8
 
