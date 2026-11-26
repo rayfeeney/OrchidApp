@@ -1,4 +1,4 @@
-param([string]$PythonExe='python3',[int]$WebPort=53337,[switch]$ExportSchema)
+param([string]$PythonExe='python3',[int]$WebPort=53337,[switch]$ExportSchema,[switch]$SharedBrowser)
 $ErrorActionPreference='Stop'
 Write-Host 'Lifecycle checks revision: c13-lock-cache-v3'
 Write-Host 'History ordering checks revision: c14-event-type-v1'
@@ -147,6 +147,27 @@ try {
             Start-Sleep -Seconds 1
         }
         if(-not $ready){throw 'Fixture web host did not become ready.'}
+        if($SharedBrowser) {
+            if ($process.HasExited) { throw 'Owned browser fixture host exited.' }
+            if ([int](Query "SELECT COUNT(*) FROM taxon;") -eq 0) {
+                Query "CALL spAddGenus('Shared browser fixture', 'Synthetic'); SET @genus=(SELECT genusId FROM genus WHERE genusName='Shared browser fixture'); CALL spAddTaxon(@genus,'browser test',NULL,NULL,NULL);" | Out-Null
+            }
+            $photoRoot = Join-Path $root 'browser-photos'
+            if (!(Test-Path -LiteralPath $photoRoot)) {
+                $null = New-Item -ItemType Directory -Path $photoRoot
+                $sourcePhoto = Join-Path $photoRoot 'source.v'
+                & vips black $sourcePhoto 5120 3840 --bands 3
+                if ($LASTEXITCODE -ne 0) { throw 'Browser photo fixture creation failed.' }
+                foreach ($extension in @('jpg', 'heic')) {
+                    & vips copy $sourcePhoto (Join-Path $photoRoot "large.$extension")
+                    if ($LASTEXITCODE -ne 0) { throw "Browser $extension fixture encoding failed." }
+                }
+            }
+            & $PythonExe (Join-Path $repo 'tests/SharedBrowser.Checks/checks.py') `
+                --base-url $env:C11_TEST_WEB_URL --disposable `
+                --jpeg (Join-Path $photoRoot 'large.jpg') --heic (Join-Path $photoRoot 'large.heic')
+            if ($LASTEXITCODE -ne 0) { throw 'Shared browser acceptance failed.' }
+        }
         & $PythonExe (Join-Path $PSScriptRoot 'PhotoConsistency.Checks.py')
         if($LASTEXITCODE -ne 0){throw 'Photo consistency/readiness checks failed.'}
         & $PythonExe (Join-Path $PSScriptRoot 'checks.py')

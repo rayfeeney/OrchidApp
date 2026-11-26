@@ -80,3 +80,7 @@ The feature job runs 23 pure historical fixture/adoption/package/ownership check
 Successful domain-unavailable chart results are deliberately cached until expiry, preserving null/gap values. Exceptions propagate and do not poison the cache. Separate tests exercise these behaviors and recovery after expiry. Current owner procedures remain in [monitoring](local-installation/greenhouse-monitoring.md); C20 changes no feature gate, cache setting or production query.
 
 See [C20 implementation evidence](maintenance/c20-reproducible-checks.md) for this delivery's measured results and remaining acceptance.
+
+### Shared browser acceptance
+
+The shared Playwright suite exercises readiness, plant workflows, validation and large JPEG/HEIC uploads in Chromium against disposable lifecycle fixtures. See the [runner, prerequisites and installed-platform handoff](../tests/SharedBrowser.Checks/README.md).
