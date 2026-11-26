@@ -39,7 +39,7 @@ Windows and Linux remain mandatory release acceptance platforms.
 | 03 | Enable and verify Windows Sandbox | Complete |
 | 04 | Establish isolated Linux testing environments | Complete |
 | 05 | Review existing automated tests and specimen backups | Complete |
-| 06 | Implement shared application functional testing | Pending |
+| 06 | Implement shared application functional testing | Complete |
 | 07 | Implement Windows-specific automated testing | Pending |
 | 08 | Implement Linux-specific automated testing | Pending |
 | 09 | Establish and approve Windows and Linux testing baselines | Pending |
@@ -417,7 +417,15 @@ Activity 05 was completed on 26 November 2026. The owner approved the
 `2796f88c7479e954354349f484786382be2c76b4`. All eight jobs passed in the
 [CI run on that merge commit](https://github.com/rayfeeney/OrchidApp/actions/runs/45872438671).
 
-Next activity: 06 - Implement shared application functional testing.
+Activity 06 was completed on 26 November 2026. The owner reviewed and
+merged [PR #395](https://github.com/rayfeeney/OrchidApp/pull/395) at
+`2842fe1d06cb980d2c263d51f4db212b75d8b8dc`. All eight jobs passed in the
+[CI run on the merge commit](https://github.com/rayfeeney/OrchidApp/actions/runs/45889785873).
+The [shared Playwright checks](../../tests/SharedBrowser.Checks/README.md)
+passed on migrated and schema-only disposable MariaDB fixtures.
+Installed package validation remains part of the platform activities and baseline.
+
+Next activity: 07 - Implement Windows-specific automated testing.
 Status: Pending; not commenced.
 
 No automated testing baseline or MariaDB 11.8 release acceptance
