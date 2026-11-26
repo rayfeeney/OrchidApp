@@ -129,10 +129,13 @@ def main():
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch()
         try:
-            page = browser.new_page()
-            page.route("**/*", lambda route: route.continue_()
-                       if route.request.url.startswith(args.base_url + "/") else route.abort())
-            exercise(page, args)
+            context = browser.new_context()
+            context.route("**/*", lambda route: route.continue_()
+                          if route.request.url.startswith(args.base_url + "/") else route.abort())
+            try:
+                exercise(context.new_page(), args)
+            finally:
+                context.close()
         finally:
             browser.close()
     print("Shared browser checks passed")
