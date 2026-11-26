@@ -104,9 +104,15 @@ def exercise(page, args):
 
     page.goto(f"{base}/Plants/Photos/{plant_id}")
     page.locator('input[name="UploadFiles"]').set_input_files([args.jpeg, args.heic])
-    page.get_by_role("button", name="Upload photos").click()
-    expect(page.locator('a:has(img[src*="/uploads/"])')).to_have_count(2)
+    with page.expect_response(lambda response: response.request.method == "POST"
+                              and urlsplit(response.url).path == f"/Plants/Photos/{plant_id}") as upload:
+        page.get_by_role("button", name="Upload photos").click()
+    assert upload.value.status in (302, 303), (
+        f"Photo upload returned HTTP {upload.value.status}: "
+        + " ".join(page.locator(".validation-summary-errors, .field-validation-error").all_text_contents())
+    )
     check_gallery(page, base, plant_id)
+    check_readiness(page, base)
     print(f"Reopen after restart with --reopen {plant_id} {edited}")
 
 
