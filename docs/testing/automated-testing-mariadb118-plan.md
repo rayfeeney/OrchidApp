@@ -38,7 +38,7 @@ Windows and Linux remain mandatory release acceptance platforms.
 | 02 | Upgrade Pi 1 to Debian 13 and MariaDB 11.8 | Complete |
 | 03 | Enable and verify Windows Sandbox | Complete |
 | 04 | Establish isolated Linux testing environments | Complete |
-| 05 | Review existing automated tests and specimen backups | In progress |
+| 05 | Review existing automated tests and specimen backups | Complete |
 | 06 | Implement shared application functional testing | Pending |
 | 07 | Implement Windows-specific automated testing | Pending |
 | 08 | Implement Linux-specific automated testing | Pending |
@@ -411,7 +411,14 @@ The programme is complete only after Gate 3 approval.
 Activities 01 to 04 are recorded as complete. Activity 04 establishes
 and verifies the isolated Linux environments described above.
 
-Activity 05 is in progress. The [review record and proposed acceptance criteria](activity-05-review.md) are ready for final review. Activity 06 remains pending until Activity 05 is verified and confirmed complete.
+Activity 05 was completed on 26 November 2026. The owner approved the
+[review record and acceptance criteria](activity-05-review.md), and
+[PR #393](https://github.com/rayfeeney/OrchidApp/pull/393) merged at
+`2796f88c7479e954354349f484786382be2c76b4`. All eight jobs passed in the
+[CI run on that merge commit](https://github.com/rayfeeney/OrchidApp/actions/runs/45872438671).
+
+Next activity: 06 - Implement shared application functional testing.
+Status: Pending; not commenced.
 
 No automated testing baseline or MariaDB 11.8 release acceptance
 is claimed at this stage.
