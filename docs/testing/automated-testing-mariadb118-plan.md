@@ -38,7 +38,7 @@ Windows and Linux remain mandatory release acceptance platforms.
 | 02 | Upgrade Pi 1 to Debian 13 and MariaDB 11.8 | Complete |
 | 03 | Enable and verify Windows Sandbox | Complete |
 | 04 | Establish isolated Linux testing environments | Complete |
-| 05 | Review existing automated tests and specimen backups | Pending |
+| 05 | Review existing automated tests and specimen backups | In progress |
 | 06 | Implement shared application functional testing | Pending |
 | 07 | Implement Windows-specific automated testing | Pending |
 | 08 | Implement Linux-specific automated testing | Pending |
@@ -411,8 +411,7 @@ The programme is complete only after Gate 3 approval.
 Activities 01 to 04 are recorded as complete. Activity 04 establishes
 and verifies the isolated Linux environments described above.
 
-Next activity: 05 - Review existing automated tests and specimen
-backups. Status: Pending; not commenced.
+Activity 05 is in progress. The [review record and proposed acceptance criteria](activity-05-review.md) are ready for final review. Activity 06 remains pending until Activity 05 is verified and confirmed complete.
 
 No automated testing baseline or MariaDB 11.8 release acceptance
 is claimed at this stage.
