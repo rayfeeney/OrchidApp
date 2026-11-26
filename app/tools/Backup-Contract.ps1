@@ -224,17 +224,58 @@ function Read-BackupPayload([string]$Root) {
 function Expand-CheckedBackup([string]$Zip, [string]$Destination) {
     Add-Type -AssemblyName System.IO.Compression
     Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $Destination = Get-FullLocalPath $Destination
+    if (Test-Path -LiteralPath $Destination) {
+        Assert-NoPathAlias $Destination
+        if (!(Test-Path -LiteralPath $Destination -PathType Container) -or
+                @(Get-ChildItem -LiteralPath $Destination -Force).Count -ne 0) {
+            throw 'Backup extraction requires an empty staging directory.'
+        }
+    }
+    else {
+        Assert-NoPathAlias (Split-Path -Parent $Destination)
+    }
+
     $archive = [IO.Compression.ZipFile]::OpenRead($Zip)
     try {
-        $seen = @{}
+        $entries = @{}
         foreach ($entry in $archive.Entries) {
-            $name=$entry.FullName.Replace('\','/')
-            if (-not $name -or $name -match '(^|/)\.\.(/|$)' -or $name.StartsWith('/') -or $name.Contains(':') -or $seen.ContainsKey($name.TrimEnd('/')) -or (($entry.ExternalAttributes -shr 16) -band 0xF000) -eq 0xA000) { throw 'Unsafe or duplicate backup archive entry.' }
-            $seen[$name.TrimEnd('/')]=$true
+            $name = $entry.FullName.Replace('\','/')
+            $directory = $name.EndsWith('/')
+            $relative = $name.TrimEnd('/')
+            $segments = $relative.Split('/')
+            if (!$relative -or $segments -match '(^$|^\.\.?$|[<>:"|?*\x00-\x1f]|[. ]$|^(CON|PRN|AUX|NUL|COM[1-9\u00B9\u00B2\u00B3]|LPT[1-9\u00B9\u00B2\u00B3])(?:\.|$))' -or
+                    $entries.ContainsKey($relative) -or
+                    (($entry.ExternalAttributes -shr 16) -band 0xF000) -eq 0xA000 -or
+                    ($directory -and $entry.Length -ne 0)) {
+                throw 'Unsafe or duplicate backup archive entry.'
+            }
+            $path = Join-Path $Destination $relative
+            Assert-ChildPath $path $Destination
+            $entries[$relative] = @{ Entry = $entry; Path = $path; Directory = $directory }
+        }
+        foreach ($relative in $entries.Keys) {
+            $parent = $relative
+            while (($separator = $parent.LastIndexOf('/')) -ge 0) {
+                $parent = $parent.Substring(0, $separator)
+                if ($entries.ContainsKey($parent) -and !$entries[$parent].Directory) {
+                    throw 'Backup archive contains a file and directory at the same path.'
+                }
+            }
+        }
+
+        [IO.Directory]::CreateDirectory($Destination) | Out-Null
+        foreach ($item in $entries.Values) {
+            if ($item.Directory) {
+                [IO.Directory]::CreateDirectory($item.Path) | Out-Null
+            }
+            else {
+                [IO.Directory]::CreateDirectory((Split-Path -Parent $item.Path)) | Out-Null
+                [IO.Compression.ZipFileExtensions]::ExtractToFile($item.Entry, $item.Path)
+            }
         }
     }
     finally { $archive.Dispose() }
-    Expand-Archive -LiteralPath $Zip -DestinationPath $Destination -Force
 }
 
 function New-OrchidBackupArchive([string]$PayloadRoot,[string]$Zip) {

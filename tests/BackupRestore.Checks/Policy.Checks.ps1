@@ -79,6 +79,28 @@ try {
     try { $entry=$z.CreateEntry('../escape.txt'); $stream=$entry.Open(); $stream.Dispose() } finally { $z.Dispose() }
     Reject 'ZIP traversal rejected before extraction' { Expand-CheckedBackup $zip (Join-Path $root 'extracted') }
     Check 'ZIP traversal wrote no file' (-not (Test-Path (Join-Path $root 'escape.txt')))
+    function Expand-Archive { throw 'The optional PowerShell archive module must not be used.' }
+    $safe = Join-Path $root 'safe.zip'
+    $zipWriter = [IO.Compression.ZipFile]::Open($safe,[IO.Compression.ZipArchiveMode]::Create)
+    try {
+        $null = $zipWriter.CreateEntry('uploads/empty/')
+        $file = $zipWriter.CreateEntry('uploads/.witness')
+        $writer = [IO.StreamWriter]::new($file.Open())
+        try { $writer.Write('backup witness') } finally { $writer.Dispose() }
+    } finally { $zipWriter.Dispose() }
+    $destination = Join-Path $root 'safe-extraction'
+    Expand-CheckedBackup $safe $destination
+    Check 'ZIP extraction preserves contents without Expand-Archive' ((Get-Content -LiteralPath (Join-Path $destination 'uploads/.witness') -Raw) -ceq 'backup witness')
+    Check 'ZIP extraction preserves empty directories' (Test-Path -LiteralPath (Join-Path $destination 'uploads/empty') -PathType Container)
+    Reject 'ZIP extraction does not overwrite staging files' { Expand-CheckedBackup $safe $destination }
+    foreach ($names in @(@('Data.txt','data.txt'), @('uploads','uploads/photo.jpg'), @('uploads/AUX.txt'), @('uploads/aliased.'))) {
+        $invalid = Join-Path $root ("invalid-"+[guid]::NewGuid()+'.zip')
+        $zipWriter = [IO.Compression.ZipFile]::Open($invalid,[IO.Compression.ZipArchiveMode]::Create)
+        try { foreach ($name in $names) { $null = $zipWriter.CreateEntry($name) } } finally { $zipWriter.Dispose() }
+        $destination = Join-Path $root ("invalid-"+[guid]::NewGuid())
+        Reject "ZIP rejects unsafe Windows paths before extraction: $($names -join ', ')" { Expand-CheckedBackup $invalid $destination }
+        Check 'Unsafe ZIP did not create the destination' (!(Test-Path -LiteralPath $destination))
+    }
     $ProgramDataRoot=$root
     $RestoreRoot=Join-Path $root 'journal'
     New-Item -ItemType Directory -Path $RestoreRoot | Out-Null
