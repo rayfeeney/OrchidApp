@@ -11,8 +11,8 @@ from playwright.sync_api import expect, sync_playwright
 
 def check_readiness(page, base_url):
     result = page.request.get(base_url + "/health/ready", max_redirects=0)
-    assert result.status == 200, f"Readiness returned HTTP {result.status}"
     report = result.json()
+    assert result.status == 200, f"Readiness returned HTTP {result.status}: {report}"
     assert report["ready"] and report["checks"] and all(report["checks"].values()), report
 
 

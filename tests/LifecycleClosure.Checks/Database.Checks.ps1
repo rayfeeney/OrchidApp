@@ -147,18 +147,6 @@ try {
             Start-Sleep -Seconds 1
         }
         if(-not $ready){throw 'Fixture web host did not become ready.'}
-        & $PythonExe (Join-Path $PSScriptRoot 'PhotoConsistency.Checks.py')
-        if($LASTEXITCODE -ne 0){throw 'Photo consistency/readiness checks failed.'}
-        & $PythonExe (Join-Path $PSScriptRoot 'checks.py')
-        if($LASTEXITCODE -ne 0){throw 'Lifecycle closure database/HTTP checks failed.'}
-        & $PythonExe (Join-Path $PSScriptRoot 'EndedPlant.Checks.py')
-        if($LASTEXITCODE -ne 0){throw 'Ended-plant/date database/HTTP checks failed.'}
-        & $PythonExe (Join-Path $PSScriptRoot 'ValidationMessages.Checks.py')
-        if($LASTEXITCODE -ne 0){throw 'Plant event field-validation HTTP checks failed.'}
-        & $PythonExe (Join-Path $PSScriptRoot 'Structural.Checks.py')
-        if($LASTEXITCODE -ne 0){throw 'Structural transaction/concurrency checks failed.'}
-        & $PythonExe (Join-Path $PSScriptRoot 'HistoryOrdering.Checks.py')
-        if($LASTEXITCODE -ne 0){throw 'History ordering SQL/HTTP checks failed.'}
         if($SharedBrowser) {
             if ($process.HasExited) { throw 'Owned browser fixture host exited.' }
             $photoRoot = Join-Path $root 'browser-photos'
@@ -177,6 +165,18 @@ try {
                 --jpeg (Join-Path $photoRoot 'large.jpg') --heic (Join-Path $photoRoot 'large.heic')
             if ($LASTEXITCODE -ne 0) { throw 'Shared browser acceptance failed.' }
         }
+        & $PythonExe (Join-Path $PSScriptRoot 'PhotoConsistency.Checks.py')
+        if($LASTEXITCODE -ne 0){throw 'Photo consistency/readiness checks failed.'}
+        & $PythonExe (Join-Path $PSScriptRoot 'checks.py')
+        if($LASTEXITCODE -ne 0){throw 'Lifecycle closure database/HTTP checks failed.'}
+        & $PythonExe (Join-Path $PSScriptRoot 'EndedPlant.Checks.py')
+        if($LASTEXITCODE -ne 0){throw 'Ended-plant/date database/HTTP checks failed.'}
+        & $PythonExe (Join-Path $PSScriptRoot 'ValidationMessages.Checks.py')
+        if($LASTEXITCODE -ne 0){throw 'Plant event field-validation HTTP checks failed.'}
+        & $PythonExe (Join-Path $PSScriptRoot 'Structural.Checks.py')
+        if($LASTEXITCODE -ne 0){throw 'Structural transaction/concurrency checks failed.'}
+        & $PythonExe (Join-Path $PSScriptRoot 'HistoryOrdering.Checks.py')
+        if($LASTEXITCODE -ne 0){throw 'History ordering SQL/HTTP checks failed.'}
         Stop-HostProcess
     }
     Write-Host 'C11 upgrade and schema-only creation with actual HTTP closure checks passed.'
