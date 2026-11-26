@@ -92,13 +92,20 @@ function Get-Window([string]$Title, [int]$Seconds = 120) {
     } $Seconds
 }
 
-function Invoke-Button($Window, [string]$Name) {
+function Invoke-Button($Window, [string]$Name, [switch]$OpensDialog) {
     $button = Wait-For "enabled button '$Name'" {
         $condition = [Windows.Automation.AndCondition]::new(
             [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::NameProperty, $Name),
             [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::ControlTypeProperty, [Windows.Automation.ControlType]::Button))
         $element = $Window.FindFirst([Windows.Automation.TreeScope]::Descendants, $condition)
         if ($element -and $element.Current.IsEnabled) { $element }
+    }
+    if ($OpensDialog) {
+        $buttonHandle = [IntPtr]$button.Current.NativeWindowHandle
+        if (![OrchidSandbox.NativeWindow]::ClickOwnedButton($buttonHandle, [uint32]$launcher.Id)) {
+            throw "Could not queue launcher button '$Name' for its owned window."
+        }
+        return
     }
     $button.GetCurrentPattern([Windows.Automation.InvokePattern]::Pattern).Invoke()
 }
@@ -127,7 +134,7 @@ function Start-Orchid {
 }
 
 function Stop-Orchid {
-    Invoke-Button (Get-Window 'OrchidApp Launcher -*') 'Close OrchidApp'
+    Invoke-Button (Get-Window 'OrchidApp Launcher -*') 'Close OrchidApp' -OpensDialog
     Invoke-Button (Get-Window 'Close OrchidApp?') 'Yes'
     $null = Wait-For 'launcher and owned listeners to stop' {
         $launcher.HasExited -and !(Test-Port 5285) -and !(Test-Port 3308)
@@ -146,7 +153,7 @@ function Install-Orchid([string]$Asset, [string]$Phase) {
 }
 
 function Restore-Orchid([string]$Archive) {
-    Invoke-Button (Get-Window 'OrchidApp Launcher -*') 'Restore from backup...'
+    Invoke-Button (Get-Window 'OrchidApp Launcher -*') 'Restore from backup...' -OpensDialog
     $dialog = Get-Window 'Select OrchidApp backup ZIP'
     $name = Wait-For 'backup file name edit' {
         $condition = [Windows.Automation.PropertyCondition]::new(
@@ -154,7 +161,7 @@ function Restore-Orchid([string]$Archive) {
         $dialog.FindFirst([Windows.Automation.TreeScope]::Descendants, $condition)
     }
     $name.GetCurrentPattern([Windows.Automation.ValuePattern]::Pattern).SetValue($Archive)
-    Invoke-Button $dialog 'Open'
+    Invoke-Button $dialog 'Open' -OpensDialog
     Invoke-Button (Get-Window 'Confirm Restore from Backup') 'Yes'
     Invoke-Button (Get-Window 'Restore Complete' 240) 'OK'
     if (Test-Path -LiteralPath (Join-Path $data 'restore-pending.json')) { throw 'Restore marker remains.' }
@@ -200,6 +207,34 @@ try {
         throw 'A fresh Sandbox without OrchidApp state is required.'
     }
     Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes
+    Add-Type -TypeDefinition @"
+using System;
+using System.Runtime.InteropServices;
+
+namespace OrchidSandbox
+{
+    public static class NativeWindow
+    {
+        private const uint ButtonClick = 0x00F5;
+
+        [DllImport("user32.dll")]
+        private static extern uint GetWindowThreadProcessId(IntPtr window, out uint processId);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool PostMessage(IntPtr window, uint message, IntPtr wParam, IntPtr lParam);
+
+        public static bool ClickOwnedButton(IntPtr window, uint owner)
+        {
+            uint processId;
+            return window != IntPtr.Zero
+                && GetWindowThreadProcessId(window, out processId) != 0
+                && processId == owner
+                && PostMessage(window, ButtonClick, IntPtr.Zero, IntPtr.Zero);
+        }
+    }
+}
+"@
     $null = New-Item -ItemType Directory -Path $work
     foreach ($asset in $case.inputs) {
         $source = Join-Path $inputRoot $asset.name
