@@ -68,26 +68,14 @@ function Test-Port([int]$Port) {
 
 function Get-Window([string]$Title, [int]$Seconds = 120) {
     Wait-For $Title {
+        if ($launcher.HasExited) { throw 'Launcher exited while waiting for a window.' }
         $launcher.Refresh()
         $handle = $launcher.MainWindowHandle
-        if ($handle -ne [IntPtr]::Zero) {
-            $mainWindow = [Windows.Automation.AutomationElement]::FromHandle($handle)
-            if ($mainWindow -and ($Title -eq 'OrchidApp Launcher -*' -or $mainWindow.Current.Name -like $Title)) {
-                return ,$mainWindow
-            }
+        if ($Title -ne 'OrchidApp Launcher -*' -or $handle -eq [IntPtr]::Zero) {
+            $handle = [OrchidSandbox.NativeWindow]::FindOwnedWindow([uint32]$launcher.Id, $Title)
         }
-        $root = [Windows.Automation.AutomationElement]::RootElement
-        $pidMatch = [Windows.Automation.PropertyCondition]::new(
-            [Windows.Automation.AutomationElement]::ProcessIdProperty, $launcher.Id)
-        $windows = $root.FindAll([Windows.Automation.TreeScope]::Children, $pidMatch)
-        foreach ($window in $windows) {
-            if ($window.Current.Name -like $Title) { return ,$window }
-            $condition = [Windows.Automation.PropertyCondition]::new(
-                [Windows.Automation.AutomationElement]::NameProperty, $Title)
-            $dialog = $window.FindFirst([Windows.Automation.TreeScope]::Descendants, $condition)
-            if ($dialog -and $dialog.Current.ControlType -eq [Windows.Automation.ControlType]::Window) {
-                return ,$dialog
-            }
+        if ($handle -ne [IntPtr]::Zero) {
+            return ,([Windows.Automation.AutomationElement]::FromHandle($handle))
         }
     } $Seconds
 }
@@ -156,9 +144,15 @@ function Restore-Orchid([string]$Archive) {
     Invoke-Button (Get-Window 'OrchidApp Launcher -*') 'Restore from backup...' -OpensDialog
     $dialog = Get-Window 'Select OrchidApp backup ZIP'
     $name = Wait-For 'backup file name edit' {
-        $condition = [Windows.Automation.PropertyCondition]::new(
-            [Windows.Automation.AutomationElement]::ControlTypeProperty, [Windows.Automation.ControlType]::Edit)
-        $dialog.FindFirst([Windows.Automation.TreeScope]::Descendants, $condition)
+        $fileNameCondition = [Windows.Automation.PropertyCondition]::new(
+            [Windows.Automation.AutomationElement]::AutomationIdProperty, '1148')
+        $fileName = $dialog.FindFirst([Windows.Automation.TreeScope]::Descendants, $fileNameCondition)
+        if ($fileName) {
+            $editCondition = [Windows.Automation.PropertyCondition]::new(
+                [Windows.Automation.AutomationElement]::ControlTypeProperty, [Windows.Automation.ControlType]::Edit)
+            if ($fileName.Current.ControlType -eq [Windows.Automation.ControlType]::Edit) { return ,$fileName }
+            return ,($fileName.FindFirst([Windows.Automation.TreeScope]::Descendants, $editCondition))
+        }
     }
     $name.GetCurrentPattern([Windows.Automation.ValuePattern]::Pattern).SetValue($Archive)
     Invoke-Button $dialog 'Open' -OpensDialog
@@ -210,6 +204,7 @@ try {
     Add-Type -TypeDefinition @"
 using System;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace OrchidSandbox
 {
@@ -223,6 +218,41 @@ namespace OrchidSandbox
         [DllImport("user32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool PostMessage(IntPtr window, uint message, IntPtr wParam, IntPtr lParam);
+
+        private delegate bool WindowCallback(IntPtr window, IntPtr context);
+
+        [DllImport("user32.dll")]
+        private static extern bool EnumWindows(WindowCallback callback, IntPtr context);
+
+        [DllImport("user32.dll")]
+        private static extern bool IsWindowVisible(IntPtr window);
+
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        private static extern int GetWindowText(IntPtr window, StringBuilder text, int capacity);
+
+        public static IntPtr FindOwnedWindow(uint owner, string title)
+        {
+            IntPtr result = IntPtr.Zero;
+            EnumWindows(delegate(IntPtr window, IntPtr context) {
+                uint processId;
+                if (GetWindowThreadProcessId(window, out processId) == 0
+                    || processId != owner || !IsWindowVisible(window))
+                    return true;
+
+                var text = new StringBuilder(512);
+                GetWindowText(window, text, text.Capacity);
+                var actual = text.ToString();
+                var matches = title.EndsWith("*", StringComparison.Ordinal)
+                    ? actual.StartsWith(title.Substring(0, title.Length - 1), StringComparison.Ordinal)
+                    : actual.Equals(title, StringComparison.Ordinal);
+                if (!matches)
+                    return true;
+
+                result = window;
+                return false;
+            }, IntPtr.Zero);
+            return result;
+        }
 
         public static bool ClickOwnedButton(IntPtr window, uint owner)
         {
