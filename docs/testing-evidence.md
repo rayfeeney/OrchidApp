@@ -84,3 +84,7 @@ See [C20 implementation evidence](maintenance/c20-reproducible-checks.md) for th
 ### Shared browser acceptance
 
 The shared Playwright suite exercises readiness, plant workflows, validation and large JPEG/HEIC uploads in Chromium against disposable lifecycle fixtures. See the [runner, prerequisites and installed-platform handoff](../tests/SharedBrowser.Checks/README.md).
+
+### Windows Sandbox release acceptance
+
+The [Windows Sandbox harness](../tests/WindowsSandbox.Checks/README.md) stages checksum-pinned Windows release inputs and runs the published package and launcher against isolated data. The fixture-installer CI and packaged Sandbox evidence are recorded separately.
