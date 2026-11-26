@@ -97,6 +97,7 @@ function Invoke-Button($Window, [string]$Name) {
 function Start-Orchid {
     if ((Test-Port 5285) -or (Test-Port 3308)) { throw 'An unexpected service is already listening.' }
     $script:launcher = Start-Process -FilePath $launcherExe -WorkingDirectory $install -PassThru
+    # Readiness can succeed before the launcher finishes its automatic backup.
     $null = Wait-For 'OrchidApp readiness' {
         if ($launcher.HasExited) { throw 'The launcher exited during startup.' }
         try {
@@ -213,8 +214,18 @@ try {
 
     Install-Orchid 'current.exe' 'install-v1.4.1'
     Start-Orchid
+    Complete-Stage 'launcher-startup-and-readiness'
+    $null = Wait-For 'launcher startup backup result' {
+        if (!(Test-Path -LiteralPath $log)) { return }
+        $launcherText = Get-Content -LiteralPath $log -Raw
+        $backupError = [regex]::Match($launcherText, '(?m)^.*BACKUP ERROR:.*$')
+        if ($backupError.Success) { throw "Published launcher startup backup failed. $($backupError.Value.Trim())" }
+        if ($launcherText -match 'Backup completed successfully\.|Automatic backup not required\.|Skipping automatic safety backup\.') {
+            return $true
+        }
+    }
     Invoke-Button (Get-Window 'OrchidApp Launcher -*') 'Open OrchidApp'
-    Complete-Stage 'launcher-open-and-readiness'
+    Complete-Stage 'launcher-open'
     if ($Upgrade) {
         if (Compare-Object -ReferenceObject $beforeUpgrade -DifferenceObject (Get-MediaInventory)) {
             throw 'Published upgrade changed historical media.'
@@ -277,6 +288,16 @@ try {
 } catch {
     $report.status = 'failed'
     $report.error = $_.Exception.Message
+    if (Test-Path -LiteralPath $log) {
+        if (Select-String -LiteralPath $log -SimpleMatch 'Microsoft.PowerShell.Archive' -Quiet) {
+            try {
+                Import-Module Microsoft.PowerShell.Archive -ErrorAction Stop
+                $report.archiveModuleDiagnostic = 'Import succeeded in the guest harness process.'
+            } catch {
+                $report.archiveModuleDiagnostic = $_.Exception.Message
+            }
+        }
+    }
     throw
 } finally {
     if (Test-Path -LiteralPath $log) {
