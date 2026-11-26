@@ -149,6 +149,9 @@ try {
         if(-not $ready){throw 'Fixture web host did not become ready.'}
         if($SharedBrowser) {
             if ($process.HasExited) { throw 'Owned browser fixture host exited.' }
+            if ([int](Query "SELECT COUNT(*) FROM taxon;") -eq 0) {
+                Query "CALL spAddGenus('Shared browser fixture', 'Synthetic'); SET @genus=(SELECT genusId FROM genus WHERE genusName='Shared browser fixture'); CALL spAddTaxon(@genus,'browser test',NULL,NULL,NULL);" | Out-Null
+            }
             $photoRoot = Join-Path $root 'browser-photos'
             if (!(Test-Path -LiteralPath $photoRoot)) {
                 $null = New-Item -ItemType Directory -Path $photoRoot
