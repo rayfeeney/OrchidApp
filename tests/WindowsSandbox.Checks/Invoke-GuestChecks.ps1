@@ -162,16 +162,33 @@ function Install-Orchid([string]$Asset, [string]$Phase) {
 function Restore-Orchid([string]$Archive) {
     Invoke-Button (Get-Window 'OrchidApp Launcher -*') 'Restore from backup...' -OpensDialog
     $dialog = Get-Window 'Select OrchidApp backup ZIP'
-    $name = Wait-For 'backup file name edit' {
-        $fileNameCondition = [Windows.Automation.PropertyCondition]::new(
-            [Windows.Automation.AutomationElement]::AutomationIdProperty, '1148')
-        $fileName = $dialog.FindFirst([Windows.Automation.TreeScope]::Descendants, $fileNameCondition)
-        if ($fileName) {
-            $editCondition = [Windows.Automation.PropertyCondition]::new(
-                [Windows.Automation.AutomationElement]::ControlTypeProperty, [Windows.Automation.ControlType]::Edit)
-            if ($fileName.Current.ControlType -eq [Windows.Automation.ControlType]::Edit) { return ,$fileName }
-            return ,($fileName.FindFirst([Windows.Automation.TreeScope]::Descendants, $editCondition))
+    $editType = [Windows.Automation.PropertyCondition]::new(
+        [Windows.Automation.AutomationElement]::ControlTypeProperty, [Windows.Automation.ControlType]::Edit)
+    try {
+        $name = Wait-For 'backup file name edit' {
+            foreach ($edit in $dialog.FindAll([Windows.Automation.TreeScope]::Descendants, $editType)) {
+                if ($edit.Current.IsEnabled -and $edit.Current.Name -match '^File &?name\s*:?$') { return ,$edit }
+            }
+            foreach ($id in @('FileNameControlHost', '1148')) {
+                $condition = [Windows.Automation.PropertyCondition]::new(
+                    [Windows.Automation.AutomationElement]::AutomationIdProperty, $id)
+                $hostControl = $dialog.FindFirst([Windows.Automation.TreeScope]::Descendants, $condition)
+                if (!$hostControl) { continue }
+                $edit = if ($hostControl.Current.ControlType -eq [Windows.Automation.ControlType]::Edit) {
+                    $hostControl
+                } else {
+                    $hostControl.FindFirst([Windows.Automation.TreeScope]::Descendants, $editType)
+                }
+                if ($edit -and $edit.Current.IsEnabled) { return ,$edit }
+            }
+        } 20
+    } catch {
+        $controls = foreach ($control in $dialog.FindAll([Windows.Automation.TreeScope]::Descendants, [Windows.Automation.Condition]::TrueCondition)) {
+            $properties = $control.Current
+            [pscustomobject]@{ name = $properties.Name; automationId = $properties.AutomationId; type = $properties.ControlType.ProgrammaticName }
         }
+        $controls | ConvertTo-Json -Depth 3 | Set-Content -LiteralPath (Join-Path $evidence 'file-picker-controls.json') -Encoding UTF8
+        throw
     }
     $name.GetCurrentPattern([Windows.Automation.ValuePattern]::Pattern).SetValue($Archive)
     Invoke-DialogButton 'Select OrchidApp backup ZIP' 1
