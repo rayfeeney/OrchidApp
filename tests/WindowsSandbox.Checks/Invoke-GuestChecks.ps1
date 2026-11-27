@@ -283,6 +283,9 @@ namespace OrchidSandbox
         [DllImport("user32.dll")]
         private static extern int GetDlgCtrlID(IntPtr window);
 
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetParent(IntPtr window);
+
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]
         private static extern int GetClassName(IntPtr window, StringBuilder name, int capacity);
 
@@ -304,7 +307,16 @@ namespace OrchidSandbox
                 var type = new StringBuilder(64);
                 GetClassName(window, type, type.Capacity);
                 uint childOwner;
-                if (GetDlgCtrlID(window) != FileNameControlId
+                var fileNameControl = false;
+                for (var parent = window; parent != IntPtr.Zero && parent != dialog; parent = GetParent(parent))
+                {
+                    if (GetDlgCtrlID(parent) == FileNameControlId)
+                    {
+                        fileNameControl = true;
+                        break;
+                    }
+                }
+                if (!fileNameControl
                     || !type.ToString().Equals("Edit", StringComparison.OrdinalIgnoreCase)
                     || GetWindowThreadProcessId(window, out childOwner) == 0 || childOwner != owner
                     || !IsWindowEnabled(window) || !IsWindowVisible(window))
