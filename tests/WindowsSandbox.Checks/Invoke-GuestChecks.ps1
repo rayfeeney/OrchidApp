@@ -161,36 +161,11 @@ function Install-Orchid([string]$Asset, [string]$Phase) {
 
 function Restore-Orchid([string]$Archive) {
     Invoke-Button (Get-Window 'OrchidApp Launcher -*') 'Restore from backup...' -OpensDialog
-    $dialog = Get-Window 'Select OrchidApp backup ZIP'
-    $editType = [Windows.Automation.PropertyCondition]::new(
-        [Windows.Automation.AutomationElement]::ControlTypeProperty, [Windows.Automation.ControlType]::Edit)
-    try {
-        $name = Wait-For 'backup file name edit' {
-            foreach ($edit in $dialog.FindAll([Windows.Automation.TreeScope]::Descendants, $editType)) {
-                if ($edit.Current.IsEnabled -and $edit.Current.Name -match '^File &?name\s*:?$') { return ,$edit }
-            }
-            foreach ($id in @('FileNameControlHost', '1148')) {
-                $condition = [Windows.Automation.PropertyCondition]::new(
-                    [Windows.Automation.AutomationElement]::AutomationIdProperty, $id)
-                $hostControl = $dialog.FindFirst([Windows.Automation.TreeScope]::Descendants, $condition)
-                if (!$hostControl) { continue }
-                $edit = if ($hostControl.Current.ControlType -eq [Windows.Automation.ControlType]::Edit) {
-                    $hostControl
-                } else {
-                    $hostControl.FindFirst([Windows.Automation.TreeScope]::Descendants, $editType)
-                }
-                if ($edit -and $edit.Current.IsEnabled) { return ,$edit }
-            }
-        } 20
-    } catch {
-        $controls = foreach ($control in $dialog.FindAll([Windows.Automation.TreeScope]::Descendants, [Windows.Automation.Condition]::TrueCondition)) {
-            $properties = $control.Current
-            [pscustomobject]@{ name = $properties.Name; automationId = $properties.AutomationId; type = $properties.ControlType.ProgrammaticName }
-        }
-        $controls | ConvertTo-Json -Depth 3 | Set-Content -LiteralPath (Join-Path $evidence 'file-picker-controls.json') -Encoding UTF8
-        throw
-    }
-    $name.GetCurrentPattern([Windows.Automation.ValuePattern]::Pattern).SetValue($Archive)
+    $ownerId = [uint32]$launcher.Id
+    $null = Wait-For 'backup file name edit' {
+        $picker = [OrchidSandbox.NativeWindow]::FindOwnedWindow($ownerId, 'Select OrchidApp backup ZIP')
+        $picker -ne [IntPtr]::Zero -and [OrchidSandbox.NativeWindow]::SetOwnedFileName($picker, $ownerId, $Archive)
+    } 20
     Invoke-DialogButton 'Select OrchidApp backup ZIP' 1
     Invoke-DialogButton 'Confirm Restore from Backup' 6
     Invoke-DialogButton 'Restore Complete' 1 240
@@ -300,6 +275,49 @@ namespace OrchidSandbox
         {
             var control = GetDlgItem(dialog, id);
             return control != IntPtr.Zero && IsWindowEnabled(control) ? control : IntPtr.Zero;
+        }
+
+        [DllImport("user32.dll")]
+        private static extern bool EnumChildWindows(IntPtr parent, WindowCallback callback, IntPtr context);
+
+        [DllImport("user32.dll")]
+        private static extern int GetDlgCtrlID(IntPtr window);
+
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        private static extern int GetClassName(IntPtr window, StringBuilder name, int capacity);
+
+        [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern IntPtr SendMessageTimeout(IntPtr window, uint message, IntPtr wParam,
+            string text, uint flags, uint timeoutMilliseconds, out IntPtr result);
+
+        public static bool SetOwnedFileName(IntPtr dialog, uint owner, string path)
+        {
+            const int FileNameControlId = 1148;
+            const uint SetText = 0x000C;
+            const uint AbortIfHung = 0x0002;
+            uint processId;
+            if (GetWindowThreadProcessId(dialog, out processId) == 0 || processId != owner)
+                return false;
+
+            IntPtr edit = IntPtr.Zero;
+            EnumChildWindows(dialog, delegate(IntPtr window, IntPtr context) {
+                var type = new StringBuilder(64);
+                GetClassName(window, type, type.Capacity);
+                uint childOwner;
+                if (GetDlgCtrlID(window) != FileNameControlId
+                    || !type.ToString().Equals("Edit", StringComparison.OrdinalIgnoreCase)
+                    || GetWindowThreadProcessId(window, out childOwner) == 0 || childOwner != owner
+                    || !IsWindowEnabled(window) || !IsWindowVisible(window))
+                    return true;
+
+                edit = window;
+                return false;
+            }, IntPtr.Zero);
+
+            IntPtr result;
+            return edit != IntPtr.Zero
+                && SendMessageTimeout(edit, SetText, IntPtr.Zero, path, AbortIfHung, 1000, out result) != IntPtr.Zero
+                && result != IntPtr.Zero;
         }
 
         public static bool InvokeOwnedDialogCommand(IntPtr window, uint owner, int id)
