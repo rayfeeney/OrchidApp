@@ -173,6 +173,10 @@ function Restore-Orchid([string]$Archive) {
     Invoke-DialogButton 'Select OrchidApp backup ZIP' 1
     Invoke-DialogButton 'Confirm Restore from Backup' 6
     Invoke-DialogButton 'Restore Complete' 1 240
+    $null = Wait-For 'automatic launcher shutdown after restore' {
+        $launcher.HasExited -and !(Test-Port 5285) -and !(Test-Port 3308)
+    }
+    $script:launcher = $null
     if (Test-Path -LiteralPath (Join-Path $data 'restore-pending.json')) { throw 'Restore marker remains.' }
     $hash = (Get-FileHash -LiteralPath $Archive -Algorithm SHA256).Hash
     $retained = @(Get-ChildItem -LiteralPath (Join-Path $data 'restore-recovery') -Filter recovery-input.zip -Recurse -File |
@@ -417,7 +421,6 @@ namespace OrchidSandbox
         Complete-Stage 'upgrade-media-preserved'
     } else {
         Restore-Orchid $specimen
-        Stop-Orchid
         Start-Orchid
         if ((Get-MediaInventory).Count -ne 20) { throw 'Specimen restore did not produce 20 media files.' }
         Complete-Stage 'launcher-specimen-restore'
@@ -450,7 +453,6 @@ namespace OrchidSandbox
     $null = Invoke-Browser $reopen
     Complete-Stage 'restart-and-browser-reopen'
     Restore-Orchid $roundTrip
-    Stop-Orchid
     Start-Orchid
     $null = Invoke-Browser $reopen
     if (Compare-Object -ReferenceObject $beforeRestore -DifferenceObject (Get-MediaInventory)) {
