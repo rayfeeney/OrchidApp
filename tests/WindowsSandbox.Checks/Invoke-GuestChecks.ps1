@@ -22,6 +22,7 @@ $report = [ordered]@{
     windows = [Environment]::OSVersion.VersionString
     architecture = $env:PROCESSOR_ARCHITECTURE
     sourceRevision = $case.sourceRevision
+    candidateRevision = $case.candidateRevision
     inputs = $case.inputs
     stages = [ordered]@{}
     status = 'running'
@@ -67,29 +68,55 @@ function Test-Port([int]$Port) {
 
 function Get-Window([string]$Title, [int]$Seconds = 120) {
     Wait-For $Title {
-        $root = [Windows.Automation.AutomationElement]::RootElement
-        $pidMatch = [Windows.Automation.PropertyCondition]::new(
-            [Windows.Automation.AutomationElement]::ProcessIdProperty, $launcher.Id)
-        $windows = $root.FindAll([Windows.Automation.TreeScope]::Children, $pidMatch)
-        foreach ($window in $windows) {
-            if ($window.Current.Name -like $Title) { return $window }
-            $condition = [Windows.Automation.PropertyCondition]::new(
-                [Windows.Automation.AutomationElement]::NameProperty, $Title)
-            $dialog = $window.FindFirst([Windows.Automation.TreeScope]::Descendants, $condition)
-            if ($dialog -and $dialog.Current.ControlType -eq [Windows.Automation.ControlType]::Window) {
-                return $dialog
-            }
+        if ($launcher.HasExited) { throw 'Launcher exited while waiting for a window.' }
+        $launcher.Refresh()
+        $handle = $launcher.MainWindowHandle
+        if ($Title -ne 'OrchidApp Launcher -*' -or $handle -eq [IntPtr]::Zero) {
+            $handle = [OrchidSandbox.NativeWindow]::FindOwnedWindow([uint32]$launcher.Id, $Title)
+        }
+        if ($handle -ne [IntPtr]::Zero) {
+            return ,([Windows.Automation.AutomationElement]::FromHandle($handle))
         }
     } $Seconds
 }
 
-function Invoke-Button($Window, [string]$Name) {
+function Invoke-DialogButton([string]$Title, [int]$Id, [int]$Seconds = 120) {
+    $ownerId = [uint32]$launcher.Id
+    $dialogHandle = Wait-For $Title {
+        $windowHandle = [OrchidSandbox.NativeWindow]::FindOwnedWindow($ownerId, $Title)
+        if ($windowHandle -ne [IntPtr]::Zero) { $windowHandle }
+    } $Seconds
+    $control = [OrchidSandbox.NativeWindow]::GetEnabledDialogButton($dialogHandle, $Id)
+    if ($Id -eq 1 -and $Title -in @('Backup Complete', 'Restore Complete')) {
+        # These result dialogs report an operation that has already completed.
+        $queued = [OrchidSandbox.NativeWindow]::CloseOwnedInformationDialog($dialogHandle, $ownerId)
+    }
+    elseif ($control -ne [IntPtr]::Zero) {
+        $queued = [OrchidSandbox.NativeWindow]::ClickOwnedButton($control, $ownerId)
+    }
+    else {
+        $queued = [OrchidSandbox.NativeWindow]::InvokeOwnedDialogCommand($dialogHandle, $ownerId, $Id)
+    }
+    if (!$queued) { throw "Could not queue button $Id for launcher dialog '$Title'." }
+    $null = Wait-For "dialog '$Title' to close" {
+        [OrchidSandbox.NativeWindow]::FindOwnedWindow($ownerId, $Title) -eq [IntPtr]::Zero
+    } 20
+}
+
+function Invoke-Button($Window, [string]$Name, [switch]$OpensDialog) {
     $button = Wait-For "enabled button '$Name'" {
         $condition = [Windows.Automation.AndCondition]::new(
             [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::NameProperty, $Name),
             [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::ControlTypeProperty, [Windows.Automation.ControlType]::Button))
         $element = $Window.FindFirst([Windows.Automation.TreeScope]::Descendants, $condition)
         if ($element -and $element.Current.IsEnabled) { $element }
+    }
+    if ($OpensDialog) {
+        $buttonHandle = [IntPtr]$button.Current.NativeWindowHandle
+        if (![OrchidSandbox.NativeWindow]::ClickOwnedButton($buttonHandle, [uint32]$launcher.Id)) {
+            throw "Could not queue launcher button '$Name' for its owned window."
+        }
+        return
     }
     $button.GetCurrentPattern([Windows.Automation.InvokePattern]::Pattern).Invoke()
 }
@@ -118,8 +145,8 @@ function Start-Orchid {
 }
 
 function Stop-Orchid {
-    Invoke-Button (Get-Window 'OrchidApp Launcher -*') 'Close OrchidApp'
-    Invoke-Button (Get-Window 'Close OrchidApp?') 'Yes'
+    Invoke-Button (Get-Window 'OrchidApp Launcher -*') 'Close OrchidApp' -OpensDialog
+    Invoke-DialogButton 'Close OrchidApp?' 6
     $null = Wait-For 'launcher and owned listeners to stop' {
         $launcher.HasExited -and !(Test-Port 5285) -and !(Test-Port 3308)
     }
@@ -137,17 +164,19 @@ function Install-Orchid([string]$Asset, [string]$Phase) {
 }
 
 function Restore-Orchid([string]$Archive) {
-    Invoke-Button (Get-Window 'OrchidApp Launcher -*') 'Restore from backup...'
-    $dialog = Get-Window 'Select OrchidApp backup ZIP'
-    $name = Wait-For 'backup file name edit' {
-        $condition = [Windows.Automation.PropertyCondition]::new(
-            [Windows.Automation.AutomationElement]::ControlTypeProperty, [Windows.Automation.ControlType]::Edit)
-        $dialog.FindFirst([Windows.Automation.TreeScope]::Descendants, $condition)
+    Invoke-Button (Get-Window 'OrchidApp Launcher -*') 'Restore from backup...' -OpensDialog
+    $ownerId = [uint32]$launcher.Id
+    $null = Wait-For 'backup file name edit' {
+        $picker = [OrchidSandbox.NativeWindow]::FindOwnedWindow($ownerId, 'Select OrchidApp backup ZIP')
+        $picker -ne [IntPtr]::Zero -and [OrchidSandbox.NativeWindow]::SetOwnedFileName($picker, $ownerId, $Archive)
+    } 20
+    Invoke-DialogButton 'Select OrchidApp backup ZIP' 1
+    Invoke-DialogButton 'Confirm Restore from Backup' 6
+    Invoke-DialogButton 'Restore Complete' 1 240
+    $null = Wait-For 'automatic launcher shutdown after restore' {
+        $launcher.HasExited -and !(Test-Port 5285) -and !(Test-Port 3308)
     }
-    $name.GetCurrentPattern([Windows.Automation.ValuePattern]::Pattern).SetValue($Archive)
-    Invoke-Button $dialog 'Open'
-    Invoke-Button (Get-Window 'Confirm Restore from Backup') 'Yes'
-    Invoke-Button (Get-Window 'Restore Complete' 240) 'OK'
+    $script:launcher = $null
     if (Test-Path -LiteralPath (Join-Path $data 'restore-pending.json')) { throw 'Restore marker remains.' }
     $hash = (Get-FileHash -LiteralPath $Archive -Algorithm SHA256).Hash
     $retained = @(Get-ChildItem -LiteralPath (Join-Path $data 'restore-recovery') -Filter recovery-input.zip -Recurse -File |
@@ -191,6 +220,156 @@ try {
         throw 'A fresh Sandbox without OrchidApp state is required.'
     }
     Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes
+    Add-Type -TypeDefinition @"
+using System;
+using System.Runtime.InteropServices;
+using System.Text;
+
+namespace OrchidSandbox
+{
+    public static class NativeWindow
+    {
+        private const uint ButtonClick = 0x00F5;
+
+        [DllImport("user32.dll")]
+        private static extern uint GetWindowThreadProcessId(IntPtr window, out uint processId);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool PostMessage(IntPtr window, uint message, IntPtr wParam, IntPtr lParam);
+
+        private delegate bool WindowCallback(IntPtr window, IntPtr context);
+
+        [DllImport("user32.dll")]
+        private static extern bool EnumWindows(WindowCallback callback, IntPtr context);
+
+        [DllImport("user32.dll")]
+        private static extern bool IsWindowVisible(IntPtr window);
+
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        private static extern int GetWindowText(IntPtr window, StringBuilder text, int capacity);
+
+        public static IntPtr FindOwnedWindow(uint owner, string title)
+        {
+            IntPtr result = IntPtr.Zero;
+            EnumWindows(delegate(IntPtr window, IntPtr context) {
+                uint processId;
+                if (GetWindowThreadProcessId(window, out processId) == 0
+                    || processId != owner || !IsWindowVisible(window))
+                    return true;
+
+                var text = new StringBuilder(512);
+                GetWindowText(window, text, text.Capacity);
+                var actual = text.ToString();
+                var matches = title.EndsWith("*", StringComparison.Ordinal)
+                    ? actual.StartsWith(title.Substring(0, title.Length - 1), StringComparison.Ordinal)
+                    : actual.Equals(title, StringComparison.Ordinal);
+                if (!matches)
+                    return true;
+
+                result = window;
+                return false;
+            }, IntPtr.Zero);
+            return result;
+        }
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetDlgItem(IntPtr dialog, int id);
+
+        [DllImport("user32.dll")]
+        private static extern bool IsWindowEnabled(IntPtr window);
+
+        public static IntPtr GetEnabledDialogButton(IntPtr dialog, int id)
+        {
+            var control = GetDlgItem(dialog, id);
+            return control != IntPtr.Zero && IsWindowEnabled(control) ? control : IntPtr.Zero;
+        }
+
+        [DllImport("user32.dll")]
+        private static extern bool EnumChildWindows(IntPtr parent, WindowCallback callback, IntPtr context);
+
+        [DllImport("user32.dll")]
+        private static extern int GetDlgCtrlID(IntPtr window);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetParent(IntPtr window);
+
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        private static extern int GetClassName(IntPtr window, StringBuilder name, int capacity);
+
+        [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern IntPtr SendMessageTimeout(IntPtr window, uint message, IntPtr wParam,
+            string text, uint flags, uint timeoutMilliseconds, out IntPtr result);
+
+        public static bool SetOwnedFileName(IntPtr dialog, uint owner, string path)
+        {
+            const int FileNameControlId = 1148;
+            const uint SetText = 0x000C;
+            const uint AbortIfHung = 0x0002;
+            uint processId;
+            if (GetWindowThreadProcessId(dialog, out processId) == 0 || processId != owner)
+                return false;
+
+            IntPtr edit = IntPtr.Zero;
+            EnumChildWindows(dialog, delegate(IntPtr window, IntPtr context) {
+                var type = new StringBuilder(64);
+                GetClassName(window, type, type.Capacity);
+                uint childOwner;
+                var fileNameControl = false;
+                for (var parent = window; parent != IntPtr.Zero && parent != dialog; parent = GetParent(parent))
+                {
+                    if (GetDlgCtrlID(parent) == FileNameControlId)
+                    {
+                        fileNameControl = true;
+                        break;
+                    }
+                }
+                if (!fileNameControl
+                    || !type.ToString().Equals("Edit", StringComparison.OrdinalIgnoreCase)
+                    || GetWindowThreadProcessId(window, out childOwner) == 0 || childOwner != owner
+                    || !IsWindowEnabled(window) || !IsWindowVisible(window))
+                    return true;
+
+                edit = window;
+                return false;
+            }, IntPtr.Zero);
+
+            IntPtr result;
+            return edit != IntPtr.Zero
+                && SendMessageTimeout(edit, SetText, IntPtr.Zero, path, AbortIfHung, 1000, out result) != IntPtr.Zero
+                && result != IntPtr.Zero;
+        }
+
+        public static bool CloseOwnedInformationDialog(IntPtr window, uint owner)
+        {
+            const uint Close = 0x0010;
+            uint processId;
+            return window != IntPtr.Zero
+                && GetWindowThreadProcessId(window, out processId) != 0
+                && processId == owner
+                && PostMessage(window, Close, IntPtr.Zero, IntPtr.Zero);
+        }
+
+        public static bool InvokeOwnedDialogCommand(IntPtr window, uint owner, int id)
+        {
+            uint processId;
+            return window != IntPtr.Zero
+                && GetWindowThreadProcessId(window, out processId) != 0
+                && processId == owner
+                && PostMessage(window, 0x0111, new IntPtr(id), IntPtr.Zero);
+        }
+
+        public static bool ClickOwnedButton(IntPtr window, uint owner)
+        {
+            uint processId;
+            return window != IntPtr.Zero
+                && GetWindowThreadProcessId(window, out processId) != 0
+                && processId == owner
+                && PostMessage(window, ButtonClick, IntPtr.Zero, IntPtr.Zero);
+        }
+    }
+}
+"@
     $null = New-Item -ItemType Directory -Path $work
     foreach ($asset in $case.inputs) {
         $source = Join-Path $inputRoot $asset.name
@@ -202,13 +381,22 @@ try {
     }
     $specimen = Join-Path $work 'specimen.zip'
     if ($Upgrade) {
+        $originalModulePath = $env:PSModulePath
+        $legacyModules = Join-Path $inputRoot 'legacy-archive-module'
+        if (Test-Path -LiteralPath $legacyModules) {
+            $env:PSModulePath = $legacyModules + ';' + $originalModulePath
+            $report.legacyArchiveModule = $legacyModules
+        }
         Install-Orchid 'previous.exe' 'install-v1.4.0'
         Start-Orchid
+        Complete-Stage 'historical-startup-and-readiness'
         Stop-Orchid
+        Complete-Stage 'historical-launcher-close'
         Invoke-Native 'powershell.exe' @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
             ('"' + (Join-Path $install 'tools\restore-orchidapp.ps1') + '"'), '-BackupZip', $specimen)
         $beforeUpgrade = Get-MediaInventory
         if ($beforeUpgrade.Count -ne 20) { throw 'Historical restore did not produce 20 media files.' }
+        $env:PSModulePath = $originalModulePath
         Complete-Stage 'historical-offline-restore'
     }
 
@@ -233,7 +421,6 @@ try {
         Complete-Stage 'upgrade-media-preserved'
     } else {
         Restore-Orchid $specimen
-        Stop-Orchid
         Start-Orchid
         if ((Get-MediaInventory).Count -ne 20) { throw 'Specimen restore did not produce 20 media files.' }
         Complete-Stage 'launcher-specimen-restore'
@@ -247,15 +434,15 @@ try {
     $backupRoot = Join-Path $data 'backups'
     $beforeBackup = @(Get-ChildItem -LiteralPath $backupRoot -File -Filter '*.zip' | Select-Object -ExpandProperty FullName)
     Invoke-Button (Get-Window 'OrchidApp Launcher -*') 'Back up now'
-    Invoke-Button (Get-Window 'Backup Complete' 240) 'OK'
+    Invoke-DialogButton 'Backup Complete' 1 240
     $archives = @(Get-ChildItem -LiteralPath $backupRoot -File -Filter '*.zip' |
         Where-Object { $_.FullName -notin $beforeBackup })
     if ($archives.Count -ne 1) { throw 'Expected one new managed backup archive.' }
     $roundTrip = Join-Path $work 'round-trip.zip'
     Copy-Item -LiteralPath $archives[0].FullName -Destination $roundTrip
     $payload = Join-Path $work 'backup-payload'
-    Expand-Archive -LiteralPath $roundTrip -DestinationPath $payload
     . (Join-Path $install 'tools\Backup-Contract.ps1')
+    Expand-CheckedBackup $roundTrip $payload
     $null = Read-BackupPayload $payload
     $beforeRestore = Get-MediaInventory
     $report.backupSha256 = (Get-FileHash -LiteralPath $roundTrip -Algorithm SHA256).Hash
@@ -266,7 +453,6 @@ try {
     $null = Invoke-Browser $reopen
     Complete-Stage 'restart-and-browser-reopen'
     Restore-Orchid $roundTrip
-    Stop-Orchid
     Start-Orchid
     $null = Invoke-Browser $reopen
     if (Compare-Object -ReferenceObject $beforeRestore -DifferenceObject (Get-MediaInventory)) {
