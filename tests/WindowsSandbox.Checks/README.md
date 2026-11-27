@@ -16,7 +16,7 @@ Omit `-Launch` to generate the configuration only. Add `-PreviousInstaller <publ
 
 The clean run installs the release, verifies the launcher-owned web and database listeners, restores the exact specimen through the launcher, runs the shared Chromium suite, creates and validates a managed backup, restarts and reopens the browser witness, restores the generated backup, and checks media and uninstall preservation. The upgrade mode stages the historical specimen through the known offline restore path before installing v1.4.1 over it. The published versions are unsigned. Record any host security policy that prevents the installer from running.
 
-Inspect `report.json`, `browser.log`, installer logs and the launcher log under the emitted evidence directory. A failed or incomplete stage does not establish acceptance. The launcher run exercises local ZIP restore and an in-place round trip in the disposable Sandbox. Separate-target restoration and provider-specific OneDrive evidence remain separate checks. This is an application upgrade on the packaged 10.11 runtime. The MariaDB 11.8 engine upgrade remains part of the later programme.
+Inspect `report.json`, `browser.log`, installer logs and the launcher log under the emitted evidence directory. A failed or incomplete stage does not establish acceptance. The launcher run exercises local ZIP restore and an in-place round trip in the disposable Sandbox. Separate-target restoration uses the handoff below. Provider-specific OneDrive evidence remains a separate check. This is an application upgrade on the packaged 10.11 runtime. The MariaDB 11.8 engine upgrade remains part of the later programme.
 
 ## First published-package run
 
@@ -32,4 +32,12 @@ On 27 November 2026, the unpublished installer built from `0b66cd4851fcf19d26ba4
 
 Historical run `20261127T171213Z-08efd88b` used the published v1.4.0 installer and restored the exact historical specimen before upgrading to the same candidate. The old installer used the test-only archive module overlay. The candidate ran without it. The installer verified its pre-install recovery snapshot, the upgraded app opened, all 20 specimen media hashes matched, the shared browser checks passed and the launcher created a backup. The run stopped when the harness could not dismiss the backup-success dialog. The later clean run verified the corrected dialog handling. Local reports and logs are retained under the run evidence directories.
 
-These are unpublished candidate results. A separate-target restore, provider-specific OneDrive acceptance and the published-package Windows baseline remain open. The programme gates apply as recorded in the [plan](../../docs/testing/automated-testing-mariadb118-plan.md).
+These are unpublished candidate results. Provider-specific OneDrive acceptance and the published-package Windows baseline remain open. The programme gates apply as recorded in the [plan](../../docs/testing/automated-testing-mariadb118-plan.md).
+
+## Separate-target restoration
+
+Use `-RetainRoundTrip` on a source session to copy its validated launcher backup and `round-trip.json` witness into that run's evidence directory. The report records the archive checksum, test plant, complete media inventory and launcher settings hash. The handoff contains restored specimen data and should stay in the local ignored evidence directory.
+
+After the source run passes, close that guest. Run the same command in a new Sandbox with `-RoundTripEvidence <source-evidence-directory>` in place of `-RetainRoundTrip`. The host verifies the ZIP checksum before staging. The destination verifies it again, restores via the launcher, restarts, reopens the source plant and photos with Chromium, and compares the media inventory and settings hash. Keep both reports together.
+
+On 27 November 2026, source run `20261127T193811Z-97c0bdaf` and destination run `20261127T200710Z-1f049895` both passed at harness revision `7979cce` using the candidate identified above. The destination was a freshly installed guest. The launcher restored source backup SHA-256 `f4ed52c3fcf6f68b61fa6b7764429aee3d87e6bd4d54dc527d820f821e1aa534`. After restart, the shared Chromium check reopened the source plant and its photos. The full media inventory and launcher settings hash matched. The destination launcher shut down cleanly. The reports and the verified backup are retained locally.
