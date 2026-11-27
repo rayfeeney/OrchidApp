@@ -41,6 +41,9 @@ function Assert-InstallerStopped([string]$AppRoot,[string]$PersistentRoot,[int]$
     foreach ($process in Get-CimInstance Win32_Process -ErrorAction Stop) {
         if ($process.ProcessId -eq $PID -or $process.ProcessId -eq $InstallerProcessId) { continue }
         $exe=[string]$process.ExecutablePath;$command=[string]$process.CommandLine
+        # CIM can return a Win32 extended-length local drive path for an ordinary executable.
+        # Normalise only this process identity, leaving snapshot source and target validation strict.
+        if ($exe -match '^\\\\\?\\[A-Za-z]:\\') { $exe=$exe.Substring(4) }
         if (($exe -and (Test-InstallerChild $exe $AppRoot)) -or
             ($process.Name -match '^(dotnet|powershell|pwsh|mariadbd|mysqld|OrchidApp\.Web|OrchidApp\.Launcher)\.exe$' -and $command -and ($command.IndexOf($AppRoot,[StringComparison]::OrdinalIgnoreCase) -ge 0 -or
                             $command.IndexOf($PersistentRoot,[StringComparison]::OrdinalIgnoreCase) -ge 0))) {

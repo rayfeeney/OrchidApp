@@ -72,5 +72,13 @@ try {
     Reject 'Selected application process blocks snapshot' { New-InstallerSnapshot $f.app $f.persistent 0 }
     $script:processInventory=@([pscustomobject]@{ProcessId=999999;Name='mariadbd.exe';ExecutablePath='C:\unrelated-runtime\mariadbd.exe';CommandLine=('--datadir="'+$f.persistent+'\data\mariadb"')})
     Reject 'Database pointing at selected durable root blocks snapshot' { New-InstallerSnapshot $f.app $f.persistent 0 }
+    $script:processInventory=@([pscustomobject]@{ProcessId=999999;Name='WMIADAP.exe';ExecutablePath='\\?\C:\Windows\system32\wbem\WMIADAP.EXE';CommandLine=''})
+    Check 'Unrelated extended-length local executable does not block a verified snapshot' ($null -ne (New-InstallerSnapshot $f.app $f.persistent 0))
+    $script:processInventory=@([pscustomobject]@{ProcessId=999999;Name='OrchidApp.Web.exe';ExecutablePath=('\\?\'+(Join-Path $f.app 'OrchidApp.Web.exe'));CommandLine=''})
+    $blockedMessage = try { Assert-InstallerStopped $f.app $f.persistent 0; '' } catch { $_.Exception.Message }
+    Check 'Extended-length application executable still blocks as a running writer' ($blockedMessage -like 'Close OrchidApp and stop its database*')
+    $script:processInventory=@([pscustomobject]@{ProcessId=999999;Name='WMIADAP.exe';ExecutablePath='\\?\UNC\server\share\program.exe';CommandLine=''})
+    Reject 'Extended UNC process path is still refused' { Assert-InstallerStopped $f.app $f.persistent 0 }
+    Reject 'Extended prefix is still refused as a snapshot root' { New-InstallerSnapshot ('\\?\'+$f.app) $f.persistent 0 }
     Write-Host "$checks installer snapshot policy checks passed. Fixture: $root"
 } finally { }
