@@ -87,7 +87,11 @@ function Invoke-DialogButton([string]$Title, [int]$Id, [int]$Seconds = 120) {
         if ($windowHandle -ne [IntPtr]::Zero) { $windowHandle }
     } $Seconds
     $control = [OrchidSandbox.NativeWindow]::GetEnabledDialogButton($dialogHandle, $Id)
-    if ($control -ne [IntPtr]::Zero) {
+    if ($Id -eq 1 -and $Title -in @('Backup Complete', 'Restore Complete')) {
+        # These result dialogs report an operation that has already completed.
+        $queued = [OrchidSandbox.NativeWindow]::CloseOwnedInformationDialog($dialogHandle, $ownerId)
+    }
+    elseif ($control -ne [IntPtr]::Zero) {
         $queued = [OrchidSandbox.NativeWindow]::ClickOwnedButton($control, $ownerId)
     }
     else {
@@ -330,6 +334,16 @@ namespace OrchidSandbox
             return edit != IntPtr.Zero
                 && SendMessageTimeout(edit, SetText, IntPtr.Zero, path, AbortIfHung, 1000, out result) != IntPtr.Zero
                 && result != IntPtr.Zero;
+        }
+
+        public static bool CloseOwnedInformationDialog(IntPtr window, uint owner)
+        {
+            const uint Close = 0x0010;
+            uint processId;
+            return window != IntPtr.Zero
+                && GetWindowThreadProcessId(window, out processId) != 0
+                && processId == owner
+                && PostMessage(window, Close, IntPtr.Zero, IntPtr.Zero);
         }
 
         public static bool InvokeOwnedDialogCommand(IntPtr window, uint owner, int id)
