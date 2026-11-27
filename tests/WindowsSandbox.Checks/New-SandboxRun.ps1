@@ -10,6 +10,8 @@ param(
     [ValidatePattern('^[0-9a-fA-F]{40}$')][string]$CandidateRevision,
     [string]$PreviousArchiveModuleRoot,
     [string]$OutputRoot = 'artifacts/windows-sandbox',
+    [switch]$RetainRoundTrip,
+    [string]$RoundTripEvidence,
     [switch]$Launch
 )
 $ErrorActionPreference = 'Stop'
@@ -26,6 +28,19 @@ $assetInputs = @(
 )
 if ($PreviousInstaller) {
     $assetInputs += @{ name = 'previous.exe'; path = $PreviousInstaller; sha256 = 'b271d9b1da0c351b28736a660c2952c10e14acb3c716da0e048c57d83d26b318' }
+}
+if ($RoundTripEvidence) {
+    if ($RetainRoundTrip -or $PreviousInstaller) { throw 'Use a clean, independent destination for a handed-off backup.' }
+    $sourceResult = Get-Content -LiteralPath (Join-Path $RoundTripEvidence 'report.json') -Raw | ConvertFrom-Json
+    $backupReport = Get-Content -LiteralPath (Join-Path $RoundTripEvidence 'round-trip.json') -Raw | ConvertFrom-Json
+    if ($sourceResult.status -cne 'passed' -or $sourceResult.backupSha256 -ine $backupReport.sha256) {
+        throw 'The source report does not establish a passed run for this backup.'
+    }
+    if ($backupReport.sha256 -notmatch '^[0-9a-fA-F]{64}$' -or $backupReport.witnessId -notmatch '^[1-9][0-9]*$' -or
+        $backupReport.witnessName -notmatch '^Browserfixture[0-9a-f]+edited$' -or !$backupReport.media) {
+        throw 'The source Sandbox evidence is missing a valid backup identity or browser witness.'
+    }
+    $assetInputs += @{ name = 'source-round-trip.zip'; path = (Join-Path $RoundTripEvidence 'round-trip.zip'); sha256 = $backupReport.sha256 }
 }
 foreach ($asset in $assetInputs) {
     $asset.path = (Resolve-Path -LiteralPath $asset.path).Path
@@ -57,7 +72,7 @@ Copy-Item -LiteralPath (Join-Path $repo 'tests/SharedBrowser.Checks/checks.py') 
 if ($PreviousArchiveModuleRoot) {
     Copy-Item -LiteralPath $PreviousArchiveModuleRoot -Destination (Join-Path $inputs 'legacy-archive-module') -Recurse
 }
-[ordered]@{ sourceRevision = $version; candidateRevision = $CandidateRevision; inputs = @($assetInputs | ForEach-Object {
+[ordered]@{ sourceRevision = $version; candidateRevision = $CandidateRevision; retainRoundTrip = [bool]$RetainRoundTrip; roundTrip = $backupReport; inputs = @($assetInputs | ForEach-Object {
     [ordered]@{ name = $_.name; sha256 = $_.sha256 }
 }) } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $inputs 'case.json') -Encoding UTF8
 

@@ -33,3 +33,9 @@ On 27 November 2026, the unpublished installer built from `0b66cd4851fcf19d26ba4
 Historical run `20261127T171213Z-08efd88b` used the published v1.4.0 installer and restored the exact historical specimen before upgrading to the same candidate. The old installer used the test-only archive module overlay. The candidate ran without it. The installer verified its pre-install recovery snapshot, the upgraded app opened, all 20 specimen media hashes matched, the shared browser checks passed and the launcher created a backup. The run stopped when the harness could not dismiss the backup-success dialog. The later clean run verified the corrected dialog handling. Local reports and logs are retained under the run evidence directories.
 
 These are unpublished candidate results. A separate-target restore, provider-specific OneDrive acceptance and the published-package Windows baseline remain open. The programme gates apply as recorded in the [plan](../../docs/testing/automated-testing-mariadb118-plan.md).
+
+## Separate-target restoration
+
+Use `-RetainRoundTrip` on a source session to copy its validated launcher backup and `round-trip.json` witness into that run's evidence directory. The report records the archive checksum, test plant, complete media inventory and launcher settings hash. The handoff contains restored specimen data and should stay in the local ignored evidence directory.
+
+After the source run passes, close that guest. Run the same command in a new Sandbox with `-RoundTripEvidence <source-evidence-directory>` in place of `-RetainRoundTrip`. The host verifies the ZIP checksum before staging. The destination verifies it again, restores via the launcher, restarts, reopens the source plant and photos with Chromium, and compares the media inventory and settings hash. Keep both reports together.

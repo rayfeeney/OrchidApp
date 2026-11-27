@@ -18,7 +18,7 @@ $baseUrl = 'http://127.0.0.1:5285'
 $case = Get-Content -LiteralPath (Join-Path $inputRoot 'case.json') -Raw | ConvertFrom-Json
 $report = [ordered]@{
     startedUtc = [DateTime]::UtcNow.ToString('o')
-    mode = if ($Upgrade) { 'v1.4.0 to v1.4.1' } else { 'clean v1.4.1' }
+    mode = if ($case.roundTrip) { 'separate-target restore' } elseif ($Upgrade) { 'v1.4.0 to v1.4.1' } else { 'clean v1.4.1' }
     windows = [Environment]::OSVersion.VersionString
     architecture = $env:PROCESSOR_ARCHITECTURE
     sourceRevision = $case.sourceRevision
@@ -190,6 +190,14 @@ function Get-MediaInventory {
         $relative = $_.FullName.Substring($uploads.Length + 1)
         "$relative $((Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash)"
     })
+}
+
+function Get-LauncherSettingsHash {
+    $path = Join-Path $data 'launcher-settings.json'
+    if (Test-Path -LiteralPath $path -PathType Leaf) {
+        return (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash
+    }
+    return 'absent'
 }
 
 function Get-PersistentInventory {
@@ -414,6 +422,24 @@ namespace OrchidSandbox
     }
     Invoke-Button (Get-Window 'OrchidApp Launcher -*') 'Open OrchidApp'
     Complete-Stage 'launcher-open'
+    if ($case.roundTrip) {
+        $reference = $case.roundTrip
+        Restore-Orchid (Join-Path $work 'source-round-trip.zip')
+        Start-Orchid
+        $null = Invoke-Browser @('--reopen', [string]$reference.witnessId, [string]$reference.witnessName)
+        if (Compare-Object -ReferenceObject @($reference.media) -DifferenceObject (Get-MediaInventory)) {
+            throw 'Separate-target restore changed the recorded media inventory.'
+        }
+        if ((Get-LauncherSettingsHash) -ine $reference.settingsSha256) {
+            throw 'Separate-target restore changed launcher settings.'
+        }
+        $report.backupSha256 = $reference.sha256
+        $report.sourceRun = $reference.sourceRun
+        Complete-Stage 'separate-target-restore-and-reopen'
+        Stop-Orchid
+        $report.status = 'passed'
+        return
+    }
     if ($Upgrade) {
         if (Compare-Object -ReferenceObject $beforeUpgrade -DifferenceObject (Get-MediaInventory)) {
             throw 'Published upgrade changed historical media.'
@@ -445,6 +471,7 @@ namespace OrchidSandbox
     Expand-CheckedBackup $roundTrip $payload
     $null = Read-BackupPayload $payload
     $beforeRestore = Get-MediaInventory
+    $settingsBeforeRestore = Get-LauncherSettingsHash
     $report.backupSha256 = (Get-FileHash -LiteralPath $roundTrip -Algorithm SHA256).Hash
     Complete-Stage 'managed-backup-and-archive-validation'
 
@@ -470,6 +497,22 @@ namespace OrchidSandbox
         throw 'Uninstall changed the persistent state.'
     }
     Complete-Stage 'uninstall-preservation'
+    if ($case.retainRoundTrip) {
+        $outputZip = Join-Path $evidence 'round-trip.zip'
+        [IO.File]::Copy($roundTrip, $outputZip, $false)
+        if ((Get-FileHash -LiteralPath $outputZip -Algorithm SHA256).Hash -ine $report.backupSha256) {
+            throw 'Retained backup does not match the verified launcher archive.'
+        }
+        [ordered]@{
+            sourceRun = $report.startedUtc
+            sha256 = $report.backupSha256
+            witnessId = $witness.Groups[1].Value
+            witnessName = $witness.Groups[2].Value
+            media = $beforeRestore
+            settingsSha256 = $settingsBeforeRestore
+        } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $evidence 'round-trip.json') -Encoding UTF8
+        Complete-Stage 'separate-target-input-retained'
+    }
     $report.status = 'passed'
 } catch {
     $report.status = 'failed'
