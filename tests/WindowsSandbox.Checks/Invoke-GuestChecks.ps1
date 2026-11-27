@@ -80,7 +80,18 @@ function Get-Window([string]$Title, [int]$Seconds = 120) {
     } $Seconds
 }
 
-function Invoke-Button($Window, [string]$Name, [switch]$OpensDialog) {
+function Invoke-Button($Window, [string]$Name, [switch]$OpensDialog, [int]$DialogButtonId) {
+    if ($DialogButtonId -ne 0) {
+        $handle = [IntPtr]$Window.Current.NativeWindowHandle
+        $control = Wait-For "enabled dialog button '$Name' ($DialogButtonId)" {
+            $controlHandle = [OrchidSandbox.NativeWindow]::GetEnabledDialogButton($handle, $DialogButtonId)
+            if ($controlHandle -ne [IntPtr]::Zero) { return $controlHandle }
+        } 20
+        if (![OrchidSandbox.NativeWindow]::ClickOwnedButton($control, [uint32]$launcher.Id)) {
+            throw "Could not queue dialog button '$Name' for the launcher."
+        }
+        return
+    }
     $button = Wait-For "enabled button '$Name'" {
         $condition = [Windows.Automation.AndCondition]::new(
             [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::NameProperty, $Name),
@@ -123,7 +134,7 @@ function Start-Orchid {
 
 function Stop-Orchid {
     Invoke-Button (Get-Window 'OrchidApp Launcher -*') 'Close OrchidApp' -OpensDialog
-    Invoke-Button (Get-Window 'Close OrchidApp?') 'Yes'
+    Invoke-Button (Get-Window 'Close OrchidApp?') 'Yes' -DialogButtonId 6
     $null = Wait-For 'launcher and owned listeners to stop' {
         $launcher.HasExited -and !(Test-Port 5285) -and !(Test-Port 3308)
     }
@@ -155,9 +166,9 @@ function Restore-Orchid([string]$Archive) {
         }
     }
     $name.GetCurrentPattern([Windows.Automation.ValuePattern]::Pattern).SetValue($Archive)
-    Invoke-Button $dialog 'Open' -OpensDialog
-    Invoke-Button (Get-Window 'Confirm Restore from Backup') 'Yes'
-    Invoke-Button (Get-Window 'Restore Complete' 240) 'OK'
+    Invoke-Button $dialog 'Open' -DialogButtonId 1
+    Invoke-Button (Get-Window 'Confirm Restore from Backup') 'Yes' -DialogButtonId 6
+    Invoke-Button (Get-Window 'Restore Complete' 240) 'OK' -DialogButtonId 1
     if (Test-Path -LiteralPath (Join-Path $data 'restore-pending.json')) { throw 'Restore marker remains.' }
     $hash = (Get-FileHash -LiteralPath $Archive -Algorithm SHA256).Hash
     $retained = @(Get-ChildItem -LiteralPath (Join-Path $data 'restore-recovery') -Filter recovery-input.zip -Recurse -File |
@@ -254,6 +265,18 @@ namespace OrchidSandbox
             return result;
         }
 
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetDlgItem(IntPtr dialog, int id);
+
+        [DllImport("user32.dll")]
+        private static extern bool IsWindowEnabled(IntPtr window);
+
+        public static IntPtr GetEnabledDialogButton(IntPtr dialog, int id)
+        {
+            var control = GetDlgItem(dialog, id);
+            return control != IntPtr.Zero && IsWindowEnabled(control) ? control : IntPtr.Zero;
+        }
+
         public static bool ClickOwnedButton(IntPtr window, uint owner)
         {
             uint processId;
@@ -284,7 +307,9 @@ namespace OrchidSandbox
         }
         Install-Orchid 'previous.exe' 'install-v1.4.0'
         Start-Orchid
+        Complete-Stage 'historical-startup-and-readiness'
         Stop-Orchid
+        Complete-Stage 'historical-launcher-close'
         Invoke-Native 'powershell.exe' @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
             ('"' + (Join-Path $install 'tools\restore-orchidapp.ps1') + '"'), '-BackupZip', $specimen)
         $beforeUpgrade = Get-MediaInventory
@@ -328,7 +353,7 @@ namespace OrchidSandbox
     $backupRoot = Join-Path $data 'backups'
     $beforeBackup = @(Get-ChildItem -LiteralPath $backupRoot -File -Filter '*.zip' | Select-Object -ExpandProperty FullName)
     Invoke-Button (Get-Window 'OrchidApp Launcher -*') 'Back up now'
-    Invoke-Button (Get-Window 'Backup Complete' 240) 'OK'
+    Invoke-Button (Get-Window 'Backup Complete' 240) 'OK' -DialogButtonId 1
     $archives = @(Get-ChildItem -LiteralPath $backupRoot -File -Filter '*.zip' |
         Where-Object { $_.FullName -notin $beforeBackup })
     if ($archives.Count -ne 1) { throw 'Expected one new managed backup archive.' }
