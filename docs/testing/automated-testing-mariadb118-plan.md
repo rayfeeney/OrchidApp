@@ -40,7 +40,7 @@ Windows and Linux remain mandatory release acceptance platforms.
 | 04 | Establish isolated Linux testing environments | Complete |
 | 05 | Review existing automated tests and specimen backups | Complete |
 | 06 | Implement shared application functional testing | Complete |
-| 07 | Implement Windows-specific automated testing | Pending |
+| 07 | Implement Windows-specific automated testing | Complete |
 | 08 | Implement Linux-specific automated testing | Pending |
 | 09 | Establish and approve Windows and Linux testing baselines | Pending |
 | 10 | Re-engineer OrchidApp for MariaDB 11.8 | Pending |
@@ -425,7 +425,18 @@ The [shared Playwright checks](../../tests/SharedBrowser.Checks/README.md)
 passed on migrated and schema-only disposable MariaDB fixtures.
 Installed package validation remains part of the platform activities and baseline.
 
-Next activity: 07 - Implement Windows-specific automated testing.
+Activity 07 was completed on 27 November 2026. The
+[Windows Sandbox harness and evidence](../../tests/WindowsSandbox.Checks/README.md)
+record the unpublished candidate installation, historical v1.4.0
+upgrade, launcher backup and restore, restart, uninstall preservation,
+and restoration into a separate fresh Sandbox.
+[PR #400](https://github.com/rayfeeney/OrchidApp/pull/400) added the
+launcher validation and [PR #401](https://github.com/rayfeeney/OrchidApp/pull/401)
+completed the separate-target check. All eight jobs passed in the
+[CI run on the final merge commit](https://github.com/rayfeeney/OrchidApp/actions/runs/46065642868).
+Published-package baseline and provider-specific OneDrive acceptance remain open.
+
+Next activity: 08 - Implement Linux-specific automated testing.
 Status: Pending; not commenced.
 
 No automated testing baseline or MariaDB 11.8 release acceptance
