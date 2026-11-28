@@ -9,6 +9,7 @@ $ErrorActionPreference='Stop'
 $PSNativeCommandUseErrorActionPreference=$false
 if (-not $IsWindows) { throw 'These packaged backup/restore checks require Windows.' }
 $RepoRoot=(Resolve-Path -LiteralPath $RepoRoot).Path
+. (Join-Path $RepoRoot 'database/scripts/Schema-Baseline.ps1')
 if (-not $MariaDbRuntimeRoot) {
     $programFiles=$env:ProgramW6432
     if (-not $programFiles) { $programFiles=$env:ProgramFiles }
@@ -39,9 +40,8 @@ function Check([string]$Name,[bool]$Pass) { if (-not $Pass) { throw "Check faile
 function Query([int]$Port,[string]$Sql) {
     $previous=$env:MYSQL_PWD; $env:MYSQL_PWD='isolated-backup-test'
     try {
-        $result=& $client --no-defaults --protocol=TCP --host=127.0.0.1 "--port=$Port" --user=root --connect-timeout=5 --default-character-set=utf8mb4 --batch --skip-column-names "--execute=$Sql" 2>&1
-        if ($LASTEXITCODE -ne 0) { throw "Fixture query failed: $($result -join "`n")" }
-        $result
+        $arguments=@('--no-defaults','--protocol=TCP','--host=127.0.0.1',"--port=$Port",'--user=root','--connect-timeout=5','--default-character-set=utf8mb4','--batch','--raw','--skip-column-names',"--execute=$Sql")
+        Invoke-MariaDbRows -Client $client -ClientArguments $arguments
     } finally { $env:MYSQL_PWD=$previous }
 }
 function Start-Fixture([string]$Data,[int]$Port) {
@@ -81,7 +81,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Disposable server initialization failed.' }
     Start-Fixture $legacyData $SourcePort
     $env:MARIADB_HOST='127.0.0.1';$env:MARIADB_PORT=[string]$SourcePort;$env:MARIADB_USER='root';$env:MARIADB_PASSWORD='isolated-backup-test';$env:MARIADB_DATABASE='orchids';$env:MARIADB_CHARSET='utf8mb4';$env:MARIADB_COLLATION='utf8mb4_unicode_ci'
-    & (Join-Path $RepoRoot 'database/scripts/rebuild.ps1') -ConfirmDatabase orchids | Out-Null
+    & (Join-Path $RepoRoot 'database/scripts/rebuild.ps1') -ConfirmDatabase orchids -MariaDbExe $client | Out-Null
     Query $SourcePort "CREATE USER 'orchid'@'127.0.0.1' IDENTIFIED BY 'orchid'; GRANT ALL PRIVILEGES ON *.* TO 'orchid'@'127.0.0.1'; CREATE USER 'orchid_shutdown'@'127.0.0.1' IDENTIFIED BY 'orchid_shutdown'; GRANT SHUTDOWN ON *.* TO 'orchid_shutdown'@'127.0.0.1';" | Out-Null
     Query $SourcePort "CALL orchids.spAddGenus('Backup fixture','fixture'); SET @taxon=(SELECT MIN(taxonId) FROM orchids.taxon); CALL orchids.spAddPlant(@taxon,NOW(),'fixture','Backup plant','Round trip café'); INSERT INTO orchids.plantevent(plantId,eventDateTime,eventDetails,observationTypeId) SELECT MIN(plantId),NOW(),'Photo fixture',(SELECT Id FROM orchids.observationtype WHERE typeCode='OBS_PHOTO') FROM orchids.plant; INSERT INTO orchids.plantphoto(plantEventId,plantId,fileName,thumbnailFileName,mimeType) SELECT MIN(plantEventId),MIN(plantId),'photo.jpg','thumb.jpg','image/jpeg' FROM orchids.plantevent; INSERT INTO orchids.taxonphoto(taxonId,fileName,thumbnailFileName,mimeType) SELECT MIN(taxonId),'taxon.jpg','taxon-thumb.jpg','image/jpeg' FROM orchids.taxon;" | Out-Null
     $plantId=[int](Query $SourcePort 'SELECT MIN(plantId) FROM orchids.plant;'); $taxonId=[int](Query $SourcePort 'SELECT MIN(taxonId) FROM orchids.taxon;')
