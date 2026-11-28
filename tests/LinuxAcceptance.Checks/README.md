@@ -36,6 +36,15 @@ on the target guest. The helper provisions the isolated
 on guest loopback port 55310, and checks readiness before and after a
 real systemd stop/start. Monitoring remains disabled.
 
+The Debian 13.8/MariaDB 11.8.9 deployment passed on 28 November 2026
+from `ba53587`. The locked build succeeded, the canonical schema and
+seeds produced ledger entry `baseline:v1:202610271200`, and systemd
+restarted the dedicated service to full readiness. Chromium on Windows
+passed plant edits and large JPEG/HEIC uploads through the loopback
+SSH tunnel. After a separate real restart it reopened the same plant,
+both full-size photographs and their thumbnails. Retained evidence
+is under `dist/activity10-target-*.log`.
+
 ## Activity 08 work
 
 - Use the [documented Linux deployment procedure](../../docs/user-guides/linux/installation-upgrade.md), canonical schema-only creation and migration runners. Verify startup, shutdown and restart through real systemd and run the [shared browser checks](../SharedBrowser.Checks/README.md).
