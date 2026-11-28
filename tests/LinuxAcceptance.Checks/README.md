@@ -45,6 +45,17 @@ SSH tunnel. After a separate real restart it reopened the same plant,
 both full-size photographs and their thumbnails. Retained evidence
 is under `dist/activity10-target-*.log`.
 
+## Activity 11 repeat profile
+
+On the designated Debian 13 guest with the Activity 10 fixture already
+present, use `--repeat-target` on `deploy.py`, `paired_check.py`, and
+`importer_check.py`. Deploy and run the browser write checks first, then
+run paired capture before adding the dedicated importer schema. The pair
+runner briefly stops both known web services for capture and verifies
+readiness after restarting them. The Activity 11 web service listens on
+guest loopback port 55311. See the [repeat evidence](../../docs/testing/activity-11-repeat.md)
+for the measured results and scope.
+
 ## Activity 08 work
 
 - Use the [documented Linux deployment procedure](../../docs/user-guides/linux/installation-upgrade.md), canonical schema-only creation and migration runners. Verify startup, shutdown and restart through real systemd and run the [shared browser checks](../SharedBrowser.Checks/README.md).

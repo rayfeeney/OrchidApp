@@ -44,7 +44,7 @@ Windows and Linux remain mandatory release acceptance platforms.
 | 08 | Implement Linux-specific automated testing | Complete |
 | 09 | Establish and approve Windows and Linux testing baselines | Complete |
 | 10 | Re-engineer OrchidApp for MariaDB 11.8 | Complete |
-| 11 | Repeat automated testing against the new version | Pending |
+| 11 | Repeat automated testing against the new version | In review |
 | 12 | Validate database migration and application upgrades | Pending |
 | 13 | Create the new application release | Pending |
 | 14 | Validate the final Windows and Linux releases | Pending |
@@ -471,8 +471,10 @@ The guarded Windows engine runner passed an isolated database fixture.
 Installed cross-version upgrade and recovery acceptance remains in Activity 12.
 Gate 2 remains pending.
 
-Next activity: 11 - Repeat automated testing against the new version.
-Status: Pending.
+The [Activity 11 repeat evidence](activity-11-repeat.md) records the eight
+passing CI jobs and the separate installed Windows and Debian 13 checks
+against the MariaDB 11.8 candidate. Activity 11 is in review. Activity 12
+and Gate 2 remain pending.
 
 Keep this document updated as each activity is completed. Link to
 existing test inventories, CI results and release-specific acceptance

@@ -17,7 +17,9 @@ def command(*arguments):
     return subprocess.run(arguments, check=True, capture_output=True, text=True, timeout=15).stdout.strip()
 
 
-def preflight(target=False):
+def preflight(target=False, repeat_target=False):
+    if repeat_target and not target:
+        raise ValueError("A repeat deployment requires the Debian 13 target.")
     expected_host, expected_os, expected_mariadb = TARGET if target else BASELINE
     if platform.system() != "Linux" or socket.gethostname().lower() != expected_host:
         raise RuntimeError(f"Run only on the isolated {expected_host} VM.")
@@ -54,12 +56,18 @@ def preflight(target=False):
 
     databases = command("mariadb", "--no-defaults", "--protocol=SOCKET", "--batch",
                         "--skip-column-names", "--execute", "SHOW DATABASES;").splitlines()
-    unexpected = set(databases) - {"information_schema", "mysql", "performance_schema", "sys"}
-    if unexpected:
-        raise RuntimeError(f"Expected only system databases; found {len(unexpected)} application schemas.")
-    installation_paths = ("/opt/orchidapp", "/etc/systemd/system/orchidapp.service",
+    application_databases = set(databases) - {"information_schema", "mysql", "performance_schema", "sys"}
+    expected_databases = {"orchids_activity10"} if repeat_target else set()
+    if application_databases != expected_databases:
+        raise RuntimeError("Application database inventory differs from the selected fixture profile.")
+    installation_paths = ["/opt/orchidapp", "/etc/systemd/system/orchidapp.service",
                           "/opt/orchidapp-activity08", "/etc/systemd/system/orchidapp-activity08.service",
-                          "/opt/orchidapp-activity10", "/etc/systemd/system/orchidapp-activity10.service")
+                          "/opt/orchidapp-activity11", "/etc/systemd/system/orchidapp-activity11.service"]
+    if repeat_target:
+        if command("systemctl", "show", "orchidapp-activity10.service", "--property=User", "--value") != "orchid10":
+            raise RuntimeError("The existing Activity 10 service does not match the designated fixture.")
+    else:
+        installation_paths.extend(("/opt/orchidapp-activity10", "/etc/systemd/system/orchidapp-activity10.service"))
     if any(Path(path).exists() for path in installation_paths):
         raise RuntimeError("OrchidApp installation state already exists on the selected guest.")
     dotnet = command("dotnet", "--version")
@@ -76,7 +84,7 @@ def preflight(target=False):
         "dotnetSdk": dotnet,
         "listener": sorted(addresses),
         "systemd": "PID 1",
-        "applicationDatabases": 0,
+        "applicationDatabases": len(application_databases),
     }
 
 
