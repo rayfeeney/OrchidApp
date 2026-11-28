@@ -20,9 +20,7 @@ function Check([string]$Name,[bool]$Pass) { if (-not $Pass) { throw "Check faile
 function Query([string]$Sql,[switch]$Global) {
     [string[]]$arguments = @('--no-defaults','--protocol=TCP',"--host=$env:MARIADB_HOST","--port=$env:MARIADB_PORT","--user=$env:MARIADB_USER",'--batch','--skip-column-names')
     if (-not $Global) { $arguments += "--database=$db" }
-    $output = $Sql | & $client @arguments 2>&1
-    if ($LASTEXITCODE -ne 0) { throw "Fixture query failed: $($output -join "`n")" }
-    $output
+    Invoke-MariaDbRows -Client $client -ClientArguments $arguments -InputSql $Sql
 }
 function Reset-Fixture {
     if ($db -cnotmatch '^orchids_migrations_[a-f0-9]{32}$') { throw 'Unsafe fixture target.' }

@@ -23,9 +23,7 @@ function Check([string]$Name, [bool]$Pass) {
 function Query([string]$Sql, [switch]$Global) {
     $arguments = @('--no-defaults', '--default-character-set=utf8mb4', '--connect-timeout=5', '--protocol=TCP', "--host=$env:MARIADB_HOST", "--port=$env:MARIADB_PORT", "--user=$env:MARIADB_USER", '--batch', '--skip-column-names')
     if (-not $Global) { $arguments += "--database=$db" }
-    $result = $Sql | & $client @arguments 2>&1
-    if ($LASTEXITCODE -ne 0) { throw "Test query failed: $($result -join "`n")" }
-    $result
+    Invoke-MariaDbRows -Client $client -ClientArguments $arguments -InputSql $Sql
 }
 function Run([string]$Script, [string[]]$Arguments, [bool]$Success = $true, [string]$ErrorText = '') {
     $result = Invoke-CheckProcess -Pwsh $pwsh -Script $Script -Arguments $Arguments

@@ -5,6 +5,7 @@ Write-Host 'History ordering checks revision: c14-event-type-v1'
 Write-Host 'Photo consistency checks revision: c15-c19-photo-v1'
 $PSNativeCommandUseErrorActionPreference=$false
 $repo=(Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../..')).Path
+. (Join-Path $repo 'database/scripts/Schema-Baseline.ps1')
 foreach($name in @('MARIADB_HOST','MARIADB_PORT','MARIADB_USER','MARIADB_PASSWORD')) {
     if(-not [Environment]::GetEnvironmentVariable($name)){throw "Explicit $name required for an isolated server."}
 }
@@ -24,9 +25,8 @@ function Quote-Option([string]$Value) {
     '"'+$Value.Replace('\','\\').Replace('"','\"')+'"'
 }
 function Query([string]$Statement) {
-    $result=$Statement | & $client "--defaults-extra-file=$defaults" "--database=$env:MARIADB_DATABASE" --batch --skip-column-names --default-character-set=utf8mb4 2>&1
-    if($LASTEXITCODE -ne 0){throw "Fixture SQL failed: $($result -join "`n")"}
-    $result
+    $arguments=@("--defaults-extra-file=$defaults", "--database=$env:MARIADB_DATABASE", '--batch', '--skip-column-names', '--default-character-set=utf8mb4')
+    Invoke-MariaDbRows -Client $client -ClientArguments $arguments -InputSql $Statement
 }
 function Stop-HostProcess {
     if($script:process -and -not $script:process.HasExited) {

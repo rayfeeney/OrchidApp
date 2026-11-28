@@ -21,9 +21,7 @@ function Query([string]$Statement,[switch]$Global){
     try {
         $arguments=@('--no-defaults','--protocol=TCP',"--host=$hostValue","--port=$portValue","--user=$userValue",'--connect-timeout=5','--batch','--skip-column-names')
         if(-not $Global){$arguments+="--database=$database"}
-        $output=$Statement | & $client @arguments 2>&1
-        if($LASTEXITCODE -ne 0){throw 'Generated fixture query failed.'}
-        $output
+        Invoke-MariaDbRows -Client $client -ClientArguments $arguments -InputSql $Statement
     }finally{$env:MYSQL_PWD=$before}
 }
 function Child([string[]]$Arguments){
