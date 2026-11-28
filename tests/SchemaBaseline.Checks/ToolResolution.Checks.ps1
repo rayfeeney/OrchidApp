@@ -14,12 +14,19 @@ try {
     $second = Join-Path $temporary 'second path'
     New-Item -ItemType Directory -Path $first, $second | Out-Null
     $toolName = if ($IsWindows) { 'orchids-resolver-fixture.exe' } else { 'orchids-resolver-fixture' }
-    $source = if ($IsWindows) { $env:ComSpec } else { '/bin/echo' }
     $firstTool = Join-Path $first $toolName
     $secondTool = Join-Path $second $toolName
-    Copy-Item -LiteralPath $source -Destination $firstTool
-    Copy-Item -LiteralPath $source -Destination $secondTool
-    if (-not $IsWindows) { & chmod +x $firstTool $secondTool; if ($LASTEXITCODE -ne 0) { throw 'Fixture chmod failed.' } }
+    if ($IsWindows) {
+        Copy-Item -LiteralPath $env:ComSpec -Destination $firstTool
+        Copy-Item -LiteralPath $env:ComSpec -Destination $secondTool
+    } else {
+        # A renamed multicall coreutils executable can dispatch by its filename.
+        $fixture = '#!/bin/sh' + [char]10 + 'printf ''%s\n'' "$@"' + [char]10
+        [IO.File]::WriteAllText($firstTool, $fixture)
+        [IO.File]::WriteAllText($secondTool, $fixture)
+        & chmod +x $firstTool $secondTool
+        if ($LASTEXITCODE -ne 0) { throw 'Fixture chmod failed.' }
+    }
     $env:PATH = $first + [IO.Path]::PathSeparator + $second + [IO.Path]::PathSeparator + $priorPath
     Check 'Fixture exposes multiple application matches' (@(Get-Command $toolName -CommandType Application -All).Count -eq 2)
     $resolved = Resolve-MariaDbTool -Name $toolName

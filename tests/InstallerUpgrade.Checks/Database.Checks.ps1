@@ -6,6 +6,7 @@ param(
 )
 $ErrorActionPreference='Stop';$PSNativeCommandUseErrorActionPreference=$false
 $RepoRoot=(Resolve-Path -LiteralPath $RepoRoot).Path
+. (Join-Path $RepoRoot 'database/scripts/Schema-Baseline.ps1')
 $MariaDbRuntimeRoot=(Resolve-Path -LiteralPath $MariaDbRuntimeRoot).Path
 if (Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue) { throw 'Disposable port occupied; no database was touched.' }
 . (Join-Path $RepoRoot 'app/tools/Installer-Snapshot.ps1')
@@ -20,8 +21,8 @@ $prior=@{};foreach ($name in @('MARIADB_HOST','MARIADB_PORT','MARIADB_DATABASE',
 $client=Join-Path $MariaDbRuntimeRoot 'bin/mariadb.exe';$admin=Join-Path $MariaDbRuntimeRoot 'bin/mariadb-admin.exe'
 function Check([string]$Name,[bool]$Pass) { if (-not $Pass) { throw "Check failed: $Name" };$script:checks++ }
 function Query([string]$Sql) {
-    $result=& $client --no-defaults --protocol=TCP --host=127.0.0.1 "--port=$Port" --user=root --connect-timeout=2 --default-character-set=utf8mb4 --batch --skip-column-names "--execute=$Sql" 2>&1
-    if ($LASTEXITCODE -ne 0) { throw "Disposable query failed: $($result -join ' ')" };$result
+    $arguments=@('--no-defaults','--protocol=TCP','--host=127.0.0.1',"--port=$Port",'--user=root','--connect-timeout=2','--default-character-set=utf8mb4','--batch','--raw','--skip-column-names',"--execute=$Sql")
+    Invoke-MariaDbRows -Client $client -ClientArguments $arguments
 }
 function Start-Fixture([string]$Directory) {
     if (-not (Test-InstallerChild $Directory $root)) { throw 'Fixture data path escaped its generated root.' }
@@ -50,7 +51,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Disposable database initialization failed.' }
     Start-Fixture $data
     $env:MARIADB_HOST='127.0.0.1';$env:MARIADB_PORT=[string]$Port;$env:MARIADB_DATABASE=$database;$env:MARIADB_USER='root';$env:MARIADB_PASSWORD='isolated-c18-test';$env:MARIADB_CHARSET='utf8mb4';$env:MARIADB_COLLATION='utf8mb4_unicode_ci'
-    & (Join-Path $RepoRoot 'database/scripts/rebuild.ps1') -ConfirmDatabase $database | Out-Null
+    & (Join-Path $RepoRoot 'database/scripts/rebuild.ps1') -ConfirmDatabase $database -MariaDbExe $client | Out-Null
     Query "CALL $database.spAddGenus('C18 synthetic','fixture'); SET @taxon=(SELECT MIN(taxonId) FROM $database.taxon); CALL $database.spAddPlant(@taxon,'2020-01-01','fixture','Before upgrade','snapshot recovery');" | Out-Null
     $ledger=[string]::Join("`n",@(Query "SELECT CONCAT(scriptName,':',checksum) FROM $database.schemaversion ORDER BY scriptName;"))
     $null=New-Item -ItemType Directory -Path (Join-Path $persistent 'uploads/plants/1') -Force

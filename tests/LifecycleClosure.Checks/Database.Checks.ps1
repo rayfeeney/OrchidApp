@@ -5,6 +5,7 @@ Write-Host 'History ordering checks revision: c14-event-type-v1'
 Write-Host 'Photo consistency checks revision: c15-c19-photo-v1'
 $PSNativeCommandUseErrorActionPreference=$false
 $repo=(Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../..')).Path
+. (Join-Path $repo 'database/scripts/Schema-Baseline.ps1')
 foreach($name in @('MARIADB_HOST','MARIADB_PORT','MARIADB_USER','MARIADB_PASSWORD')) {
     if(-not [Environment]::GetEnvironmentVariable($name)){throw "Explicit $name required for an isolated server."}
 }
@@ -24,9 +25,8 @@ function Quote-Option([string]$Value) {
     '"'+$Value.Replace('\','\\').Replace('"','\"')+'"'
 }
 function Query([string]$Statement) {
-    $result=$Statement | & $client "--defaults-extra-file=$defaults" "--database=$env:MARIADB_DATABASE" --batch --skip-column-names --default-character-set=utf8mb4 2>&1
-    if($LASTEXITCODE -ne 0){throw "Fixture SQL failed: $($result -join "`n")"}
-    $result
+    $arguments=@("--defaults-extra-file=$defaults", "--database=$env:MARIADB_DATABASE", '--batch', '--skip-column-names', '--default-character-set=utf8mb4')
+    Invoke-MariaDbRows -Client $client -ClientArguments $arguments -InputSql $Statement
 }
 function Stop-HostProcess {
     if($script:process -and -not $script:process.HasExited) {
@@ -44,6 +44,11 @@ try {
     $lines=@('[client]','protocol=tcp',('host='+ (Quote-Option $env:MARIADB_HOST)),('port='+$env:MARIADB_PORT),('user='+ (Quote-Option $env:MARIADB_USER)),('password='+ (Quote-Option $env:MARIADB_PASSWORD)))
     [IO.File]::WriteAllLines($defaults,$lines,[Text.UTF8Encoding]::new($false))
     if(-not $IsWindows){& chmod 600 -- $defaults;if($LASTEXITCODE -ne 0){throw 'Credential protection failed.'}}
+    $serverVersion=Invoke-MariaDbRows -Client $client -ClientArguments @("--defaults-extra-file=$defaults", '--batch', '--skip-column-names', '--execute=SELECT VERSION();')
+    if ($serverVersion -match '^11\.8\.\d+-MariaDB') {
+        # Direct SQL cases use the same per-session locking behavior as the web host.
+        [IO.File]::AppendAllLines($defaults, [string[]]@('[mariadb-client]', 'init-command=SET SESSION innodb_snapshot_isolation=OFF'))
+    }
     $env:MYSQL_PWD=$null;$env:MARIADB_CHARSET='utf8mb4';$env:MARIADB_COLLATION='utf8mb4_unicode_ci'
     $stage=Join-Path $root 'schema-only/database';$null=New-Item -ItemType Directory -Path $stage
     foreach($directory in @('scripts','schema')){Copy-Item -LiteralPath (Join-Path $repo "database/$directory") -Destination $stage -Recurse}

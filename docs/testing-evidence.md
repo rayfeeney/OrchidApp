@@ -1,5 +1,9 @@
 # Reproducible checks and release evidence
 
+On 28 November 2026, the Activity 10 Windows candidate passed all 80 packaged backup/restore database checks and all nine installer snapshot recovery checks on the pinned MariaDB 11.8.9 runtime. Canonical schema creation and the fixture queries consume SQL rows on stdout separately from client diagnostics on stderr. Nonzero client exits still fail with diagnostics. The installer snapshot suite tests recovery on a single engine version. The existing-installation 10.11-to-11.8 package exercise remains separate.
+A controlled MariaDB 11.8.9 comparison reproduced the concurrent plant-location edit and removal errors and the ended caller transaction with snapshot isolation enabled. The existing assertions passed when the fixture used the prior locking-read behavior. The web application applies the setting per MariaDB 11.8 connection, including after pool reset. Direct SQL lifecycle checks select the same session setting. The local pooled connection probe confirmed the setting on synchronous and asynchronous opens, unchanged collation and an unchanged server default. Evidence is under `dist/activity10-session-compatibility/`.
+
+
 Pi 1's 15 November abandoned-lock incident adds real POSIX contention,
 SIGKILL-release and main-process SIGHUP-unwind cases to nightly_checks.py
 (26 cases; three POSIX cases skipped on Windows). These synthetic children never

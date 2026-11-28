@@ -88,3 +88,28 @@ function Resolve-MariaDbTool([string]$Name = 'mariadb', [string]$Override = '') 
     }
     throw "MariaDB tool '$Name' not found. Install it on PATH or supply an explicit executable."
 }
+
+function Invoke-MariaDbRows {
+    param(
+        [Parameter(Mandatory)][string]$Client,
+        [Parameter(Mandatory)][string[]]$ClientArguments,
+        [string]$InputSql
+    )
+    $stderr = [IO.Path]::GetTempFileName()
+    try {
+        $PSNativeCommandUseErrorActionPreference = $false
+        if ($PSBoundParameters.ContainsKey('InputSql')) {
+            $rows = $InputSql | & $Client @ClientArguments 2> $stderr
+        } else {
+            $rows = & $Client @ClientArguments 2> $stderr
+        }
+        if ($LASTEXITCODE -ne 0) {
+            $problem = Get-Content -LiteralPath $stderr -Raw
+            throw "MariaDB command failed (exit $LASTEXITCODE): $problem"
+        }
+        $rows
+    }
+    finally {
+        Remove-Item -LiteralPath $stderr
+    }
+}

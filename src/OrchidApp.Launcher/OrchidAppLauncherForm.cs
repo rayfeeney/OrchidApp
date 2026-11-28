@@ -245,6 +245,19 @@ public partial class OrchidAppLauncherForm : Form
 
             AppendLog($"Launcher log file: {_programDataPaths.LauncherLogFile}");
 
+            if (IsMariaDbUpgradePending())
+            {
+                SetLauncherStatus(LauncherStatus.Red);
+                SetWindowTitle("Recovery required");
+                statusLabel.Text = "A MariaDB upgrade needs recovery. Keep OrchidApp closed and contact support.";
+                openAppButton.Enabled = false;
+                backupButton.Enabled = false;
+                restoreButton.Enabled = false;
+                configureCloudBackupButton.Enabled = false;
+                AppendLog("MariaDB engine upgrade pending. Preserve the upgrade record, pre-install snapshot and database files.");
+                return;
+            }
+
             if (GetRestoreRecovery().IsPending)
             {
                 ShowRestoreRecoveryState();
@@ -775,7 +788,7 @@ FLUSH PRIVILEGES;
         {
             if (e.Data != null)
             {
-                AppendLog(e.Data);
+                AppendLog(e.Data, showInPane: !e.Data.StartsWith("DB DIAGNOSTIC: ", StringComparison.Ordinal));
             }
         };
 
@@ -1365,6 +1378,24 @@ FLUSH PRIVILEGES;
         }
     }
 
+    private bool IsMariaDbUpgradePending()
+    {
+        try
+        {
+            // An empty, malformed or unreadable record is still a recovery boundary.
+            File.GetAttributes(_programDataPaths.MariaDbUpgradePendingFile);
+            return true;
+        }
+        catch (FileNotFoundException)
+        {
+            return false;
+        }
+        catch (DirectoryNotFoundException)
+        {
+            return false;
+        }
+    }
+
     private RestoreRecovery GetRestoreRecovery() => new(_programDataPaths.Root);
 
     private void ShowRestoreRecoveryState()
@@ -1577,17 +1608,20 @@ FLUSH PRIVILEGES;
         AppendLog($"  ProgramData launcher settings: {layout.ProgramDataLauncherSettingsPath}");
     }
 
-    private void AppendLog(string text)
+    private void AppendLog(string text) => AppendLog(text, showInPane: true);
+
+    private void AppendLog(string text, bool showInPane)
     {
         if (InvokeRequired)
         {
-            BeginInvoke(new Action<string>(AppendLog), text);
+            BeginInvoke(new Action(() => AppendLog(text, showInPane)));
             return;
         }
 
         var line = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {text}";
 
         WriteLauncherLogFileLine(line);
+        if (!showInPane) return;
 
         lock (_logLock)
         {

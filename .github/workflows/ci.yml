@@ -43,7 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       mariadb:
-        image: mariadb:10.11
+        image: mariadb:11.8.9
         env:
           MARIADB_ROOT_PASSWORD: c20-disposable-ci
         ports:
@@ -76,11 +76,11 @@ jobs:
 
   lifecycle-closure:
     name: Lifecycle closure, transactions, history and photo recovery
-    # Noble supplies the supported 10.11 client; ubuntu-latest now selects 26.04/11.8.
+    # The pinned Playwright Chromium build supports Noble.
     runs-on: ubuntu-24.04
     services:
       mariadb:
-        image: mariadb:10.11
+        image: mariadb:11.8.9
         env:
           MARIADB_ROOT_PASSWORD: root
         ports:
@@ -122,10 +122,10 @@ jobs:
 
   linux-backup:
     name: Linux paired backup and recovery
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     services:
       mariadb:
-        image: mariadb:10.11
+        image: mariadb:11.8.9
         env:
           MARIADB_ROOT_PASSWORD: root
         ports:
@@ -141,8 +141,8 @@ jobs:
       - name: Install backup test tools
         run: |
           sudo apt-get update && sudo apt-get install -y mariadb-client rclone
-          mariadb --version | grep -E 'Distrib 10[.]11[.]'
-          mariadb-dump --version | grep -E 'Distrib 10[.]11[.]'
+          mariadb --version | grep -E '11[.]8[.]'
+          mariadb-dump --version | grep -E '11[.]8[.]'
       - name: Check Linux backup wrapper syntax
         run: |
           bash -n infrastructure/backups/backup_orchids.sh
@@ -178,7 +178,7 @@ jobs:
 
   standby-native:
     name: Isolated MariaDB 10.11 to 11.8 standby data restore
-    # Resolute supplies the target 11.8 tools; old native-client jobs remain Noble.
+    # Resolute supplies the target 11.8 tools. The fixture pins its historical 10.11 source independently.
     runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v4
@@ -275,11 +275,11 @@ jobs:
 
   schema-contract:
     name: Schema contract validation
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     services:
       mariadb:
-        image: mariadb:10.11
+        image: mariadb:11.8.9
         env:
           MARIADB_ROOT_PASSWORD: root
         ports:
@@ -297,8 +297,8 @@ jobs:
       - name: Install MariaDB client
         run: |
           sudo apt-get update && sudo apt-get install -y mariadb-client
-          mariadb --version | grep -E 'Distrib 10[.]11[.]'
-          mariadb-dump --version | grep -E 'Distrib 10[.]11[.]'
+          mariadb --version | grep -E '11[.]8[.]'
+          mariadb-dump --version | grep -E '11[.]8[.]'
 
       - name: Create canonical database from schema and seeds only
         shell: pwsh
@@ -426,7 +426,9 @@ jobs:
 
       - name: Check Windows backup and restore round trip
         shell: pwsh
-        run: ./tests/BackupRestore.Checks/Database.Checks.ps1 -MariaDbRuntimeRoot ./app/runtime/mariadb/win-x64
+        run: |
+          . ./scripts/windows-mariadb-runtime.ps1
+          ./tests/BackupRestore.Checks/Database.Checks.ps1 -MariaDbRuntimeRoot "./.runtime-downloads/mariadb-$WindowsMariaDbVersion-winx64"
 
       - name: Create Windows package
         shell: pwsh
@@ -441,7 +443,9 @@ jobs:
 
       - name: Check real database recovery from installer snapshot
         shell: pwsh
-        run: ./tests/InstallerUpgrade.Checks/Database.Checks.ps1 -MariaDbRuntimeRoot ./app/runtime/mariadb/win-x64
+        run: |
+          . ./scripts/windows-mariadb-runtime.ps1
+          ./tests/InstallerUpgrade.Checks/Database.Checks.ps1 -MariaDbRuntimeRoot "./.runtime-downloads/mariadb-$WindowsMariaDbVersion-winx64"
 
       - name: Compile and test isolated installers
         shell: pwsh

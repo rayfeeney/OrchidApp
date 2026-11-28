@@ -29,9 +29,8 @@ try {
     function Invoke-SchemaSql([string]$Sql, [switch]$UseDatabase) {
         $arguments = $clientArgs
         if ($UseDatabase) { $arguments += "--database=$db" }
-        $output = $Sql | & $MariaDbExe @arguments 2>&1
-        if ($LASTEXITCODE -ne 0) { throw "Schema command failed (exit $LASTEXITCODE): $($output -join "`n")" }
-        $output
+        try { Invoke-MariaDbRows -Client $MariaDbExe -ClientArguments $arguments -InputSql $Sql }
+        catch { throw "Schema command failed: $($_.Exception.Message)" }
     }
     $exists = @(Invoke-SchemaSql "SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME='$db';")
     if ($exists.Count) {

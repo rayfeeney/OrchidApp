@@ -106,6 +106,9 @@ begin
     ' -PersistentRoot ' + QuoteArgument(PersistentRoot) +
     ' -ResultFile ' + QuoteArgument(ResultFile) +
     ' -InstallerProcessId ' + IntToStr(GetCurrentProcessId);
+#ifndef InstallerFixture
+  Arguments := Arguments + ' -MariaDbTargetVersion ' + QuoteArgument('{#MariaDbTargetVersion}');
+#endif
   WizardForm.StatusLabel.Caption := 'Checking stopped applications and creating a verified recovery snapshot...';
   if not Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
       Arguments, '', SW_HIDE, ewWaitUntilTerminated, ExitCode) then begin
@@ -119,3 +122,31 @@ begin
   if ExitCode <> 0 then
     Result := MessageText;
 end;
+
+#ifndef InstallerFixture
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  ExitCode: Integer;
+  Arguments, ResultFile, MessageText: String;
+  ResultText: AnsiString;
+begin
+  if CurStep <> ssPostInstall then Exit;
+  ResultFile := ExpandConstant('{tmp}\orchidapp-engine-upgrade-result.txt');
+  Arguments := '-NoProfile -NonInteractive -ExecutionPolicy Bypass -File ' +
+    QuoteArgument(ExpandConstant('{app}\tools\complete-installer-mariadb-upgrade.ps1')) +
+    ' -AppRoot ' + QuoteArgument(ExpandConstant('{app}')) +
+    ' -PersistentRoot ' + QuoteArgument(ExpandConstant('{commonappdata}\OrchidApp')) +
+    ' -ResultFile ' + QuoteArgument(ResultFile) +
+    ' -InstallerProcessId ' + IntToStr(GetCurrentProcessId);
+  WizardForm.StatusLabel.Caption := 'Checking whether the MariaDB engine needs an upgrade...';
+  if not Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
+      Arguments, '', SW_HIDE, ewWaitUntilTerminated, ExitCode) then
+    RaiseException('Could not run the MariaDB upgrade check. Preserve the recovery files and contact support.');
+  MessageText := 'MariaDB upgrade stopped. Preserve the recovery files and contact support.';
+  if LoadStringFromFile(ResultFile, ResultText) then begin
+    MessageText := UTF8Decode(ResultText);
+    Log(MessageText);
+  end;
+  if ExitCode <> 0 then RaiseException(MessageText);
+end;
+#endif

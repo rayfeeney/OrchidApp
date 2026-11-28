@@ -60,9 +60,12 @@ builder.Services.AddDbContext<OrchidDbContext>(options =>
             "Ensure Production provides it via environment configuration.");
     }
 
+    var serverVersion = ServerVersion.AutoDetect(connectionString);
+    var useLegacyCurrentReads = serverVersion is MariaDbServerVersion &&
+        serverVersion.Version.Major == 11 && serverVersion.Version.Minor == 8;
     options
-        .UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
-        .AddInterceptors(new CollationInterceptor());
+        .UseMySql(connectionString, serverVersion)
+        .AddInterceptors(new MariaDbSessionInterceptor(useLegacyCurrentReads));
 });
 
 builder.Services.AddScoped<PhotoPipeline>();
@@ -308,10 +311,11 @@ static void RunScriptWithMariaDb(string scriptPath, string mariadbExe, string co
             Console.WriteLine(e.Data);
     };
 
+    var diagnostics = new List<string>();
     process.ErrorDataReceived += (s, e) =>
     {
         if (e.Data != null)
-            Console.WriteLine("ERR: " + e.Data);
+            diagnostics.Add(e.Data);
     };
 
     process.Start();
@@ -326,6 +330,14 @@ static void RunScriptWithMariaDb(string scriptPath, string mariadbExe, string co
     process.StandardInput.Close();
 
     process.WaitForExit();
+    const string passwordlessWarning = "WARNING: option --ssl-verify-server-cert is disabled, because of an insecure passwordless login.";
+    var localDesktopSuccess = process.ExitCode == 0 && OperatingSystem.IsWindows() &&
+        connection.Server == "127.0.0.1";
+    foreach (var line in diagnostics)
+    {
+        var prefix = localDesktopSuccess && line == passwordlessWarning ? "DB DIAGNOSTIC: " : "ERR: ";
+        Console.WriteLine(prefix + line);
+    }
 
     if (process.ExitCode != 0)
     {

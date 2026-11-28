@@ -14,15 +14,12 @@ function Write-Step {
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RepoRoot = Resolve-Path (Join-Path $ScriptDir "..")
 
-$MariaDbRuntimeRoot = Join-Path $RepoRoot "app\runtime\mariadb\win-x64"
-$MariaDbExe = Join-Path $MariaDbRuntimeRoot "bin\mariadbd.exe"
-
-$MariaDbVersion = "10.11.16"
-$MariaDbPackageName = "mariadb-$MariaDbVersion-winx64.zip"
-$MariaDbDownloadUrl = "https://mirror.mariadb.org/mariadb-$MariaDbVersion/winx64-packages/$MariaDbPackageName"
+. (Join-Path $ScriptDir 'windows-mariadb-runtime.ps1')
+$MariaDbPackageName = "mariadb-$WindowsMariaDbVersion-winx64.zip"
+$MariaDbDownloadUrl = "https://archive.mariadb.org/mariadb-$WindowsMariaDbVersion/winx64-packages/$MariaDbPackageName"
 $RuntimeDownloadRoot = Join-Path $RepoRoot ".runtime-downloads"
 $MariaDbArchivePath = Join-Path $RuntimeDownloadRoot $MariaDbPackageName
-$MariaDbExtractRoot = Join-Path $RuntimeDownloadRoot "mariadb"
+$MariaDbRuntimeRoot = Join-Path $RuntimeDownloadRoot "mariadb-$WindowsMariaDbVersion-winx64"
 
 $LibVipsRuntimeRoot = Join-Path $RepoRoot "app\runtime\libvips\win-x64"
 $LibVipsDll = Join-Path $LibVipsRuntimeRoot "bin\libvips-42.dll"
@@ -46,54 +43,45 @@ foreach ($target in @($MariaDbRuntimeRoot,$LibVipsRuntimeRoot,$LibVipsExtractRoo
 Write-Step "Checking Windows runtime dependencies"
 
 if (-not $LibVipsOnly) {
-    if (Test-Path $MariaDbExe) {
-        Write-Host "MariaDB runtime already present: $MariaDbExe" -ForegroundColor Green
-    }
-    else {
-        Write-Step "Restoring MariaDB runtime"
-
-        $ChocolateyMariaDbInstallRoot = "C:\Program Files\MariaDB 10.11"
-        $ChocolateyMariaDbExe = Join-Path $ChocolateyMariaDbInstallRoot "bin\mariadbd.exe"
-
-        if (-not (Test-Path $ChocolateyMariaDbExe)) {
-            Write-Host "Installing MariaDB $MariaDbVersion using Chocolatey..."
-
-            choco install mariadb `
-                --version=$MariaDbVersion `
-                --yes `
-                --no-progress
-
-            if ($LASTEXITCODE -ne 0) {
-                throw "Chocolatey MariaDB install failed. ExitCode=$LASTEXITCODE"
+    if (-not (Test-Path -LiteralPath $MariaDbRuntimeRoot)) {
+        Write-Step "Restoring MariaDB $WindowsMariaDbVersion"
+        New-Item -ItemType Directory -Path $RuntimeDownloadRoot -Force | Out-Null
+        if (-not (Test-Path -LiteralPath $MariaDbArchivePath -PathType Leaf)) {
+            $download = "$MariaDbArchivePath.$([guid]::NewGuid().ToString('N')).download"
+            try {
+                Invoke-WebRequest -Uri $MariaDbDownloadUrl -OutFile $download
+                if ((Get-FileHash -LiteralPath $download -Algorithm SHA256).Hash -ne $WindowsMariaDbArchiveSha256) {
+                    throw 'Downloaded MariaDB archive checksum differs from the pinned upstream checksum.'
+                }
+                Move-Item -LiteralPath $download -Destination $MariaDbArchivePath
+            }
+            finally {
+                if (Test-Path -LiteralPath $download) { Remove-Item -LiteralPath $download }
             }
         }
-        else {
-            Write-Host "MariaDB already installed by Chocolatey: $ChocolateyMariaDbInstallRoot"
+
+        if ((Get-FileHash -LiteralPath $MariaDbArchivePath -Algorithm SHA256).Hash -ne $WindowsMariaDbArchiveSha256) {
+            throw "Pinned MariaDB archive checksum differs. Move the cached archive aside and retry: $MariaDbArchivePath"
         }
-
-        if (-not (Test-Path $ChocolateyMariaDbExe)) {
-            throw "Chocolatey MariaDB executable not found after install: $ChocolateyMariaDbExe"
+        $staging = Join-Path $RuntimeDownloadRoot ("mariadb-" + [guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Path $staging | Out-Null
+        try {
+            [IO.Compression.ZipFile]::ExtractToDirectory($MariaDbArchivePath, $staging)
+            $extracted = Join-Path $staging "mariadb-$WindowsMariaDbVersion-winx64"
+            Assert-WindowsMariaDbRuntime $extracted
+            New-Item -ItemType Directory -Path (Split-Path -Parent $MariaDbRuntimeRoot) -Force | Out-Null
+            Move-Item -LiteralPath $extracted -Destination $MariaDbRuntimeRoot
         }
-
-        if (Test-Path $MariaDbRuntimeRoot) {
-            Remove-Item $MariaDbRuntimeRoot -Recurse -Force
+        finally {
+            $resolvedStage = (Resolve-Path -LiteralPath $staging).Path
+            if (-not $resolvedStage.StartsWith($RepoRoot.Path + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
+                throw 'MariaDB staging directory is outside the repository.'
+            }
+            Remove-Item -LiteralPath $resolvedStage -Recurse -Force
         }
-
-        New-Item -ItemType Directory -Path (Split-Path -Parent $MariaDbRuntimeRoot) -Force | Out-Null
-
-        Copy-Item `
-            -Path $ChocolateyMariaDbInstallRoot `
-            -Destination $MariaDbRuntimeRoot `
-            -Recurse `
-            -Force
-
-        if (-not (Test-Path $MariaDbExe)) {
-            throw "MariaDB runtime restore failed. Expected file missing: $MariaDbExe"
-        }
-
-        Write-Host "MariaDB runtime restored: $MariaDbRuntimeRoot" -ForegroundColor Green
     }
-
+    Assert-WindowsMariaDbRuntime $MariaDbRuntimeRoot
+    Write-Host "Verified MariaDB $WindowsMariaDbVersion runtime: $MariaDbRuntimeRoot" -ForegroundColor Green
 }
 
 if (Test-Path $LibVipsDll) {

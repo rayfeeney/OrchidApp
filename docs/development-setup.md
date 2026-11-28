@@ -210,7 +210,7 @@ Stop the app and use the same `pwsh ./scripts/DevSetup/update-database.ps1` comm
 
 ## Optional Windows packaging preparation
 
-With MariaDB installed at the location in the prerequisites table, the preparation script copies its runtime into the repository and downloads libvips if needed.
+The packaging preparation script downloads the official Windows x64 MariaDB 11.8.9 ZIP, verifies its pinned SHA-256 and stages it under the ignored .runtime-downloads directory. It also restores libvips when needed.
 
 From the repository root, run:
 
@@ -218,6 +218,6 @@ From the repository root, run:
 pwsh ./scripts/restore-windows-runtime.ps1
 ```
 
-If MariaDB is missing from that location, stop and correct its installation first: the script otherwise attempts to install MariaDB through Chocolatey.
+Packaging checks the staged and copied runtime for the pinned server version and required tools. If validation fails, move the affected cache files out of the repository and rerun the preparation command. The existing development server and its data are independent of this staged runtime.
 
-These runtime files are preparation for packaging. The Windows release payload must also be built before running `scripts/build-windows-installer.ps1`. If Inno Setup is installed elsewhere, supply `-InnoCompiler <absolute-ISCC-path>` to that script.
+The package build initializes a fresh MariaDB system template with the staged 11.8 runtime and verifies it over a private named pipe. The launcher creates the OrchidApp database and applies the existing schema bootstrap on first start. Existing installations follow the separate upgrade and recovery contract. The Windows release payload must also be built before running `scripts/build-windows-installer.ps1`. If Inno Setup is installed elsewhere, supply `-InnoCompiler <absolute-ISCC-path>` to that script.

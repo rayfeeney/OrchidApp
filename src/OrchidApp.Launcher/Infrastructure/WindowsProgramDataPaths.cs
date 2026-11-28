@@ -49,6 +49,8 @@ public sealed class WindowsProgramDataPaths
 
     public string MigrationStateFile => Path.Combine(Root, "migration-state.json");
 
+    public string MariaDbUpgradePendingFile => Path.Combine(Root, "mariadb-upgrade-pending.json");
+
     public string[] RequiredDirectories => new[]
     {
         Root,

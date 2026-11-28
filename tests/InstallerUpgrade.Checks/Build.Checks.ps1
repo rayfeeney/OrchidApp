@@ -4,12 +4,12 @@ $RepoRoot=(Resolve-Path -LiteralPath $RepoRoot).Path
 $root=Join-Path ([IO.Path]::GetTempPath()) ('orchids-installer-build-'+[guid]::NewGuid().ToString('N'))
 $package=Join-Path $root 'dist/windows/OrchidApp'
 foreach ($folder in @('scripts','installer/windows','app/tools','dist/windows/OrchidApp/tools')) { $null=New-Item -ItemType Directory -Path (Join-Path $root $folder) -Force }
-Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/build-windows-installer.ps1') -Destination (Join-Path $root 'scripts')
+Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/build-windows-installer.ps1'),(Join-Path $RepoRoot 'scripts/windows-mariadb-runtime.ps1') -Destination (Join-Path $root 'scripts')
 Copy-Item -LiteralPath (Join-Path $RepoRoot 'installer/windows/OrchidApp.iss') -Destination (Join-Path $root 'installer/windows')
 $launcher=Join-Path $RepoRoot 'src/OrchidApp.Launcher/bin/Release/net8.0-windows/OrchidApp.Launcher.exe'
 if (-not(Test-Path -LiteralPath $launcher)) { throw 'Build the Release launcher before the installer build checks.' }
 Copy-Item -LiteralPath $launcher -Destination $package
-foreach ($helper in @('Installer-Snapshot.ps1','prepare-installer-upgrade.ps1','review-installer-snapshot.ps1')) {
+foreach ($helper in @('Installer-Snapshot.ps1','prepare-installer-upgrade.ps1','review-installer-snapshot.ps1','complete-installer-mariadb-upgrade.ps1')) {
     Copy-Item -LiteralPath (Join-Path $RepoRoot "app/tools/$helper") -Destination (Join-Path $root 'app/tools')
     Copy-Item -LiteralPath (Join-Path $RepoRoot "app/tools/$helper") -Destination (Join-Path $package 'tools')
 }

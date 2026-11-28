@@ -12,6 +12,39 @@ sudo python3 preflight.py
 
 The script uses the guest's local MariaDB socket for read-only queries. It checks the guest identity, Debian version, architecture, systemd, the MariaDB server version and loopback listener, charset and collation, absence of application schemas and deployment files, and the .NET 8 SDK. Retain its JSON output before provisioning. A machine that differs from the recorded baseline requires review before deployment.
 
+## Read-only target preflight
+
+Run `sudo python3 preflight.py --target` only on `orchidapp-debian13`. This
+mode checks Debian 13.8 x64, MariaDB server and client 11.8.9, systemd,
+loopback binding, the recorded server character set and collation,
+absence of application state, and the .NET 8 SDK. The default command
+still selects the Debian 12 baseline.
+
+The target preflight passed on 28 November 2026. Debian 13.8 x64 had
+MariaDB server and client 11.8.9, utf8mb4/utf8mb4_unicode_ci, a loopback
+database listener, systemd PID 1, .NET SDK 8.0.428 and no application
+databases or installed fixture. Retained host evidence is
+`dist/activity10-target-preflight.log`.
+
+## Disposable x64 target deployment
+
+After the Debian 13 preflight passes, publish the reviewed source as a
+framework-dependent x64 build using the locked dependency restore.
+Run `sudo python3 tests/LinuxAcceptance.Checks/deploy.py --target --source . --publish /path/to/publish`
+on the target guest. The helper provisions the isolated
+`orchids_activity10` database and `orchidapp-activity10.service`, listens
+on guest loopback port 55310, and checks readiness before and after a
+real systemd stop/start. Monitoring remains disabled.
+
+The Debian 13.8/MariaDB 11.8.9 deployment passed on 28 November 2026
+from `ba53587`. The locked build succeeded, the canonical schema and
+seeds produced ledger entry `baseline:v1:202610271200`, and systemd
+restarted the dedicated service to full readiness. Chromium on Windows
+passed plant edits and large JPEG/HEIC uploads through the loopback
+SSH tunnel. After a separate real restart it reopened the same plant,
+both full-size photographs and their thumbnails. Retained evidence
+is under `dist/activity10-target-*.log`.
+
 ## Activity 08 work
 
 - Use the [documented Linux deployment procedure](../../docs/user-guides/linux/installation-upgrade.md), canonical schema-only creation and migration runners. Verify startup, shutdown and restart through real systemd and run the [shared browser checks](../SharedBrowser.Checks/README.md).
