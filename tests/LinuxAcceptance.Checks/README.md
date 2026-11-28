@@ -41,4 +41,24 @@ On 28 November 2026 both imports succeeded. The same two reading IDs and values 
 
 Run `paired_check.py --source <reviewed-source>` with sudo after the browser has created its fixture plant and photos. The runner checks the allowed database set before taking a server-wide read lock, stops the dedicated source service, calls the production paired backup tool and verifies encrypted local read-back. Recovery runs against a separately initialised MariaDB process with no TCP networking and events disabled. The runner recreates the expected locked schema definer for the isolated database and compares record, media and configuration witnesses. It restarts the source service and verifies readiness. The target application is outside this data-stage check.
 
-On 28 November 2026 the initial backup passed, while restore stopped with MariaDB error 1449 because its target lacked the expected definer. The failed target and marker were retained. The corrected runner used a fresh target and passed the backup, encrypted read-back and restore comparisons. Four media files and one configuration file matched. Archive SHA-256 was `92df31836bb222970fcd0d21ce809fc9d7edd808d7d3a2fe57235895b069d60e`. The source restarted and passed readiness. Recovered application acceptance, nightly/standby scheduling and historical upgrade remain open.
+On 28 November 2026 the initial backup passed, while restore stopped with MariaDB error 1449 because its target lacked the expected definer. The failed target and marker were retained. The corrected runner used a fresh target and passed the backup, encrypted read-back and restore comparisons. Four media files and one configuration file matched. Archive SHA-256 was `92df31836bb222970fcd0d21ce809fc9d7edd808d7d3a2fe57235895b069d60e`. The source restarted and passed readiness.
+
+## Recovered application
+
+The verified paired snapshot was used to start a second systemd web service on guest loopback port 55309. The rehearsal copied the stopped restored database and recovered uploads. It used a local socket, a fixture-only database account and fresh configuration with monitoring disabled. Both the source and recovered applications passed all readiness checks. The shared Chromium reopen check on Windows found plant 1 and verified both full-size photos and thumbnails against the recovered service. Retained evidence includes `activity08-recovered-check.log` and `recovered-browser-reopen.log`.
+
+## Nightly backup and standby preparation
+
+All 122 existing nightly and standby policy checks passed on Debian 12. Two one-shot systemd timers invoked the checked-in nightly backup and standby preparation tools. The backup captured the two disposable databases, verified encrypted local read-back and restarted the source application to readiness. Standby preparation selected the same snapshot and reached `PREPARED_RESTORE_PENDING`. The fixture deliberately left its email in the local outbox. The standby database stage requires MariaDB 11.8, so the Debian 12 run ended after verified preparation.
+
+- Snapshot `orchidset-20261128T104050Z-eb16579180914edea0acaa812c4a39d6`
+- SHA-256 `e86554128ea748727073409799c1314346472b214a54701d9f8683b3436471e2`
+- Retained log `activity08-nightly-check.log`
+
+The recovery and timer orchestration scripts used for these specific guest runs are retained with the local evidence. The existing production backup/standby commands and tracked test suites remain the reusable entry points.
+
+## Historical specimen upgrade
+
+[GitHub Actions run 46136490543](https://github.com/rayfeeney/OrchidApp/actions/runs/46136490543) passed on `f64e1527d48ef35e281dbe9c64b7544e3215668c`. It verified the frozen v1.3.0 ARM64 specimen with SHA-256 `7ffd16949ae07238f31447ad7d64e1444e898a00248b8e14757533bcbf00f3b5`, preserved 245 historical ledger rows, applied four forward migrations and verified a no-op second apply. Plant actions, app-only package replacement, paired recovery and recovery after a deliberate migration failure passed. A separate restore in the same run passed operational adoption checks, including interruption, lock and password handling.
+
+The workflow ran source-built ARM64 packages under emulation against isolated amd64 MariaDB 10.11.14. It used private local encrypted storage and a service-state adapter. The installed Debian 12 x64 results above used MariaDB 10.11.19 and real systemd. Physical Raspberry Pi, published v1.4.1 ARM64 package installation and live providers remain separate acceptance evidence.

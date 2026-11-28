@@ -41,7 +41,7 @@ Windows and Linux remain mandatory release acceptance platforms.
 | 05 | Review existing automated tests and specimen backups | Complete |
 | 06 | Implement shared application functional testing | Complete |
 | 07 | Implement Windows-specific automated testing | Complete |
-| 08 | Implement Linux-specific automated testing | Pending |
+| 08 | Implement Linux-specific automated testing | In review |
 | 09 | Establish and approve Windows and Linux testing baselines | Pending |
 | 10 | Re-engineer OrchidApp for MariaDB 11.8 | Pending |
 | 11 | Repeat automated testing against the new version | Pending |
@@ -436,8 +436,12 @@ completed the separate-target check. All eight jobs passed in the
 [CI run on the final merge commit](https://github.com/rayfeeney/OrchidApp/actions/runs/46065642868).
 Published-package baseline and provider-specific OneDrive acceptance remain open.
 
-Next activity: 08 - Implement Linux-specific automated testing.
-Status: Pending; not commenced.
+Activity 08 validation ran on 28 November 2026. The
+[Linux-specific harness and evidence](../../tests/LinuxAcceptance.Checks/README.md)
+record the installed Debian 12 x64 checks and the separate ARM64
+historical specimen workflow, including the limits of each environment.
+The evidence is in review. Activity 09 remains pending owner approval
+of Activity 08 and applicable merge validation.
 
 No automated testing baseline or MariaDB 11.8 release acceptance
 is claimed at this stage.
