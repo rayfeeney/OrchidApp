@@ -143,7 +143,6 @@ function Update-OrchidAppVersionForPackaging {
 
     $DatabaseSource = Join-Path $RepoRoot "database"
     $MariaDbRuntimeSource = Join-Path $RepoRoot ".runtime-downloads/mariadb-$WindowsMariaDbVersion-winx64"
-    $MariaDbDataSource = Join-Path $RepoRoot "app\data\mariadb"
 
     $DatabaseDest = Join-Path $DistRoot "database"
     $MariaDbRuntimeDest = Join-Path $DistRoot "runtime\mariadb\win-x64"
@@ -187,10 +186,6 @@ Write-Step "Checking source paths"
         throw "Database folder not found: $DatabaseSource"
     }
 
-
-    if (-not (Test-Path $MariaDbDataSource)) {
-        throw "MariaDB data folder not found: $MariaDbDataSource"
-    }
 
     if (-not (Test-Path $ToolsSource)) {
         throw "Tools folder not found: $ToolsSource"
@@ -266,15 +261,18 @@ Write-Step "Copying MariaDB runtime"
 
     Assert-WindowsMariaDbRuntime $MariaDbRuntimeDest
 
-Write-Step "Copying MariaDB data directory"
+Write-Step "Initializing packaged MariaDB data directory"
 
     New-Item -ItemType Directory -Path (Split-Path -Parent $MariaDbDataDest) -Force | Out-Null
+    $packagePipe = "OrchidAppPackage-$([Guid]::NewGuid().ToString('N'))"
+    $installDb = Join-Path $MariaDbRuntimeDest 'bin/mariadb-install-db.exe'
+    & $installDb "--datadir=$MariaDbDataDest" --skip-networking "--socket=$packagePipe"
+    if ($LASTEXITCODE -ne 0) {
+        throw "Packaged MariaDB initialization failed."
+    }
 
-    Copy-Item `
-        -Path $MariaDbDataSource `
-        -Destination $MariaDbDataDest `
-        -Recurse `
-        -Force
+    # The initializer writes host-specific absolute paths. Packaged startup supplies its own settings.
+    Remove-Item -LiteralPath (Join-Path $MariaDbDataDest 'my.ini')
 
 Write-Step "Copying packaged tools"
 
@@ -303,50 +301,10 @@ Write-Step "Copying libvips runtime"
         -Force
 
 
-Write-Step "Removing packaged application database cleanly"
+Write-Step "Verifying the fresh packaged MariaDB template"
 
-    $PackagedOrchidsFolder = Join-Path $MariaDbDataDest "orchids"
-
-    if (Test-Path $PackagedOrchidsFolder) {
-        Write-Host "Removing packaged trigger metadata before database drop..."
-
-        $TriggerMetadataFiles = @()
-
-        $TriggerMetadataFiles += Get-ChildItem `
-            -Path $PackagedOrchidsFolder `
-            -Filter "*.TRG" `
-            -File `
-            -ErrorAction SilentlyContinue
-
-        $TriggerMetadataFiles += Get-ChildItem `
-            -Path $PackagedOrchidsFolder `
-            -Filter "*.TRN" `
-            -File `
-            -ErrorAction SilentlyContinue
-
-        foreach ($TriggerMetadataFile in $TriggerMetadataFiles) {
-            Write-Host "Removing trigger metadata file: $($TriggerMetadataFile.FullName)"
-            Remove-Item -Path $TriggerMetadataFile.FullName -Force
-        }
-
-        Write-Host "Removed $($TriggerMetadataFiles.Count) trigger metadata file(s)."
-    }
-
-    if (-not (Test-Path $MariaDbExe)) {
-        throw "MariaDB server executable not found: $MariaDbExe"
-    }
-
-    if (-not (Test-Path $MariaDbClient)) {
-        throw "MariaDB client executable not found: $MariaDbClient"
-    }
-
-    if (-not (Test-Path $MariaDbAdmin)) {
-        throw "MariaDB admin executable not found: $MariaDbAdmin"
-    }
-
-    # Use a private local pipe so packaging cannot connect to an installed server.
-    $packagePipe = "OrchidAppPackage-$([Guid]::NewGuid().ToString('N'))"
-    $connectionArgs = @('--no-defaults', '--protocol=PIPE', "--socket=$packagePipe")
+    # A private local pipe prevents packaging from connecting to an installed server.
+    $connectionArgs = @('--no-defaults', '--protocol=PIPE', "--socket=$packagePipe", '--user=root', '--password=', '--connect-timeout=2')
 
     $mariaDbProcess = Start-Process `
         -FilePath $MariaDbExe `
@@ -363,8 +321,6 @@ Write-Step "Removing packaged application database cleanly"
         for ($i = 0; $i -lt 30; $i++) {
             & $MariaDbClient `
                 @connectionArgs `
-                -u orchid `
-                -porchid `
                 -e "SELECT 1;" `
                 2>$null | Out-Null
 
@@ -384,24 +340,16 @@ Write-Step "Removing packaged application database cleanly"
             throw "Packaged MariaDB did not become ready."
         }
 
-        Write-Host "Dropping packaged orchids database..."
-
-        & $MariaDbClient `
-            @connectionArgs `
-            -u orchid `
-            -porchid `
-            -e "DROP DATABASE IF EXISTS orchids;"
-
-        if ($LASTEXITCODE -ne 0) {
-            throw "Failed to drop packaged orchids database."
+        $schemas = & $MariaDbClient @connectionArgs --batch --skip-column-names -e "SHOW DATABASES;"
+        if ($LASTEXITCODE -ne 0 -or 'mysql' -notin $schemas -or
+            @($schemas | Where-Object { $_ -notin @('information_schema', 'mysql', 'performance_schema', 'sys', 'test') }).Count -ne 0) {
+            throw "Packaged MariaDB does not contain the expected fresh system schemas."
         }
 
         Write-Host "Requesting clean MariaDB shutdown..."
 
         & $MariaDbAdmin `
             @connectionArgs `
-            -u orchid_shutdown `
-            -porchid_shutdown `
             shutdown
 
         if ($LASTEXITCODE -ne 0) {
@@ -423,7 +371,7 @@ Write-Step "Removing packaged application database cleanly"
     finally {
         if ($mariaDbProcess -and -not $mariaDbProcess.HasExited) {
             Stop-Process -Id $mariaDbProcess.Id -Force
-            throw "Packaged MariaDB had to be force-stopped during cleanup."
+            Write-Warning "Packaged MariaDB had to be force-stopped during cleanup."
         }
     }
 

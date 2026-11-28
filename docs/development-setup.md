@@ -220,4 +220,4 @@ pwsh ./scripts/restore-windows-runtime.ps1
 
 Packaging checks the staged and copied runtime for the pinned server version and required tools. If validation fails, move the affected cache files out of the repository and rerun the preparation command. The existing development server and its data are independent of this staged runtime.
 
-These runtime files are preparation for packaging. The Windows release payload must also be built before running `scripts/build-windows-installer.ps1`. If Inno Setup is installed elsewhere, supply `-InnoCompiler <absolute-ISCC-path>` to that script.
+The package build initializes a fresh MariaDB system template with the staged 11.8 runtime and verifies it over a private named pipe. The launcher creates the OrchidApp database and applies the existing schema bootstrap on first start. Existing installations follow the separate upgrade and recovery contract. The Windows release payload must also be built before running `scripts/build-windows-installer.ps1`. If Inno Setup is installed elsewhere, supply `-InnoCompiler <absolute-ISCC-path>` to that script.
