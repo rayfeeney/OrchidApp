@@ -453,8 +453,7 @@ round-trip and uninstall were unverified in that published run. The
 [unpublished candidate results](../../tests/WindowsSandbox.Checks/README.md)
 record the separate fix validation. Retest launcher backup, specimen
 restore and backup round-trip in a fresh Sandbox on the next published
-version containing the fix. Linux published-package verification and
-Gate 1 approval remain pending.
+version containing the fix. The exact published Linux ARM64 package passed isolated historical upgrade and recovery. The [Activity 09 baseline review](activity-09-baseline-review.md) records the T01–T16 evidence and remaining limitations. Gate 1 approval remains pending.
 
 No automated testing baseline or MariaDB 11.8 release acceptance
 is claimed at this stage.
