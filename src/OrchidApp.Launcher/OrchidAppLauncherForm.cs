@@ -245,6 +245,19 @@ public partial class OrchidAppLauncherForm : Form
 
             AppendLog($"Launcher log file: {_programDataPaths.LauncherLogFile}");
 
+            if (IsMariaDbUpgradePending())
+            {
+                SetLauncherStatus(LauncherStatus.Red);
+                SetWindowTitle("Recovery required");
+                statusLabel.Text = "A MariaDB upgrade needs recovery. Keep OrchidApp closed and contact support.";
+                openAppButton.Enabled = false;
+                backupButton.Enabled = false;
+                restoreButton.Enabled = false;
+                configureCloudBackupButton.Enabled = false;
+                AppendLog("MariaDB engine upgrade pending. Preserve the upgrade record, pre-install snapshot and database files.");
+                return;
+            }
+
             if (GetRestoreRecovery().IsPending)
             {
                 ShowRestoreRecoveryState();
@@ -1362,6 +1375,24 @@ FLUSH PRIVILEGES;
             backupButton.Enabled = false;
             restoreButton.Enabled = true;
             configureCloudBackupButton.Enabled = false;
+        }
+    }
+
+    private bool IsMariaDbUpgradePending()
+    {
+        try
+        {
+            // An empty, malformed or unreadable record is still a recovery boundary.
+            File.GetAttributes(_programDataPaths.MariaDbUpgradePendingFile);
+            return true;
+        }
+        catch (FileNotFoundException)
+        {
+            return false;
+        }
+        catch (DirectoryNotFoundException)
+        {
+            return false;
         }
     }
 

@@ -56,6 +56,7 @@ function Assert-InstallerStopped([string]$AppRoot,[string]$PersistentRoot,[int]$
 }
 function Assert-InstallerRecoveryState([string]$AppRoot,[string]$PersistentRoot) {
     foreach ($root in @($AppRoot,$PersistentRoot)) {
+        if (Test-Path -LiteralPath (Join-Path $root 'mariadb-upgrade-pending.json')) { throw 'An interrupted MariaDB engine upgrade requires recovery before installation.' }
         if (Test-Path -LiteralPath (Join-Path $root 'restore-pending.json')) { throw 'An interrupted restore requires recovery before installation.' }
         $state=Join-Path $root 'migration-state.json'
         if (Test-Path -LiteralPath $state) {
@@ -141,6 +142,46 @@ function New-InstallerSnapshot([string]$AppRoot,[string]$PersistentRoot,[int]$In
         $archive
     }
     finally { foreach ($handle in $handles) { $handle.Dispose() } }
+}
+function New-InstallerMariaDbUpgradeRecord([string]$AppRoot,[string]$PersistentRoot,[string]$Archive,[string]$SourceVersion,[string]$TargetVersion) {
+    $AppRoot=Get-InstallerFullPath $AppRoot
+    $PersistentRoot=Get-InstallerFullPath $PersistentRoot
+    $Archive=Get-InstallerFullPath $Archive
+    Assert-InstallerPath $AppRoot
+    Assert-InstallerPath $PersistentRoot
+    Assert-InstallerPath $Archive
+    Assert-InstallerRecoveryState $AppRoot $PersistentRoot
+    $archiveParent=Join-Path $PersistentRoot 'backups/pre-install'
+    if ((Split-Path -Parent $Archive) -ine $archiveParent -or [IO.Path]::GetExtension($Archive) -ine '.zip' -or
+        $SourceVersion -notmatch '^10\.11\.\d+$' -or $TargetVersion -notmatch '^11\.8\.\d+$') {
+        throw 'The engine upgrade requires a local pre-install snapshot and explicit 10.11 and 11.8 versions.'
+    }
+
+    $manifest=Read-InstallerSnapshot $Archive
+    if ($manifest.applicationRoot -ine $AppRoot -or $manifest.persistentRoot -ine $PersistentRoot -or
+        -not @($manifest.files | Where-Object { $_.path -like 'persistent/data/mariadb/mysql/*' }).Count) {
+        throw 'The verified snapshot does not contain the selected ProgramData database.'
+    }
+
+    $marker=Join-Path $PersistentRoot 'mariadb-upgrade-pending.json'
+    $record=[ordered]@{
+        formatVersion=1
+        operationId=[guid]::NewGuid().ToString('D')
+        createdUtc=[datetime]::UtcNow.ToString('o')
+        sourceVersion=$SourceVersion
+        targetVersion=$TargetVersion
+        dataDirectory=(Join-Path $PersistentRoot 'data/mariadb')
+        snapshot=$Archive
+        snapshotSha256=(Get-FileHash -LiteralPath $Archive -Algorithm SHA256).Hash.ToLowerInvariant()
+    }
+    $bytes=[Text.Encoding]::UTF8.GetBytes(($record | ConvertTo-Json))
+    # CreateNew prevents a concurrent attempt from replacing recovery evidence.
+    $stream=[IO.File]::Open($marker,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::None)
+    try {
+        $stream.Write($bytes,0,$bytes.Length)
+        $stream.Flush($true)
+    } finally { $stream.Dispose() }
+    $marker
 }
 function Expand-InstallerSnapshot([string]$Archive,[string]$Destination) {
     $Destination=Get-InstallerFullPath $Destination

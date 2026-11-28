@@ -39,6 +39,23 @@ try {
     '{}' | Set-Content (Join-Path $f.persistent 'restore-pending.json')
     Reject 'Unresolved restore blocks file replacement' { New-InstallerSnapshot $f.app $f.persistent 0 }
     $f=Fixture
+    $system=Join-Path $f.persistent 'data/mariadb/mysql'
+    $null=New-Item -ItemType Directory -Path $system
+    'system fixture' | Set-Content -LiteralPath (Join-Path $system 'global_priv.MAI')
+    $archive=New-InstallerSnapshot $f.app $f.persistent 0
+    $marker=New-InstallerMariaDbUpgradeRecord $f.app $f.persistent $archive '10.11.16' '11.8.9'
+    $record=Get-Content -LiteralPath $marker -Raw | ConvertFrom-Json
+    Check 'Pending engine record binds data, versions and verified snapshot' (
+        $record.dataDirectory -eq (Join-Path $f.persistent 'data/mariadb') -and
+        $record.sourceVersion -eq '10.11.16' -and $record.targetVersion -eq '11.8.9' -and
+        $record.snapshot -eq $archive -and $record.snapshotSha256 -eq (Get-FileHash -LiteralPath $archive).Hash)
+    Reject 'Existing engine record blocks another attempt' {
+        New-InstallerMariaDbUpgradeRecord $f.app $f.persistent $archive '10.11.16' '11.8.9'
+    }
+    Reject 'Pending engine upgrade blocks installer file replacement' { New-InstallerSnapshot $f.app $f.persistent 0 }
+    Clear-Content -LiteralPath $marker
+    Reject 'Empty engine record still blocks installer file replacement' { New-InstallerSnapshot $f.app $f.persistent 0 }
+    $f=Fixture
     '{"SchemaVersion":2,"MigrationStatus":"Failed","Phase":"Copying"}' | Set-Content (Join-Path $f.persistent 'migration-state.json')
     Reject 'Unfinished migration blocks upgrade' { New-InstallerSnapshot $f.app $f.persistent 0 }
     $f=Fixture;$recovery=Join-Path $f.persistent 'uploads/.photo-recovery';$null=New-Item -ItemType Directory -Path $recovery
