@@ -47,7 +47,7 @@ try {
     $serverVersion=Invoke-MariaDbRows -Client $client -ClientArguments @("--defaults-extra-file=$defaults", '--batch', '--skip-column-names', '--execute=SELECT VERSION();')
     if ($serverVersion -match '^11\.8\.\d+-MariaDB') {
         # Direct SQL cases use the same per-session locking behavior as the web host.
-        [IO.File]::AppendAllLines($defaults, @('[mariadb-client]', 'init-command=SET SESSION innodb_snapshot_isolation=OFF'))
+        [IO.File]::AppendAllLines($defaults, [string[]]@('[mariadb-client]', 'init-command=SET SESSION innodb_snapshot_isolation=OFF'))
     }
     $env:MYSQL_PWD=$null;$env:MARIADB_CHARSET='utf8mb4';$env:MARIADB_COLLATION='utf8mb4_unicode_ci'
     $stage=Join-Path $root 'schema-only/database';$null=New-Item -ItemType Directory -Path $stage
