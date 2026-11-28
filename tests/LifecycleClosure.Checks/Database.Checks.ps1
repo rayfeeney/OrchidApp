@@ -44,6 +44,11 @@ try {
     $lines=@('[client]','protocol=tcp',('host='+ (Quote-Option $env:MARIADB_HOST)),('port='+$env:MARIADB_PORT),('user='+ (Quote-Option $env:MARIADB_USER)),('password='+ (Quote-Option $env:MARIADB_PASSWORD)))
     [IO.File]::WriteAllLines($defaults,$lines,[Text.UTF8Encoding]::new($false))
     if(-not $IsWindows){& chmod 600 -- $defaults;if($LASTEXITCODE -ne 0){throw 'Credential protection failed.'}}
+    $serverVersion=Invoke-MariaDbRows -Client $client -ClientArguments @("--defaults-extra-file=$defaults", '--batch', '--skip-column-names', '--execute=SELECT VERSION();')
+    if ($serverVersion -match '^11\.8\.\d+-MariaDB') {
+        # Direct SQL cases use the same per-session locking behavior as the web host.
+        [IO.File]::AppendAllLines($defaults, @('[mariadb-client]', 'init-command=SET SESSION innodb_snapshot_isolation=OFF'))
+    }
     $env:MYSQL_PWD=$null;$env:MARIADB_CHARSET='utf8mb4';$env:MARIADB_COLLATION='utf8mb4_unicode_ci'
     $stage=Join-Path $root 'schema-only/database';$null=New-Item -ItemType Directory -Path $stage
     foreach($directory in @('scripts','schema')){Copy-Item -LiteralPath (Join-Path $repo "database/$directory") -Destination $stage -Recurse}
