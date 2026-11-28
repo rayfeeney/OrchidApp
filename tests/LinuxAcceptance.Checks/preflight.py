@@ -58,7 +58,8 @@ def preflight(target=False):
     if unexpected:
         raise RuntimeError(f"Expected only system databases; found {len(unexpected)} application schemas.")
     installation_paths = ("/opt/orchidapp", "/etc/systemd/system/orchidapp.service",
-                          "/opt/orchidapp-activity08", "/etc/systemd/system/orchidapp-activity08.service")
+                          "/opt/orchidapp-activity08", "/etc/systemd/system/orchidapp-activity08.service",
+                          "/opt/orchidapp-activity10", "/etc/systemd/system/orchidapp-activity10.service")
     if any(Path(path).exists() for path in installation_paths):
         raise RuntimeError("OrchidApp installation state already exists on the selected guest.")
     dotnet = command("dotnet", "--version")
