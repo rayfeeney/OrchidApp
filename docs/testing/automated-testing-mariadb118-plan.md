@@ -43,7 +43,7 @@ Windows and Linux remain mandatory release acceptance platforms.
 | 07 | Implement Windows-specific automated testing | Complete |
 | 08 | Implement Linux-specific automated testing | Complete |
 | 09 | Establish and approve Windows and Linux testing baselines | Complete |
-| 10 | Re-engineer OrchidApp for MariaDB 11.8 | Pending |
+| 10 | Re-engineer OrchidApp for MariaDB 11.8 | Complete |
 | 11 | Repeat automated testing against the new version | Pending |
 | 12 | Validate database migration and application upgrades | Pending |
 | 13 | Create the new application release | Pending |
@@ -458,7 +458,20 @@ version containing the fix. The exact published Linux ARM64 package passed isola
 `7e7628cab39b6979fa38659cbb6f0dd6d3307f2d` and all eight jobs passed in
 [post-merge CI](https://github.com/rayfeeney/OrchidApp/actions/runs/46142587657).
 
-Next activity: 10 - Re-engineer OrchidApp for MariaDB 11.8.
+Activity 10 was completed on 28 November 2026. The owner reviewed and merged
+[PR #407](https://github.com/rayfeeney/OrchidApp/pull/407) at
+`72bc337fc8df682e846e82624e3c02f3fd852d78`. All eight jobs passed in
+[post-merge CI](https://github.com/rayfeeney/OrchidApp/actions/runs/46168138442).
+The candidate pins the Windows bundled runtime and Linux integration CI to
+MariaDB 11.8.9. The [Windows Sandbox evidence](../../tests/WindowsSandbox.Checks/README.md)
+records clean candidate acceptance, and the [Debian 13 evidence](../../tests/LinuxAcceptance.Checks/README.md)
+records schema creation, systemd restart and shared browser checks. OrchidApp
+applies its locking-read compatibility setting per 11.8 connection.
+The guarded Windows engine runner passed an isolated database fixture.
+Installed cross-version upgrade and recovery acceptance remains in Activity 12.
+Gate 2 remains pending.
+
+Next activity: 11 - Repeat automated testing against the new version.
 Status: Pending.
 
 Keep this document updated as each activity is completed. Link to
