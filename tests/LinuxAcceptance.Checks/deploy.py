@@ -55,15 +55,20 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", type=Path, required=True)
     parser.add_argument("--publish", type=Path, required=True)
-    parser.add_argument("--target", action="store_true", help="Deploy to the designated Debian 13 target.")
+    profile = parser.add_mutually_exclusive_group()
+    profile.add_argument("--target", action="store_true", help="Deploy to the clean Debian 13 target.")
+    profile.add_argument("--repeat-target", action="store_true", help="Deploy independently beside the Activity 10 target fixture.")
     args = parser.parse_args()
     if os.geteuid() != 0:
         parser.error("Run as root on the designated disposable guest.")
-    environment_report = preflight(target=args.target)
+    is_target = args.target or args.repeat_target
+    environment_report = preflight(target=is_target, repeat_target=args.repeat_target)
+    activity = "11" if args.repeat_target else ("10" if args.target else "08")
     app, config, unit, database, owner, port = (
-        Path("/opt/orchidapp-activity10"), Path("/etc/orchidapp-activity10"),
-        "orchidapp-activity10.service", "orchids_activity10", "orchid10", 55310
-    ) if args.target else (APP, CONFIG, UNIT, DATABASE, OWNER, PORT)
+        Path(f"/opt/orchidapp-activity{activity}"), Path(f"/etc/orchidapp-activity{activity}"),
+        f"orchidapp-activity{activity}.service", f"orchids_activity{activity}",
+        f"orchid{activity}", 55300 + int(activity)
+    ) if is_target else (APP, CONFIG, UNIT, DATABASE, OWNER, PORT)
     unit_path = UNIT_PATH.with_name(unit)
     setup_user = f"{owner}_setup"
     source, published = args.source.resolve(strict=True), args.publish.resolve(strict=True)
@@ -98,7 +103,6 @@ def main():
     ledger = query(f"SELECT scriptName FROM {database}.schemaversion ORDER BY scriptName;")
     if not ledger.startswith("baseline:v1:") or len(ledger.splitlines()) != 1:
         raise RuntimeError("Expected exactly one schema-only baseline ledger entry.")
-    activity = "10" if args.target else "08"
     query(f"CALL {database}.spAddGenus('Activity {activity} synthetic', 'Disposable browser fixture');")
 
     run("useradd", "--system", "--user-group", "--no-create-home", "--shell", "/usr/sbin/nologin", owner)
@@ -130,7 +134,7 @@ def main():
         raise RuntimeError("systemd did not stop the owned fixture.")
     run("systemctl", "start", unit)
     restarted = wait_ready(port, unit)
-    print(json.dumps({("target" if args.target else "baseline"): environment_report, "ledger": ledger, "unit": unit, "initialState": started,
+    print(json.dumps({("target" if is_target else "baseline"): environment_report, "ledger": ledger, "unit": unit, "initialState": started,
                       "stoppedState": stopped, "restartedState": service_state(unit),
                       "initialReadiness": ready, "restartReadiness": restarted}, indent=2))
 
