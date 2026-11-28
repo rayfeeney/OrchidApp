@@ -42,7 +42,7 @@ Windows and Linux remain mandatory release acceptance platforms.
 | 06 | Implement shared application functional testing | Complete |
 | 07 | Implement Windows-specific automated testing | Complete |
 | 08 | Implement Linux-specific automated testing | Complete |
-| 09 | Establish and approve Windows and Linux testing baselines | Pending |
+| 09 | Establish and approve Windows and Linux testing baselines | In progress |
 | 10 | Re-engineer OrchidApp for MariaDB 11.8 | Pending |
 | 11 | Repeat automated testing against the new version | Pending |
 | 12 | Validate database migration and application upgrades | Pending |
@@ -444,8 +444,16 @@ The owner reviewed and merged [PR #403](https://github.com/rayfeeney/OrchidApp/p
 `06902237fe536be1a896b751d7c079f1170fe662`. All eight jobs passed in the
 [CI run on the merge commit](https://github.com/rayfeeney/OrchidApp/actions/runs/46138574117).
 
-Next activity: 09 - Establish and approve Windows and Linux testing baselines.
-Status: Pending.
+Activity 09 is in progress. On 28 November 2026, the owner accepted
+the known Windows v1.4.1 baseline limitation. The verified published
+installer passed installation and readiness with MariaDB 10.11.16 in
+Windows Sandbox. Its startup backup reproduced the missing en-GB
+ArchiveResources.psd1 failure. Specimen restore, browser writes, backup
+round-trip and uninstall were unverified in that published run. The
+[unpublished candidate results](../../tests/WindowsSandbox.Checks/README.md)
+record the separate fix validation. Retest launcher backup, specimen
+restore and backup round-trip in a fresh Sandbox on the next published
+version containing the fix. The exact published Linux ARM64 package passed isolated historical upgrade and recovery. The [Activity 09 baseline review](activity-09-baseline-review.md) records the T01–T16 evidence and remaining limitations. Gate 1 approval remains pending.
 
 No automated testing baseline or MariaDB 11.8 release acceptance
 is claimed at this stage.
