@@ -28,6 +28,7 @@ if ($appVersion -notmatch '^\d+\.\d+\.\d+$') {
 $installerScript = Join-Path $repoRoot "installer\windows\OrchidApp.iss"
 $outputInstaller = Join-Path $repoRoot "dist\installer\OrchidAppSetup-$appVersion.exe"
 $isccExe = $InnoCompiler
+. (Join-Path $scriptRoot 'windows-mariadb-runtime.ps1')
 
 Write-Host "Building OrchidApp Windows installer..."
 Write-Host "Repo root: $repoRoot"
@@ -52,13 +53,13 @@ Write-Host "Source folder: $sourceDir"
 Write-Host "Installer script: $installerScript"
 Write-Host "Inno compiler: $isccExe"
 
-foreach ($helper in @('Installer-Snapshot.ps1','prepare-installer-upgrade.ps1','review-installer-snapshot.ps1')) {
+foreach ($helper in @('Installer-Snapshot.ps1','prepare-installer-upgrade.ps1','review-installer-snapshot.ps1','complete-installer-mariadb-upgrade.ps1')) {
     if (-not (Test-Path -LiteralPath (Join-Path $sourceDir "tools/$helper") -PathType Leaf)) { throw "Packaged installer helper missing: $helper. Repackage before building the installer." }
     if ((Get-FileHash -LiteralPath (Join-Path $sourceDir "tools/$helper")).Hash -ne
         (Get-FileHash -LiteralPath (Join-Path $repoRoot "app/tools/$helper")).Hash) { throw "Packaged installer helper is stale: $helper" }
 }
 # Inno preprocessor options precede the script; use the checked-in production identity.
-& $isccExe "/DMyAppVersion=$appVersion" $installerScript
+& $isccExe "/DMyAppVersion=$appVersion" "/DMariaDbTargetVersion=$WindowsMariaDbVersion" $installerScript
 
 Write-Host "App version: $appVersion"
 

@@ -426,7 +426,9 @@ jobs:
 
       - name: Check Windows backup and restore round trip
         shell: pwsh
-        run: ./tests/BackupRestore.Checks/Database.Checks.ps1 -MariaDbRuntimeRoot ./app/runtime/mariadb/win-x64
+        run: |
+          . ./scripts/windows-mariadb-runtime.ps1
+          ./tests/BackupRestore.Checks/Database.Checks.ps1 -MariaDbRuntimeRoot "./.runtime-downloads/mariadb-$WindowsMariaDbVersion-winx64"
 
       - name: Create Windows package
         shell: pwsh
@@ -441,7 +443,9 @@ jobs:
 
       - name: Check real database recovery from installer snapshot
         shell: pwsh
-        run: ./tests/InstallerUpgrade.Checks/Database.Checks.ps1 -MariaDbRuntimeRoot ./app/runtime/mariadb/win-x64
+        run: |
+          . ./scripts/windows-mariadb-runtime.ps1
+          ./tests/InstallerUpgrade.Checks/Database.Checks.ps1 -MariaDbRuntimeRoot "./.runtime-downloads/mariadb-$WindowsMariaDbVersion-winx64"
 
       - name: Compile and test isolated installers
         shell: pwsh

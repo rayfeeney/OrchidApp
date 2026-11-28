@@ -47,7 +47,7 @@ For an accepted offline rollback, the operator must first preserve the failed ro
 
 ### Pending MariaDB engine upgrade
 
-The MariaDB 11.8 candidate reserves `mariadb-upgrade-pending.json` under ProgramData OrchidApp. The record binds the intended versions and data directory to a verified pre-install snapshot. Its presence, even when empty, blocks installer replacement and launcher startup before MariaDB opens the data. Keep the record, snapshot and failed data for support-assisted recovery. The engine-upgrade runner and its successful completion path are still under development in Activity 10.
+The MariaDB 11.8 candidate reserves `mariadb-upgrade-pending.json` under ProgramData OrchidApp. The record binds the intended versions and data directory to a verified pre-install snapshot. Its presence, even when empty, blocks installer replacement and launcher startup before MariaDB opens the data. Keep the record, snapshot and failed data for support-assisted recovery. For a supported installed 10.11 runtime and a stopped ProgramData database, setup writes the record before replacing the application files. After copying the package, setup rechecks the snapshot and stopped database bytes, starts the matching 11.8 engine on a private named pipe with TCP and events disabled, and runs mariadb-upgrade. Setup removes the pending record only after the engine records the target version and shuts down cleanly. An existing installation at the exact target version follows the usual snapshot path. Ambiguous or legacy application-folder data requires review before an engine change.
 
 ## Release build and signing evidence
 

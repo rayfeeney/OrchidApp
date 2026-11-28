@@ -444,6 +444,7 @@ Write-Step "Validating package contents"
         (Join-Path $DistRoot "tools\Restore-Recovery.ps1"),
         (Join-Path $DistRoot "tools\Installer-Snapshot.ps1"),
         (Join-Path $DistRoot "tools\prepare-installer-upgrade.ps1"),
+        (Join-Path $DistRoot "tools\complete-installer-mariadb-upgrade.ps1"),
         (Join-Path $DistRoot "tools\review-installer-snapshot.ps1"),
         (Join-Path $DistRoot "Legal"),
         (Join-Path $DistRoot "Legal\LICENSE"),
