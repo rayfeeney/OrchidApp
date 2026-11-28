@@ -40,4 +40,4 @@ Live OneDrive, IMAP and SMTP were outside these fixture runs. The scheduled
 restore used the two disposable application and importer schemas. Full
 standby application acceptance remains separate. Existing-installation
 10.11-to-11.8 upgrade and recovery acceptance belongs to Activity 12.
-Activity 11 awaits owner review, and Gate 2 remains pending.
+The owner reviewed and merged PR #409. All eight post-merge CI jobs passed. Gate 2 remains pending. [Post-merge CI](https://github.com/rayfeeney/OrchidApp/actions/runs/46188137528)

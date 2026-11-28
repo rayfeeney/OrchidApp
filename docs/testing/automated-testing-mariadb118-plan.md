@@ -44,7 +44,7 @@ Windows and Linux remain mandatory release acceptance platforms.
 | 08 | Implement Linux-specific automated testing | Complete |
 | 09 | Establish and approve Windows and Linux testing baselines | Complete |
 | 10 | Re-engineer OrchidApp for MariaDB 11.8 | Complete |
-| 11 | Repeat automated testing against the new version | In review |
+| 11 | Repeat automated testing against the new version | Complete |
 | 12 | Validate database migration and application upgrades | Pending |
 | 13 | Create the new application release | Pending |
 | 14 | Validate the final Windows and Linux releases | Pending |
@@ -471,10 +471,16 @@ The guarded Windows engine runner passed an isolated database fixture.
 Installed cross-version upgrade and recovery acceptance remains in Activity 12.
 Gate 2 remains pending.
 
-The [Activity 11 repeat evidence](activity-11-repeat.md) records the eight
-passing CI jobs and the separate installed Windows and Debian 13 checks
-against the MariaDB 11.8 candidate. Activity 11 is in review. Activity 12
-and Gate 2 remain pending.
+Activity 11 was completed on 28 November 2026. The owner reviewed and
+merged [PR #409](https://github.com/rayfeeney/OrchidApp/pull/409) at
+`01dd07af1117f6f9faab8b4528a98e8fabd71fd5` and all eight jobs passed in
+[post-merge CI](https://github.com/rayfeeney/OrchidApp/actions/runs/46188137528).
+The [Activity 11 repeat evidence](activity-11-repeat.md) records the
+candidate CI run, the separate installed Windows and Debian 13 checks,
+and the remaining standby and provider limits. Gate 2 remains pending.
+
+Next activity: 12 - Validate database migration and application upgrades.
+Status: Pending.
 
 Keep this document updated as each activity is completed. Link to
 existing test inventories, CI results and release-specific acceptance
