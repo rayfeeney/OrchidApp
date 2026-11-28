@@ -42,7 +42,7 @@ Windows and Linux remain mandatory release acceptance platforms.
 | 06 | Implement shared application functional testing | Complete |
 | 07 | Implement Windows-specific automated testing | Complete |
 | 08 | Implement Linux-specific automated testing | Complete |
-| 09 | Establish and approve Windows and Linux testing baselines | In progress |
+| 09 | Establish and approve Windows and Linux testing baselines | Complete |
 | 10 | Re-engineer OrchidApp for MariaDB 11.8 | Pending |
 | 11 | Repeat automated testing against the new version | Pending |
 | 12 | Validate database migration and application upgrades | Pending |
@@ -404,7 +404,7 @@ The programme is complete only after Gate 3 approval.
 
 | Gate | Status | Approval evidence |
 | --- | --- | --- |
-| Gate 1 - Current version baseline | Pending | Not yet approved |
+| Gate 1 - Current version baseline | Approved | Owner approval on 28 November 2026 |
 | Gate 2 - MariaDB 11.8 acceptance | Pending | Not yet approved |
 | Gate 3 - Final release acceptance | Pending | Not yet approved |
 
@@ -444,7 +444,7 @@ The owner reviewed and merged [PR #403](https://github.com/rayfeeney/OrchidApp/p
 `06902237fe536be1a896b751d7c079f1170fe662`. All eight jobs passed in the
 [CI run on the merge commit](https://github.com/rayfeeney/OrchidApp/actions/runs/46138574117).
 
-Activity 09 is in progress. On 28 November 2026, the owner accepted
+Activity 09 was completed on 28 November 2026. The owner accepted
 the known Windows v1.4.1 baseline limitation. The verified published
 installer passed installation and readiness with MariaDB 10.11.16 in
 Windows Sandbox. Its startup backup reproduced the missing en-GB
@@ -453,10 +453,13 @@ round-trip and uninstall were unverified in that published run. The
 [unpublished candidate results](../../tests/WindowsSandbox.Checks/README.md)
 record the separate fix validation. Retest launcher backup, specimen
 restore and backup round-trip in a fresh Sandbox on the next published
-version containing the fix. The exact published Linux ARM64 package passed isolated historical upgrade and recovery. The [Activity 09 baseline review](activity-09-baseline-review.md) records the T01–T16 evidence and remaining limitations. Gate 1 approval remains pending.
+version containing the fix. The exact published Linux ARM64 package passed isolated historical upgrade and recovery. The [Activity 09 baseline review](activity-09-baseline-review.md) records the T01–T16 evidence and remaining limitations. The owner approved Activity 09 and Gate 1 after
+[PR #405](https://github.com/rayfeeney/OrchidApp/pull/405) merged at
+`7e7628cab39b6979fa38659cbb6f0dd6d3307f2d` and all eight jobs passed in
+[post-merge CI](https://github.com/rayfeeney/OrchidApp/actions/runs/46142587657).
 
-No automated testing baseline or MariaDB 11.8 release acceptance
-is claimed at this stage.
+Next activity: 10 - Re-engineer OrchidApp for MariaDB 11.8.
+Status: Pending.
 
 Keep this document updated as each activity is completed. Link to
 existing test inventories, CI results and release-specific acceptance

@@ -1,6 +1,6 @@
 # Activity 09 baseline review
 
-Review evidence captured on 28 November 2026 under the [programme](automated-testing-mariadb118-plan.md) and its [detailed criteria](activity-05-review.md). Activity 09 and Gate 1 await the owner’s decision. The owner accepted the known Windows v1.4.1 backup limitation on 28 November 2026.
+Review evidence captured on 28 November 2026 under the [programme](automated-testing-mariadb118-plan.md) and its [detailed criteria](activity-05-review.md). The owner approved Activity 09 and Gate 1 on 28 November 2026. The owner accepted the known Windows v1.4.1 backup limitation on 28 November 2026.
 
 ## Retained inputs and environments
 
@@ -43,4 +43,4 @@ The installed Linux source fixture used Debian 12.15 x64, MariaDB 10.11.19, .NET
 - Windows published rerun `dist/activity09-windows-sandbox/20261128T113042Z-6827f608/evidence/report.json`. The automatic backup failed because PowerShell could not find the `en-GB` archive resource `ArchiveResources.psd1`. Retest backup, specimen restore and backup round-trip in a fresh Sandbox on the next published version containing the fix.
 - Published Linux report `dist/activity09-linux-evidence/20261128T114008Z-9f3a44ca/report.json` and `application/application-report.json` under the same run directory.
 - [Historical ARM64 CI](https://github.com/rayfeeney/OrchidApp/actions/runs/46136490543) and [Activity 08 merge CI](https://github.com/rayfeeney/OrchidApp/actions/runs/46138574117).
-- Review the measured baseline and the outstanding evidence above before deciding Gate 1. Owner acceptance of the Windows backup limitation is recorded. The Gate 1 decision remains pending.
+- The owner approved these baselines with the documented limitations after PR #405 merged and all eight post-merge CI jobs passed. [Merge CI](https://github.com/rayfeeney/OrchidApp/actions/runs/46142587657)
