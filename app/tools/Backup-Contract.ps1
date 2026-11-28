@@ -78,9 +78,22 @@ function Assert-ChildPath([string]$Path, [string]$Parent) {
 }
 function Invoke-OrchidQuery([string]$Sql) {
     [string[]]$arguments = @('--no-defaults','--protocol=TCP','--host=127.0.0.1',"--port=$MariaDbPort",'--user=orchid','--connect-timeout=5','--default-character-set=utf8mb4','--batch','--skip-column-names',"--execute=$Sql")
-    $output = & $MariaDbClient @arguments 2>&1
-    if ($LASTEXITCODE -ne 0) { throw "MariaDB query failed: $($output -join "`n")" }
-    $output
+    $exitCode = $null
+    $scriptExitCode = [ref]$exitCode
+    $stderr = [IO.Path]::GetTempFileName()
+    try {
+        # Windows PowerShell can turn redirected native stderr into a terminating error.
+        $output = & {
+            $ErrorActionPreference = 'Continue'
+            $PSNativeCommandUseErrorActionPreference = $false
+            & $MariaDbClient @arguments 2> $stderr
+            $scriptExitCode.Value = $LASTEXITCODE
+        }
+        $diagnostic = Get-Content -LiteralPath $stderr -Raw
+        if ($exitCode -ne 0) { throw "MariaDB query failed (exit $exitCode): $diagnostic" }
+        $output
+    }
+    finally { Remove-Item -LiteralPath $stderr }
 }
 function Assert-DatabaseIdentity {
     $actual = @(Invoke-OrchidQuery 'SELECT @@datadir;')

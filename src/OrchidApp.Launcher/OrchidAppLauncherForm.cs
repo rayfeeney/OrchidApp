@@ -775,7 +775,7 @@ FLUSH PRIVILEGES;
         {
             if (e.Data != null)
             {
-                AppendLog(e.Data);
+                AppendLog(e.Data, showInPane: !e.Data.StartsWith("DB DIAGNOSTIC: ", StringComparison.Ordinal));
             }
         };
 
@@ -1577,17 +1577,20 @@ FLUSH PRIVILEGES;
         AppendLog($"  ProgramData launcher settings: {layout.ProgramDataLauncherSettingsPath}");
     }
 
-    private void AppendLog(string text)
+    private void AppendLog(string text) => AppendLog(text, showInPane: true);
+
+    private void AppendLog(string text, bool showInPane)
     {
         if (InvokeRequired)
         {
-            BeginInvoke(new Action<string>(AppendLog), text);
+            BeginInvoke(new Action(() => AppendLog(text, showInPane)));
             return;
         }
 
         var line = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {text}";
 
         WriteLauncherLogFileLine(line);
+        if (!showInPane) return;
 
         lock (_logLock)
         {
