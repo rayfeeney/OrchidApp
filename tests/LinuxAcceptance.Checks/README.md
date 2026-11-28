@@ -12,6 +12,20 @@ sudo python3 preflight.py
 
 The script uses the guest's local MariaDB socket for read-only queries. It checks the guest identity, Debian version, architecture, systemd, the MariaDB server version and loopback listener, charset and collation, absence of application schemas and deployment files, and the .NET 8 SDK. Retain its JSON output before provisioning. A machine that differs from the recorded baseline requires review before deployment.
 
+## Read-only target preflight
+
+Run `sudo python3 preflight.py --target` only on `orchidapp-debian13`. This
+mode checks Debian 13.8 x64, MariaDB server and client 11.8.9, systemd,
+loopback binding, the recorded server character set and collation,
+absence of application state, and the .NET 8 SDK. The default command
+still selects the Debian 12 baseline.
+
+The target preflight passed on 28 November 2026. Debian 13.8 x64 had
+MariaDB server and client 11.8.9, utf8mb4/utf8mb4_unicode_ci, a loopback
+database listener, systemd PID 1, .NET SDK 8.0.428 and no application
+databases or installed fixture. Retained host evidence is
+`dist/activity10-target-preflight.log`.
+
 ## Activity 08 work
 
 - Use the [documented Linux deployment procedure](../../docs/user-guides/linux/installation-upgrade.md), canonical schema-only creation and migration runners. Verify startup, shutdown and restart through real systemd and run the [shared browser checks](../SharedBrowser.Checks/README.md).
