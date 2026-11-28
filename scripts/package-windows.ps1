@@ -134,6 +134,7 @@ function Update-OrchidAppVersionForPackaging {
     $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
     $RepoRoot = Resolve-Path (Join-Path $ScriptDir "..")
     $DirectoryBuildProps = Join-Path $RepoRoot "Directory.Build.props"
+    . (Join-Path $ScriptDir 'windows-mariadb-runtime.ps1')
 
     $DistRoot = Join-Path $RepoRoot "dist\windows\OrchidApp"
 
@@ -141,7 +142,7 @@ function Update-OrchidAppVersionForPackaging {
     $LauncherProject = Join-Path $RepoRoot "src\OrchidApp.Launcher\OrchidApp.Launcher.csproj"
 
     $DatabaseSource = Join-Path $RepoRoot "database"
-    $MariaDbRuntimeSource = Join-Path $RepoRoot "app\runtime\mariadb\win-x64"
+    $MariaDbRuntimeSource = Join-Path $RepoRoot ".runtime-downloads/mariadb-$WindowsMariaDbVersion-winx64"
     $MariaDbDataSource = Join-Path $RepoRoot "app\data\mariadb"
 
     $DatabaseDest = Join-Path $DistRoot "database"
@@ -162,6 +163,8 @@ function Update-OrchidAppVersionForPackaging {
     $UserGuidesSource = Join-Path $RepoRoot "\docs\user-guides\windows"
     $UserGuidesDest = Join-Path $DistRoot "user-guides"
 
+
+    Assert-WindowsMariaDbRuntime $MariaDbRuntimeSource
 
 Write-Step "Stamping application version"
 
@@ -184,9 +187,6 @@ Write-Step "Checking source paths"
         throw "Database folder not found: $DatabaseSource"
     }
 
-    if (-not (Test-Path $MariaDbRuntimeSource)) {
-        throw "MariaDB runtime folder not found: $MariaDbRuntimeSource"
-    }
 
     if (-not (Test-Path $MariaDbDataSource)) {
         throw "MariaDB data folder not found: $MariaDbDataSource"
@@ -263,6 +263,8 @@ Write-Step "Copying MariaDB runtime"
         -Destination $MariaDbRuntimeDest `
         -Recurse `
         -Force
+
+    Assert-WindowsMariaDbRuntime $MariaDbRuntimeDest
 
 Write-Step "Copying MariaDB data directory"
 
